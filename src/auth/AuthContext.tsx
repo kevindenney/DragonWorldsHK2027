@@ -71,10 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setAuthState(prev => ({
           ...prev,
           isLoading: false,
-          error: {
-            code: 'storage/load-error',
-            message: 'Failed to load stored authentication data',
-          },
+          error: 'Failed to load stored authentication data',
         }));
       }
     };
@@ -119,10 +116,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setAuthState(prev => ({
           ...prev,
           isLoading: false,
-          error: {
-            code: 'auth/state-change-error',
-            message: 'Failed to handle authentication state change',
-          },
+          error: 'Failed to handle authentication state change',
         }));
       }
     });
@@ -168,7 +162,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return user;
     } catch (error) {
       const authError = error as AuthError;
-      setError(authError);
+      setError(authError.message);
       throw authError;
     } finally {
       setLoading(false);
@@ -195,7 +189,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return user;
     } catch (error) {
       const authError = error as AuthError;
-      setError(authError);
+      setError(authError.message);
       throw authError;
     } finally {
       setLoading(false);
@@ -210,7 +204,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await authService.signOut();
     } catch (error) {
       const authError = error as AuthError;
-      setError(authError);
+      setError(authError.message);
       throw authError;
     } finally {
       setLoading(false);
@@ -226,7 +220,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return user;
     } catch (error) {
       const authError = error as AuthError;
-      setError(authError);
+      setError(authError.message);
       throw authError;
     } finally {
       setLoading(false);
@@ -242,7 +236,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return user;
     } catch (error) {
       const authError = error as AuthError;
-      setError(authError);
+      setError(authError.message);
       throw authError;
     } finally {
       setLoading(false);
@@ -257,7 +251,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await authService.sendPasswordResetEmail(email);
     } catch (error) {
       const authError = error as AuthError;
-      setError(authError);
+      setError(authError.message);
       throw authError;
     } finally {
       setLoading(false);
@@ -272,7 +266,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await authService.sendEmailVerification();
     } catch (error) {
       const authError = error as AuthError;
-      setError(authError);
+      setError(authError.message);
       throw authError;
     } finally {
       setLoading(false);
@@ -289,7 +283,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await refreshUser();
     } catch (error) {
       const authError = error as AuthError;
-      setError(authError);
+      setError(authError.message);
       throw authError;
     } finally {
       setLoading(false);
@@ -306,7 +300,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await AsyncStorage.multiRemove([STORAGE_KEYS.USER, STORAGE_KEYS.LAST_ACTIVITY]);
     } catch (error) {
       const authError = error as AuthError;
-      setError(authError);
+      setError(authError.message);
       throw authError;
     } finally {
       setLoading(false);
