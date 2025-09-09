@@ -1,0 +1,92 @@
+name: 🔒 Security Vulnerability
+description: Report a security vulnerability (use this template for non-critical issues only)
+title: "[Security]: "
+labels: ["security", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ **IMPORTANT**: This template is for NON-CRITICAL security issues only.
+        
+        For critical security vulnerabilities, please:
+        1. **DO NOT** create a public issue
+        2. Email us directly at: security@dragonworlds.com
+        3. Include "CRITICAL SECURITY" in the subject line
+        
+        Critical issues include: authentication bypass, data exposure, remote code execution, etc.
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity Level
+      description: How would you classify this security issue?
+      options:
+        - Low - Information disclosure or minor security improvement
+        - Medium - Requires authentication or special conditions to exploit
+        - High - Please use private disclosure via email instead
+        - Critical - Please use private disclosure via email instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Vulnerability Description
+      description: Describe the security issue in detail
+      placeholder: "Describe the vulnerability, its potential impact, and any relevant technical details..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can this vulnerability be reproduced?
+      placeholder: |
+        1. Go to...
+        2. Perform action...
+        3. Observe security issue...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Affected Platform(s)
+      description: Which platforms are affected?
+      multiple: true
+      options:
+        - iOS
+        - Android
+        - Web
+        - Firebase backend
+        - All platforms
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Potential Impact
+      description: What could an attacker achieve with this vulnerability?
+      placeholder: "An attacker could potentially..."
+
+  - type: textarea
+    id: mitigation
+    attributes:
+      label: Suggested Mitigation
+      description: Do you have suggestions for fixing this issue?
+      placeholder: "This could be mitigated by..."
+
+  - type: checkboxes
+    id: disclosure
+    attributes:
+      label: Responsible Disclosure
+      description: Please confirm your understanding of responsible disclosure
+      options:
+        - label: I understand this is for LOW/MEDIUM severity issues only
+          required: true
+        - label: I will not publicly disclose details until the issue is resolved
+          required: true
+        - label: I have not shared this vulnerability with others
+          required: true

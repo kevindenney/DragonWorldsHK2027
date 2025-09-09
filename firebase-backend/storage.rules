@@ -1,0 +1,51 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Users can upload and read their own files
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Profile images - users can upload their own, anyone can read
+    match /profiles/{userId}/avatar {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId
+        && isValidImageFile();
+    }
+    
+    // Public files - anyone authenticated can read, admins can write
+    match /public/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
+    }
+    
+    // Temporary uploads - users can upload, expire after 1 day
+    match /temp/{userId}/{fileName} {
+      allow read, write: if request.auth != null && request.auth.uid == userId
+        && resource.timeCreated > (timestamp.date() - duration.value(1, 'd'));
+    }
+    
+    // Admin files - only admins can access
+    match /admin/{allPaths=**} {
+      allow read, write: if request.auth != null && isAdmin();
+    }
+    
+    // Helper functions
+    function isAdmin() {
+      return request.auth.token.admin == true;
+    }
+    
+    function isValidImageFile() {
+      return request.resource.size < 5 * 1024 * 1024 // 5MB max
+        && request.resource.contentType.matches('image/.*');
+    }
+    
+    function isValidDocumentFile() {
+      return request.resource.size < 10 * 1024 * 1024 // 10MB max
+        && (request.resource.contentType.matches('application/pdf') ||
+            request.resource.contentType.matches('application/msword') ||
+            request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.wordprocessingml.document'));
+    }
+  }
+}

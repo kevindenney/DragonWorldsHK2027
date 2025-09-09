@@ -1,20 +1,16 @@
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { AppProviders, AppNavigationContainer, setupNotifications } from './src';
 
 export default function App() {
+  useEffect(() => {
+    setupNotifications();
+  }, []);
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
+    <AppProviders>
+      <AppNavigationContainer />
       <StatusBar style="auto" />
-    </View>
+    </AppProviders>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

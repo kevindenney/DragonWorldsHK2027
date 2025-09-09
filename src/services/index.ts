@@ -1,0 +1,194 @@
+// Services Index - Dragon World Championships App
+// Centralized export of all application services
+
+// Core services
+export { weatherAPI } from './weatherAPI';
+export type {
+  PredictWindResponse,
+  PredictWindData,
+  WaveData,
+  WeatherData,
+  TideData,
+  NOAAResponse,
+  HKObservatoryResponse,
+  WeatherAPIError,
+  WeatherCache
+} from './weatherAPI';
+
+export { subscriptionService } from './subscriptionService';
+export type {
+  SubscriptionTier,
+  SubscriptionFeature,
+  SubscriptionStatus,
+  ParticipantVerification,
+  PurchaseRequest,
+  VerificationResult,
+  SubscriptionMetrics
+} from './subscriptionService';
+
+export { weatherManager } from './weatherManager';
+export type {
+  ProcessedWeatherData,
+  WeatherAlert,
+  AlertCondition,
+  WeatherUpdateOptions
+} from './weatherManager';
+
+export { notificationService } from './notificationService';
+export type {
+  NotificationPreferences,
+  WeatherAlert as NotificationWeatherAlert,
+  RaceNotification,
+  SubscriptionNotification,
+  NotificationSchedule
+} from './notificationService';
+
+export { errorHandler } from './errorHandler';
+export type {
+  AppError,
+  NetworkStatus,
+  OfflineAction,
+  RetryConfig
+} from './errorHandler';
+
+// Error handling utilities
+export {
+  handleAPIError,
+  handleWeatherAPIError,
+  handleSubscriptionError,
+  handleStorageError
+} from './errorHandler';
+
+// Service initialization helper
+export const initializeServices = async () => {
+  try {
+    console.log('Initializing application services...');
+    
+    // Initialize error handler first
+    await errorHandler.initialize();
+    
+    // Initialize notification service
+    const notificationInitialized = await notificationService.initialize();
+    if (!notificationInitialized) {
+      console.warn('Notification service initialization failed');
+    }
+    
+    // Weather manager will auto-initialize when first used
+    console.log('Services initialization completed');
+    
+    return {
+      errorHandler: true,
+      notifications: notificationInitialized,
+      weather: true,
+      subscription: true
+    };
+    
+  } catch (error) {
+    console.error('Failed to initialize services:', error);
+    errorHandler.logError({
+      type: 'general',
+      severity: 'critical',
+      message: `Service initialization failed: ${(error as Error).message}`,
+      source: 'service_initialization',
+      retryable: false,
+      userFacing: true
+    });
+    
+    throw error;
+  }
+};
+
+// Service health check
+export const checkServiceHealth = async () => {
+  const health = {
+    network: errorHandler.isOnline(),
+    weatherAPI: false,
+    subscription: false,
+    notifications: false,
+    errors: errorHandler.getRecentErrors(1).length
+  };
+  
+  // Test weather API connectivity
+  try {
+    await weatherAPI.getHKObservatoryData();
+    health.weatherAPI = true;
+  } catch (error) {
+    console.warn('Weather API health check failed:', error);
+  }
+  
+  // Test subscription service
+  try {
+    await subscriptionService.getSubscriptionStatus();
+    health.subscription = true;
+  } catch (error) {
+    console.warn('Subscription service health check failed:', error);
+  }
+  
+  // Test notification service
+  try {
+    const token = notificationService.getPushToken();
+    health.notifications = token !== null;
+  } catch (error) {
+    console.warn('Notification service health check failed:', error);
+  }
+  
+  return health;
+};
+
+// Service sync helper for background refresh
+export const syncAllServices = async () => {
+  try {
+    console.log('Starting service synchronization...');
+    
+    // Sync weather data
+    await weatherManager.updateWeatherData();
+    
+    // Monitor subscription status
+    await notificationService.monitorSubscriptionStatus();
+    
+    // Process any offline actions
+    // (errorHandler will automatically handle this when network becomes available)
+    
+    console.log('Service synchronization completed');
+    
+  } catch (error) {
+    console.error('Service synchronization failed:', error);
+    errorHandler.logError({
+      type: 'general',
+      severity: 'medium',
+      message: `Service sync failed: ${(error as Error).message}`,
+      source: 'service_sync',
+      retryable: true
+    });
+  }
+};
+
+// Emergency service reset (for development/testing)
+export const resetAllServices = () => {
+  try {
+    weatherAPI.clearCache();
+    subscriptionService.clearCache();
+    errorHandler.clearErrorLog();
+    errorHandler.clearOfflineActions();
+    notificationService.clearAllScheduledNotifications();
+    
+    console.log('All services reset successfully');
+    
+  } catch (error) {
+    console.error('Failed to reset services:', error);
+  }
+};
+
+// Service statistics for debugging
+export const getServiceStats = () => {
+  return {
+    weather: {
+      cache: weatherAPI.getCacheStatus()
+    },
+    subscription: {
+      metrics: subscriptionService.getMetrics()
+    },
+    errors: errorHandler.getStats(),
+    network: errorHandler.getNetworkStatus()
+  };
+};

@@ -1,29 +1,171 @@
 {
   "expo": {
-    "name": "DragonWorldsHK2027",
-    "slug": "DragonWorldsHK2027",
+    "name": "Dragon Worlds HK 2027",
+    "slug": "dragon-worlds-hk-2027",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "scheme": "dragonworlds",
+    "description": "Official app for the Dragon World Championships 2027 in Hong Kong. Get real-time weather data, race schedules, results, and connect with fellow sailors.",
+    "keywords": ["sailing", "dragon class", "regatta", "weather", "racing", "hong kong", "yachting"],
+    "primaryColor": "#0066CC",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0066CC"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dragonworlds.hk2027",
+      "buildNumber": "1",
+      "requireFullScreen": false,
+      "userInterfaceStyle": "light",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to provide accurate local weather conditions and nearby sailing venues.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app uses your location to provide accurate local weather conditions and nearby sailing venues.",
+        "NSCameraUsageDescription": "This app uses the camera to allow you to share photos of racing moments and connect with other sailors.",
+        "NSPhotoLibraryUsageDescription": "This app accesses your photo library to let you share sailing photos and memories.",
+        "NSCalendarsUsageDescription": "This app can add race events to your calendar to help you stay organized.",
+        "NSRemindersUsageDescription": "This app can create reminders for important race events and weather conditions.",
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLName": "dragonworlds-deep-linking",
+            "CFBundleURLSchemes": ["dragonworlds"]
+          }
+        ],
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": ["background-fetch", "background-processing"],
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false,
+          "NSExceptionDomains": {
+            "api.dragonworlds.com": {
+              "NSExceptionAllowsInsecureHTTPLoads": false,
+              "NSExceptionMinimumTLSVersion": "TLSv1.2"
+            }
+          }
+        }
+      },
+      "associatedDomains": ["applinks:dragonworlds.com"],
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.dragonworlds.hk2027",
+      "versionCode": 1,
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundImage": "./assets/adaptive-background.png",
+        "backgroundColor": "#0066CC"
       },
-      "edgeToEdgeEnabled": true
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_NETWORK_STATE",
+        "INTERNET",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "WRITE_CALENDAR",
+        "READ_CALENDAR"
+      ],
+      "edgeToEdgeEnabled": true,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "dragonworlds.com"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/favicon.png",
+      "themeColor": "#0066CC",
+      "backgroundColor": "#ffffff",
+      "startUrl": ".",
+      "display": "standalone",
+      "orientation": "portrait"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "This app uses your location to provide accurate local weather conditions and nearby sailing venues."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "This app uses the camera to allow you to share photos of racing moments and connect with other sailors."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "This app accesses your photo library to let you share sailing photos and memories.",
+          "savePhotosPermission": "This app saves photos you take to your photo library.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#0066CC",
+          "defaultChannel": "default"
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "This app can add race events to your calendar to help you stay organized."
+        }
+      ],
+      [
+        "expo-linking",
+        {
+          "scheme": "dragonworlds"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0066CC",
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "extra": {
+      "eas": {
+        "projectId": "dragon-worlds-hk-2027"
+      },
+      "apiUrl": "https://api.dragonworlds.com",
+      "weatherApiUrl": "https://weather-api.dragonworlds.com",
+      "analyticsEnabled": true,
+      "sentryDsn": "https://your-sentry-dsn@sentry.io/project-id",
+      "enableDeveloperMenu": false
+    },
+    "owner": "dragonworlds",
+    "privacy": "public",
+    "githubUrl": "https://github.com/dragonworlds/hk2027-app"
   }
 }

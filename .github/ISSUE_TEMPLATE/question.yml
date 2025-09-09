@@ -1,0 +1,78 @@
+name: ❓ Question or Support
+description: Ask a question about the Dragon Worlds HK 2027 app
+title: "[Question]: "
+labels: ["question", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question about using the app or need support? We're here to help!
+        
+        **Note**: For general discussions, consider using [GitHub Discussions](../../discussions) instead.
+
+  - type: dropdown
+    id: question-type
+    attributes:
+      label: Question Type
+      description: What type of question is this?
+      options:
+        - Setup and installation
+        - App usage and features
+        - Sailing functionality
+        - Technical integration
+        - Account and data
+        - Performance issues
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: "Please describe your question in detail..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: |
+        Provide any additional context that might help us answer your question:
+        - What you've already tried
+        - Your sailing experience level
+        - Specific sailing conditions or scenarios
+        - Screenshots (if applicable)
+      placeholder: "Any additional context that might help..."
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform (if applicable)
+      description: Which platform(s) is your question related to?
+      multiple: true
+      options:
+        - iOS
+        - Android
+        - Web
+        - All platforms
+        - Not platform-specific
+
+  - type: input
+    id: app-version
+    attributes:
+      label: App Version (if applicable)
+      description: If your question is about app functionality, what version are you using?
+      placeholder: "1.0.0 (build 123)"
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues and discussions
+          required: true
+        - label: This is a question, not a bug report or feature request
+          required: true

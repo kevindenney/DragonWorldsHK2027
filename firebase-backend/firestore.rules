@@ -1,0 +1,83 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read and write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow users to create their own profile
+      allow create: if request.auth != null && request.auth.uid == userId
+        && isValidUserData(request.resource.data);
+      
+      // Allow users to update their own profile
+      allow update: if request.auth != null && request.auth.uid == userId
+        && isValidUserData(request.resource.data)
+        && !('role' in request.resource.data) || request.resource.data.role == resource.data.role;
+    }
+    
+    // Admin users can read all users (with admin role)
+    match /users/{userId} {
+      allow read: if request.auth != null && isAdmin();
+    }
+    
+    // User sessions - users can manage their own sessions
+    match /sessions/{sessionId} {
+      allow read, write, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // User profiles - public read, owner write
+    match /profiles/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // User activities - owner read/write
+    match /activities/{activityId} {
+      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Admin collection - only admins can access
+    match /admin/{document=**} {
+      allow read, write: if request.auth != null && isAdmin();
+    }
+    
+    // System configuration - read only for authenticated users
+    match /config/{document} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
+    }
+    
+    // Helper functions
+    function isAdmin() {
+      return request.auth.token.admin == true;
+    }
+    
+    function isValidUserData(data) {
+      return data.keys().hasAll(['email', 'createdAt']) &&
+             data.email is string &&
+             data.email.matches('.*@.*') &&
+             data.createdAt is timestamp;
+    }
+    
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
+    function isAuthenticatedUser() {
+      return request.auth != null;
+    }
+    
+    function hasRole(role) {
+      return request.auth != null && 
+             request.auth.token.role == role;
+    }
+    
+    function hasAnyRole(roles) {
+      return request.auth != null && 
+             request.auth.token.role in roles;
+    }
+  }
+}

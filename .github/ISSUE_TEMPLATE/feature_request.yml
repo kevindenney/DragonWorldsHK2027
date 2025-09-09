@@ -1,0 +1,135 @@
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement for the Dragon Worlds HK 2027 app
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Your ideas help make the app better for the entire sailing community.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem would this feature solve? What sailing need does it address?
+      placeholder: "As a sailor, I'm frustrated when... because it impacts my racing performance by..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe your ideal solution to this problem
+      placeholder: "I would like to see... which would allow sailors to..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: user-type
+    attributes:
+      label: Primary User Type
+      description: Who would benefit most from this feature?
+      options:
+        - Competitive racers
+        - Recreational sailors
+        - Race organizers
+        - Coaches/instructors
+        - All sailors
+        - App administrators
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority Level
+      description: How important is this feature to the sailing community?
+      options:
+        - Low - Nice to have
+        - Medium - Would improve user experience
+        - High - Addresses common user need
+        - Critical - Essential for competitive sailing
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Target Platform(s)
+      description: Which platform(s) should this feature support?
+      multiple: true
+      options:
+        - iOS
+        - Android
+        - Web
+        - All platforms
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Have you considered any alternative solutions or workarounds?
+      placeholder: "Alternatively, this could be addressed by... or users currently work around this by..."
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups or Examples
+      description: |
+        If you have mockups, sketches, or examples from other apps, please describe them or attach images.
+        You can drag and drop images into this text area.
+      placeholder: "Describe or attach any visual examples..."
+
+  - type: textarea
+    id: sailing-context
+    attributes:
+      label: Sailing Context
+      description: |
+        Provide sailing-specific context that would help developers understand the feature:
+        - When during sailing would this be used?
+        - What sailing conditions make this important?
+        - How does this relate to Dragon class racing rules?
+      placeholder: "This feature would be most useful when... because Dragon sailors typically..."
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Success Criteria
+      description: How would you know this feature is working well?
+      placeholder: |
+        This feature would be successful if:
+        - Users can easily...
+        - The data is accurate within...
+        - It works reliably in conditions such as...
+
+  - type: checkboxes
+    id: feature-scope
+    attributes:
+      label: Feature Scope
+      description: Select all that apply to this feature request
+      options:
+        - label: Weather and environmental data
+        - label: Race management and scheduling
+        - label: Navigation and course planning
+        - label: Social features and community
+        - label: Performance tracking and analysis
+        - label: Safety and emergency features
+        - label: App settings and customization
+        - label: Accessibility improvements
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues to ensure this feature hasn't been requested already
+          required: true
+        - label: This feature would benefit multiple users, not just my specific use case
+          required: true
+        - label: I have provided clear context about the sailing use case
+          required: true

@@ -1,0 +1,122 @@
+{
+  "cli": {
+    "version": ">= 12.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "resourceClass": "medium",
+        "gradleCommand": ":app:assembleDebug"
+      },
+      "channel": "development",
+      "env": {
+        "NODE_ENV": "development",
+        "API_URL": "https://dev-api.dragonworlds.com",
+        "WEATHER_API_URL": "https://dev-weather-api.dragonworlds.com",
+        "ANALYTICS_ENABLED": "true",
+        "SENTRY_ENABLED": "false"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium",
+        "simulator": false,
+        "buildConfiguration": "Release"
+      },
+      "android": {
+        "resourceClass": "medium",
+        "gradleCommand": ":app:assembleRelease"
+      },
+      "channel": "preview",
+      "env": {
+        "NODE_ENV": "staging",
+        "API_URL": "https://staging-api.dragonworlds.com",
+        "WEATHER_API_URL": "https://staging-weather-api.dragonworlds.com",
+        "ANALYTICS_ENABLED": "true",
+        "SENTRY_ENABLED": "true"
+      }
+    },
+    "production": {
+      "ios": {
+        "resourceClass": "m-medium",
+        "buildConfiguration": "Release",
+        "simulator": false,
+        "autoIncrement": "buildNumber"
+      },
+      "android": {
+        "resourceClass": "large",
+        "buildType": "apk",
+        "gradleCommand": ":app:bundleRelease"
+      },
+      "channel": "production",
+      "env": {
+        "NODE_ENV": "production",
+        "API_URL": "https://api.dragonworlds.com",
+        "WEATHER_API_URL": "https://weather-api.dragonworlds.com",
+        "ANALYTICS_ENABLED": "true",
+        "SENTRY_ENABLED": "true"
+      }
+    },
+    "production-ios": {
+      "extends": "production",
+      "ios": {
+        "resourceClass": "m-large",
+        "buildConfiguration": "Release",
+        "simulator": false,
+        "autoIncrement": "buildNumber",
+        "enterpriseProvisioning": false
+      }
+    },
+    "production-android": {
+      "extends": "production",
+      "android": {
+        "resourceClass": "large",
+        "buildType": "app-bundle",
+        "gradleCommand": ":app:bundleRelease"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "your-apple-id@dragonworlds.com",
+        "ascAppId": "123456789",
+        "appleTeamId": "TEAM123456"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "production",
+        "releaseStatus": "completed"
+      }
+    },
+    "preview": {
+      "ios": {
+        "appleId": "your-apple-id@dragonworlds.com",
+        "ascAppId": "123456789",
+        "appleTeamId": "TEAM123456"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
+    }
+  },
+  "updates": {
+    "development": {
+      "channel": "development"
+    },
+    "preview": {
+      "channel": "preview"
+    },
+    "production": {
+      "channel": "production"
+    }
+  }
+}
