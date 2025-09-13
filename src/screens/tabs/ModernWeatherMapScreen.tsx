@@ -56,7 +56,7 @@ import {
   useDailyForecast,
   useSelectedLocation,
 } from '../../stores/weatherStore';
-import type { WeatherScreenProps } from '../../types/navigation';
+import type { MoreScreenProps } from '../../types/navigation';
 import type { LocationData } from '../../stores/weatherStore';
 
 // Import new modern components
@@ -146,7 +146,7 @@ interface WeatherMarker {
   waveHeight: number;
 }
 
-export function ModernWeatherMapScreen({ navigation }: WeatherScreenProps) {
+export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
   const mapRef = useRef<MapView>(null);
   const bottomSheetOffset = useSharedValue(SCREEN_HEIGHT * 0.4);
   const [refreshing, setRefreshing] = useState(false);
@@ -978,9 +978,10 @@ export function ModernWeatherMapScreen({ navigation }: WeatherScreenProps) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Modern Weather Top Bar */}
-      <ModernWeatherTopBar
+    <View style={styles.container}>
+      {/* Modern Weather Top Bar - Positioned absolutely over the map */}
+      <View style={styles.topBarContainer}>
+        <ModernWeatherTopBar
         selectedLocation={selectedLocation}
         selectedDate={selectedDate}
         selectedTime={selectedTime}
@@ -998,9 +999,10 @@ export function ModernWeatherMapScreen({ navigation }: WeatherScreenProps) {
         }}
         isLoading={isLoadingLocationData}
         error={locationDataError}
-      />
+        />
+      </View>
 
-      {/* Map View */}
+      {/* Map View - Full Screen */}
       <View style={styles.mapContainer}>
         {/* Map View with OpenSeaMap */}
         <MapView
@@ -1322,17 +1324,30 @@ export function ModernWeatherMapScreen({ navigation }: WeatherScreenProps) {
           tideHeight: snapshot?.tideHeight ?? currentMarine?.tideHeight ?? 1.2,
         }}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: '#000',
+  },
+  topBarContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    backgroundColor: 'transparent',
+    paddingTop: Platform.OS === 'ios' ? 44 : 0, // Account for status bar
   },
   mapContainer: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: '#000',
   },
   map: {
