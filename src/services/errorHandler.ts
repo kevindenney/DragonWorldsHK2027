@@ -129,6 +129,11 @@ export class ErrorHandler {
   private handleError(error: AppError): void {
     console.error(`[${error.severity.toUpperCase()}] ${error.type}: ${error.message}`, error);
 
+    // Show user-facing errors as notifications
+    if (error.userFacing) {
+      this.showErrorNotification(error);
+    }
+
     // Critical errors require immediate attention
     if (error.severity === 'critical' && error.userFacing) {
       this.showCriticalErrorAlert(error);
@@ -142,6 +147,44 @@ export class ErrorHandler {
     // API errors with retry logic
     if (error.type === 'api' && error.retryable) {
       this.scheduleRetry(error);
+    }
+  }
+
+  private showErrorNotification(error: AppError): void {
+    // For weather errors, show a local notification
+    if (error.type === 'weather') {
+      import('../services/notificationService').then(({ notificationService }) => {
+        notificationService.sendLocalNotification(
+          this.getErrorTitle(error),
+          error.message,
+          { 
+            type: 'weather_error',
+            errorId: error.id,
+            retryable: error.retryable 
+          }
+        );
+      }).catch(err => {
+        console.warn('Failed to show weather error notification:', err);
+      });
+    }
+  }
+
+  private getErrorTitle(error: AppError): string {
+    switch (error.type) {
+      case 'weather':
+        return 'Weather Data Error';
+      case 'api':
+        return 'Connection Error';
+      case 'network':
+        return 'Network Error';
+      case 'subscription':
+        return 'Subscription Error';
+      case 'storage':
+        return 'Storage Error';
+      case 'permission':
+        return 'Permission Error';
+      default:
+        return 'Error';
     }
   }
 

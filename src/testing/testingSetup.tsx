@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Test data factories
-export class MockDataFactory {
+class MockDataFactory {
   // Weather data mocks
   static createMockWeatherData(overrides = {}) {
     return {
@@ -209,7 +209,7 @@ export const renderWithProviders = (
 };
 
 // Zustand store testing utilities
-export class StoreTestUtils {
+class StoreTestUtils {
   static async waitForStoreUpdate<T>(
     getStore: () => T,
     predicate: (state: T) => boolean,
@@ -243,7 +243,7 @@ export class StoreTestUtils {
 }
 
 // API mocking utilities
-export class APITestUtils {
+class APITestUtils {
   static mockFetch(response: any, options: { status?: number; delay?: number } = {}) {
     const { status = 200, delay = 0 } = options;
     
@@ -275,7 +275,7 @@ export class APITestUtils {
 }
 
 // Accessibility testing utilities
-export class AccessibilityTestUtils {
+class AccessibilityTestUtils {
   static findByAccessibilityLabel(getByLabelText: any, label: string) {
     return getByLabelText(label);
   }
@@ -300,7 +300,7 @@ export class AccessibilityTestUtils {
 }
 
 // Performance testing utilities
-export class PerformanceTestUtils {
+class PerformanceTestUtils {
   static measureRenderTime<T>(renderFn: () => T): { result: T; time: number } {
     const startTime = performance.now();
     const result = renderFn();
@@ -325,7 +325,7 @@ export class PerformanceTestUtils {
 }
 
 // Navigation testing utilities
-export class NavigationTestUtils {
+class NavigationTestUtils {
   static createMockNavigation(overrides = {}) {
     return {
       navigate: jest.fn(),

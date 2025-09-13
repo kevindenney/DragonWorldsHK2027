@@ -101,9 +101,9 @@ export interface WhatsAppServiceConfig {
 
 class WhatsAppService {
   private config: WhatsAppServiceConfig;
-  private userStore: typeof UserStore;
+  private userStore?: typeof UserStore;
 
-  constructor(userStore: typeof UserStore) {
+  constructor(userStore?: typeof UserStore) {
     this.userStore = userStore;
     this.config = {
       baseUrl: process.env.EXPO_PUBLIC_WHATSAPP_API_URL || 'https://graph.facebook.com/v18.0',
@@ -119,7 +119,7 @@ class WhatsAppService {
    */
   async getAvailableGroups(): Promise<WhatsAppGroup[]> {
     try {
-      const user = this.userStore.getState();
+      const user = this.userStore?.getState();
       
       // Demo groups for Dragon Worlds HK 2027
       const allGroups: WhatsAppGroup[] = [
@@ -322,27 +322,27 @@ class WhatsAppService {
     }
 
     // VIP-only groups require VIP status
-    if (group.accessLevel === 'vip_only' && user.userType !== 'vip') {
+    if (group.accessLevel === 'vip_only' && user?.userType !== 'vip') {
       return false;
     }
 
     // Check sponsor-specific requirements
     if (group.sponsor === 'HSBC' && group.verificationRequired.hsbc) {
-      return user.profile?.hsbc?.isPremier === true;
+      return user?.profile?.hsbc?.isPremier === true;
     }
 
     if (group.sponsor === 'Sino_Group' && group.verificationRequired.sino) {
-      return user.profile?.sino?.isGuest === true;
+      return user?.profile?.sino?.isGuest === true;
     }
 
     // Check event registration requirement
-    if (group.verificationRequired.eventRegistration && user.userType !== 'participant') {
+    if (group.verificationRequired.eventRegistration && user?.userType !== 'participant') {
       return false;
     }
 
     // Check sailing credentials requirement
     if (group.verificationRequired.sailingCredentials) {
-      return user.profile?.sailing?.hasCredentials === true || user.userType === 'participant';
+      return user?.profile?.sailing?.hasCredentials === true || user?.userType === 'participant';
     }
 
     return true;
@@ -353,21 +353,21 @@ class WhatsAppService {
    */
   async requestGroupAccess(groupId: string, message?: string): Promise<GroupAccessRequest> {
     try {
-      const user = this.userStore.getState();
+      const user = this.userStore?.getState();
       
       const request: GroupAccessRequest = {
         id: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         groupId,
-        userId: user.id || 'demo_user',
+        userId: user?.id || 'demo_user',
         requestType: 'join_request',
         status: 'pending',
         requestedAt: new Date().toISOString(),
         message,
         verificationData: {
-          sailingCredentials: user.profile?.sailing,
-          hsbcAccount: user.profile?.hsbc,
-          sinoGuestStatus: user.profile?.sino,
-          eventRegistration: user.userType === 'participant'
+          sailingCredentials: user?.profile?.sailing,
+          hsbcAccount: user?.profile?.hsbc,
+          sinoGuestStatus: user?.profile?.sino,
+          eventRegistration: user?.userType === 'participant'
         }
       };
 
@@ -386,11 +386,11 @@ class WhatsAppService {
    */
   async joinGroup(groupId: string): Promise<UserGroupMembership> {
     try {
-      const user = this.userStore.getState();
+      const user = this.userStore?.getState();
       
       const membership: UserGroupMembership = {
         groupId,
-        userId: user.id || 'demo_user',
+        userId: user?.id || 'demo_user',
         status: 'member',
         joinedAt: new Date().toISOString(),
         role: 'member',
@@ -416,15 +416,15 @@ class WhatsAppService {
    */
   async getUserGroups(): Promise<UserGroupMembership[]> {
     try {
-      const user = this.userStore.getState();
+      const user = this.userStore?.getState();
       
       // Demo memberships based on user type
       const memberships: UserGroupMembership[] = [];
       
-      if (user.userType === 'participant') {
+      if (user?.userType === 'participant') {
         memberships.push({
           groupId: 'dragon_worlds_participants',
-          userId: user.id || 'demo_user',
+          userId: user?.id || 'demo_user',
           status: 'member',
           joinedAt: '2024-11-01T10:00:00Z',
           role: 'member',
@@ -436,10 +436,10 @@ class WhatsAppService {
         });
       }
       
-      if (user.userType === 'vip' && user.profile?.hsbc?.isPremier) {
+      if (user?.userType === 'vip' && user?.profile?.hsbc?.isPremier) {
         memberships.push({
           groupId: 'hsbc_premier_vip',
-          userId: user.id || 'demo_user',
+          userId: user?.id || 'demo_user',
           status: 'member',
           joinedAt: '2024-11-01T12:00:00Z',
           role: 'member',
@@ -454,7 +454,7 @@ class WhatsAppService {
       // Everyone can join spectator groups
       memberships.push({
         groupId: 'dragon_worlds_spectators',
-        userId: user.id || 'demo_user',
+        userId: user?.id || 'demo_user',
         status: 'member',
         joinedAt: '2024-11-02T08:00:00Z',
         role: 'member',
@@ -539,14 +539,14 @@ class WhatsAppService {
    */
   async postComment(groupId: string, message: string, type: 'text' | 'photo' = 'text'): Promise<RaceComment> {
     try {
-      const user = this.userStore.getState();
+      const user = this.userStore?.getState();
       
       const comment: RaceComment = {
         id: `comment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         groupId,
-        userId: user.id || 'demo_user',
-        username: user.profile?.name || 'Anonymous',
-        userType: user.userType || 'spectator',
+        userId: user?.id || 'demo_user',
+        username: user?.profile?.name || 'Anonymous',
+        userType: user?.userType || 'spectator',
         message,
         timestamp: new Date().toISOString(),
         type,
@@ -582,10 +582,10 @@ class WhatsAppService {
    */
   async leaveGroup(groupId: string): Promise<void> {
     try {
-      const user = this.userStore.getState();
+      const user = this.userStore?.getState();
       
       // In a real implementation, this would use WhatsApp Business API
-      console.log(`User ${user.id} left group ${groupId}`);
+      console.log(`User ${user?.id} left group ${groupId}`);
     } catch (error) {
       console.error('Error leaving group:', error);
       throw new Error('Failed to leave group');

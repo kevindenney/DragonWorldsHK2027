@@ -321,7 +321,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return await authService.getUserToken(forceRefresh);
     } catch (error) {
       const authError = error as AuthError;
-      setError(authError);
+      setError(authError.message);
       return null;
     }
   };

@@ -264,7 +264,7 @@ export const EnhancedLiveScreen: React.FC<LiveScreenProps> = ({ navigation }) =>
           />
         </View>
         
-        <IOSText style={styles.weatherAttribution}>PredictWind</IOSText>
+        <IOSText style={styles.weatherAttribution}>Marine Weather</IOSText>
       </IOSCard>
     </IOSSection>
   );
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
+    borderBottomColor: colors.borderLight,
   },
   headerTitle: {
     fontSize: 24,
@@ -482,12 +482,12 @@ const styles = StyleSheet.create({
   headerLogo: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.borderLight,
     borderRadius: 4,
   },
   logoText: {
     fontSize: 12,
-    color: colors.gray[600],
+    color: colors.textSecondary,
   },
   scrollView: {
     flex: 1,
@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
   },
   contextSubtitle: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.textSecondary,
   },
   raceStatusCard: {
     padding: 16,
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
   },
   raceDetail: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   raceButton: {
@@ -566,11 +566,11 @@ const styles = StyleSheet.create({
   },
   alertTime: {
     fontSize: 12,
-    color: colors.gray[500],
+    color: colors.textMuted,
   },
   alertMessage: {
     fontSize: 14,
-    color: colors.gray[700],
+    color: colors.text,
     marginBottom: 12,
   },
   alertButton: {
@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
   },
   weatherDetail: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   weatherFooter: {
@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
   },
   weatherAttribution: {
     fontSize: 11,
-    color: colors.gray[500],
+    color: colors.textMuted,
     textAlign: 'right',
     marginTop: 8,
   },
@@ -623,12 +623,12 @@ const styles = StyleSheet.create({
   },
   eventTime: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   eventLocation: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   eventSponsor: {
@@ -666,7 +666,7 @@ const styles = StyleSheet.create({
   },
   standingChange: {
     fontSize: 12,
-    color: colors.gray[500],
+    color: colors.textMuted,
     marginRight: 8,
   },
   standingPoints: {

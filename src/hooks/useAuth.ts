@@ -1,25 +1,24 @@
-import { useAuth as useAuthContext } from '../contexts/AuthContext';
-import { useAuthStore } from '../stores/authStore';
-import { User, AuthProvider, LoginCredentials, RegisterCredentials, UserRole } from '../types/auth';
+import { useAuth as useAuthContext } from '../auth/AuthProvider';
+import { User, LoginCredentials, RegisterCredentials, AuthProviderType } from '../auth/authTypes';
 
 /**
  * Enhanced authentication hook with additional utilities
  */
 export const useAuth = () => {
   const authContext = useAuthContext();
-  const authStore = useAuthStore();
+  // Removed authStore to eliminate circular dependency
 
   /**
    * Check if user has specific role
    */
-  const hasRole = (role: UserRole): boolean => {
+  const hasRole = (role: string): boolean => {
     return authContext.user?.role === role;
   };
 
   /**
    * Check if user has any of the specified roles
    */
-  const hasAnyRole = (roles: UserRole[]): boolean => {
+  const hasAnyRole = (roles: string[]): boolean => {
     return authContext.user ? roles.includes(authContext.user.role) : false;
   };
 
@@ -27,21 +26,21 @@ export const useAuth = () => {
    * Check if user is admin
    */
   const isAdmin = (): boolean => {
-    return hasRole(UserRole.ADMIN);
+    return hasRole('admin');
   };
 
   /**
    * Check if user is organizer
    */
   const isOrganizer = (): boolean => {
-    return hasRole(UserRole.ORGANIZER);
+    return hasRole('organizer');
   };
 
   /**
    * Check if user is participant
    */
   const isParticipant = (): boolean => {
-    return hasRole(UserRole.PARTICIPANT);
+    return hasRole('participant');
   };
 
   /**
@@ -106,7 +105,7 @@ export const useAuth = () => {
   /**
    * Login with OAuth provider
    */
-  const loginWithProvider = async (provider: AuthProvider): Promise<void> => {
+  const loginWithProvider = async (provider: AuthProviderType): Promise<void> => {
     return authContext.loginWithProvider(provider);
   };
 
@@ -132,10 +131,10 @@ export const useAuth = () => {
   };
 
   /**
-   * Resend email verification
+   * Resend email verification - TODO: Implement in AuthProvider
    */
   const resendEmailVerification = async (): Promise<void> => {
-    return authContext.resendEmailVerification();
+    throw new Error('resendEmailVerification not implemented yet');
   };
 
   /**

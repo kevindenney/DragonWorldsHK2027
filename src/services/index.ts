@@ -1,6 +1,12 @@
 // Services Index - Dragon World Championships App
 // Centralized export of all application services
 
+// Database and authentication services
+export * from './database';
+export * from './auth';
+export { default as userProfileService } from './userProfileService';
+export * from './userProfileService';
+
 // Core services
 export { weatherAPI } from './weatherAPI';
 export type {

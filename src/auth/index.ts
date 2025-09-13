@@ -42,7 +42,6 @@ export {
 
 // Types
 export type {
-  AuthProvider,
   UserRole,
   UserStatus,
   User,
@@ -54,3 +53,5 @@ export type {
   AuthContextType,
   ValidationResult
 } from '../types/auth';
+
+export { AuthProviderType } from '../types/auth';

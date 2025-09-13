@@ -1,4 +1,4 @@
-import { User, UserRole, AuthProvider, UserStatus } from '../../types/auth';
+import { User, UserRole, AuthProviderTypeType, UserStatus } from '../../types/auth';
 
 /**
  * Authentication utilities and helpers
@@ -185,7 +185,7 @@ export const isEmailVerified = (user: User | null): boolean => {
 /**
  * Get user's primary authentication provider
  */
-export const getPrimaryProvider = (user: User | null): AuthProvider | null => {
+export const getPrimaryProvider = (user: User | null): AuthProviderType | null => {
   if (!user || !user.linkedProviders.length) return null;
   
   const primaryProvider = user.linkedProviders.find(p => p.isPrimary);
@@ -195,11 +195,11 @@ export const getPrimaryProvider = (user: User | null): AuthProvider | null => {
 /**
  * Check if user can unlink a provider
  */
-export const canUnlinkProvider = (user: User | null, provider: AuthProvider): boolean => {
+export const canUnlinkProvider = (user: User | null, provider: AuthProviderType): boolean => {
   if (!user) return false;
   
   // Must have password or multiple providers
-  const hasPassword = user.providers.includes(AuthProvider.EMAIL);
+  const hasPassword = user.providers.includes(AuthProviderType.EMAIL);
   const otherProviders = user.linkedProviders.filter(p => p.provider !== provider);
   
   return hasPassword || otherProviders.length > 0;
@@ -250,13 +250,13 @@ export const getDisplayName = (user: User | null): string => {
 /**
  * Get provider display name
  */
-export const getProviderDisplayName = (provider: AuthProvider): string => {
+export const getProviderDisplayName = (provider: AuthProviderType): string => {
   const providerNames = {
-    [AuthProvider.EMAIL]: 'Email',
-    [AuthProvider.GOOGLE]: 'Google',
-    [AuthProvider.APPLE]: 'Apple',
-    [AuthProvider.FACEBOOK]: 'Facebook',
-    [AuthProvider.GITHUB]: 'GitHub',
+    [AuthProviderType.EMAIL]: 'Email',
+    [AuthProviderType.GOOGLE]: 'Google',
+    [AuthProviderType.APPLE]: 'Apple',
+    [AuthProviderType.FACEBOOK]: 'Facebook',
+    [AuthProviderType.GITHUB]: 'GitHub',
   };
   
   return providerNames[provider] || provider;
@@ -265,13 +265,13 @@ export const getProviderDisplayName = (provider: AuthProvider): string => {
 /**
  * Get provider icon name (for use with icon libraries)
  */
-export const getProviderIcon = (provider: AuthProvider): string => {
+export const getProviderIcon = (provider: AuthProviderType): string => {
   const providerIcons = {
-    [AuthProvider.EMAIL]: 'mail',
-    [AuthProvider.GOOGLE]: 'google',
-    [AuthProvider.APPLE]: 'apple',
-    [AuthProvider.FACEBOOK]: 'facebook',
-    [AuthProvider.GITHUB]: 'github',
+    [AuthProviderType.EMAIL]: 'mail',
+    [AuthProviderType.GOOGLE]: 'google',
+    [AuthProviderType.APPLE]: 'apple',
+    [AuthProviderType.FACEBOOK]: 'facebook',
+    [AuthProviderType.GITHUB]: 'github',
   };
   
   return providerIcons[provider] || 'user';

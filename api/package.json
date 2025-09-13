@@ -1,0 +1,14 @@
+{
+  "name": "dragon-worlds-scraper-api",
+  "version": "1.0.0",
+  "description": "Serverless API for scraping race data from racingrulesofsailing.org",
+  "main": "scrape-race-data.js",
+  "scripts": {
+    "test": "node scrape-race-data.js"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": "18.x"
+  }
+}

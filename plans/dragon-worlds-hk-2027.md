@@ -348,14 +348,63 @@ Building on existing iOS components:
 
 ---
 
-**Living Document Status:** Phase 5 Complete, Moving to Phase 6
-**Last Updated:** September 9, 2025
+## Navigation Simplification Update (September 11, 2025)
+
+Based on user feedback to "extremely simplify the UX/UI" and remove/change the Live tab, implemented core navigation restructuring:
+
+### ✅ COMPLETED: 4-Tab Navigation Structure
+**Problem:** Original 5-tab navigation (Live, Weather, Schedule, Social, Services) was too complex for core racing needs
+**Solution:** Simplified to 4 core tabs focusing on essential user needs
+
+**Phase 1: Navigation Structure**
+- ✅ Updated NavigationContainer.tsx to new 4-tab structure (Race, Weather, Social, Map)
+- ✅ Removed Live tab and created UnifiedRaceScreen combining Schedule + Live functionality
+- ✅ Preserved all Dark Sky weather components functionality
+
+**Phase 2: Content Consolidation**
+- ✅ Merged Schedule and Live screen logic into single UnifiedRaceScreen
+- ✅ Verified Notice Board service integration for racingrulesofsailing.org already working
+- ✅ Maintained real-time race status, championship standings, and event toggles
+
+**Phase 3: Enhanced Map Experience**
+- ✅ Added comprehensive transportation hub with ferry, bus, shuttle services
+- ✅ Enhanced sponsor locations with special offers and discount codes:
+  - HSBC: Dragon Worlds Banking Package (code: DRAGON2027)
+  - Conrad Hong Kong: 20% off accommodation (code: DRAGON20)
+  - Peninsula Hong Kong: 30% off luxury package (code: PENINSULA30)
+  - BMW: 15% off transport services (code: BMW15)
+  - Garmin: Free chart updates + 20% off GPS (code: GARMIN20)
+- ✅ Added transportation logistics with schedules and costs
+
+**Phase 4: UX Simplification**
+- ✅ Minimized splash screen to show only logo (1.2s duration)
+- ✅ Streamlined authentication for minimal friction (guest access enabled)
+- ✅ Reduced development splash timeout to 2 seconds
+
+### Technical Implementation Details
+- **UnifiedRaceScreen.tsx:** Combines live race status, notice board, and race schedule in single screen
+- **Enhanced GarminService:** Added deals and transportation data structures
+- **Simplified SplashScreen:** Removed complex animations, loading states, and footer content
+- **Guest Access Pattern:** Authentication bypass for core functionality while preserving optional auth
+
+### Result
+Achieved user goal of "extremely simplified UX/UI" with 4-tab navigation focusing on core racing needs:
+1. **Race:** Live status + race schedule + notice board
+2. **Weather:** Dark Sky racing-specific weather
+3. **Social:** WhatsApp groups and community features  
+4. **Map:** Venues, sponsors, deals, and transportation
+
+---
+
+**Living Document Status:** Phase 5 Complete + Navigation Simplified, Moving to Phase 6
+**Last Updated:** September 11, 2025
 **Implementation Status:** 
 - ✅ Phase 1 Complete: Enhanced Foundation with Splash, Onboarding, and Context-aware Live Tab
 - ✅ Phase 2 Complete: Professional Weather & Interactive Mapping System
 - ✅ Phase 3 Complete: Social Platform & WhatsApp Group Integration
 - ✅ Phase 4 Complete: Real-time Results & Competition Features
 - ✅ Phase 5 Complete: Sponsor Services Integration (HSBC, Sino, BMW, Garmin)
+- ✅ Navigation Simplification Complete: 4-tab structure with enhanced UX/UI simplification
 - 🔄 Phase 6 Starting: Retention & Monetization Features
 **Next Update Trigger:** After Phase 6 completion or major technical discovery
 **Review Frequency:** After each phase completion or major technical discovery

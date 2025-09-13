@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { weatherManager } from '../services/weatherManager';
+// Note: Import weatherManager dynamically to avoid circular dependency
 import { subscriptionService } from '../services/subscriptionService';
 import { errorHandler, handleWeatherAPIError } from '../services/errorHandler';
+import { WeatherUnits, TemperatureUnit, WindSpeedUnit, PressureUnit, DistanceUnit } from '../components/weather/UnitConverter';
 
 // TypeScript interfaces
 export interface WeatherCondition {
@@ -69,6 +70,62 @@ export interface SubscriptionTier {
 
 export type ParticipantStatus = 'competitor' | 'support' | 'spectator' | 'official' | 'media';
 
+// Location-based forecasting interfaces
+export interface LocationCoordinate {
+  latitude: number;
+  longitude: number;
+}
+
+export interface LocationData {
+  id: string;
+  name: string;
+  coordinate: LocationCoordinate;
+  type: 'marina' | 'race-area' | 'harbor' | 'city' | 'custom';
+  description?: string;
+}
+
+export interface HourlyForecastData {
+  time: string;
+  hour: number;
+  temperature: number;
+  windSpeed: number;
+  windDirection: number;
+  waveHeight: number;
+  tideHeight: number;
+  precipitation: number;
+  conditions: string;
+  humidity: number;
+}
+
+export interface DailyForecastData {
+  id: string;
+  date: string;
+  dayName: string;
+  dayShort: string;
+  high: number;
+  low: number;
+  conditions: string;
+  precipitationChance: number;
+  windSpeed: number;
+  windDirection: number;
+  waveHeight: number;
+  highTideTime: string;
+  lowTideTime: string;
+  tideRange: number;
+  sailingConditions: 'excellent' | 'good' | 'moderate' | 'poor' | 'dangerous';
+  uvIndex: number;
+  humidity: number;
+}
+
+export interface LocationBasedForecast {
+  location: LocationData;
+  currentWeather: WeatherCondition;
+  currentMarine: MarineCondition;
+  hourlyForecast: HourlyForecastData[];
+  dailyForecast: DailyForecastData[];
+  lastUpdate: string;
+}
+
 interface WeatherState {
   // State
   currentConditions: WeatherCondition | null;
@@ -81,12 +138,33 @@ interface WeatherState {
   loading: boolean;
   error: string | null;
   
+  // Location-based forecasting state
+  selectedLocation: LocationData | null;
+  locationForecasts: Map<string, LocationBasedForecast>;
+  recentLocations: LocationData[];
+  favoriteLocations: LocationData[];
+  hourlyForecast: HourlyForecastData[];
+  dailyForecast: DailyForecastData[];
+  isLocationLoading: boolean;
+
+  // Active sources per metric
+  activeSources: {
+    temperature?: { source: string; at: string };
+    wind?: { source: string; at: string };
+    waves?: { source: string; at: string };
+    tide?: { source: string; at: string };
+  };
+  
   // Freemium model state
   dailyQueries: number;
   maxDailyQueries: number;
   premiumUnlocked: boolean;
   trialActive: boolean;
   trialExpiresAt: string | null;
+  
+  // Unit preferences state
+  units: WeatherUnits;
+  selectedDayId: string | null;
 
   // Actions
   updateWeather: (conditions: WeatherCondition, marine: MarineCondition) => void;
@@ -105,6 +183,27 @@ interface WeatherState {
   canAccessFeature: (feature: WeatherFeature) => boolean;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  
+  // Location-based forecasting actions
+  setSelectedLocation: (location: LocationData) => void;
+  fetchWeatherData: (coordinate: LocationCoordinate, options?: { date?: Date; time?: Date }) => Promise<void>;
+  addRecentLocation: (location: LocationData) => void;
+  addFavoriteLocation: (location: LocationData) => void;
+  removeFavoriteLocation: (locationId: string) => void;
+  updateHourlyForecast: (data: HourlyForecastData[]) => void;
+  updateDailyForecast: (data: DailyForecastData[]) => void;
+  getLocationForecast: (locationId: string) => LocationBasedForecast | null;
+  clearLocationCache: () => void;
+  
+  // Unit preferences actions
+  setUnits: (units: WeatherUnits) => void;
+  setTemperatureUnit: (unit: TemperatureUnit) => void;
+  setWindSpeedUnit: (unit: WindSpeedUnit) => void;
+  setPressureUnit: (unit: PressureUnit) => void;
+  setDistanceUnit: (unit: DistanceUnit) => void;
+  
+  // Day selection actions
+  setSelectedDayId: (dayId: string | null) => void;
 }
 
 export type WeatherFeature = 
@@ -116,6 +215,69 @@ export type WeatherFeature =
   | '6hourForecast'
   | '24hourForecast'
   | 'professionalAnalysis';
+
+// Sample data generation functions for development
+const generateSampleHourlyData = (): HourlyForecastData[] => {
+  const data: HourlyForecastData[] = [];
+  const baseTemp = 25;
+  const now = new Date();
+  
+  for (let i = 0; i < 24; i++) {
+    const hour = (now.getHours() + i) % 24;
+    const timeStr = hour === 0 ? '12 AM' : 
+                   hour === 12 ? '12 PM' : 
+                   hour < 12 ? `${hour} AM` : `${hour - 12} PM`;
+    
+    const tempVariation = Math.sin((hour - 6) * Math.PI / 12) * 8;
+    const randomVariation = (Math.random() - 0.5) * 3;
+    
+    data.push({
+      time: timeStr,
+      hour: hour,
+      temperature: Math.round(baseTemp + tempVariation + randomVariation),
+      windSpeed: Math.round(8 + Math.sin(hour * Math.PI / 12) * 4 + Math.random() * 3),
+      windDirection: 180 + Math.sin(hour * Math.PI / 8) * 45,
+      waveHeight: 1.2 + Math.sin(hour * Math.PI / 6) * 0.4 + Math.random() * 0.2,
+      tideHeight: Math.sin(hour * Math.PI / 6.2) * 1.5,
+      precipitation: Math.random() * 30,
+      conditions: i < 8 ? 'Partly Cloudy' : i < 16 ? 'Sunny' : 'Clear',
+      humidity: 60 + Math.random() * 25
+    });
+  }
+  
+  return data;
+};
+
+const generateSampleDailyData = (): DailyForecastData[] => {
+  const days = ['Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu'];
+  const conditions = ['Partly cloudy', 'Sunny', 'Mostly sunny', 'Cloudy', 'Rain', 'Partly cloudy', 'Sunny', 'Thunderstorms'];
+  const sailingConditions = ['good', 'excellent', 'good', 'moderate', 'poor', 'good', 'excellent', 'dangerous'] as const;
+  
+  return days.map((day, index) => {
+    const baseTemp = 87 - index * 1;
+    const tempVariation = Math.random() * 4 - 2;
+    
+    return {
+      id: `day-${index}`,
+      date: new Date(Date.now() + index * 24 * 60 * 60 * 1000).toISOString(),
+      dayName: day === 'Thu' ? 'Today' : day,
+      dayShort: day,
+      high: Math.round(baseTemp + tempVariation),
+      low: Math.round(baseTemp - 5 + tempVariation),
+      conditions: conditions[index],
+      precipitationChance: index === 4 ? 80 : Math.round(Math.random() * 30),
+      windSpeed: Math.round(7 + Math.random() * 15),
+      windDirection: 180 + (Math.random() - 0.5) * 60,
+      waveHeight: 1.2 + Math.random() * 1.3,
+      highTideTime: `${Math.floor(6 + index * 0.8) % 12 || 12}:${30 + index * 10}${index % 2 ? 'AM' : 'PM'}`,
+      lowTideTime: `${Math.floor(12 + index * 0.8) % 12 || 12}:${15 + index * 5}${index % 2 ? 'PM' : 'AM'}`,
+      tideRange: 1.8 + Math.random() * 0.8,
+      sailingConditions: sailingConditions[index],
+      uvIndex: Math.round(5 + Math.random() * 5),
+      humidity: Math.round(65 + Math.random() * 20)
+    };
+  });
+};
 
 // Subscription tier definitions
 const subscriptionTiers: Record<string, SubscriptionTier> = {
@@ -176,12 +338,32 @@ export const useWeatherStore = create<WeatherState>()(
       loading: false,
       error: null,
       
+      // Location-based forecasting state
+      selectedLocation: null,
+      locationForecasts: new Map(),
+      recentLocations: [],
+      favoriteLocations: [],
+      hourlyForecast: [],
+      dailyForecast: [],
+      isLocationLoading: false,
+
+      activeSources: {},
+      
       // Freemium model state
       dailyQueries: 0,
       maxDailyQueries: 10,
       premiumUnlocked: false,
       trialActive: false,
       trialExpiresAt: null,
+      
+      // Unit preferences state
+      units: {
+        temperature: 'C',
+        windSpeed: 'kts',
+        pressure: 'hPa',
+        distance: 'metric'
+      },
+      selectedDayId: null,
 
       // Actions
       updateWeather: (conditions: WeatherCondition, marine: MarineCondition) => {
@@ -270,6 +452,7 @@ export const useWeatherStore = create<WeatherState>()(
         set({ loading: true, error: null });
         
         try {
+          const { weatherManager } = await import('../services/weatherManager');
           const result = await weatherManager.updateWeatherData();
           
           if (result.success && result.data) {
@@ -447,6 +630,152 @@ export const useWeatherStore = create<WeatherState>()(
         }
       },
 
+      // Location-based forecasting actions
+      setSelectedLocation: (location: LocationData) => {
+        set({ selectedLocation: location });
+        // Add to recent locations
+        const { recentLocations } = get();
+        const filtered = recentLocations.filter(l => l.id !== location.id);
+        const updated = [location, ...filtered].slice(0, 10); // Keep last 10
+        set({ recentLocations: updated });
+      },
+
+      fetchWeatherData: async (coordinate: LocationCoordinate, options?: { date?: Date; time?: Date }) => {
+        const { incrementQuery } = get();
+        
+        if (!incrementQuery()) {
+          set({ error: 'Daily query limit reached. Upgrade to continue.' });
+          return;
+        }
+        
+        set({ isLocationLoading: true, error: null });
+        
+        try {
+          const { weatherAPI } = await import('../services/weatherAPI');
+
+          let apiResult: any;
+          if (options?.date) {
+            apiResult = await weatherAPI.getWeatherDataForDate(options.date, { lat: coordinate.latitude, lon: coordinate.longitude });
+          } else if (options?.time) {
+            apiResult = await weatherAPI.getWeatherDataForTime(options.time, { lat: coordinate.latitude, lon: coordinate.longitude });
+          } else {
+            apiResult = await weatherAPI.getWeatherData({ lat: coordinate.latitude, lon: coordinate.longitude });
+          }
+
+          const nowIso = new Date().toISOString();
+          const nextActive: WeatherState['activeSources'] = { ...get().activeSources };
+          const present = (k: string) => apiResult?.data && k in apiResult.data;
+          if (present('openweathermap')) {
+            nextActive.temperature = { source: 'OpenWeatherMap', at: nowIso };
+            nextActive.wind = { source: 'OpenWeatherMap', at: nowIso };
+          }
+          if (present('openmeteo')) {
+            nextActive.waves = { source: 'Open‑Meteo Marine', at: nowIso };
+          }
+          if (present('noaa')) {
+            nextActive.tide = { source: 'NOAA Tides', at: nowIso };
+          }
+          if (!present('openweathermap') && present('hko')) {
+            nextActive.temperature = nextActive.temperature ?? { source: 'Hong Kong Observatory', at: nowIso };
+            nextActive.wind = nextActive.wind ?? { source: 'Hong Kong Observatory', at: nowIso };
+          }
+
+          // Build hourly forecast from available sources
+          const hourlyData: HourlyForecastData[] = [];
+          const openMeteo = apiResult?.data?.openmeteo;
+          const ow = apiResult?.data?.openweathermap;
+          const owHourly = ow?.hourly || ow?.data?.hourly;
+          if (Array.isArray(owHourly) && owHourly.length) {
+            const slice = owHourly.slice(0, 24);
+            slice.forEach((h: any) => {
+              const ts = (h.dt || h.time || Math.floor(Date.now() / 1000)) * 1000;
+              hourlyData.push({
+                time: new Date(ts).toISOString(),
+                hour: new Date(ts).getHours(),
+                temperature: typeof h.temp === 'number' ? h.temp : (h.temperature ?? 28),
+                windSpeed: typeof h.wind_speed === 'number' ? h.wind_speed : (h.windSpeed ?? 8),
+                windDirection: typeof h.wind_deg === 'number' ? h.wind_deg : (h.windDirection ?? 180),
+                waveHeight: openMeteo?.data?.wave?.length ? (openMeteo.data.wave[hourlyData.length]?.waveHeight ?? 1.2) : 1.2,
+                tideHeight: 0,
+                precipitation: h.pop ?? h.precipitation ?? 0,
+                conditions: h.weather?.[0]?.main ?? 'Clear',
+                humidity: h.humidity ?? 70,
+              });
+            });
+          } else if (openMeteo?.data?.wave?.length) {
+            const waveHours = openMeteo.data.wave.slice(0, 24);
+            waveHours.forEach((w: any) => {
+              const ts = new Date(w.time).getTime();
+              hourlyData.push({
+                time: new Date(ts).toISOString(),
+                hour: new Date(ts).getHours(),
+                temperature: 28,
+                windSpeed: 8,
+                windDirection: 180,
+                waveHeight: w.waveHeight ?? 1.2,
+                tideHeight: 0,
+                precipitation: 0,
+                conditions: 'Clear',
+                humidity: 70,
+              });
+            });
+          }
+
+          const ensureHourly = hourlyData.length ? hourlyData : generateSampleHourlyData();
+          const dailyData = generateSampleDailyData();
+          
+          set({
+            hourlyForecast: ensureHourly,
+            dailyForecast: dailyData,
+            isLocationLoading: false,
+            lastUpdate: new Date().toISOString(),
+            activeSources: nextActive,
+          });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to fetch weather data';
+          set({
+            isLocationLoading: false,
+            error: errorMessage
+          });
+        }
+      },
+
+      addRecentLocation: (location: LocationData) => {
+        const { recentLocations } = get();
+        const filtered = recentLocations.filter(l => l.id !== location.id);
+        const updated = [location, ...filtered].slice(0, 10);
+        set({ recentLocations: updated });
+      },
+
+      addFavoriteLocation: (location: LocationData) => {
+        const { favoriteLocations } = get();
+        if (!favoriteLocations.find(l => l.id === location.id)) {
+          set({ favoriteLocations: [...favoriteLocations, location] });
+        }
+      },
+
+      removeFavoriteLocation: (locationId: string) => {
+        const { favoriteLocations } = get();
+        set({ favoriteLocations: favoriteLocations.filter(l => l.id !== locationId) });
+      },
+
+      updateHourlyForecast: (data: HourlyForecastData[]) => {
+        set({ hourlyForecast: data });
+      },
+
+      updateDailyForecast: (data: DailyForecastData[]) => {
+        set({ dailyForecast: data });
+      },
+
+      getLocationForecast: (locationId: string) => {
+        const { locationForecasts } = get();
+        return locationForecasts.get(locationId) || null;
+      },
+
+      clearLocationCache: () => {
+        set({ locationForecasts: new Map() });
+      },
+
       setLoading: (loading: boolean) => {
         set({ loading });
       },
@@ -464,6 +793,40 @@ export const useWeatherStore = create<WeatherState>()(
             userFacing: true
           });
         }
+      },
+
+      // Unit preferences actions
+      setUnits: (units: WeatherUnits) => {
+        set({ units });
+      },
+
+      setTemperatureUnit: (unit: TemperatureUnit) => {
+        set(state => ({ 
+          units: { ...state.units, temperature: unit } 
+        }));
+      },
+
+      setWindSpeedUnit: (unit: WindSpeedUnit) => {
+        set(state => ({ 
+          units: { ...state.units, windSpeed: unit } 
+        }));
+      },
+
+      setPressureUnit: (unit: PressureUnit) => {
+        set(state => ({ 
+          units: { ...state.units, pressure: unit } 
+        }));
+      },
+
+      setDistanceUnit: (unit: DistanceUnit) => {
+        set(state => ({ 
+          units: { ...state.units, distance: unit } 
+        }));
+      },
+
+      // Day selection actions
+      setSelectedDayId: (dayId: string | null) => {
+        set({ selectedDayId: dayId });
       }
     }),
     {
@@ -479,7 +842,16 @@ export const useWeatherStore = create<WeatherState>()(
         dailyQueries: state.dailyQueries,
         trialActive: state.trialActive,
         trialExpiresAt: state.trialExpiresAt,
-        premiumUnlocked: state.premiumUnlocked
+        premiumUnlocked: state.premiumUnlocked,
+        // Location-based state
+        selectedLocation: state.selectedLocation,
+        recentLocations: state.recentLocations,
+        favoriteLocations: state.favoriteLocations,
+        hourlyForecast: state.hourlyForecast,
+        dailyForecast: state.dailyForecast,
+        // Unit preferences state
+        units: state.units,
+        selectedDayId: state.selectedDayId
       })
     }
   )
@@ -507,3 +879,21 @@ export const useQueryStatus = () => useWeatherStore(state => ({
   limit: state.maxDailyQueries,
   remaining: state.maxDailyQueries - state.dailyQueries
 }));
+
+// Location-based selectors
+export const useSelectedLocation = () => useWeatherStore(state => state.selectedLocation);
+export const useRecentLocations = () => useWeatherStore(state => state.recentLocations);
+export const useFavoriteLocations = () => useWeatherStore(state => state.favoriteLocations);
+export const useHourlyForecast = () => useWeatherStore(state => state.hourlyForecast);
+export const useDailyForecast = () => useWeatherStore(state => state.dailyForecast);
+export const useLocationLoading = () => useWeatherStore(state => state.isLocationLoading);
+
+// Unit preferences selectors
+export const useWeatherUnits = () => useWeatherStore(state => state.units);
+export const useTemperatureUnit = () => useWeatherStore(state => state.units.temperature);
+export const useWindSpeedUnit = () => useWeatherStore(state => state.units.windSpeed);
+export const usePressureUnit = () => useWeatherStore(state => state.units.pressure);
+export const useDistanceUnit = () => useWeatherStore(state => state.units.distance);
+
+// Day selection selectors
+export const useSelectedDayId = () => useWeatherStore(state => state.selectedDayId);

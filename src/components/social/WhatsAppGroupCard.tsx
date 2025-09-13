@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { 
   Users, 
@@ -9,13 +9,12 @@ import {
   Lock,
   Verified,
   UserPlus,
-  Clock
+  Clock,
+  QrCode
 } from 'lucide-react-native';
 
-import { IOSText } from '../ui/IOSText';
-import { IOSButton } from '../ui/IOSButton';
-import { IOSBadge } from '../ui/IOSBadge';
-import { IOSCard } from '../ui/IOSCard';
+import { IOSText, IOSButton, IOSBadge, IOSCard } from '../ios';
+import { QRCodeDisplay } from '../contacts/QRCodeDisplay';
 import type { WhatsAppGroup } from '../../stores/socialStore';
 import { useUserStore } from '../../stores/userStore';
 
@@ -39,6 +38,7 @@ export const WhatsAppGroupCard: React.FC<WhatsAppGroupCardProps> = ({
   onLeave,
 }) => {
   const user = useUserStore();
+  const [showQRCode, setShowQRCode] = useState(false);
 
   const getSponsorColor = (sponsor?: string): string => {
     switch (sponsor) {
@@ -116,6 +116,10 @@ export const WhatsAppGroupCard: React.FC<WhatsAppGroupCardProps> = ({
         }
       ]
     );
+  };
+
+  const handleShowQRCode = () => {
+    setShowQRCode(true);
   };
 
   const canUserJoin = (): boolean => {
@@ -274,6 +278,17 @@ export const WhatsAppGroupCard: React.FC<WhatsAppGroupCardProps> = ({
           />
         )}
         
+        {group.joinUrl && !isJoined && (
+          <IOSButton
+            title="QR"
+            onPress={handleShowQRCode}
+            variant="secondary"
+            size="small"
+            icon={<QrCode size={16} color="#007AFF" />}
+            style={styles.qrButton}
+          />
+        )}
+        
         <IOSButton
           title={actionConfig.title}
           onPress={actionConfig.onPress}
@@ -284,6 +299,17 @@ export const WhatsAppGroupCard: React.FC<WhatsAppGroupCardProps> = ({
           style={styles.actionButton}
         />
       </View>
+
+      {/* QR Code Modal */}
+      {group.joinUrl && (
+        <QRCodeDisplay
+          visible={showQRCode}
+          onClose={() => setShowQRCode(false)}
+          data={group.joinUrl}
+          title={group.title}
+          description={group.description}
+        />
+      )}
     </IOSCard>
   );
 };
@@ -384,6 +410,9 @@ const styles = StyleSheet.create({
   },
   leaveButton: {
     minWidth: 60,
+  },
+  qrButton: {
+    minWidth: 50,
   },
   actionButton: {
     minWidth: 80,

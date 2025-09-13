@@ -1,7 +1,6 @@
 import { weatherAPI, WeatherAPIError } from './weatherAPI';
 import { subscriptionService, SubscriptionTier } from './subscriptionService';
-import { useWeatherStore } from '../stores/weatherStore';
-import { useUserStore } from '../stores/userStore';
+// Note: Import weatherStore dynamically to avoid circular dependency
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // TypeScript interfaces for weather management
@@ -131,6 +130,7 @@ export class WeatherManager {
       const accessRules = this.getDataAccessRules();
       
       // Check if user has remaining queries (for free/basic users)
+      const { useWeatherStore } = await import('../stores/weatherStore');
       const weatherStore = useWeatherStore.getState();
       if (!weatherStore.incrementQuery() && !forceUpdate) {
         return { 
@@ -209,19 +209,19 @@ export class WeatherManager {
 
   // Combine current conditions from multiple sources
   private combineCurrentConditions(data: any, rules: DataAccessRules) {
-    // Prioritize PredictWind for marine conditions, HKO for local conditions
-    const predictwind = data.predictwind?.data?.wind?.[0];
+    // Prioritize OpenWeatherMap for comprehensive data, HKO for local conditions
+    const openweathermap = data.openweathermap?.current;
     const hko = data.hko?.regionalWeather;
     
     return {
-      temperature: hko?.temperature || predictwind?.temperature || 25,
-      windSpeed: predictwind?.windSpeed || hko?.windSpeed || 0,
-      windDirection: predictwind?.windDirection || hko?.windDirection || 0,
-      windGust: predictwind?.windGust,
-      visibility: predictwind?.visibility || hko?.visibility || 10,
-      pressure: predictwind?.pressure || hko?.pressure || 1013,
-      humidity: predictwind?.humidity || hko?.humidity || 70,
-      conditions: predictwind?.conditions || hko?.conditions || 'Unknown'
+      temperature: openweathermap?.temp || hko?.temperature || 25,
+      windSpeed: openweathermap?.wind_speed || hko?.windSpeed || 0,
+      windDirection: openweathermap?.wind_deg || hko?.windDirection || 0,
+      windGust: openweathermap?.wind_gust,
+      visibility: openweathermap?.visibility || hko?.visibility || 10,
+      pressure: openweathermap?.pressure || hko?.pressure || 1013,
+      humidity: openweathermap?.humidity || hko?.humidity || 70,
+      conditions: openweathermap?.weather?.[0]?.description || hko?.conditions || 'Unknown'
     };
   }
 
@@ -239,13 +239,13 @@ export class WeatherManager {
     };
 
     if (rules.includeMarineData) {
-      const predictwind = data.predictwind?.data?.wave?.[0];
+      const openmeteo = data.openmeteo?.data?.wave?.[0];
       const noaa = data.noaa?.tides?.[0];
       
-      if (predictwind) {
-        marine.waveHeight = predictwind.waveHeight;
-        marine.swellPeriod = predictwind.swellPeriod;
-        marine.swellDirection = predictwind.swellDirection;
+      if (openmeteo) {
+        marine.waveHeight = openmeteo.waveHeight;
+        marine.swellPeriod = openmeteo.swellPeriod;
+        marine.swellDirection = openmeteo.swellDirection;
       }
       
       if (noaa) {
@@ -267,40 +267,45 @@ export class WeatherManager {
     const maxHours = rules.forecastHours;
     
     // Get forecast data from available sources
-    const predictwindForecast = data.predictwind?.data?.wind || [];
+    const openweathermapForecast = data.openweathermap?.hourly || [];
     const hkoForecast = data.hko?.forecast?.periods || [];
     
     // Limit forecast based on subscription
-    const limitedForecast = predictwindForecast.slice(0, Math.ceil(maxHours / 3));
+    const limitedForecast = openweathermapForecast.slice(0, Math.ceil(maxHours / 1)); // Hourly data
     
     for (const item of limitedForecast) {
       const forecastPeriod: WeatherForecastPeriod = {
-        time: item.time,
+        time: new Date(item.dt * 1000).toISOString(),
         weather: {
-          temperature: item.temperature,
-          windSpeed: item.windSpeed,
-          windDirection: item.windDirection,
-          windGust: item.windGust,
-          conditions: item.conditions,
-          visibility: item.visibility
+          temperature: item.temp,
+          windSpeed: item.wind_speed,
+          windDirection: item.wind_deg,
+          windGust: item.wind_gust,
+          conditions: item.weather?.[0]?.description || 'Unknown',
+          visibility: 10 // Default as OpenWeatherMap hourly doesn't include visibility
         }
       };
       
       // Add marine data for professional+ subscriptions
-      if (rules.includeMarineData && data.predictwind?.data?.wave) {
-        const waveData = data.predictwind.data.wave.find((w: any) => w.time === item.time);
+      if (rules.includeMarineData && data.openmeteo?.data?.wave) {
+        const waveData = data.openmeteo.data.wave.find((w: any) => 
+          new Date(w.time).getTime() === item.dt * 1000
+        );
         if (waveData) {
           forecastPeriod.marine = {
             waveHeight: waveData.waveHeight,
             waveDirection: waveData.waveDirection,
-            current: waveData.current || 0
+            current: 0 // Open-Meteo doesn't provide current data
           };
         }
       }
       
       // Add racing analysis for professional+ subscriptions
       if (rules.includeRacingAnalysis) {
-        forecastPeriod.racing = this.generateRacingAnalysis(item);
+        forecastPeriod.racing = this.generateRacingAnalysis({
+          windSpeed: item.wind_speed,
+          windGust: item.wind_gust
+        });
       }
       
       forecast.push(forecastPeriod);
@@ -388,18 +393,18 @@ export class WeatherManager {
   // Generate system alerts for racing conditions
   private async generateSystemAlerts(data: any): Promise<WeatherAlert[]> {
     const alerts: WeatherAlert[] = [];
-    const current = data.predictwind?.data?.wind?.[0];
+    const current = data.openweathermap?.current;
     
     if (!current) return alerts;
     
     // High wind warning
-    if (current.windSpeed > 25) {
+    if (current.wind_speed > 25) {
       alerts.push({
         id: `system_wind_${Date.now()}`,
         type: 'warning',
         severity: 'high',
         title: 'Strong Wind Warning',
-        message: `Wind speeds of ${current.windSpeed} knots forecast. Racing conditions may be dangerous.`,
+        message: `Wind speeds of ${current.wind_speed} knots forecast. Racing conditions may be dangerous.`,
         validFrom: new Date().toISOString(),
         validTo: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
         areas: ['Racing Area'],
@@ -413,13 +418,13 @@ export class WeatherManager {
     }
     
     // Light wind advisory
-    if (current.windSpeed < 5) {
+    if (current.wind_speed < 5) {
       alerts.push({
         id: `system_light_${Date.now()}`,
         type: 'advisory',
         severity: 'low',
         title: 'Light Wind Advisory',
-        message: `Light winds of ${current.windSpeed} knots forecast. Expect tactical racing conditions.`,
+        message: `Light winds of ${current.wind_speed} knots forecast. Expect tactical racing conditions.`,
         validFrom: new Date().toISOString(),
         validTo: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
         areas: ['Racing Area'],
@@ -442,7 +447,7 @@ export class WeatherManager {
     const rules: Record<SubscriptionTier['id'], DataAccessRules> = {
       free: {
         tier: 'free',
-        allowedSources: ['hko'],
+        allowedSources: ['hko', 'openmeteo'],
         forecastHours: 3,
         includeMarineData: false,
         includeRacingAnalysis: false,
@@ -451,16 +456,16 @@ export class WeatherManager {
       },
       basic: {
         tier: 'basic',
-        allowedSources: ['hko', 'noaa'],
+        allowedSources: ['hko', 'noaa', 'openmeteo'],
         forecastHours: 12,
-        includeMarineData: false,
+        includeMarineData: true,
         includeRacingAnalysis: false,
         includeAlerts: true,
         updateFrequency: 20
       },
       professional: {
         tier: 'professional',
-        allowedSources: ['hko', 'noaa', 'predictwind'],
+        allowedSources: ['hko', 'noaa', 'openmeteo', 'openweathermap'],
         forecastHours: 48,
         includeMarineData: true,
         includeRacingAnalysis: true,
@@ -469,7 +474,7 @@ export class WeatherManager {
       },
       elite: {
         tier: 'elite',
-        allowedSources: ['hko', 'noaa', 'predictwind'],
+        allowedSources: ['hko', 'noaa', 'openmeteo', 'openweathermap'],
         forecastHours: 168,
         includeMarineData: true,
         includeRacingAnalysis: true,

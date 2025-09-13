@@ -1,0 +1,480 @@
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeInDown, SlideInRight } from 'react-native-reanimated';
+import { 
+  Megaphone, 
+  Flag, 
+  Trophy, 
+  RefreshCw, 
+  Calendar, 
+  Waves,
+  MapPin,
+  Clock,
+  Users,
+  ChevronDown,
+  WifiOff,
+  User,
+  Anchor,
+  UserCheck,
+  Scale,
+  AlertTriangle,
+  Coffee,
+  Utensils,
+  Activity,
+  Wind,
+  Navigation,
+  Play,
+  ExternalLink,
+  FileText
+} from 'lucide-react-native';
+import { colors, spacing, borderRadius } from '../../constants/theme';
+import { ErrorBoundary, LoadingSpinner, SkeletonLoader, SimpleError, OfflineError } from '../../components/shared';
+import { haptics } from '../../utils/haptics';
+import { offlineManager } from '../../services/offlineManager';
+import {
+  IOSNavigationBar,
+  IOSCard,
+  IOSSection,
+  IOSButton,
+  IOSText,
+  IOSBadge
+} from '../../components/ios';
+import { useUserType } from '../../stores/userStore';
+import type { UserType } from '../../types';
+
+// Unified interfaces for Race Screen
+interface RaceEvent {
+  id: string;
+  type: 'racing' | 'social' | 'meeting' | 'practice' | 'registration' | 'measurement' | 'protest-hearing';
+  time: string;
+  title: string;
+  location: string;
+  status?: 'upcoming' | 'in-progress' | 'weather-hold' | 'completed' | 'cancelled';
+  details: string[];
+  icon: any;
+  actionButton?: {
+    title: string;
+    onPress: () => void;
+  };
+}
+
+interface LiveRaceStatus {
+  raceNumber: number;
+  raceName: string;
+  status: 'scheduled' | 'in-progress' | 'completed' | 'postponed' | 'abandoned';
+  startTime?: string;
+  elapsedTime?: string;
+  estimatedFinish?: string;
+  location: string;
+  reason?: string;
+}
+
+interface LiveContext {
+  eventName: string;
+  eventType: 'asia-cup' | 'dragon-worlds';
+  status: 'race-day' | 'social-time' | 'rest-day';
+  currentTime: string;
+}
+
+interface NoticeItem {
+  id: string;
+  title: string;
+  type: 'notice' | 'amendment' | 'result' | 'protest';
+  postedTime: string;
+  urgent: boolean;
+}
+
+export function UnifiedRaceScreen() {
+  const [refreshing, setRefreshing] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<'asia-cup' | 'dragon-worlds'>('dragon-worlds');
+  const userType = useUserType();
+
+  // Live context state
+  const [liveContext, setLiveContext] = useState<LiveContext>({
+    eventName: 'Dragon World Championships 2027',
+    eventType: 'dragon-worlds',
+    status: 'race-day',
+    currentTime: new Date().toLocaleTimeString()
+  });
+
+  // Live race status state
+  const [currentRace, setCurrentRace] = useState<LiveRaceStatus>({
+    raceNumber: 3,
+    raceName: 'Gold Fleet Race 3',
+    status: 'in-progress',
+    startTime: '14:00',
+    elapsedTime: '1:23:45',
+    location: 'Hong Kong Racing Area',
+  });
+
+  // Notice board state
+  const [notices, setNotices] = useState<NoticeItem[]>([
+    {
+      id: '1',
+      title: 'Weather Update - Winds 15-20 knots',
+      type: 'notice',
+      postedTime: '2 hours ago',
+      urgent: true
+    },
+    {
+      id: '2', 
+      title: 'Race Committee Instructions',
+      type: 'amendment',
+      postedTime: '4 hours ago',
+      urgent: false
+    }
+  ]);
+
+  // Race events state (merged from ScheduleScreen)
+  const [raceEvents] = useState<RaceEvent[]>([
+    {
+      id: '1',
+      type: 'racing',
+      time: '14:00',
+      title: 'Gold Fleet Race 3',
+      location: 'Hong Kong Racing Area',
+      status: 'in-progress',
+      details: ['Wind: 15-20 knots', 'Course: Windward-Leeward', 'Estimated finish: 15:30'],
+      icon: Flag,
+    },
+    {
+      id: '2', 
+      type: 'racing',
+      time: '15:45',
+      title: 'Gold Fleet Race 4',
+      location: 'Hong Kong Racing Area', 
+      status: 'upcoming',
+      details: ['Subject to completion of Race 3', 'Wind forecast: 12-18 knots'],
+      icon: Flag,
+    },
+    {
+      id: '3',
+      type: 'social',
+      time: '19:00',
+      title: 'Welcome Reception',
+      location: 'Royal Hong Kong Yacht Club',
+      status: 'upcoming',
+      details: ['Cocktails & networking', 'Dress code: Smart casual', 'Sponsored by HSBC'],
+      icon: Users,
+    }
+  ]);
+
+  const onRefresh = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      await haptics.impact();
+      
+      // Refresh logic here
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+    } catch (error) {
+      console.error('Refresh error:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  const renderLiveStatus = () => {
+    if (liveContext.status !== 'race-day') return null;
+
+    return (
+      <Animated.View entering={FadeInDown.duration(600).delay(200)}>
+        <IOSCard style={styles.liveCard}>
+          <View style={styles.liveHeader}>
+            <View style={styles.liveIndicator}>
+              <View style={styles.liveDot} />
+              <IOSText variant="caption" color="secondary">LIVE</IOSText>
+            </View>
+            <IOSBadge 
+              text={currentRace.status.toUpperCase()} 
+              variant={currentRace.status === 'in-progress' ? 'warning' : 'default'}
+            />
+          </View>
+          
+          <IOSText variant="title2" style={styles.raceTitle}>
+            {currentRace.raceName}
+          </IOSText>
+          
+          <View style={styles.raceDetails}>
+            <View style={styles.raceDetailItem}>
+              <Clock size={16} color={colors.textSecondary} />
+              <IOSText variant="body" color="secondary">
+                {currentRace.elapsedTime || currentRace.startTime}
+              </IOSText>
+            </View>
+            <View style={styles.raceDetailItem}>
+              <MapPin size={16} color={colors.textSecondary} />
+              <IOSText variant="body" color="secondary">
+                {currentRace.location}
+              </IOSText>
+            </View>
+          </View>
+        </IOSCard>
+      </Animated.View>
+    );
+  };
+
+  const renderNoticeBoard = () => (
+    <Animated.View entering={FadeInDown.duration(600).delay(400)}>
+      <IOSSection title="Notice Board" icon={FileText}>
+        {notices.map((notice, index) => (
+          <IOSCard key={notice.id} style={[styles.noticeCard, notice.urgent && styles.urgentNotice]}>
+            <View style={styles.noticeHeader}>
+              <IOSText variant="headline" style={styles.noticeTitle}>
+                {notice.title}
+              </IOSText>
+              {notice.urgent && (
+                <IOSBadge text="URGENT" variant="error" />
+              )}
+            </View>
+            <View style={styles.noticeFooter}>
+              <IOSText variant="caption" color="secondary">
+                {notice.type.toUpperCase()} • {notice.postedTime}
+              </IOSText>
+              <ExternalLink size={16} color={colors.primary} />
+            </View>
+          </IOSCard>
+        ))}
+        <IOSButton 
+          title="View All Notices"
+          variant="secondary"
+          style={styles.viewAllButton}
+          onPress={() => {}}
+        />
+      </IOSSection>
+    </Animated.View>
+  );
+
+  const renderEventToggle = () => (
+    <View style={styles.eventToggle}>
+      <IOSButton
+        title="Asia Cup"
+        variant={selectedEvent === 'asia-cup' ? 'primary' : 'secondary'}
+        size="small"
+        style={[styles.toggleButton, selectedEvent === 'asia-cup' && styles.activeToggle]}
+        onPress={() => setSelectedEvent('asia-cup')}
+      />
+      <IOSButton
+        title="Dragon Worlds"
+        variant={selectedEvent === 'dragon-worlds' ? 'primary' : 'secondary'}
+        size="small"
+        style={[styles.toggleButton, selectedEvent === 'dragon-worlds' && styles.activeToggle]}
+        onPress={() => setSelectedEvent('dragon-worlds')}
+      />
+    </View>
+  );
+
+  const renderRaceEvents = () => (
+    <Animated.View entering={SlideInRight.duration(600).delay(600)}>
+      <IOSSection title="Race Schedule" icon={Calendar}>
+        {raceEvents.map((event, index) => (
+          <IOSCard key={event.id} style={styles.eventCard}>
+            <View style={styles.eventHeader}>
+              <View style={styles.eventTime}>
+                <IOSText variant="title3">{event.time}</IOSText>
+                {event.status && (
+                  <IOSBadge 
+                    text={event.status.toUpperCase()} 
+                    variant={
+                      event.status === 'in-progress' ? 'warning' :
+                      event.status === 'completed' ? 'success' :
+                      event.status === 'weather-hold' ? 'error' : 'default'
+                    }
+                  />
+                )}
+              </View>
+              <event.icon size={24} color={colors.primary} />
+            </View>
+            
+            <IOSText variant="headline" style={styles.eventTitle}>
+              {event.title}
+            </IOSText>
+            
+            <View style={styles.eventLocation}>
+              <MapPin size={16} color={colors.textSecondary} />
+              <IOSText variant="body" color="secondary">
+                {event.location}
+              </IOSText>
+            </View>
+            
+            <View style={styles.eventDetails}>
+              {event.details.map((detail, idx) => (
+                <IOSText key={idx} variant="caption" color="secondary">
+                  • {detail}
+                </IOSText>
+              ))}
+            </View>
+            
+            {event.actionButton && (
+              <IOSButton
+                title={event.actionButton.title}
+                variant="secondary"
+                size="small"
+                style={styles.eventAction}
+                onPress={event.actionButton.onPress}
+              />
+            )}
+          </IOSCard>
+        ))}
+      </IOSSection>
+    </Animated.View>
+  );
+
+  if (isOffline) {
+    return <OfflineError onRetry={onRefresh} />;
+  }
+
+  return (
+    <ErrorBoundary>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <IOSNavigationBar
+          title="Race"
+          style="large"
+          rightActions={[
+            {
+              icon: <RefreshCw size={20} color={colors.primary} />,
+              onPress: onRefresh,
+              testID: "refresh-button"
+            }
+          ]}
+        />
+        
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={styles.contentContainer}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+            />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          {renderEventToggle()}
+          {renderLiveStatus()}
+          {renderNoticeBoard()}
+          {renderRaceEvents()}
+        </ScrollView>
+      </SafeAreaView>
+    </ErrorBoundary>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  contentContainer: {
+    paddingHorizontal: spacing.screenPadding,
+    paddingBottom: spacing.xl,
+  },
+  eventToggle: {
+    flexDirection: 'row',
+    marginBottom: spacing.lg,
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: borderRadius.md,
+    padding: spacing.xs,
+  },
+  toggleButton: {
+    flex: 1,
+    marginHorizontal: spacing.xs,
+  },
+  activeToggle: {
+    backgroundColor: colors.primary,
+  },
+  liveCard: {
+    marginBottom: spacing.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.success,
+  },
+  liveHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  liveIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.success,
+    marginRight: spacing.xs,
+  },
+  raceTitle: {
+    marginBottom: spacing.sm,
+  },
+  raceDetails: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  raceDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  noticeCard: {
+    marginBottom: spacing.sm,
+  },
+  urgentNotice: {
+    borderLeftWidth: 4,
+    borderLeftColor: colors.error,
+  },
+  noticeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.sm,
+  },
+  noticeTitle: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  noticeFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  viewAllButton: {
+    marginTop: spacing.sm,
+  },
+  eventCard: {
+    marginBottom: spacing.md,
+  },
+  eventHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.sm,
+  },
+  eventTime: {
+    alignItems: 'flex-start',
+    gap: spacing.xs,
+  },
+  eventTitle: {
+    marginBottom: spacing.xs,
+  },
+  eventLocation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  eventDetails: {
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  eventAction: {
+    alignSelf: 'flex-start',
+  },
+});

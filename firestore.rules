@@ -1,224 +1,286 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    
     // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    function getUserId() {
-      return request.auth.uid;
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
     }
     
-    function isOwner(uid) {
-      return isAuthenticated() && getUserId() == uid;
-    }
-    
-    function isAdmin() {
+    function hasRole(role) {
       return isAuthenticated() && 
-             exists(/databases/$(database)/documents/users/$(getUserId())) &&
-             get(/databases/$(database)/documents/users/$(getUserId())).data.role == 'admin';
+             request.auth.token.role == role;
     }
     
-    function isSuperAdmin() {
+    function hasAnyRole(roles) {
       return isAuthenticated() && 
-             exists(/databases/$(database)/documents/users/$(getUserId())) &&
-             get(/databases/$(database)/documents/users/$(getUserId())).data.role == 'superadmin';
+             request.auth.token.role in roles;
     }
     
-    function isActiveUser() {
-      return isAuthenticated() && 
-             exists(/databases/$(database)/documents/users/$(getUserId())) &&
-             get(/databases/$(database)/documents/users/$(getUserId())).data.status == 'active';
+    function isOwnerOrAdmin(userId) {
+      return isOwner(userId) || hasAnyRole(['admin', 'superadmin']);
     }
     
-    function hasValidUserData(data) {
-      return data.keys().hasAll(['uid', 'email', 'displayName', 'role', 'status', 'providers', 'linkedProviders', 'primaryProvider', 'profile', 'preferences', 'metadata']) &&
-             data.uid is string &&
-             data.email is string &&
-             data.displayName is string &&
-             data.role in ['user', 'admin', 'superadmin'] &&
-             data.status in ['active', 'inactive', 'suspended', 'pending_verification'] &&
-             data.providers is list &&
-             data.linkedProviders is list &&
-             data.primaryProvider is string &&
-             data.profile is map &&
-             data.preferences is map &&
-             data.metadata is map;
+    function validateUserData() {
+      let requiredFields = ['uid', 'email', 'displayName', 'role', 'status'];
+      let allowedRoles = ['user', 'admin', 'superadmin'];
+      let allowedStatuses = ['active', 'inactive', 'suspended', 'pending_verification'];
+      
+      return requiredFields.toSet().isSubsetOf(resource.data.keys().toSet()) &&
+             resource.data.role in allowedRoles &&
+             resource.data.status in allowedStatuses &&
+             resource.data.uid is string &&
+             resource.data.email is string &&
+             resource.data.displayName is string;
     }
     
-    function isValidUserUpdate(data) {
-      // Users can only update certain fields
-      let allowedFields = ['displayName', 'photoURL', 'phoneNumber', 'profile', 'preferences', 'metadata'];
-      return data.diff(resource.data).affectedKeys().hasOnly(allowedFields);
+    function validateEmailChange() {
+      // Email can only be changed by the user themselves
+      return !('email' in resource.data) || 
+             resource.data.email == request.auth.token.email;
     }
     
-    function isValidAdminUpdate(data) {
-      // Admins can update more fields but not critical system fields
-      let restrictedFields = ['uid', 'metadata.createdAt'];
-      return !data.diff(resource.data).affectedKeys().hasAny(restrictedFields);
+    function validateRoleChange() {
+      // Only admins can change roles, and only superadmin can assign admin roles
+      return !('role' in resource.data) ||
+             (hasRole('superadmin')) ||
+             (hasRole('admin') && resource.data.role == 'user');
     }
-    
-    function isValidTimestamp(timestamp) {
-      return timestamp is timestamp || 
-             (timestamp is string && timestamp.matches('^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$'));
-    }
-    
-    // Users collection - main user profiles
+
+    // Users collection
     match /users/{userId} {
-      // Read: User can read their own profile, admins can read all
-      allow read: if isOwner(userId) || isAdmin();
+      // Read: Users can read their own data, admins can read any user
+      allow read: if isOwnerOrAdmin(userId);
       
-      // Create: Only during registration, user creates their own profile
-      allow create: if isAuthenticated() &&
-                       userId == getUserId() &&
-                       hasValidUserData(resource.data) &&
-                       resource.data.uid == getUserId() &&
-                       resource.data.role == 'user' &&
-                       resource.data.status in ['active', 'pending_verification'];
+      // Create: Users can create their own profile, admins can create any
+      allow create: if (isOwner(userId) || hasAnyRole(['admin', 'superadmin'])) &&
+                       validateUserData() &&
+                       resource.data.uid == userId;
       
-      // Update: Users can update their own profile (limited fields), admins can update more
-      allow update: if (isOwner(userId) && isValidUserUpdate(resource.data)) ||
-                       (isAdmin() && isValidAdminUpdate(resource.data));
+      // Update: Users can update their own data (except role), admins can update any
+      allow update: if isOwnerOrAdmin(userId) &&
+                       validateUserData() &&
+                       validateEmailChange() &&
+                       validateRoleChange() &&
+                       resource.data.uid == userId;
       
-      // Delete: Only super admins can delete user profiles
-      allow delete: if isSuperAdmin();
-      
-      // List users (for admin functions)
-      allow list: if isAdmin();
+      // Delete: Only admins can delete (soft delete recommended)
+      allow delete: if hasAnyRole(['admin', 'superadmin']);
     }
-    
-    // User sessions tracking
+
+    // User sessions collection
     match /user_sessions/{sessionId} {
-      // Users can read/write their own sessions, admins can read all
-      allow read: if isAuthenticated() && 
-                     (resource.data.uid == getUserId() || isAdmin());
-      
-      allow write: if isAuthenticated() && 
-                      resource.data.uid == getUserId();
-      
-      allow delete: if isAuthenticated() && 
-                       (resource.data.uid == getUserId() || isAdmin());
+      allow read, write: if isAuthenticated() && 
+                            resource.data.uid == request.auth.uid;
+      allow read, write: if hasAnyRole(['admin', 'superadmin']);
     }
-    
-    // User activity logs
+
+    // User activity collection  
     match /user_activity/{activityId} {
-      // Users can read their own activity, admins can read all
       allow read: if isAuthenticated() && 
-                     (resource.data.uid == getUserId() || isAdmin());
-      
-      // Only system can write activity logs (via server/cloud functions)
-      allow write: if false; // Activities should be written via server-side code
+                     resource.data.uid == request.auth.uid;
+      allow read: if hasAnyRole(['admin', 'superadmin']);
+      allow create: if isAuthenticated() && 
+                       resource.data.uid == request.auth.uid;
     }
-    
-    // User notifications
+
+    // User notifications collection
     match /user_notifications/{notificationId} {
-      // Users can read/update their own notifications
-      allow read, update: if isAuthenticated() && 
-                             resource.data.uid == getUserId();
-      
-      // System creates notifications (via server/cloud functions)
-      allow create: if false; // Should be created via server-side code
-      
-      // Users can delete their own notifications, admins can delete any
-      allow delete: if isAuthenticated() && 
-                       (resource.data.uid == getUserId() || isAdmin());
+      allow read: if isAuthenticated() && 
+                     resource.data.uid == request.auth.uid;
+      allow read, write: if hasAnyRole(['admin', 'superadmin']);
+      allow update: if isAuthenticated() && 
+                       resource.data.uid == request.auth.uid &&
+                       // Only allow updating read status and delivered status
+                       request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['readAt', 'deliveredAt', 'status']);
     }
-    
-    // User preferences (weather, etc.)
-    match /user_preferences/{preferenceId} {
-      // Extract userId from preference document ID (format: {userId}_{type})
-      function getPreferenceUserId() {
-        return preferenceId.split('_')[0];
-      }
+
+    // Races collection
+    match /races/{raceId} {
+      // Anyone can read race information
+      allow read: if true;
       
-      // Users can read/write their own preferences
-      allow read, write: if isAuthenticated() && 
-                            getUserId() == getPreferenceUserId();
-      
-      // Admins can read all preferences
-      allow read: if isAdmin();
+      // Only admins can create/update/delete races
+      allow write: if hasAnyRole(['admin', 'superadmin']);
     }
-    
-    // Regatta participants (sailing-specific)
+
+    // Results collection
+    match /results/{resultId} {
+      // Anyone can read results
+      allow read: if true;
+      
+      // Only admins can create/update results
+      allow write: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // Teams collection
+    match /teams/{teamId} {
+      // Anyone can read team information
+      allow read: if true;
+      
+      // Team members can update their own team
+      allow update: if isAuthenticated() && 
+                       request.auth.uid in resource.data.members;
+      
+      // Admins can create/update/delete teams
+      allow write: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // Events collection
+    match /events/{eventId} {
+      // Anyone can read events
+      allow read: if true;
+      
+      // Only admins can create/update/delete events
+      allow write: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // Notifications collection (system-wide notifications)
+    match /notifications/{notificationId} {
+      // Anyone can read public notifications
+      allow read: if true;
+      
+      // Only admins can create/update/delete notifications
+      allow write: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // Social posts collection
+    match /socialPosts/{postId} {
+      // Anyone can read social posts
+      allow read: if true;
+      
+      // Authenticated users can create posts
+      allow create: if isAuthenticated() && 
+                       resource.data.authorId == request.auth.uid;
+      
+      // Users can update/delete their own posts, admins can moderate any
+      allow update, delete: if isAuthenticated() && 
+                              (resource.data.authorId == request.auth.uid || 
+                               hasAnyRole(['admin', 'superadmin']));
+    }
+
+    // Regatta participants collection
     match /regatta_participants/{participantId} {
-      // Users can read all participants (for race results)
-      allow read: if isActiveUser();
+      // Participants can read their own data, admins can read all
+      allow read: if isAuthenticated() && 
+                     (resource.data.userId == request.auth.uid || 
+                      hasAnyRole(['admin', 'superadmin']));
       
-      // Users can create/update their own participation
-      allow write: if isAuthenticated() && 
-                      resource.data.userId == getUserId();
+      // Users can register themselves, admins can register anyone
+      allow create: if isAuthenticated() && 
+                       (resource.data.userId == request.auth.uid || 
+                        hasAnyRole(['admin', 'superadmin']));
       
-      // Admins can manage all participants
-      allow read, write: if isAdmin();
+      // Users can update their own registration, admins can update any
+      allow update: if isAuthenticated() && 
+                       (resource.data.userId == request.auth.uid || 
+                        hasAnyRole(['admin', 'superadmin']));
+      
+      // Only admins can delete registrations
+      allow delete: if hasAnyRole(['admin', 'superadmin']);
     }
-    
-    // Weather favorites
+
+    // Weather favorites collection
     match /weather_favorites/{favoriteId} {
-      // Users can manage their own weather favorites
+      // Users can only access their own weather favorites
       allow read, write: if isAuthenticated() && 
-                            resource.data.userId == getUserId();
+                            resource.data.userId == request.auth.uid;
+      
+      // Admins can access all weather favorites
+      allow read, write: if hasAnyRole(['admin', 'superadmin']);
     }
-    
-    // User subscriptions (premium features)
+
+    // User subscriptions collection
     match /user_subscriptions/{subscriptionId} {
       // Users can read their own subscriptions
       allow read: if isAuthenticated() && 
-                     resource.data.userId == getUserId();
-      
-      // Only system can write subscriptions (via payment processing)
-      allow write: if false; // Should be managed via server-side code
+                     resource.data.userId == request.auth.uid;
       
       // Admins can read all subscriptions
-      allow read: if isAdmin();
+      allow read: if hasAnyRole(['admin', 'superadmin']);
+      
+      // System can create/update subscriptions (via Cloud Functions)
+      allow write: if hasAnyRole(['admin', 'superadmin']);
     }
-    
-    // Public collections (readable by all authenticated users)
-    match /public_data/{document=**} {
+
+    // Notice board collection (official notices from racingrulesofsailing.org)
+    match /notices/{noticeId} {
+      // All authenticated users can read notices
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      
+      // Only Cloud Functions and admins can write notices
+      // Cloud Functions are authenticated with admin privileges
+      allow write: if hasAnyRole(['admin', 'superadmin']);
     }
-    
-    // System configuration (admin only)
-    match /system_config/{document=**} {
-      allow read, write: if isSuperAdmin();
+
+    // User notice status collection (read/bookmark status per user)
+    match /userNoticeStatus/{statusId} {
+      // Users can only read/write their own notice status
+      allow read, write: if isAuthenticated() && 
+                            resource.data.userId == request.auth.uid;
+      
+      // Admins can read all notice statuses
+      allow read: if hasAnyRole(['admin', 'superadmin']);
+      
+      // Validate that statusId format is userId_noticeId
+      allow create: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid &&
+                       statusId.matches('^' + request.auth.uid + '_.*$');
     }
-    
-    // Analytics and logs (admin only)
-    match /analytics/{document=**} {
-      allow read: if isAdmin();
-      allow write: if false; // Should be written via server-side code
+
+    // Race data cache collection (for Cloud Function caching)
+    match /raceDataCache/{cacheId} {
+      // All authenticated users can read cached data
+      allow read: if isAuthenticated();
+      
+      // Only Cloud Functions and admins can write cache data
+      allow write: if hasAnyRole(['admin', 'superadmin']);
     }
-    
-    // Audit logs (super admin only)
-    match /audit_logs/{document=**} {
-      allow read: if isSuperAdmin();
-      allow write: if false; // Should be written via server-side code
+
+    // Documents collection (official documents from multiple sources)
+    match /documents/{documentId} {
+      // All authenticated users can read documents
+      allow read: if isAuthenticated();
+      
+      // Only Cloud Functions and admins can write documents
+      allow write: if hasAnyRole(['admin', 'superadmin']);
     }
-    
-    // Default deny rule for all other paths
+
+    // Document content collection (processed document text and metadata)
+    match /document_content/{documentId} {
+      // All authenticated users can read document content
+      allow read: if isAuthenticated();
+      
+      // Only Cloud Functions and admins can write document content
+      allow write: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // Event-specific documents subcollection
+    match /events/{eventId}/documents/{documentId} {
+      // All authenticated users can read event documents
+      allow read: if isAuthenticated();
+      
+      // Only Cloud Functions and admins can write event documents
+      allow write: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // Activities collection (system activities)
+    match /activities/{activityId} {
+      // Only admins can read system activities
+      allow read: if hasAnyRole(['admin', 'superadmin']);
+      
+      // System functions can create activities
+      allow create: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // Default deny all other collections
     match /{document=**} {
       allow read, write: if false;
     }
   }
 }
-
-// Additional rules for specific use cases:
-// 
-// 1. Rate limiting could be implemented via Cloud Functions
-// 2. Data validation could be enhanced with more specific field checks
-// 3. Batch operations should be validated to ensure all documents follow the same rules
-// 4. Consider adding rules for offline/cached data scenarios
-// 
-// Security considerations:
-// - All sensitive operations (payments, admin actions) should go through Cloud Functions
-// - User activity logging is restricted to server-side to prevent tampering
-// - Role changes must be done by admins only
-// - Personal data is only accessible to the owner and admins
-// - All operations require authentication
-// 
-// Performance considerations:
-// - Rules are optimized to minimize database reads
-// - Admin checks cache user documents to avoid repeated lookups
-// - Batch operations are supported where appropriate

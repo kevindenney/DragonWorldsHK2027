@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
@@ -12,11 +12,7 @@ import {
 } from 'lucide-react-native';
 
 import { WhatsAppGroupCard } from '../../components/social/WhatsAppGroupCard';
-import { IOSText } from '../../components/ui/IOSText';
-import { IOSButton } from '../../components/ui/IOSButton';
-import { IOSCard } from '../../components/ui/IOSCard';
-import { IOSSegmentedControl } from '../../components/ui/IOSSegmentedControl';
-import { IOSSection } from '../../components/ui/IOSSection';
+import { IOSText, IOSButton, IOSCard, IOSSection, IOSSegmentedControl } from '../../components/ios';
 import { 
   useSocialStore,
   useWhatsAppGroups,
@@ -26,7 +22,7 @@ import {
   useSocialError,
   type GroupCategory
 } from '../../stores/socialStore';
-import { useUserStore } from '../../stores/userStore';
+import { useUserStore, useUserType } from '../../stores/userStore';
 import type { SocialScreenProps } from '../../types/navigation';
 
 interface LiveCommentaryProps {
@@ -81,15 +77,15 @@ const LiveCommentary: React.FC<LiveCommentaryProps> = ({
 };
 
 export const EnhancedSocialScreen: React.FC<SocialScreenProps> = ({ navigation }) => {
-  const user = useUserStore();
-  const {
-    refreshGroups,
-    joinGroup,
-    leaveGroup,
-    requestGroupAccess,
-    getGroupsByCategory,
-    trackGroupInteraction
-  } = useSocialStore();
+  const userType = useUserType();
+  
+  // Use stable references to store actions to prevent infinite re-renders
+  const refreshGroups = useSocialStore(state => state.refreshGroups);
+  const joinGroup = useSocialStore(state => state.joinGroup);
+  const leaveGroup = useSocialStore(state => state.leaveGroup);
+  const requestGroupAccess = useSocialStore(state => state.requestGroupAccess);
+  const getGroupsByCategory = useSocialStore(state => state.getGroupsByCategory);
+  const trackGroupInteraction = useSocialStore(state => state.trackGroupInteraction);
   
   const allGroups = useWhatsAppGroups();
   const joinedGroups = useJoinedGroups();
@@ -110,17 +106,17 @@ export const EnhancedSocialScreen: React.FC<SocialScreenProps> = ({ navigation }
     { label: 'Tech', value: 'technical-support' }
   ];
 
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     try {
-      await refreshGroups();
+      await useSocialStore.getState().refreshGroups();
     } catch (error) {
       console.error('Error loading social data:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -363,7 +359,7 @@ export const EnhancedSocialScreen: React.FC<SocialScreenProps> = ({ navigation }
         </IOSSection>
 
         {/* User Type Specific Features */}
-        {user.userType === 'participant' && (
+        {userType === 'participant' && (
           <IOSSection style={styles.section}>
             <IOSText style={styles.sectionTitle}>Competitor Features</IOSText>
             <IOSCard style={styles.featureCard}>

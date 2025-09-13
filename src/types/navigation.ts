@@ -7,16 +7,20 @@ export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
+  CompetitorDetail: { 
+    sailNumber: string;
+    competitorData: any;
+    standings: any;
+  };
   // Add other stack screens here as needed
 };
 
 export type MainTabParamList = {
-  Live: undefined;
-  Weather: undefined;
   Map: undefined;
   Schedule: undefined;
-  Social: undefined;
-  Services: undefined;
+  Results: undefined;
+  NoticeBoard: { eventId: string };
+  More: undefined;
 };
 
 export type RootStackScreenProps<Screen extends keyof RootStackParamList> =
@@ -29,12 +33,11 @@ export type MainTabScreenProps<Screen extends keyof MainTabParamList> =
   >;
 
 // Individual screen props for type safety
-export type LiveScreenProps = MainTabScreenProps<'Live'>;
-export type WeatherScreenProps = MainTabScreenProps<'Weather'>;
 export type MapScreenProps = MainTabScreenProps<'Map'>;
 export type ScheduleScreenProps = MainTabScreenProps<'Schedule'>;
-export type SocialScreenProps = MainTabScreenProps<'Social'>;
-export type ServicesScreenProps = MainTabScreenProps<'Services'>;
+export type ResultsScreenProps = MainTabScreenProps<'Results'>;
+export type NoticeBoardScreenProps = MainTabScreenProps<'NoticeBoard'>;
+export type MoreScreenProps = MainTabScreenProps<'More'>;
 
 declare global {
   namespace ReactNavigation {

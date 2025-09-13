@@ -3,15 +3,14 @@ import { View, StyleSheet, Dimensions } from 'react-native';
 import MapView, { Marker, Heatmap, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Wind, Waves, Thermometer, Eye } from 'lucide-react-native';
 
-import { IOSText } from '../ui/IOSText';
-import { IOSButton } from '../ui/IOSButton';
-import { IOSSegmentedControl } from '../ui/IOSSegmentedControl';
+import { IOSText, IOSButton, IOSSegmentedControl } from '../ios';
 import { 
   predictWindService,
   formatWindSpeed,
   formatTemperature,
   type PredictWindCurrentConditions
 } from '../../services/predictwindService';
+import { windStationService } from '../../services/windStationService';
 
 interface WeatherMapOverlayProps {
   height?: number;
@@ -25,6 +24,7 @@ interface WeatherDataPoint {
   longitude: number;
   windSpeed: number;
   windDirection: number;
+  windGust?: number;
   temperature: number;
   waveHeight: number;
   visibility: number;
@@ -58,7 +58,27 @@ export const WeatherMapOverlay: React.FC<WeatherMapOverlayProps> = ({
     try {
       setIsLoading(true);
       
-      // Generate demo weather data points for Hong Kong racing area
+      // Get real wind station data (force refresh to bypass cache)
+      const windStations = await windStationService.forceRefreshWindStations();
+      
+      // Convert wind stations to weather data points
+      const realWeatherData: WeatherDataPoint[] = windStations.map(station => ({
+        latitude: station.coordinate.latitude,
+        longitude: station.coordinate.longitude,
+        windSpeed: station.windSpeed,
+        windDirection: station.windDirection,
+        windGust: station.windGust,
+        temperature: station.temperature || 24,
+        waveHeight: 1.2, // Default wave height
+        visibility: station.visibility || 15,
+        intensity: Math.min(1, Math.max(0, station.windSpeed / 30)) // Normalize for heatmap
+      }));
+      
+      setWeatherData(realWeatherData);
+    } catch (error) {
+      console.error('Error loading weather data:', error);
+      
+      // Fallback to demo data if real data fails
       const demoWeatherData: WeatherDataPoint[] = [];
       
       // Create a grid of weather data points
@@ -89,8 +109,6 @@ export const WeatherMapOverlay: React.FC<WeatherMapOverlayProps> = ({
       }
       
       setWeatherData(demoWeatherData);
-    } catch (error) {
-      console.error('Error loading weather data:', error);
     } finally {
       setIsLoading(false);
     }
@@ -274,7 +292,13 @@ export const WeatherMapOverlay: React.FC<WeatherMapOverlayProps> = ({
             >
               <View style={styles.weatherMarker}>
                 <IOSText style={styles.weatherMarkerText}>
-                  {selectedOverlay === 'wind' && formatWindSpeed(location.data.windSpeed)}
+                  {selectedOverlay === 'wind' && (
+                    <>
+                      {formatWindSpeed(location.data.windSpeed)}
+                      {location.data.windGust && ` G${location.data.windGust.toFixed(0)}`}
+                      {` ${location.data.windDirection}°`}
+                    </>
+                  )}
                   {selectedOverlay === 'waves' && `${location.data.waveHeight.toFixed(1)}m`}
                   {selectedOverlay === 'temperature' && formatTemperature(location.data.temperature)}
                   {selectedOverlay === 'visibility' && `${location.data.visibility.toFixed(0)}km`}

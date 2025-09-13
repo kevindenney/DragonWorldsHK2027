@@ -1,298 +1,249 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Dimensions } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, StyleSheet, Dimensions, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MapPin, Navigation, Layers, Info, Settings } from 'lucide-react-native';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { Filter, Layers, Navigation } from 'lucide-react-native';
 
-import { InteractiveRaceMap } from '../components/maps/InteractiveRaceMap';
-import { IOSText } from '../components/ui/IOSText';
-import { IOSButton } from '../components/ui/IOSButton';
-import { IOSCard } from '../components/ui/IOSCard';
-import { IOSSegmentedControl } from '../components/ui/IOSSegmentedControl';
-import { useUserStore } from '../stores/userStore';
-import GarminService, { SponsorLocation, RaceAreaBoundary, NavigationRoute } from '../services/garminService';
+import { SailingLocationMarker } from '../components/maps/SailingLocationMarker';
+import { LocationDetailModal } from '../components/maps/LocationDetailModal';
+import { IOSSegmentedControl } from '../components/ios';
+import { 
+  sailingLocations, 
+  locationFilters, 
+  getLocationsByType 
+} from '../data/sailingLocations';
+import { 
+  SailingLocation, 
+  SailingLocationFilter 
+} from '../types/sailingLocation';
+import { dragonChampionshipsLightTheme } from '../constants/dragonChampionshipsTheme';
+import type { MapScreenProps } from '../types/navigation';
 
-interface MapScreenProps {
-  navigation: any;
-}
-
-interface LocationDetails {
-  location: SponsorLocation | RaceAreaBoundary;
-  route?: NavigationRoute;
-  isNavigating: boolean;
-}
-
+const { colors, spacing, typography, shadows, borderRadius } = dragonChampionshipsLightTheme;
 const { width, height } = Dimensions.get('window');
 
 export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
-  const userStore = useUserStore();
-  const user = userStore();
-  
-  const [mapMode, setMapMode] = useState<'racing' | 'navigation' | 'services'>('racing');
-  const [selectedLocation, setSelectedLocation] = useState<LocationDetails | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [garminService] = useState(() => new GarminService(userStore));
+  const mapRef = useRef<MapView>(null);
+  const [selectedFilter, setSelectedFilter] = useState<SailingLocationFilter['type']>('all');
+  const [selectedLocation, setSelectedLocation] = useState<SailingLocation | null>(null);
+  const [mapType, setMapType] = useState<'standard' | 'satellite' | 'hybrid'>('hybrid');
+  const [showFilters, setShowFilters] = useState(false);
 
-  const mapModeOptions = [
-    { label: 'Racing', value: 'racing' },
-    { label: 'Navigation', value: 'navigation' },
-    { label: 'Services', value: 'services' }
-  ];
+  // Get filtered locations based on current filter
+  const filteredLocations = getLocationsByType(selectedFilter);
 
-  const handleLocationSelect = async (location: SponsorLocation | RaceAreaBoundary) => {
-    try {
-      setSelectedLocation({
-        location,
-        isNavigating: false
-      });
-    } catch (error) {
-      console.error('Error selecting location:', error);
-      Alert.alert('Error', 'Failed to select location');
-    }
+  // Hong Kong sailing area center - between RHKYC and Clearwater Bay
+  const initialRegion = {
+    latitude: 22.2720,
+    longitude: 114.2200,
+    latitudeDelta: 0.15,
+    longitudeDelta: 0.15,
   };
 
-  const handleStartNavigation = async () => {
-    if (!selectedLocation) return;
+  const handleLocationPress = (location: SailingLocation) => {
+    setSelectedLocation(location);
     
-    try {
-      setIsLoading(true);
-      
-      // Get user's current location (mock for demo)
-      const currentLocation = {
-        latitude: 22.2830,
-        longitude: 114.1650
-      };
-      
-      const targetCoordinate = 'coordinates' in selectedLocation.location 
-        ? selectedLocation.location.coordinates
-        : selectedLocation.location.coordinates[0];
-        
-      const route = await garminService.calculateRoute(currentLocation, targetCoordinate);
-      
-      setSelectedLocation(prev => prev ? {
-        ...prev,
-        route,
-        isNavigating: true
-      } : null);
-      
-      Alert.alert(
-        'Navigation Started',
-        `Route to ${selectedLocation.location.name}\nDistance: ${route.distance.toFixed(1)} nm\nETA: ${Math.round(route.estimatedTime)} minutes`,
-        [{ text: 'OK' }]
-      );
-    } catch (error) {
-      console.error('Error starting navigation:', error);
-      Alert.alert('Navigation Error', 'Failed to calculate route');
-    } finally {
-      setIsLoading(false);
-    }
+    // Center map on selected location
+    mapRef.current?.animateToRegion({
+      ...location.coordinates,
+      latitudeDelta: 0.05,
+      longitudeDelta: 0.05,
+    }, 1000);
   };
 
-  const handleStopNavigation = () => {
-    setSelectedLocation(prev => prev ? {
-      ...prev,
-      route: undefined,
-      isNavigating: false
-    } : null);
-  };
-
-  const getLocationTypeDescription = (location: SponsorLocation | RaceAreaBoundary): string => {
-    if ('sponsor' in location) {
-      const sponsorLocation = location as SponsorLocation;
-      switch (sponsorLocation.sponsor) {
-        case 'HSBC':
-          return sponsorLocation.type === 'ATM' ? 'Banking Services' : 'Premier Banking';
-        case 'Sino_Group':
-          return 'Luxury Hospitality';
-        case 'BMW':
-          return 'Transport Services';
-        case 'Garmin':
-          return 'Marine Navigation';
-        default:
-          return 'Services';
-      }
-    } else {
-      const raceArea = location as RaceAreaBoundary;
-      switch (raceArea.type) {
-        case 'start_line':
-          return 'Race Start';
-        case 'finish_line':
-          return 'Race Finish';
-        case 'mark':
-          return 'Racing Mark';
-        case 'prohibited_area':
-          return 'Restricted Area';
-        default:
-          return 'Race Area';
+  const handleFilterChange = (filter: SailingLocationFilter['type']) => {
+    setSelectedFilter(filter);
+    setShowFilters(false);
+    
+    // If filtering to specific type, zoom to show those locations
+    const locations = getLocationsByType(filter);
+    if (locations.length > 0 && mapRef.current) {
+      // Calculate region to show all filtered locations
+      const coordinates = locations.map(loc => loc.coordinates);
+      
+      if (coordinates.length === 1) {
+        // Single location - zoom in close
+        mapRef.current.animateToRegion({
+          ...coordinates[0],
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
+        }, 1000);
+      } else {
+        // Multiple locations - fit all
+        mapRef.current.fitToCoordinates(coordinates, {
+          edgePadding: { top: 100, right: 50, bottom: 100, left: 50 },
+          animated: true,
+        });
       }
     }
   };
 
-  const getAccessLevel = (): string => {
-    switch (user.userType) {
-      case 'participant':
-        return 'Professional Charts & Navigation';
-      case 'vip':
-        return 'Premium Services & VIP Access';
-      default:
-        return 'Basic Navigation';
-    }
-  };
-
-  const renderLocationDetails = () => {
-    if (!selectedLocation) return null;
-    
-    const { location, route, isNavigating } = selectedLocation;
-    const isSponsorLocation = 'sponsor' in location;
-    
-    return (
-      <IOSCard style={styles.locationCard}>
-        <View style={styles.locationHeader}>
-          <View style={styles.locationInfo}>
-            <IOSText style={styles.locationName}>{location.name}</IOSText>
-            <IOSText style={styles.locationType}>
-              {getLocationTypeDescription(location)}
-            </IOSText>
-            {isSponsorLocation && (
-              <IOSText style={styles.locationAddress}>
-                {(location as SponsorLocation).address}
-              </IOSText>
-            )}
-          </View>
-          <IOSButton
-            title={isNavigating ? "Stop" : "Navigate"}
-            onPress={isNavigating ? handleStopNavigation : handleStartNavigation}
-            variant={isNavigating ? "secondary" : "primary"}
-            size="small"
-            disabled={isLoading}
-            style={styles.navButton}
-          />
-        </View>
-        
-        {location.description && (
-          <IOSText style={styles.locationDescription}>
-            {location.description}
-          </IOSText>
-        )}
-        
-        {isSponsorLocation && (
-          <View style={styles.servicesContainer}>
-            <IOSText style={styles.servicesTitle}>Available Services:</IOSText>
-            {(location as SponsorLocation).services.map((service, index) => (
-              <IOSText key={index} style={styles.serviceItem}>• {service}</IOSText>
-            ))}
-            
-            {(location as SponsorLocation).contact && (
-              <View style={styles.contactInfo}>
-                <IOSText style={styles.contactLabel}>Contact:</IOSText>
-                {(location as SponsorLocation).contact?.phone && (
-                  <IOSText style={styles.contactText}>
-                    📞 {(location as SponsorLocation).contact!.phone}
-                  </IOSText>
-                )}
-                {(location as SponsorLocation).contact?.website && (
-                  <IOSText style={styles.contactText}>
-                    🌐 {(location as SponsorLocation).contact!.website}
-                  </IOSText>
-                )}
-              </View>
-            )}
-          </View>
-        )}
-        
-        {route && (
-          <View style={styles.routeInfo}>
-            <IOSText style={styles.routeTitle}>Navigation Route</IOSText>
-            <View style={styles.routeStats}>
-              <View style={styles.routeStat}>
-                <IOSText style={styles.routeStatLabel}>Distance</IOSText>
-                <IOSText style={styles.routeStatValue}>{route.distance.toFixed(1)} nm</IOSText>
-              </View>
-              <View style={styles.routeStat}>
-                <IOSText style={styles.routeStatLabel}>ETA</IOSText>
-                <IOSText style={styles.routeStatValue}>{Math.round(route.estimatedTime)} min</IOSText>
-              </View>
-            </View>
-            
-            {route.safetyNotes.length > 0 && (
-              <View style={styles.safetyNotes}>
-                <IOSText style={styles.safetyTitle}>⚠️ Safety Notes:</IOSText>
-                {route.safetyNotes.map((note, index) => (
-                  <IOSText key={index} style={styles.safetyNote}>• {note}</IOSText>
-                ))}
-              </View>
-            )}
-          </View>
-        )}
-      </IOSCard>
+  const handleMapTypeChange = () => {
+    setMapType(prev => 
+      prev === 'standard' ? 'satellite' : 
+      prev === 'satellite' ? 'hybrid' : 'standard'
     );
+  };
+
+  const handleCloseModal = () => {
+    setSelectedLocation(null);
+  };
+
+  const getCurrentFilterLabel = () => {
+    const filter = locationFilters.find(f => f.type === selectedFilter);
+    return filter?.label || 'All Locations';
+  };
+
+  const getFilteredLocationCount = () => {
+    return filteredLocations.length;
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <IOSText style={styles.headerTitle}>Marine Navigation</IOSText>
-        <IOSText style={styles.accessLevel}>{getAccessLevel()}</IOSText>
+        <View style={styles.headerContent}>
+          <View>
+            <Text style={styles.headerTitle}>Sailing Locations</Text>
+            <Text style={styles.headerSubtitle}>
+              {getCurrentFilterLabel()} ({getFilteredLocationCount()})
+            </Text>
+          </View>
+          
+          <View style={styles.headerActions}>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => setShowFilters(!showFilters)}
+            >
+              <Filter size={20} color={colors.primary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={handleMapTypeChange}
+            >
+              <Layers size={20} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Filter Controls */}
+        {showFilters && (
+          <View style={styles.filterContainer}>
+            <IOSSegmentedControl
+              options={locationFilters.map(filter => ({
+                label: filter.label,
+                value: filter.type
+              }))}
+              selectedValue={selectedFilter}
+              onValueChange={handleFilterChange}
+              style={styles.segmentedControl}
+            />
+          </View>
+        )}
       </View>
-      
-      <IOSSegmentedControl
-        options={mapModeOptions}
-        selectedValue={mapMode}
-        onValueChange={(value) => setMapMode(value as 'racing' | 'navigation' | 'services')}
-        style={styles.segmentedControl}
-      />
-      
+
+      {/* Map */}
       <View style={styles.mapContainer}>
-        <InteractiveRaceMap
-          showRaceAreas={mapMode === 'racing' || mapMode === 'navigation'}
-          showSponsorLocations={mapMode === 'services' || mapMode === 'navigation'}
-          showNavigation={mapMode === 'navigation'}
-          selectedLocationId={selectedLocation?.location.id}
-          onLocationSelect={handleLocationSelect}
-          initialRegion={{
-            latitude: 22.2830,
-            longitude: 114.1650,
-            latitudeDelta: mapMode === 'racing' ? 0.0422 : 0.0922,
-            longitudeDelta: mapMode === 'racing' ? 0.0221 : 0.0421,
+        <MapView
+          ref={mapRef}
+          provider={PROVIDER_GOOGLE}
+          style={styles.map}
+          initialRegion={initialRegion}
+          mapType={mapType}
+          showsUserLocation={true}
+          showsMyLocationButton={true}
+          showsCompass={true}
+          showsScale={true}
+          showsBuildings={false}
+          showsIndoors={false}
+          zoomEnabled={true}
+          scrollEnabled={true}
+          pitchEnabled={false}
+          rotateEnabled={true}
+          onPress={() => setSelectedLocation(null)} // Deselect when tapping empty area
+        >
+          {filteredLocations.map((location) => (
+            <Marker
+              key={location.id}
+              coordinate={location.coordinates}
+              onPress={() => handleLocationPress(location)}
+              tracksViewChanges={false} // Optimize performance
+            >
+              <SailingLocationMarker
+                location={location}
+                isSelected={selectedLocation?.id === location.id}
+                onPress={handleLocationPress}
+              />
+            </Marker>
+          ))}
+        </MapView>
+
+        {/* Map Legend */}
+        <View style={styles.legend}>
+          <Text style={styles.legendTitle}>Legend</Text>
+          
+          <View style={styles.legendItem}>
+            <View style={[styles.legendMarker, { backgroundColor: '#DC2626' }]} />
+            <Text style={styles.legendText}>Championship HQ</Text>
+          </View>
+          
+          <View style={styles.legendItem}>
+            <View style={[styles.legendMarker, { backgroundColor: '#2563EB' }]} />
+            <Text style={styles.legendText}>Race Course</Text>
+          </View>
+          
+          <View style={styles.legendItem}>
+            <View style={[styles.legendMarker, { backgroundColor: '#0891B2' }]} />
+            <Text style={styles.legendText}>Marinas</Text>
+          </View>
+          
+          <View style={styles.legendItem}>
+            <View style={[styles.legendMarker, { backgroundColor: '#EA580C' }]} />
+            <Text style={styles.legendText}>Chandleries</Text>
+          </View>
+          
+          <View style={styles.legendItem}>
+            <View style={[styles.legendMarker, { backgroundColor: '#D97706' }]} />
+            <Text style={styles.legendText}>Gear Stores</Text>
+          </View>
+          
+          <View style={styles.legendItem}>
+            <View style={[styles.legendMarker, { backgroundColor: '#7C3AED' }]} />
+            <Text style={styles.legendText}>Hotels</Text>
+          </View>
+
+          <View style={styles.legendDivider} />
+          
+          <View style={styles.legendItem}>
+            <View style={styles.championshipIndicator} />
+            <Text style={styles.legendText}>Championship 2027</Text>
+          </View>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.quickActions}>
+          <TouchableOpacity 
+            style={styles.quickActionButton}
+            onPress={() => navigation.navigate('Schedule')}
+          >
+            <Navigation size={16} color={colors.primary} />
+            <Text style={styles.quickActionText}>Schedule</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Location Detail Modal */}
+      {selectedLocation && (
+        <LocationDetailModal
+          location={selectedLocation}
+          onClose={handleCloseModal}
+          onNavigate={(location) => {
+            // Could integrate with external navigation apps here
+            console.log('Navigate to:', location.name);
           }}
         />
-      </View>
-      
-      {selectedLocation && (
-        <ScrollView 
-          style={styles.detailsContainer}
-          contentContainerStyle={styles.detailsContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {renderLocationDetails()}
-        </ScrollView>
       )}
-      
-      {/* Quick Action Buttons */}
-      <View style={styles.quickActions}>
-        <IOSButton
-          title="Weather Overlay"
-          onPress={() => navigation.navigate('Weather')}
-          variant="secondary"
-          size="small"
-          icon={<Layers size={16} color="#007AFF" />}
-        />
-        {user.userType === 'participant' && (
-          <IOSButton
-            title="Race Areas"
-            onPress={() => setMapMode('racing')}
-            variant={mapMode === 'racing' ? 'primary' : 'secondary'}
-            size="small"
-            icon={<MapPin size={16} color={mapMode === 'racing' ? "#FFFFFF" : "#007AFF"} />}
-          />
-        )}
-        <IOSButton
-          title="Services"
-          onPress={() => setMapMode('services')}
-          variant={mapMode === 'services' ? 'primary' : 'secondary'}
-          size="small"
-          icon={<Navigation size={16} color={mapMode === 'services' ? "#FFFFFF" : "#007AFF"} />}
-        />
-      </View>
     </SafeAreaView>
   );
 };
@@ -300,160 +251,122 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: colors.background,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#C6C6C8',
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+    ...shadows.cardMedium,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#1C1C1E',
+    ...typography.headlineMedium,
+    color: colors.text,
+    fontWeight: '700',
   },
-  accessLevel: {
-    fontSize: 13,
-    color: '#007AFF',
+  headerSubtitle: {
+    ...typography.caption,
+    color: colors.textMuted,
     marginTop: 2,
   },
+  headerActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  actionButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+  },
   segmentedControl: {
-    marginHorizontal: 16,
-    marginVertical: 12,
+    marginTop: spacing.sm,
   },
   mapContainer: {
     flex: 1,
+    position: 'relative',
   },
-  detailsContainer: {
+  map: {
+    width: width,
+    height: '100%',
+  },
+  legend: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    maxHeight: height * 0.4,
-    backgroundColor: 'transparent',
+    bottom: spacing.lg,
+    left: spacing.lg,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    minWidth: 160,
+    ...shadows.cardMedium,
   },
-  detailsContent: {
-    padding: 16,
-  },
-  locationCard: {
-    padding: 16,
-    marginBottom: 16,
-  },
-  locationHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  locationInfo: {
-    flex: 1,
-  },
-  locationName: {
-    fontSize: 18,
+  legendTitle: {
+    ...typography.bodyMedium,
+    color: colors.text,
     fontWeight: '600',
-    color: '#1C1C1E',
-    marginBottom: 4,
+    marginBottom: spacing.sm,
   },
-  locationType: {
-    fontSize: 14,
-    color: '#007AFF',
-    marginBottom: 2,
-  },
-  locationAddress: {
-    fontSize: 13,
-    color: '#8E8E93',
-  },
-  locationDescription: {
-    fontSize: 14,
-    color: '#3C3C43',
-    marginBottom: 12,
-    fontStyle: 'italic',
-  },
-  navButton: {
-    minWidth: 80,
-  },
-  servicesContainer: {
-    marginTop: 8,
-  },
-  servicesTitle: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#1C1C1E',
-    marginBottom: 8,
-  },
-  serviceItem: {
-    fontSize: 14,
-    color: '#3C3C43',
-    marginBottom: 2,
-  },
-  contactInfo: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 0.5,
-    borderTopColor: '#C6C6C8',
-  },
-  contactLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#1C1C1E',
-    marginBottom: 4,
-  },
-  contactText: {
-    fontSize: 13,
-    color: '#007AFF',
-    marginBottom: 2,
-  },
-  routeInfo: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 0.5,
-    borderTopColor: '#C6C6C8',
-  },
-  routeTitle: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#1C1C1E',
-    marginBottom: 8,
-  },
-  routeStats: {
+  legendItem: {
     flexDirection: 'row',
-    marginBottom: 12,
-  },
-  routeStat: {
-    flex: 1,
     alignItems: 'center',
+    marginBottom: spacing.xs,
   },
-  routeStatLabel: {
-    fontSize: 12,
-    color: '#8E8E93',
-    marginBottom: 2,
+  legendMarker: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: spacing.sm,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
-  routeStatValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#007AFF',
+  legendText: {
+    ...typography.caption,
+    color: colors.text,
   },
-  safetyNotes: {
-    marginTop: 8,
+  legendDivider: {
+    height: 1,
+    backgroundColor: colors.borderLight,
+    marginVertical: spacing.xs,
   },
-  safetyTitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#FF9500',
-    marginBottom: 4,
-  },
-  safetyNote: {
-    fontSize: 13,
-    color: '#8E8E93',
-    marginBottom: 2,
+  championshipIndicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#FFD700',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    marginRight: spacing.sm,
   },
   quickActions: {
     position: 'absolute',
-    bottom: 20,
-    right: 16,
-    flexDirection: 'column',
-    gap: 8,
+    top: spacing.lg,
+    right: spacing.lg,
+  },
+  quickActionButton: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    ...shadows.cardMedium,
+  },
+  quickActionText: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '600',
   },
 });

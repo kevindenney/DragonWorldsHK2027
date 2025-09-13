@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, ReactNode } from 'react';
 import { useAuthStore, authSelectors } from '../stores/authStore';
-import { User, AuthProvider, LoginCredentials, RegisterCredentials } from '../types/auth';
+import { User, AuthProviderType, LoginCredentials, RegisterCredentials } from '../types/simpleAuth';
 
 /**
  * Authentication context interface
@@ -16,7 +16,7 @@ interface AuthContextType {
   // Actions
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
-  loginWithProvider: (provider: AuthProvider) => Promise<void>;
+  loginWithProvider: (provider: AuthProviderType) => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
@@ -40,33 +40,58 @@ interface AuthProviderProps {
  * Authentication provider component
  */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const authStore = useAuthStore();
+  // Get store selectors
+  const user = useAuthStore(authSelectors.user);
+  const isAuthenticated = useAuthStore(authSelectors.isAuthenticated);
+  const isLoading = useAuthStore(authSelectors.isLoading);
+  const error = useAuthStore(authSelectors.error);
+  const isInitialized = useAuthStore(authSelectors.isInitialized);
   
-  // Initialize auth state on mount
+  // Get store actions
+  const { 
+    initialize, 
+    login, 
+    register, 
+    loginWithProvider, 
+    logout, 
+    resetPassword, 
+    updateProfile, 
+    resendEmailVerification, 
+    clearError 
+  } = useAuthStore();
+  
+  // Track initialization to prevent multiple calls
+  const initializationAttempted = useRef(false);
+  
+  // Initialize auth state on mount - only run once
   useEffect(() => {
-    if (!authStore.isInitialized) {
-      authStore.initialize();
+    if (!isInitialized && !initializationAttempted.current) {
+      initializationAttempted.current = true;
+      console.log('🚀 Initializing auth store...');
+      initialize().catch(error => {
+        console.error('Auth initialization error:', error);
+      });
     }
-  }, [authStore]);
+  }, [isInitialized]);
 
-  const contextValue: AuthContextType = {
+  const contextValue: AuthContextType = useMemo(() => ({
     // State
-    user: useAuthStore(authSelectors.user),
-    isAuthenticated: useAuthStore(authSelectors.isAuthenticated),
-    isLoading: useAuthStore(authSelectors.isLoading),
-    error: useAuthStore(authSelectors.error),
-    isInitialized: useAuthStore(authSelectors.isInitialized),
+    user,
+    isAuthenticated,
+    isLoading,
+    error,
+    isInitialized,
 
     // Actions
-    login: authStore.login,
-    register: authStore.register,
-    loginWithProvider: authStore.loginWithProvider,
-    logout: authStore.logout,
-    resetPassword: authStore.resetPassword,
-    updateProfile: authStore.updateProfile,
-    resendEmailVerification: authStore.resendEmailVerification,
-    clearError: authStore.clearError,
-  };
+    login,
+    register,
+    loginWithProvider,
+    logout,
+    resetPassword,
+    updateProfile,
+    resendEmailVerification,
+    clearError,
+  }), [user, isAuthenticated, isLoading, error, isInitialized, login, register, loginWithProvider, logout, resetPassword, updateProfile, resendEmailVerification, clearError]);
 
   return (
     <AuthContext.Provider value={contextValue}>

@@ -17,8 +17,6 @@ import {
   EmailAuthProvider,
 } from 'firebase/auth';
 import { Platform } from 'react-native';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
-import appleAuth from '@invertase/react-native-apple-authentication';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { auth } from '../../config/firebase';
@@ -53,8 +51,8 @@ class AuthService {
   };
 
   constructor() {
-    this.initializeAuth();
-    this.setupGoogleSignIn();
+    // Skip initialization since we're using the authStore directly
+    // this.initializeAuth();
   }
 
   /**
@@ -79,20 +77,6 @@ class AuthService {
     });
   }
 
-  /**
-   * Setup Google Sign-In configuration
-   */
-  private setupGoogleSignIn() {
-    if (Platform.OS !== 'web') {
-      GoogleSignin.configure({
-        webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-        iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-        offlineAccess: true,
-        hostedDomain: '',
-        forceCodeForRefreshToken: true,
-      });
-    }
-  }
 
   /**
    * Handle Firebase auth state changes

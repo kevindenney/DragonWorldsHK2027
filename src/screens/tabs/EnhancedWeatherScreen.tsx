@@ -27,26 +27,33 @@ import {
 import { colors } from '../../constants/theme';
 import { useUserType, useNeedsVerification } from '../../stores/userStore';
 import { 
-  predictWindService,
-  formatWindSpeed,
-  formatTemperature,
-  getRaceQualityColor,
-  type PredictWindCurrentConditions,
-  type PredictWindProfessionalAnalysis,
-  type PredictWindWaveAnalysis,
-  type PredictWindRacingForecast,
-  type PredictWindSubscriptionStatus
-} from '../../services/predictwindService';
+  useWeatherStore,
+  useCurrentWeather,
+  useCurrentMarine,
+  useWeatherForecasts,
+  useWeatherAlerts,
+  useWeatherLoading,
+  useWeatherError,
+  useAccessLevel,
+  useCanAccessFeature
+} from '../../stores/weatherStore';
 import type { WeatherScreenProps } from '../../types/navigation';
 
 export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [currentConditions, setCurrentConditions] = useState<PredictWindCurrentConditions | null>(null);
-  const [professionalAnalysis, setProfessionalAnalysis] = useState<PredictWindProfessionalAnalysis | null>(null);
-  const [waveAnalysis, setWaveAnalysis] = useState<PredictWindWaveAnalysis | null>(null);
-  const [racingForecast, setRacingForecast] = useState<PredictWindRacingForecast | null>(null);
-  const [subscriptionStatus, setSubscriptionStatus] = useState<PredictWindSubscriptionStatus | null>(null);
+  
+  // Real weather store hooks
+  const { refreshWeather } = useWeatherStore();
+  const currentWeather = useCurrentWeather();
+  const currentMarine = useCurrentMarine();
+  const forecasts = useWeatherForecasts();
+  const alerts = useWeatherAlerts();
+  const loading = useWeatherLoading();
+  const error = useWeatherError();
+  const accessLevel = useAccessLevel();
+  const canAccessProfessionalAnalysis = useCanAccessFeature('detailedAnalysis');
+  const canAccessMarineData = useCanAccessFeature('marineConditions');
+  const canAccessRacingAnalysis = useCanAccessFeature('racingAnalysis');
   
   const userType = useUserType();
   const needsVerification = useNeedsVerification();
@@ -57,33 +64,10 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
 
   const loadWeatherData = async () => {
     try {
-      setLoading(true);
-
-      // Load subscription status first
-      const subStatus = await predictWindService.getSubscriptionStatus();
-      setSubscriptionStatus(subStatus);
-
-      // Load basic weather data
-      const conditions = await predictWindService.getCurrentConditions();
-      setCurrentConditions(conditions);
-
-      // Load professional features if accessible
-      if (subStatus.features.professionalAnalysis) {
-        const [profAnalysis, waves, racingData] = await Promise.all([
-          predictWindService.getProfessionalAnalysis().catch(() => null),
-          predictWindService.getWaveAnalysis().catch(() => null),
-          predictWindService.getRacingForecast().catch(() => null)
-        ]);
-
-        setProfessionalAnalysis(profAnalysis);
-        setWaveAnalysis(waves);
-        setRacingForecast(racingData);
-      }
+      await refreshWeather();
     } catch (error) {
       console.error('Failed to load weather data:', error);
       Alert.alert('Error', 'Failed to load weather data. Please try again.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -118,7 +102,7 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
   };
 
   const renderParticipantAccess = () => {
-    if (!subscriptionStatus?.isParticipantAccess) return null;
+    if (accessLevel !== 'participant') return null;
 
     return (
       <IOSCard style={styles.participantCard}>
@@ -141,7 +125,7 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
   };
 
   const renderSubscriptionRequired = () => {
-    if (subscriptionStatus?.hasAccess) return null;
+    if (accessLevel === 'premium') return null;
 
     return (
       <IOSCard style={styles.subscriptionCard}>
@@ -174,7 +158,7 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
   };
 
   const renderCurrentConditions = () => {
-    if (!currentConditions) return null;
+    if (!currentWeather) return null;
 
     return (
       <IOSSection title="CURRENT CONDITIONS">
@@ -183,9 +167,9 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
             <View style={styles.conditionItem}>
               <Cloud size={24} color={colors.primary} />
               <View style={styles.conditionDetails}>
-                <IOSText style={styles.conditionTitle}>🌤️ {currentConditions.conditions}</IOSText>
+                <IOSText style={styles.conditionTitle}>🌤️ {currentWeather.conditions}</IOSText>
                 <IOSText style={styles.conditionValue}>
-                  {formatTemperature(currentConditions.temperature)} | Feels like {formatTemperature(currentConditions.feelsLike)}
+                  {currentWeather.temperature}°C | Feels like {currentWeather.temperature}°C
                 </IOSText>
               </View>
             </View>
@@ -194,15 +178,15 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
           <View style={styles.detailGrid}>
             <View style={styles.detailItem}>
               <IOSText style={styles.detailLabel}>Humidity</IOSText>
-              <IOSText style={styles.detailValue}>{currentConditions.humidity}%</IOSText>
+              <IOSText style={styles.detailValue}>{currentWeather.humidity}%</IOSText>
             </View>
             <View style={styles.detailItem}>
               <IOSText style={styles.detailLabel}>Pressure</IOSText>
-              <IOSText style={styles.detailValue}>{currentConditions.pressure} hPa</IOSText>
+              <IOSText style={styles.detailValue}>{currentWeather.pressure} hPa</IOSText>
             </View>
             <View style={styles.detailItem}>
               <IOSText style={styles.detailLabel}>Visibility</IOSText>
-              <IOSText style={styles.detailValue}>{currentConditions.visibility}nm</IOSText>
+              <IOSText style={styles.detailValue}>{currentWeather.visibility}km</IOSText>
             </View>
             <View style={styles.detailItem}>
               <IOSText style={styles.detailLabel}>Updated</IOSText>
@@ -210,21 +194,21 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
             </View>
           </View>
 
-          {subscriptionStatus?.hasAccess && (
+          {accessLevel === 'premium' && (
             <View style={styles.professionalBadge}>
-              <IOSBadge text="Model Consensus: 3/3 agree" variant="success" size="small" />
-              <IOSBadge text="Confidence: High (95%)" variant="primary" size="small" />
+              <IOSBadge text="Multi-Source Data Active" variant="success" size="small" />
+              <IOSBadge text="OpenWeatherMap + Open-Meteo" variant="primary" size="small" />
             </View>
           )}
           
-          <IOSText style={styles.attribution}>PredictWind Professional</IOSText>
+          <IOSText style={styles.attribution}>Professional Marine Weather</IOSText>
         </IOSCard>
       </IOSSection>
     );
   };
 
   const renderProfessionalWindAnalysis = () => {
-    if (!professionalAnalysis || !subscriptionStatus?.features.professionalAnalysis) {
+    if (!canAccessProfessionalAnalysis || !currentWeather) {
       return renderLockedFeature('PROFESSIONAL WIND ANALYSIS', 'Professional analysis requires subscription');
     }
 
@@ -234,21 +218,21 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
           <View style={styles.windHeader}>
             <Wind size={20} color={colors.primary} />
             <IOSText style={styles.windTitle}>
-              💨 {currentConditions?.windSpeed || 15} knots from {currentConditions?.windDirectionText || 'NE'} (045°)
+              💨 {currentWeather.windSpeed} knots from {currentWeather.windDirection}°
             </IOSText>
           </View>
 
-          <IOSText style={styles.windDetail}>Gusts: 18-22 knots</IOSText>
-          <IOSText style={styles.windDetail}>Wind Shear: {professionalAnalysis.windShear.description}</IOSText>
-          <IOSText style={styles.windDetail}>Pressure Gradient: {professionalAnalysis.pressureGradient.value}mb/100km</IOSText>
-          <IOSText style={styles.windDetail}>Next Shift: +{professionalAnalysis.windShiftPrediction.direction}° in {professionalAnalysis.windShiftPrediction.timeMinutes} minutes</IOSText>
+          <IOSText style={styles.windDetail}>Gusts: {currentWeather.windGust || currentWeather.windSpeed + 3} knots</IOSText>
+          <IOSText style={styles.windDetail}>Pressure: {currentWeather.pressure} hPa</IOSText>
+          <IOSText style={styles.windDetail}>Visibility: {currentWeather.visibility}km</IOSText>
+          <IOSText style={styles.windDetail}>Conditions: {currentWeather.conditions}</IOSText>
 
           <View style={styles.racingAnalysisSection}>
             <IOSText style={styles.racingAnalysisTitle}>🎯 Racing Analysis</IOSText>
             <IOSText style={styles.racingAnalysisDetail}>
-              {professionalAnalysis.racingAnalysis.favors === 'right' ? 'Right side favored next hour' : 'Left side favored next hour'}
+              {currentWeather.windSpeed > 15 ? 'Strong wind conditions - favors tactical sailing' : 'Moderate conditions - consistent wind expected'}
             </IOSText>
-            <IOSText style={styles.racingAnalysisDetail}>Tactical shift window: {professionalAnalysis.racingAnalysis.tacticalWindow}</IOSText>
+            <IOSText style={styles.racingAnalysisDetail}>Wind direction: {currentWeather.windDirection}° - {currentWeather.windDirection > 180 ? 'Southerly' : 'Northerly'} pattern</IOSText>
           </View>
 
           <IOSButton
@@ -265,26 +249,28 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
   };
 
   const renderWaveCurrentAnalysis = () => {
-    if (!waveAnalysis || !subscriptionStatus?.features.currentAnalysis) {
-      return renderLockedFeature('WAVE & CURRENT ANALYSIS', 'Wave analysis requires subscription');
+    if (!canAccessMarineData || !currentMarine) {
+      return renderLockedFeature('WAVE & CURRENT ANALYSIS', 'Marine data requires premium subscription');
     }
 
     return (
       <IOSSection title="WAVE & CURRENT ANALYSIS">
         <IOSCard style={styles.analysisCard}>
           <IOSText style={styles.waveTitle}>
-            🌊 Wave: {waveAnalysis.waveHeight}m @ {waveAnalysis.wavePeriod}-{waveAnalysis.wavePeriod + 1} sec ({waveAnalysis.waveDirectionText})
+            🌊 Wave: {currentMarine.waveHeight}m @ {currentMarine.swellPeriod}sec
           </IOSText>
           <IOSText style={styles.waveDetail}>
-            Current: {waveAnalysis.currentSpeed}kt {waveAnalysis.currentDirectionText} ({waveAnalysis.tideStatus} tide)
+            Current: {currentMarine.current.speed}kt at {currentMarine.current.direction}°
           </IOSText>
-          <IOSText style={styles.waveDetail}>Wave-Current Interaction: {waveAnalysis.waveCurrentInteraction}</IOSText>
-          <IOSText style={styles.waveDetail}>Optimal Racing Angle: {waveAnalysis.racingImpact.optimalAngles}</IOSText>
+          <IOSText style={styles.waveDetail}>Tide: {currentMarine.tideHeight}m ({currentMarine.tideTime})</IOSText>
+          <IOSText style={styles.waveDetail}>Sea Temperature: {currentMarine.seaTemperature}°C</IOSText>
 
           <View style={styles.tacticalSection}>
             <IOSText style={styles.tacticalTitle}>🎯 Tactical Recommendation</IOSText>
-            <IOSText style={styles.tacticalDetail}>{waveAnalysis.racingImpact.tacticalAdvantage}</IOSText>
-            <IOSText style={styles.tacticalDetail}>Wave angle favors reaching</IOSText>
+            <IOSText style={styles.tacticalDetail}>
+              {currentMarine.waveHeight < 1 ? 'Calm seas - focus on wind patterns' : 'Moderate seas - consider wave patterns in tactics'}
+            </IOSText>
+            <IOSText style={styles.tacticalDetail}>Current direction affects racing line selection</IOSText>
           </View>
 
           <IOSButton
@@ -301,28 +287,28 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
   };
 
   const renderProfessionalForecast = () => {
-    if (!racingForecast || !subscriptionStatus?.features.racingAnalysis) {
+    if (!canAccessRacingAnalysis || !forecasts || forecasts.length === 0) {
       return renderBasicForecast();
     }
 
     return (
       <IOSSection title="6-HOUR PROFESSIONAL FORECAST">
         <IOSCard style={styles.forecastCard}>
-          {racingForecast.hourlyData.slice(0, 6).map((hour, index) => {
-            const time = new Date(hour.time).getHours();
-            const raceQualityColor = getRaceQualityColor(hour.raceQuality);
+          {forecasts.slice(0, 6).map((forecast, index) => {
+            const time = new Date(forecast.time).getHours();
+            const raceQualityColor = colors.success; // Simplified for now
 
             return (
               <View key={index} style={styles.forecastRow}>
                 <IOSText style={styles.forecastTime}>{time}:00</IOSText>
                 <IOSText style={styles.forecastWind}>
-                  {Math.round(hour.windSpeed)}kts {hour.windDirectionText}
+                  {Math.round(forecast.weather.windSpeed)}kts {forecast.weather.windDirection}°
                 </IOSText>
-                <IOSText style={styles.forecastCondition}>{hour.conditions}</IOSText>
-                <IOSText style={styles.forecastTemp}>{formatTemperature(hour.temperature)}</IOSText>
+                <IOSText style={styles.forecastCondition}>{forecast.weather.conditions}</IOSText>
+                <IOSText style={styles.forecastTemp}>{forecast.weather.temperature}°C</IOSText>
                 <View style={[styles.raceQualityDot, { backgroundColor: raceQualityColor }]} />
                 <IOSText style={[styles.raceQuality, { color: raceQualityColor }]}>
-                  R{hour.raceQuality === 'excellent' ? '++' : hour.raceQuality === 'good' ? '+' : hour.raceQuality === 'fair' ? '' : '-'}
+                  R{forecast.weather.windSpeed > 15 ? '++' : forecast.weather.windSpeed > 8 ? '+' : '-'}
                 </IOSText>
               </View>
             );
@@ -347,10 +333,10 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
   const renderBasicForecast = () => (
     <IOSSection title="BASIC CONDITIONS">
       <IOSCard style={styles.basicCard}>
-        <IOSText style={styles.basicTitle}>🌤️ {currentConditions?.conditions || 'Partly Cloudy'} | {formatTemperature(currentConditions?.temperature || 22)}</IOSText>
-        <IOSText style={styles.basicDetail}>Wind: {formatWindSpeed(currentConditions?.windSpeed || 15)} {currentConditions?.windDirectionText || 'NE'} (±3)</IOSText>
-        <IOSText style={styles.basicDetail}>Wave: 0.8m</IOSText>
-        <IOSText style={styles.basicDetail}>Visibility: Good</IOSText>
+        <IOSText style={styles.basicTitle}>🌤️ {currentWeather?.conditions || 'Loading...'} | {currentWeather?.temperature || '--'}°C</IOSText>
+        <IOSText style={styles.basicDetail}>Wind: {currentWeather?.windSpeed || '--'}kts from {currentWeather?.windDirection || '--'}°</IOSText>
+        <IOSText style={styles.basicDetail}>Marine data: Premium feature</IOSText>
+        <IOSText style={styles.basicDetail}>Visibility: {currentWeather?.visibility || '--'}km</IOSText>
 
         <View style={styles.upgradePrompt}>
           <IOSText style={styles.upgradeTitle}>🔓 Upgrade for:</IOSText>
@@ -367,7 +353,7 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
   );
 
   const renderPremiumPreview = () => {
-    if (subscriptionStatus?.hasAccess) return null;
+    if (accessLevel === 'premium') return null;
 
     return (
       <IOSSection title="PREMIUM PREVIEW">
@@ -425,7 +411,7 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
     <IOSSection title={title}>
       <IOSCard style={styles.lockedCard}>
         <View style={styles.lockedHeader}>
-          <Lock size={20} color={colors.gray[400]} />
+          <Lock size={20} color={colors.textMuted} />
           <IOSText style={styles.lockedTitle}>Premium Feature</IOSText>
         </View>
         <IOSText style={styles.lockedDescription}>{description}</IOSText>
@@ -491,7 +477,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
+    borderBottomColor: colors.borderLight,
   },
   headerTitle: {
     fontSize: 24,
@@ -501,12 +487,12 @@ const styles = StyleSheet.create({
   headerLogo: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.borderLight,
     borderRadius: 4,
   },
   logoText: {
     fontSize: 12,
-    color: colors.gray[600],
+    color: colors.textSecondary,
   },
   scrollView: {
     flex: 1,
@@ -518,7 +504,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: colors.gray[600],
+    color: colors.textSecondary,
   },
   // Participant Access Card
   participantCard: {
@@ -542,12 +528,12 @@ const styles = StyleSheet.create({
   },
   accessSubtitle: {
     fontSize: 14,
-    color: colors.gray[700],
+    color: colors.text,
     marginBottom: 4,
   },
   accessExpiry: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.textSecondary,
     marginBottom: 12,
   },
   continueButton: {
@@ -575,12 +561,12 @@ const styles = StyleSheet.create({
   },
   subscriptionSubtitle: {
     fontSize: 14,
-    color: colors.gray[700],
+    color: colors.text,
     marginBottom: 4,
   },
   subscriptionDescription: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.textSecondary,
     marginBottom: 16,
   },
   subscriptionActions: {
@@ -615,7 +601,7 @@ const styles = StyleSheet.create({
   },
   conditionValue: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.textSecondary,
   },
   detailGrid: {
     flexDirection: 'row',
@@ -629,7 +615,7 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 12,
-    color: colors.gray[500],
+    color: colors.textMuted,
     marginBottom: 2,
   },
   detailValue: {
@@ -644,7 +630,7 @@ const styles = StyleSheet.create({
   },
   attribution: {
     fontSize: 11,
-    color: colors.gray[500],
+    color: colors.textMuted,
     textAlign: 'right',
     fontStyle: 'italic',
   },
@@ -665,7 +651,7 @@ const styles = StyleSheet.create({
   },
   windDetail: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   racingAnalysisSection: {
@@ -683,7 +669,7 @@ const styles = StyleSheet.create({
   },
   racingAnalysisDetail: {
     fontSize: 14,
-    color: colors.gray[700],
+    color: colors.text,
     marginBottom: 4,
   },
   // Wave Analysis
@@ -695,7 +681,7 @@ const styles = StyleSheet.create({
   },
   waveDetail: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   tacticalSection: {
@@ -712,7 +698,7 @@ const styles = StyleSheet.create({
   },
   tacticalDetail: {
     fontSize: 14,
-    color: colors.gray[700],
+    color: colors.text,
     marginBottom: 4,
   },
   detailButton: {
@@ -728,7 +714,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[100],
+    borderBottomColor: colors.borderLight,
   },
   forecastTime: {
     fontSize: 14,
@@ -743,7 +729,7 @@ const styles = StyleSheet.create({
   },
   forecastCondition: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.textSecondary,
     width: 60,
   },
   forecastTemp: {
@@ -769,11 +755,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: colors.gray[100],
+    borderTopColor: colors.borderLight,
   },
   legendText: {
     fontSize: 12,
-    color: colors.gray[500],
+    color: colors.textMuted,
   },
   extendedButton: {
     alignSelf: 'flex-end',
@@ -790,14 +776,14 @@ const styles = StyleSheet.create({
   },
   basicDetail: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   upgradePrompt: {
     marginTop: 16,
     marginBottom: 16,
     padding: 12,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.surface,
     borderRadius: 8,
   },
   upgradeTitle: {
@@ -808,7 +794,7 @@ const styles = StyleSheet.create({
   },
   upgradeFeature: {
     fontSize: 13,
-    color: colors.gray[700],
+    color: colors.text,
     marginBottom: 4,
   },
   // Premium Preview
@@ -823,13 +809,13 @@ const styles = StyleSheet.create({
   },
   blurredContent: {
     padding: 16,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.borderLight,
     borderRadius: 8,
     marginBottom: 16,
   },
   blurredText: {
     fontSize: 14,
-    color: colors.gray[500],
+    color: colors.textMuted,
     marginBottom: 4,
   },
   unlockButton: {
@@ -859,7 +845,7 @@ const styles = StyleSheet.create({
   },
   promoFeature: {
     fontSize: 14,
-    color: colors.gray[700],
+    color: colors.text,
     marginBottom: 4,
   },
   promoButton: {
@@ -867,7 +853,7 @@ const styles = StyleSheet.create({
   },
   promoCredibility: {
     fontSize: 12,
-    color: colors.gray[600],
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   // Locked Feature
@@ -883,12 +869,12 @@ const styles = StyleSheet.create({
   lockedTitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors.gray[600],
+    color: colors.textSecondary,
     marginLeft: 8,
   },
   lockedDescription: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.textSecondary,
     marginBottom: 12,
   },
   lockedButton: {

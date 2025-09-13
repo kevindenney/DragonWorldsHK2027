@@ -10,10 +10,7 @@ import {
   Flag
 } from 'lucide-react-native';
 
-import { IOSText } from '../ui/IOSText';
-import { IOSCard } from '../ui/IOSCard';
-import { IOSButton } from '../ui/IOSButton';
-import { IOSBadge } from '../ui/IOSBadge';
+import { IOSText, IOSCard, IOSButton, IOSBadge } from '../ios';
 import type { ChampionshipStandings } from '../../services/resultsService';
 
 interface ChampionshipStandingsCardProps {

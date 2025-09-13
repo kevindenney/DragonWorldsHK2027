@@ -6,72 +6,7 @@ const config = getDefaultConfig(__dirname, {
   isCSSEnabled: true,
 });
 
-// Enable bundle splitting and optimization
-config.transformer = {
-  ...config.transformer,
-  // Enable minification in production
-  minifierConfig: {
-    mangle: {
-      keep_fnames: false,
-    },
-    output: {
-      comments: false,
-    },
-  },
-  // Optimize images
-  assetPlugins: ['expo-asset/tools/hashAssetFiles'],
-};
-
-// Bundle splitting configuration
-config.serializer = {
-  ...config.serializer,
-  // Create separate bundles for better caching
-  createModuleIdFactory: () => {
-    const fileToIdMap = new Map();
-    let nextId = 0;
-    
-    return (path) => {
-      if (!fileToIdMap.has(path)) {
-        fileToIdMap.set(path, nextId);
-        nextId++;
-      }
-      return fileToIdMap.get(path);
-    };
-  },
-  
-  // Optimize bundle output
-  processModuleFilter: (modules) => {
-    // Filter out unused modules in production
-    if (process.env.NODE_ENV === 'production') {
-      return modules.filter(module => {
-        // Keep essential modules
-        const path = module.path;
-        
-        // Always include app entry point and core modules
-        if (path.includes('/node_modules/react/') ||
-            path.includes('/node_modules/react-native/') ||
-            path.includes('/node_modules/expo/') ||
-            path.includes('/src/')) {
-          return true;
-        }
-        
-        // Filter out test files and development tools
-        if (path.includes('__tests__') ||
-            path.includes('.test.') ||
-            path.includes('.spec.') ||
-            path.includes('/testing/')) {
-          return false;
-        }
-        
-        return true;
-      });
-    }
-    
-    return modules;
-  },
-};
-
-// Resolver optimization
+// Resolver optimization - keep essential aliases and extensions
 config.resolver = {
   ...config.resolver,
   
@@ -107,9 +42,8 @@ config.resolver = {
     'svg'
   ],
   
-  // Module resolution optimization
+  // Module resolution optimization - keep useful aliases
   alias: {
-    // Create aliases for common paths to improve build performance
     '@': './src',
     '@components': './src/components',
     '@screens': './src/screens',
@@ -119,77 +53,90 @@ config.resolver = {
     '@assets': './assets',
   },
   
-  // Blocklist for modules we don't want to include
-  blockList: [
-    // Block common development files
-    /.*\/__tests__\/.*/,
-    /.*\.test\.(js|tsx?|jsx?)$/,
-    /.*\.spec\.(js|tsx?|jsx?)$/,
-    
-    // Block source maps in production
-    ...(process.env.NODE_ENV === 'production' ? [
-      /.*\.map$/,
-    ] : []),
-  ],
-  
   // Platform-specific resolution
   platforms: ['ios', 'android', 'native', 'web'],
+  
+  // Block web-specific packages from React Native bundle
+  blockList: [
+    /node_modules\/idb\/.*/,
+    /node_modules\/fake-indexeddb\/.*/,
+    /node_modules\/@firebase\/analytics\/.*/,
+    /node_modules\/@firebase\/analytics-compat\/.*/,
+    /node_modules\/@firebase\/remote-config\/.*/,
+    /node_modules\/@firebase\/remote-config-compat\/.*/,
+    /node_modules\/@firebase\/performance\/.*/,
+    /node_modules\/@firebase\/performance-compat\/.*/,
+    /node_modules\/whatwg-url\/.*/,
+    /node_modules\/url-polyfill\/.*/,
+    // Only block specific problematic files, not all CJS/ESM
+    /node_modules\/@firebase\/.*\/dist\/index\.browser\.js$/,
+    /node_modules\/@firebase\/.*\/dist\/index\.web\.js$/,
+  ],
+  
+  // Platform-specific resolution for React Native (prioritize React Native builds)
+  resolverMainFields: ['react-native', 'main', 'browser'],
 };
 
-// Cache configuration for faster rebuilds
-config.cacheStores = [
-  {
-    name: 'filesystem',
-    path: './node_modules/.cache/metro',
-  },
-];
-
-// Enable experimental features for better performance
-config.transformer.experimentalImportSupport = false;
-config.transformer.inlineRequires = true;
-
-// Production optimizations
-if (process.env.NODE_ENV === 'production') {
-  // Enable aggressive minification
-  config.transformer.minifierConfig = {
-    ...config.transformer.minifierConfig,
-    mangle: {
-      keep_fnames: false,
-      keep_classnames: false,
-    },
-    compress: {
-      drop_console: true, // Remove console.log statements
-      drop_debugger: true,
-      pure_funcs: ['console.log', 'console.info', 'console.debug'],
-    },
-    output: {
-      comments: false,
-      beautify: false,
-    },
-  };
+// Custom resolver to handle Firebase packages
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  // Handle idb package - prevent it from being resolved in React Native
+  if (moduleName === 'idb') {
+    return {
+      type: 'empty',
+    };
+  }
   
-  // Enable tree shaking
-  config.optimizationSizeLimit = 150000;
+  // Get the default resolution first
+  let resolved;
+  try {
+    resolved = context.resolveRequest(context, moduleName, platform);
+  } catch (error) {
+    // If default resolution fails, just let it fail
+    throw error;
+  }
   
-  // Optimize imports
-  config.transformer.optimizeCSSImports = true;
-}
-
-// Development optimizations
-if (process.env.NODE_ENV === 'development') {
-  // Enable fast refresh
-  config.transformer.enableBabelRCLookup = true;
-  
-  // Better source maps for debugging
-  config.symbolicator = {
-    customizeFrame: (frame) => {
-      // Improve stack trace readability
-      if (frame.file && frame.file.includes('node_modules')) {
-        return null; // Hide node_modules frames
+  // Handle Firebase packages - redirect blocked file types
+  if ((moduleName.startsWith('@firebase/') || moduleName.startsWith('firebase/')) && resolved && resolved.filePath) {
+    // If resolved path contains blocked files, find alternative
+    if (resolved.filePath.includes('index.cjs.js') || 
+        resolved.filePath.includes('index.esm.js') ||
+        resolved.filePath.endsWith('.cjs.js') ||
+        resolved.filePath.endsWith('.esm.js')) {
+      
+      // Try to find React Native specific builds
+      const basePath = resolved.filePath.replace(/\/dist\/.*$/, '');
+      const possiblePaths = [
+        `${basePath}/dist/index.rn.js`,
+        `${basePath}/dist/index.native.js`, 
+        `${basePath}/dist/index.js`,
+        `${basePath}/index.js`
+      ];
+      
+      const fs = require('fs');
+      for (const path of possiblePaths) {
+        try {
+          if (fs.existsSync(path)) {
+            console.log(`🔄 Redirecting ${moduleName} from ${resolved.filePath} to ${path}`);
+            return { type: 'sourceFile', filePath: path };
+          }
+        } catch (e) {
+          continue;
+        }
       }
-      return frame;
-    },
-  };
-}
+      
+      // If no alternative found, log and use original (will likely fail but with better error)
+      console.warn(`⚠️ No React Native alternative found for ${moduleName} at ${resolved.filePath}`);
+    }
+  }
+  
+  return resolved;
+};
+
+// Basic transformer optimizations
+config.transformer = {
+  ...config.transformer,
+  // Enable inline requires for better performance
+  inlineRequires: true,
+};
 
 module.exports = config;

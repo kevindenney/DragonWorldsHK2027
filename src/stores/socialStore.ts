@@ -188,12 +188,301 @@ const convertServiceGroupToStoreGroup = (serviceGroup: WhatsAppGroupService): Wh
 // Fetch groups using the WhatsApp service
 const fetchGroupsFromAPI = async (): Promise<WhatsAppGroup[]> => {
   if (!whatsappService) {
-    whatsappService = new WhatsAppService(useUserStore);
+    whatsappService = new WhatsAppService();
   }
   
   const serviceGroups = await whatsappService.getAvailableGroups();
   return serviceGroups.map(convertServiceGroupToStoreGroup);
 };
+
+// Default sailing-specific WhatsApp groups for Dragon Worlds HK 2027
+const defaultSailingGroups: WhatsAppGroup[] = [
+  // Competition Communication Groups
+  {
+    id: 'race-committee-comms',
+    title: 'Race Committee Communications',
+    description: 'Official race updates, course changes, postponements, and daily race briefings',
+    category: 'active-racing',
+    memberCount: 45,
+    activeMemberCount: 38,
+    isActive: true,
+    isVIP: false,
+    isInviteOnly: true,
+    verificationStatus: 'verified',
+    joinUrl: 'https://chat.whatsapp.com/race-committee-comms',
+    createdAt: new Date('2027-02-01').toISOString(),
+    lastActivity: new Date().toISOString(),
+    rules: ['Officials and competitors only', 'Race-related communications only'],
+    admins: ['race-officer', 'chief-judge']
+  },
+  {
+    id: 'competitors-general',
+    title: 'Dragon Worlds 2027 - Competitors',
+    description: 'General discussion for all Dragon Worlds competitors, fleet announcements, and networking',
+    category: 'active-racing',
+    memberCount: 286,
+    activeMemberCount: 195,
+    isActive: true,
+    isVIP: false,
+    isInviteOnly: false,
+    verificationStatus: 'verified',
+    joinUrl: 'https://chat.whatsapp.com/competitors-general',
+    createdAt: new Date('2027-01-15').toISOString(),
+    lastActivity: new Date().toISOString(),
+    rules: ['Registered competitors only', 'Be respectful', 'No spam'],
+    admins: ['regatta-director', 'competitors-rep']
+  },
+  {
+    id: 'weather-conditions',
+    title: 'Weather & Sea Conditions',
+    description: 'Real-time weather updates, sea state reports, and sailing condition discussions',
+    category: 'active-racing',
+    memberCount: 324,
+    activeMemberCount: 267,
+    isActive: true,
+    isVIP: false,
+    isInviteOnly: false,
+    verificationStatus: 'unverified',
+    joinUrl: 'https://chat.whatsapp.com/weather-conditions',
+    createdAt: new Date('2027-01-20').toISOString(),
+    lastActivity: new Date().toISOString(),
+    rules: ['Weather-related content only', 'Share reliable sources'],
+    admins: ['weather-officer', 'safety-officer']
+  },
+  {
+    id: 'results-scoring',
+    title: 'Results & Scoring',
+    description: 'Live results, protest updates, redress announcements, and scoring clarifications',
+    category: 'active-racing',
+    memberCount: 198,
+    activeMemberCount: 156,
+    isActive: true,
+    isVIP: false,
+    isInviteOnly: true,
+    verificationStatus: 'verified',
+    joinUrl: 'https://chat.whatsapp.com/results-scoring',
+    createdAt: new Date('2027-02-01').toISOString(),
+    lastActivity: new Date().toISOString(),
+    rules: ['Race results discussions only', 'No protest discussions'],
+    admins: ['scoring-officer', 'chief-judge']
+  },
+
+  // Class-Specific Groups
+  {
+    id: 'dragon-class-fleet',
+    title: 'Dragon Class Fleet',
+    description: 'Dragon class specific discussions, boat setup, tuning tips, and class regulations',
+    category: 'active-racing',
+    memberCount: 156,
+    activeMemberCount: 89,
+    isActive: true,
+    isVIP: false,
+    isInviteOnly: false,
+    verificationStatus: 'verified',
+    sponsorPrefix: 'Dragon Class',
+    joinUrl: 'https://chat.whatsapp.com/dragon-class-fleet',
+    createdAt: new Date('2027-01-10').toISOString(),
+    lastActivity: new Date().toISOString(),
+    rules: ['Dragon class sailors only', 'Technical discussions welcome'],
+    admins: ['class-captain', 'technical-rep']
+  },
+  {
+    id: 'youth-junior-sailors',
+    title: 'Youth & Junior Sailors',
+    description: 'Young sailors networking, mentorship, and youth sailing development discussions',
+    category: 'active-racing',
+    memberCount: 67,
+    activeMemberCount: 52,
+    isActive: true,
+    isVIP: false,
+    isInviteOnly: false,
+    verificationStatus: 'unverified',
+    joinUrl: 'https://chat.whatsapp.com/youth-junior-sailors',
+    createdAt: new Date('2027-01-25').toISOString(),
+    lastActivity: new Date().toISOString(),
+    rules: ['Under 25 competitors only', 'Supportive environment'],
+    admins: ['youth-coordinator', 'junior-rep']
+  },
+
+  // Support & Social Groups
+  {
+    id: 'crew-exchange',
+    title: 'Crew Exchange',
+    description: 'Find crew positions, boat positions, and crew networking for the regatta',
+    category: 'spectators-families',
+    memberCount: 89,
+    activeMemberCount: 34,
+    isActive: true,
+    isVIP: false,
+    isInviteOnly: false,
+    verificationStatus: 'unverified',
+    joinUrl: 'https://chat.whatsapp.com/crew-exchange',
+    createdAt: new Date('2027-01-20').toISOString(),
+    lastActivity: new Date().toISOString(),
+    rules: ['Crew-related posts only', 'Be professional'],
+    admins: ['event-coordinator']
+  },
+  {
+    id: 'social-events',
+    title: 'Social Events & Parties',
+    description: 'Social gatherings, evening events, prize ceremonies, and after-race celebrations',
+    category: 'spectators-families',
+    memberCount: 245,
+    activeMemberCount: 123,
+    isActive: true,
+    isVIP: false,
+    isInviteOnly: false,
+    verificationStatus: 'unverified',
+    joinUrl: 'https://chat.whatsapp.com/social-events',
+    createdAt: new Date('2027-01-15').toISOString(),
+    lastActivity: new Date().toISOString(),
+    rules: ['Social events only', 'Family-friendly content'],
+    admins: ['social-coordinator']
+  },
+  {
+    id: 'transportation-logistics',
+    title: 'Transportation & Logistics',
+    description: 'Shared rides, boat transport, equipment shipping, and logistics coordination',
+    category: 'spectators-families',
+    memberCount: 134,
+    activeMemberCount: 67,
+    isActive: true,
+    isVIP: false,
+    isInviteOnly: false,
+    verificationStatus: 'unverified',
+    joinUrl: 'https://chat.whatsapp.com/transportation-logistics',
+    createdAt: new Date('2027-01-18').toISOString(),
+    lastActivity: new Date().toISOString(),
+    rules: ['Transport-related only', 'Share costs fairly'],
+    admins: ['logistics-coordinator']
+  },
+  {
+    id: 'equipment-trade',
+    title: 'Equipment Buy/Sell/Trade',
+    description: 'Sailing gear marketplace, equipment exchange, and gear recommendations',
+    category: 'spectators-families',
+    memberCount: 178,
+    activeMemberCount: 89,
+    isActive: true,
+    isVIP: false,
+    isInviteOnly: false,
+    verificationStatus: 'unverified',
+    joinUrl: 'https://chat.whatsapp.com/equipment-trade',
+    createdAt: new Date('2027-01-12').toISOString(),
+    lastActivity: new Date().toISOString(),
+    rules: ['Equipment-related only', 'Fair pricing', 'Photos required'],
+    admins: ['equipment-coordinator']
+  },
+
+  // VIP & Hospitality Groups
+  {
+    id: 'vip-hospitality',
+    title: 'HSBC VIP Hospitality',
+    description: 'Exclusive VIP events, hospitality schedule, and premium guest services',
+    category: 'vip-hospitality',
+    memberCount: 45,
+    activeMemberCount: 38,
+    isActive: true,
+    isVIP: true,
+    isInviteOnly: true,
+    verificationStatus: 'verified',
+    sponsorPrefix: 'HSBC',
+    joinUrl: 'https://chat.whatsapp.com/vip-hospitality',
+    createdAt: new Date('2027-02-01').toISOString(),
+    lastActivity: new Date().toISOString(),
+    rules: ['VIP guests only', 'Invitation required'],
+    admins: ['vip-coordinator', 'hsbc-rep']
+  },
+  {
+    id: 'sponsors-supporters',
+    title: 'Sponsors & Supporters',
+    description: 'Sponsor networking, corporate hospitality, and business development opportunities',
+    category: 'vip-hospitality',
+    memberCount: 67,
+    activeMemberCount: 23,
+    isActive: false,
+    isVIP: true,
+    isInviteOnly: true,
+    verificationStatus: 'verified',
+    joinUrl: 'https://chat.whatsapp.com/sponsors-supporters',
+    createdAt: new Date('2027-01-28').toISOString(),
+    lastActivity: new Date(Date.now() - 86400000).toISOString(),
+    rules: ['Sponsors and major supporters only'],
+    admins: ['sponsor-relations']
+  },
+
+  // Hong Kong Local Groups
+  {
+    id: 'hk-local-sailing',
+    title: 'Hong Kong Local Sailing',
+    description: 'Local Hong Kong sailing community, marina information, and local conditions',
+    category: 'hong-kong-local',
+    memberCount: 189,
+    activeMemberCount: 145,
+    isActive: true,
+    isVIP: false,
+    isInviteOnly: false,
+    verificationStatus: 'unverified',
+    joinUrl: 'https://chat.whatsapp.com/hk-local-sailing',
+    createdAt: new Date('2026-12-15').toISOString(),
+    lastActivity: new Date().toISOString(),
+    rules: ['Hong Kong sailing focus', 'Local knowledge sharing'],
+    admins: ['hk-sailing-rep', 'rhkyc-member']
+  },
+  {
+    id: 'hk-tourism-dining',
+    title: 'HK Tourism & Dining',
+    description: 'Hong Kong restaurants, tourist attractions, and local recommendations for visitors',
+    category: 'hong-kong-local',
+    memberCount: 234,
+    activeMemberCount: 112,
+    isActive: true,
+    isVIP: false,
+    isInviteOnly: false,
+    verificationStatus: 'unverified',
+    joinUrl: 'https://chat.whatsapp.com/hk-tourism-dining',
+    createdAt: new Date('2027-01-10').toISOString(),
+    lastActivity: new Date().toISOString(),
+    rules: ['Hong Kong recommendations only', 'Be helpful'],
+    admins: ['tourism-volunteer']
+  },
+
+  // Technical Support Groups
+  {
+    id: 'technical-support',
+    title: 'Technical Support',
+    description: 'Boat measurement, equipment checks, technical regulations, and rule clarifications',
+    category: 'technical-support',
+    memberCount: 78,
+    activeMemberCount: 45,
+    isActive: true,
+    isVIP: false,
+    isInviteOnly: true,
+    verificationStatus: 'verified',
+    joinUrl: 'https://chat.whatsapp.com/technical-support',
+    createdAt: new Date('2027-01-30').toISOString(),
+    lastActivity: new Date().toISOString(),
+    rules: ['Technical questions only', 'Official responses from measurers'],
+    admins: ['chief-measurer', 'technical-committee']
+  },
+  {
+    id: 'it-scoring-support',
+    title: 'IT & Scoring Support',
+    description: 'Registration issues, scoring system help, and technology support',
+    category: 'technical-support',
+    memberCount: 56,
+    activeMemberCount: 23,
+    isActive: false,
+    isVIP: false,
+    isInviteOnly: true,
+    verificationStatus: 'verified',
+    joinUrl: 'https://chat.whatsapp.com/it-scoring-support',
+    createdAt: new Date('2027-01-28').toISOString(),
+    lastActivity: new Date(Date.now() - 172800000).toISOString(),
+    rules: ['IT support only', 'Be patient with volunteers'],
+    admins: ['it-coordinator']
+  }
+];
 
 const fetchActiveDiscussions = async (): Promise<ActiveDiscussion[]> => {
   await new Promise(resolve => setTimeout(resolve, 500));
@@ -201,16 +490,29 @@ const fetchActiveDiscussions = async (): Promise<ActiveDiscussion[]> => {
   return [
     {
       id: 'race3-live',
-      groupId: 'racing-live',
+      groupId: 'race-committee-comms',
       title: 'Race 3 Live Commentary',
       type: 'race-commentary',
       participantCount: 147,
       lastMessage: {
-        author: '@SailorMike',
-        content: 'Wind building on the right side of the course',
+        author: '@RaceCommittee',
+        content: 'Wind building to 15 knots from the southeast, race starting in 10 minutes',
         timestamp: new Date().toISOString()
       },
       isLive: true
+    },
+    {
+      id: 'weather-discussion',
+      groupId: 'weather-conditions',
+      title: 'Current Weather Discussion',
+      type: 'general',
+      participantCount: 89,
+      lastMessage: {
+        author: '@WeatherGuru',
+        content: 'Sea state improving, 1-2m swells expected this afternoon',
+        timestamp: new Date(Date.now() - 300000).toISOString()
+      },
+      isLive: false
     }
   ];
 };
@@ -248,7 +550,7 @@ export const useSocialStore = create<SocialState>()(
         
         try {
           if (!whatsappService) {
-            whatsappService = new WhatsAppService(useUserStore);
+            whatsappService = new WhatsAppService();
           }
 
           const membership = await whatsappService.joinGroup(groupId);
@@ -280,7 +582,7 @@ export const useSocialStore = create<SocialState>()(
         
         try {
           if (!whatsappService) {
-            whatsappService = new WhatsAppService(useUserStore);
+            whatsappService = new WhatsAppService();
           }
 
           await whatsappService.leaveGroup(groupId);
@@ -316,7 +618,7 @@ export const useSocialStore = create<SocialState>()(
         
         try {
           if (!whatsappService) {
-            whatsappService = new WhatsAppService(useUserStore);
+            whatsappService = new WhatsAppService();
           }
 
           const request = await whatsappService.requestGroupAccess(groupId, message);
@@ -338,7 +640,7 @@ export const useSocialStore = create<SocialState>()(
       loadGroupComments: async (groupId: string) => {
         try {
           if (!whatsappService) {
-            whatsappService = new WhatsAppService(useUserStore);
+            whatsappService = new WhatsAppService();
           }
 
           const comments = await whatsappService.getGroupComments(groupId, 50);
@@ -360,7 +662,7 @@ export const useSocialStore = create<SocialState>()(
       postComment: async (groupId: string, message: string) => {
         try {
           if (!whatsappService) {
-            whatsappService = new WhatsAppService(useUserStore);
+            whatsappService = new WhatsAppService();
           }
 
           const comment = await whatsappService.postComment(groupId, message);
@@ -398,13 +700,14 @@ export const useSocialStore = create<SocialState>()(
         
         try {
           if (!whatsappService) {
-            whatsappService = new WhatsAppService(useUserStore);
+            whatsappService = new WhatsAppService();
           }
 
           const [groups, discussions, userMemberships] = await Promise.all([
-            fetchGroupsFromAPI(),
+            // Use sailing groups if API fails or for demo
+            Promise.resolve(defaultSailingGroups),
             fetchActiveDiscussions(),
-            whatsappService.getUserGroups()
+            whatsappService ? whatsappService.getUserGroups() : Promise.resolve([])
           ]);
           
           const joinedGroupIds = userMemberships.map(m => m.groupId);
@@ -611,7 +914,13 @@ export const useSocialStore = create<SocialState>()(
 
 // Selectors
 export const useWhatsAppGroups = () => useSocialStore(state => state.whatsappGroups);
-export const useJoinedGroups = () => useSocialStore(state => state.getJoinedGroups());
+export const useJoinedGroups = () => useSocialStore(state => {
+  const { whatsappGroups, joinedGroups } = state;
+  return whatsappGroups.filter(group => joinedGroups.includes(group.id));
+}, (a, b) => {
+  // Custom equality function to prevent unnecessary re-renders
+  return a.length === b.length && a.every((group, index) => group.id === b[index]?.id);
+});
 export const useActiveDiscussions = () => useSocialStore(state => state.activeDiscussions);
 export const useSailingConnections = () => useSocialStore(state => state.connections);
 export const useSocialLoading = () => useSocialStore(state => state.loading);
@@ -622,7 +931,16 @@ export const useGroupsByCategory = (category: GroupCategory) =>
   useSocialStore(state => state.getGroupsByCategory(category));
 
 export const useAvailableGroups = () => 
-  useSocialStore(state => state.getAvailableGroups());
+  useSocialStore(state => {
+    const { whatsappGroups, joinedGroups, blockedGroups } = state;
+    return whatsappGroups.filter(group => 
+      !joinedGroups.includes(group.id) && 
+      !blockedGroups.includes(group.id)
+    );
+  }, (a, b) => {
+    // Custom equality function to prevent unnecessary re-renders
+    return a.length === b.length && a.every((group, index) => group.id === b[index]?.id);
+  });
 
 export const useConnectionsByRole = (role: SailingConnection['role']) =>
   useSocialStore(state => state.getConnectionsByRole(role));

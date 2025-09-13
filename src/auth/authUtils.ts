@@ -1,4 +1,4 @@
-import { AuthError, AuthErrorCodes, User, AuthProvider } from '../types/auth';
+import { AuthError, AuthErrorCodes, User, AuthProviderType } from '../types/auth';
 
 /**
  * Email validation regex pattern
@@ -329,8 +329,8 @@ export const formatUserDisplayName = (user: User): string => {
  * console.log(`User signed in with: ${provider}`);
  * ```
  */
-export const getPrimaryProvider = (user: User): AuthProvider => {
-  return user.primaryProvider || AuthProvider.EMAIL;
+export const getPrimaryProvider = (user: User): AuthProviderType => {
+  return user.primaryProvider || AuthProviderType.EMAIL;
 };
 
 /**
@@ -342,13 +342,13 @@ export const getPrimaryProvider = (user: User): AuthProvider => {
  * 
  * @example
  * ```ts
- * const canUnlink = canUnlinkProvider(user, AuthProvider.GOOGLE);
+ * const canUnlink = canUnlinkProvider(user, AuthProviderType.GOOGLE);
  * if (canUnlink) {
  *   // Show unlink option
  * }
  * ```
  */
-export const canUnlinkProvider = (user: User, provider: AuthProvider): boolean => {
+export const canUnlinkProvider = (user: User, provider: AuthProviderType): boolean => {
   // User must have at least one other provider
   return user.providers.length > 1 && user.providers.includes(provider);
 };

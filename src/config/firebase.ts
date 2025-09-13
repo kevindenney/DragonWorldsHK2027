@@ -1,8 +1,15 @@
 import { initializeApp, getApp, getApps, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth, connectAuthEmulator } from 'firebase/auth';
+import { 
+  getAuth, 
+  Auth, 
+  connectAuthEmulator,
+  initializeAuth,
+  getReactNativePersistence
+} from 'firebase/auth';
 import { getFirestore, Firestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage, FirebaseStorage, connectStorageEmulator } from 'firebase/storage';
-import { getAnalytics, Analytics } from 'firebase/analytics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+// Analytics conditionally imported only for web
 import { Platform } from 'react-native';
 
 export interface FirebaseConfig {
@@ -19,13 +26,13 @@ export interface FirebaseConfig {
  * Firebase configuration from environment variables
  */
 const firebaseConfig: FirebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY!,
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN!,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID!,
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET!,
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID!,
-  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || '',
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || '',
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || '',
+  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID || undefined,
 };
 
 /**
@@ -58,8 +65,25 @@ function validateFirebaseConfig(config: FirebaseConfig): void {
   }
 }
 
-// Validate configuration
-validateFirebaseConfig(firebaseConfig);
+// Validate configuration with additional diagnostics
+try {
+  validateFirebaseConfig(firebaseConfig);
+  if (__DEV__) {
+    console.log('[firebase.ts] ✅ Config validated. projectId=', firebaseConfig.projectId);
+  }
+} catch (e) {
+  console.error('[firebase.ts] ❌ Firebase config validation failed:', e);
+  console.log('[firebase.ts] Env snapshot', {
+    NODE_ENV: process.env.EXPO_PUBLIC_NODE_ENV,
+    hasApiKey: Boolean(process.env.EXPO_PUBLIC_FIREBASE_API_KEY),
+    hasAuthDomain: Boolean(process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN),
+    hasProjectId: Boolean(process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID),
+    hasStorageBucket: Boolean(process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET),
+    hasMessagingSenderId: Boolean(process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID),
+    hasAppId: Boolean(process.env.EXPO_PUBLIC_FIREBASE_APP_ID)
+  });
+  throw e;
+}
 
 /**
  * Initialize Firebase app
@@ -73,21 +97,43 @@ if (getApps().length === 0) {
 }
 
 /**
- * Initialize Firebase services
+ * Initialize Firebase services with proper persistence for React Native
  */
-export const auth: Auth = getAuth(app);
-export const firestore: Firestore = getFirestore(app);
-export const storage: FirebaseStorage = getStorage(app);
+let auth: Auth;
+let firestore: Firestore | null = null;
+let storage: FirebaseStorage | null = null;
 
-// Initialize Analytics only on web platform
-export let analytics: Analytics | null = null;
-if (Platform.OS === 'web' && typeof window !== 'undefined') {
+// Initialize Auth with persistence for React Native
+if (Platform.OS !== 'web') {
   try {
-    analytics = getAnalytics(app);
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage)
+    });
+    console.log('✅ Firebase Auth initialized with AsyncStorage persistence');
   } catch (error) {
-    console.warn('Analytics initialization failed:', error);
+    // Auth might already be initialized
+    auth = getAuth(app);
   }
+} else {
+  auth = getAuth(app);
 }
+
+// Initialize Firestore and Storage only if Firebase is properly configured
+try {
+  if (__DEV__) console.log('[firebase.ts] Attempting to initialize Firestore/Storage...');
+  firestore = getFirestore(app);
+  storage = getStorage(app);
+  console.log('✅ Firebase Firestore and Storage initialized');
+} catch (error) {
+  console.warn('⚠️ Firebase Firestore/Storage initialization skipped:', error);
+  // Services will remain null if not available
+}
+
+export { auth, firestore, storage };
+export const isFirestoreReady = () => Boolean(firestore);
+
+// Analytics disabled for mobile - only available on web
+export let analytics: any = null;
 
 /**
  * Connect to Firebase emulators in development
@@ -97,20 +143,30 @@ if (__DEV__ && process.env.EXPO_PUBLIC_NODE_ENV === 'development') {
   
   try {
     // Connect Auth Emulator
-    if (!auth._delegate._config?.emulator) {
+    try {
       connectAuthEmulator(auth, `http://${EMULATOR_HOST}:9099`, {
         disableWarnings: true
       });
+    } catch (error) {
+      // Emulator might already be connected
     }
 
-    // Connect Firestore Emulator  
-    if (!firestore._delegate._databaseId.projectId.includes('demo-')) {
-      connectFirestoreEmulator(firestore, EMULATOR_HOST, 8080);
+    // Connect Firestore Emulator only if firestore is available 
+    if (firestore) {
+      try {
+        connectFirestoreEmulator(firestore, EMULATOR_HOST, 8080);
+      } catch (error) {
+        // Emulator might already be connected
+      }
     }
 
-    // Connect Storage Emulator
-    if (!storage._delegate._host.includes('localhost')) {
-      connectStorageEmulator(storage, EMULATOR_HOST, 9199);
+    // Connect Storage Emulator only if storage is available
+    if (storage) {
+      try {
+        connectStorageEmulator(storage, EMULATOR_HOST, 9199);
+      } catch (error) {
+        // Emulator might already be connected
+      }
     }
 
     console.log('🔥 Connected to Firebase emulators');

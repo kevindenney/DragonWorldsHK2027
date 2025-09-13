@@ -117,13 +117,8 @@ export const CreateUserProfileSchema = UserSchema.omit({
  */
 export const UpdateUserProfileSchema = UserSchema.omit({
   uid: true,
-  metadata: true,
   emailVerified: true, // Cannot be updated directly
-}).partial().extend({
-  metadata: UserMetadataSchema.partial().extend({
-    updatedAt: z.string(),
-  }),
-});
+}).partial();
 
 /**
  * Schema for updating user preferences only
@@ -343,7 +338,8 @@ export const validateUserPreferences = (data: unknown): UserPreferences => {
 };
 
 export const validateUser = (data: unknown): User => {
-  return UserSchema.parse(data);
+  const parsed = UserSchema.parse(data);
+  return parsed as User;
 };
 
 export const validateCreateUserProfile = (data: unknown) => {
@@ -376,4 +372,244 @@ export const toFirestoreTimestamp = (date: Date = new Date()): string => {
 
 export const fromFirestoreTimestamp = (timestamp: string): Date => {
   return new Date(timestamp);
+};
+
+/**
+ * Racing and Regatta Database Types
+ * Types for managing regatta results, competitors, and race data
+ */
+
+/**
+ * Racing event/regatta schema
+ */
+export const RacingEventSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  location: z.string(),
+  startDate: z.string(),
+  endDate: z.string(),
+  status: z.enum(['upcoming', 'active', 'completed', 'cancelled']),
+  eventType: z.enum(['regatta', 'championship', 'series', 'race']),
+  organizerName: z.string(),
+  organizerEmail: z.string().email().optional(),
+  websiteUrl: z.string().url().optional(),
+  totalRaces: z.number().int().min(1),
+  racesCompleted: z.number().int().min(0),
+  classes: z.array(z.string()), // Racing classes in this event
+  venue: z.object({
+    name: z.string(),
+    coordinates: z.object({
+      latitude: z.number().min(-90).max(90),
+      longitude: z.number().min(-180).max(180),
+    }).optional(),
+    description: z.string().optional(),
+  }),
+  metadata: z.object({
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    lastResultsUpdate: z.string().optional(),
+    dataSource: z.string().optional(), // e.g. 'scraped', 'manual', 'api'
+  }),
+});
+
+export interface RacingEvent extends z.infer<typeof RacingEventSchema> {}
+
+/**
+ * Competitor/Boat schema
+ */
+export const CompetitorSchema = z.object({
+  id: z.string(),
+  eventId: z.string(),
+  sailNumber: z.string(),
+  boatName: z.string().optional(),
+  boatType: z.string().optional(),
+  helmName: z.string(),
+  crewName: z.string().optional(),
+  yachtClub: z.string().optional(),
+  country: z.string().length(3).optional(), // ISO country code
+  racingClass: z.string(),
+  status: z.enum(['active', 'retired', 'dnf', 'dsq', 'dns']),
+  metadata: z.object({
+    registeredAt: z.string(),
+    updatedAt: z.string(),
+    notes: z.string().optional(),
+  }).optional(),
+});
+
+export interface Competitor extends z.infer<typeof CompetitorSchema> {}
+
+/**
+ * Race standings/results schema  
+ */
+export const RaceStandingSchema = z.object({
+  id: z.string(),
+  eventId: z.string(),
+  competitorId: z.string(),
+  sailNumber: z.string(), // Denormalized for easy display
+  boatName: z.string().optional(), // Denormalized for easy display
+  helmName: z.string(), // Denormalized for easy display
+  crewName: z.string().optional(), // Denormalized for easy display
+  yachtClub: z.string().optional(), // Denormalized for easy display
+  racingClass: z.string(),
+  position: z.number().int().min(1),
+  totalPoints: z.number().min(0),
+  raceResults: z.array(z.union([
+    z.number().int().min(1), // Normal finishing position
+    z.literal('DNF'), // Did Not Finish
+    z.literal('DNS'), // Did Not Start
+    z.literal('DSQ'), // Disqualified
+    z.literal('RET'), // Retired
+  ])),
+  status: z.enum(['active', 'retired', 'disqualified']),
+  metadata: z.object({
+    calculatedAt: z.string(),
+    lastRaceUpdate: z.string().optional(),
+  }).optional(),
+});
+
+export interface RaceStanding extends z.infer<typeof RaceStandingSchema> {}
+
+/**
+ * Individual race result schema
+ */
+export const IndividualRaceSchema = z.object({
+  id: z.string(),
+  eventId: z.string(),
+  raceNumber: z.number().int().min(1),
+  raceName: z.string().optional(),
+  raceDate: z.string(),
+  racingClass: z.string(),
+  conditions: z.object({
+    windSpeed: z.number().optional(),
+    windDirection: z.number().optional(), // degrees
+    temperature: z.number().optional(),
+    description: z.string().optional(),
+  }).optional(),
+  results: z.array(z.object({
+    competitorId: z.string(),
+    sailNumber: z.string(),
+    position: z.union([
+      z.number().int().min(1),
+      z.literal('DNF'),
+      z.literal('DNS'),
+      z.literal('DSQ'),
+      z.literal('RET'),
+    ]),
+    elapsedTime: z.string().optional(), // Format: HH:MM:SS
+    correctedTime: z.string().optional(),
+    points: z.number().min(0),
+  })),
+  status: z.enum(['scheduled', 'active', 'completed', 'cancelled']),
+  metadata: z.object({
+    startTime: z.string().optional(),
+    finishTime: z.string().optional(),
+    updatedAt: z.string(),
+  }),
+});
+
+export interface IndividualRace extends z.infer<typeof IndividualRaceSchema> {}
+
+/**
+ * Data source tracking for scraped/external data
+ */
+export const DataSourceSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.enum(['scraping', 'api', 'manual', 'import']),
+  baseUrl: z.string().url().optional(),
+  lastUpdate: z.string(),
+  status: z.enum(['active', 'inactive', 'error']),
+  errorMessage: z.string().optional(),
+  updateFrequency: z.number().optional(), // minutes
+  metadata: z.record(z.any()).optional(),
+});
+
+export interface DataSource extends z.infer<typeof DataSourceSchema> {}
+
+/**
+ * Extended collection names for racing data
+ */
+export enum RacingCollectionName {
+  EVENTS = 'racing_events',
+  COMPETITORS = 'competitors',
+  STANDINGS = 'race_standings',
+  INDIVIDUAL_RACES = 'individual_races',
+  DATA_SOURCES = 'data_sources',
+  SCRAPED_DATA_CACHE = 'scraped_data_cache',
+}
+
+/**
+ * Validation helper functions for racing data
+ */
+export const validateRacingEvent = (data: unknown): RacingEvent => {
+  return RacingEventSchema.parse(data);
+};
+
+export const validateCompetitor = (data: unknown): Competitor => {
+  return CompetitorSchema.parse(data);
+};
+
+export const validateRaceStanding = (data: unknown): RaceStanding => {
+  return RaceStandingSchema.parse(data);
+};
+
+export const validateIndividualRace = (data: unknown): IndividualRace => {
+  return IndividualRaceSchema.parse(data);
+};
+
+export const validateDataSource = (data: unknown): DataSource => {
+  return DataSourceSchema.parse(data);
+};
+
+/**
+ * Default values for racing data creation
+ */
+export const createDefaultRacingEvent = (overrides: Partial<RacingEvent> = {}): Partial<RacingEvent> => {
+  const now = new Date().toISOString();
+  return {
+    status: 'upcoming',
+    eventType: 'regatta',
+    racesCompleted: 0,
+    classes: [],
+    metadata: {
+      createdAt: now,
+      updatedAt: now,
+    },
+    ...overrides,
+  };
+};
+
+/**
+ * Utility functions for race data
+ */
+export const calculateTotalPoints = (raceResults: (number | string)[]): number => {
+  return raceResults.reduce((total, result) => {
+    if (typeof result === 'number') {
+      return total + result;
+    }
+    // Handle special cases - assign penalty points
+    switch (result) {
+      case 'DNF':
+      case 'DNS':
+      case 'DSQ':
+        return total + 999; // High penalty
+      case 'RET':
+        return total + 888; // Lower penalty than DNF
+      default:
+        return total;
+    }
+  }, 0);
+};
+
+export const formatRaceResult = (result: number | string): string => {
+  if (typeof result === 'number') {
+    return result.toString();
+  }
+  return result;
+};
+
+export const isValidSailNumber = (sailNumber: string): boolean => {
+  // Basic validation - can be extended based on class rules
+  return sailNumber.length > 0 && sailNumber.length <= 20;
 };

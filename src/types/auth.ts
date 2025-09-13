@@ -3,13 +3,15 @@ import { User as FirebaseUser } from 'firebase/auth';
 /**
  * Authentication provider types
  */
-export enum AuthProvider {
+export enum AuthProviderType {
   EMAIL = 'email',
   GOOGLE = 'google',
   APPLE = 'apple',
   FACEBOOK = 'facebook',
   GITHUB = 'github',
 }
+
+// Removed AuthProvider alias to avoid naming conflicts with new auth system
 
 /**
  * User role types
@@ -34,7 +36,7 @@ export enum UserStatus {
  * Linked OAuth provider interface
  */
 export interface LinkedProvider {
-  provider: AuthProvider;
+  provider: AuthProviderType;
   providerId: string;
   providerUid: string;
   email?: string;
@@ -81,7 +83,7 @@ export interface UserPreferences {
   oauth: {
     autoSyncProfile: boolean;
     allowMultipleAccounts: boolean;
-    preferredProvider?: AuthProvider;
+    preferredProvider?: AuthProviderType;
   };
 }
 
@@ -108,9 +110,9 @@ export interface User {
   emailVerified: boolean;
   role: UserRole;
   status: UserStatus;
-  providers: AuthProvider[];
+  providers: AuthProviderType[];
   linkedProviders: LinkedProvider[];
-  primaryProvider: AuthProvider;
+  primaryProvider: AuthProviderType;
   profile: UserProfile;
   preferences: UserPreferences;
   metadata: UserMetadata;
@@ -147,6 +149,11 @@ export interface RegistrationData {
   phoneNumber?: string;
   acceptTerms: boolean;
 }
+
+/**
+ * Registration credentials interface (alias for RegistrationData)
+ */
+export type RegisterCredentials = RegistrationData;
 
 /**
  * Password reset request interface
@@ -191,7 +198,7 @@ export interface ProfileUpdateRequest {
  * Account linking request interface
  */
 export interface AccountLinkingRequest {
-  provider: AuthProvider;
+  provider: AuthProviderType;
   idToken: string;
   accessToken?: string;
   refreshToken?: string;

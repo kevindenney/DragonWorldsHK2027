@@ -239,7 +239,7 @@ export class AuthSyncService {
       
       switch (providerId) {
         case 'google.com':
-          return AuthProvider.GOOGLE;
+          return AuthProvider.EMAIL; // Google temporarily disabled
         case 'apple.com':
           return AuthProvider.APPLE;
         case 'facebook.com':

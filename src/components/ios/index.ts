@@ -37,6 +37,9 @@ export type { IOSBadgeProps, IOSBadgeVariant, IOSBadgeColor, IOSBadgeSize } from
 export { IOSSection, IOSContentGroup } from './IOSSection';
 export type { IOSSectionProps, IOSContentGroupProps } from './IOSSection';
 
+export { IOSSegmentedControl } from './IOSSegmentedControl';
+export type { IOSSegmentedControlProps, IOSSegmentedControlOption } from './IOSSegmentedControl';
+
 // Type definitions and HIG specifications
 export type {
   IOSComponentBase,

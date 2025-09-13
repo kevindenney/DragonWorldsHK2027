@@ -11,10 +11,7 @@ import {
   Users
 } from 'lucide-react-native';
 
-import { IOSText } from '../ui/IOSText';
-import { IOSCard } from '../ui/IOSCard';
-import { IOSButton } from '../ui/IOSButton';
-import { IOSBadge } from '../ui/IOSBadge';
+import { IOSText, IOSCard, IOSButton, IOSBadge } from '../ios';
 import type { LiveRaceData } from '../../services/resultsService';
 
 interface LiveRaceCardProps {

@@ -1,0 +1,363 @@
+/**
+ * Authentication Components Usage Examples
+ * 
+ * This file demonstrates how to use the various authentication components
+ * built for DragonWorldsHK2027. These examples showcase best practices
+ * for accessibility, error handling, and user experience.
+ */
+
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import {
+  // LoginForm, // Temporarily disabled
+  // RegisterForm, // Temporarily disabled
+  // PasswordResetForm, // Temporarily disabled
+  // UserProfile, // Temporarily disabled
+  AuthGuard,
+  RequireAuth,
+  RequireRole,
+  // SocialLoginGroup, // Temporarily disabled
+  AuthNotification,
+  NotificationProvider,
+  useNotifications,
+  AuthButton,
+  AuthInput,
+  // commonProviderSets, // Temporarily disabled
+} from '../index';
+import { colors, typography, spacing } from '../../../constants/theme';
+import { AuthProvider, UserRole } from '../../../types/auth';
+
+// Example 1: Basic Login Form
+export function BasicLoginExample() {
+  const handleLogin = () => {
+    console.log('Login successful');
+  };
+
+  return (
+    <View style={styles.exampleContainer}>
+      <Text style={styles.exampleTitle}>Basic Login Form</Text>
+      <LoginForm
+        onSuccess={handleLogin}
+        onSwitchToRegister={() => console.log('Switch to register')}
+        onForgotPassword={() => console.log('Forgot password')}
+        testID="basic-login-example"
+      />
+    </View>
+  );
+}
+
+// Example 2: Registration Form with Custom Social Providers
+export function CustomRegistrationExample() {
+  const customProviders = [AuthProvider.APPLE]; // Google temporarily disabled
+
+  return (
+    <View style={styles.exampleContainer}>
+      <Text style={styles.exampleTitle}>Registration with Custom Providers</Text>
+      <RegisterForm
+        onSuccess={() => console.log('Registration successful')}
+        onSwitchToLogin={() => console.log('Switch to login')}
+        socialProviders={customProviders}
+        testID="custom-registration-example"
+      />
+    </View>
+  );
+}
+
+// Example 3: Password Reset Flow
+export function PasswordResetExample() {
+  const [resetState, setResetState] = useState<'form' | 'success'>('form');
+
+  return (
+    <View style={styles.exampleContainer}>
+      <Text style={styles.exampleTitle}>Password Reset Flow</Text>
+      {resetState === 'form' ? (
+        <PasswordResetForm
+          onSuccess={() => setResetState('success')}
+          onCancel={() => console.log('Reset cancelled')}
+          testID="password-reset-example"
+        />
+      ) : (
+        <View style={styles.successMessage}>
+          <Text style={styles.successText}>Reset email sent successfully!</Text>
+          <AuthButton
+            title="Back to Form"
+            onPress={() => setResetState('form')}
+            variant="outline"
+            size="medium"
+          />
+        </View>
+      )}
+    </View>
+  );
+}
+
+// Example 4: Protected Content with Auth Guard
+export function ProtectedContentExample() {
+  return (
+    <View style={styles.exampleContainer}>
+      <Text style={styles.exampleTitle}>Protected Content</Text>
+      
+      {/* Content that requires authentication */}
+      <RequireAuth testID="require-auth-example">
+        <View style={styles.protectedContent}>
+          <Text style={styles.protectedText}>
+            🔒 This content is only visible to authenticated users
+          </Text>
+        </View>
+      </RequireAuth>
+
+      {/* Content that requires admin role */}
+      <RequireRole roles={[UserRole.ADMIN]} testID="require-admin-example">
+        <View style={[styles.protectedContent, styles.adminContent]}>
+          <Text style={styles.protectedText}>
+            👑 This content is only visible to admins
+          </Text>
+        </View>
+      </RequireRole>
+    </View>
+  );
+}
+
+// Example 5: Social Login Options
+export function SocialLoginExample() {
+  const handleSocialLogin = (provider: AuthProvider) => {
+    console.log(`Login with ${provider}`);
+  };
+
+  return (
+    <View style={styles.exampleContainer}>
+      <Text style={styles.exampleTitle}>Social Login Options</Text>
+      
+      {/* Basic social login */}
+      <SocialLoginGroup
+        providers={commonProviderSets.basic}
+        onPress={handleSocialLogin}
+        title="Continue with"
+        testID="social-login-basic"
+      />
+
+      {/* Full social login options */}
+      <SocialLoginGroup
+        providers={commonProviderSets.full}
+        onPress={handleSocialLogin}
+        variant="filled"
+        title="Or sign in with"
+        testID="social-login-full"
+      />
+    </View>
+  );
+}
+
+// Example 6: Notification System
+export function NotificationExample() {
+  const { showNotification } = useNotifications();
+
+  const showSuccessNotification = () => {
+    showNotification({
+      type: 'success',
+      title: 'Login Successful',
+      message: 'Welcome back to DragonWorlds HK!',
+      duration: 3000,
+    });
+  };
+
+  const showErrorNotification = () => {
+    showNotification({
+      type: 'error',
+      title: 'Login Failed',
+      message: 'Invalid credentials. Please try again.',
+      duration: 5000,
+      action: {
+        label: 'Retry',
+        onPress: () => console.log('Retry login'),
+      },
+    });
+  };
+
+  const showPersistentNotification = () => {
+    showNotification({
+      type: 'warning',
+      title: 'Connection Issue',
+      message: 'Please check your internet connection.',
+      persistent: true,
+    });
+  };
+
+  return (
+    <View style={styles.exampleContainer}>
+      <Text style={styles.exampleTitle}>Notification System</Text>
+      
+      <AuthButton
+        title="Show Success"
+        onPress={showSuccessNotification}
+        variant="primary"
+        size="medium"
+        style={styles.notificationButton}
+      />
+      
+      <AuthButton
+        title="Show Error"
+        onPress={showErrorNotification}
+        variant="danger"
+        size="medium"
+        style={styles.notificationButton}
+      />
+      
+      <AuthButton
+        title="Show Persistent"
+        onPress={showPersistentNotification}
+        variant="outline"
+        size="medium"
+        style={styles.notificationButton}
+      />
+    </View>
+  );
+}
+
+// Example 7: Custom Input Components
+export function CustomInputExample() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const validateEmail = (value: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!value) {
+      return { isValid: false, error: 'Email is required' };
+    }
+    if (!emailRegex.test(value)) {
+      return { isValid: false, error: 'Please enter a valid email' };
+    }
+    return { isValid: true };
+  };
+
+  return (
+    <View style={styles.exampleContainer}>
+      <Text style={styles.exampleTitle}>Custom Input Components</Text>
+      
+      <AuthInput
+        label="Email Address"
+        type="email"
+        value={email}
+        onChangeText={setEmail}
+        onValidate={validateEmail}
+        isRequired
+        helpText="Enter your sailing club email"
+        testID="custom-email-input"
+      />
+      
+      <AuthInput
+        label="Password"
+        type="password"
+        value={password}
+        onChangeText={setPassword}
+        isRequired
+        helpText="Must be at least 8 characters"
+        testID="custom-password-input"
+      />
+    </View>
+  );
+}
+
+// Complete example app showing all components
+export function AuthExampleApp() {
+  return (
+    <NotificationProvider>
+      <SafeAreaView style={styles.container}>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Authentication Examples</Text>
+            <Text style={styles.headerSubtitle}>
+              DragonWorlds HK 2027 - Auth Components Showcase
+            </Text>
+          </View>
+
+          <BasicLoginExample />
+          <CustomRegistrationExample />
+          <PasswordResetExample />
+          <ProtectedContentExample />
+          <SocialLoginExample />
+          <NotificationExample />
+          <CustomInputExample />
+        </ScrollView>
+      </SafeAreaView>
+    </NotificationProvider>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: spacing.lg,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+    paddingVertical: spacing.lg,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+  },
+  headerTitle: {
+    ...typography.h2,
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
+  headerSubtitle: {
+    ...typography.body1,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  exampleContainer: {
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  exampleTitle: {
+    ...typography.h4,
+    color: colors.text,
+    marginBottom: spacing.lg,
+    textAlign: 'center',
+  },
+  protectedContent: {
+    backgroundColor: colors.success + '20',
+    padding: spacing.lg,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.success + '40',
+    marginVertical: spacing.md,
+  },
+  adminContent: {
+    backgroundColor: colors.warning + '20',
+    borderColor: colors.warning + '40',
+  },
+  protectedText: {
+    ...typography.body1,
+    color: colors.text,
+    textAlign: 'center',
+  },
+  successMessage: {
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  successText: {
+    ...typography.body1,
+    color: colors.success,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+  },
+  notificationButton: {
+    marginBottom: spacing.md,
+  },
+});
+
+export default AuthExampleApp;

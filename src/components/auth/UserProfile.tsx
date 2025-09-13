@@ -27,7 +27,7 @@ import {
   AlertTriangle
 } from 'lucide-react-native';
 import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../auth/useAuth';
 import { User as UserType, UserProfile as UserProfileType, LinkedProvider } from '../../types/auth';
 import { AuthButton } from './AuthButton';
 
@@ -44,11 +44,33 @@ export function UserProfile({
   onDeleteAccount,
   testID,
 }: UserProfileProps) {
-  const { user, signOut } = useAuth();
+  const { user, logout, updateProfile } = useAuth();
   
   const [notificationsEnabled, setNotificationsEnabled] = useState(
     user?.preferences?.notifications?.push || false
   );
+
+  const handleNotificationToggle = async (value: boolean) => {
+    try {
+      setNotificationsEnabled(value);
+      
+      // Update user preferences
+      await updateProfile({
+        preferences: {
+          ...user?.preferences,
+          notifications: {
+            ...user?.preferences?.notifications,
+            push: value,
+          },
+        },
+      });
+    } catch (error) {
+      console.error('Failed to update notification preferences:', error);
+      // Revert the toggle on error
+      setNotificationsEnabled(!value);
+      Alert.alert('Error', 'Failed to update notification preferences. Please try again.');
+    }
+  };
 
   if (!user) {
     return (
@@ -69,7 +91,7 @@ export function UserProfile({
           style: 'destructive',
           onPress: async () => {
             try {
-              await signOut();
+              await logout();
             } catch (error) {
               Alert.alert('Error', 'Failed to sign out. Please try again.');
             }
@@ -168,7 +190,7 @@ export function UserProfile({
           </View>
           <Switch
             value={notificationsEnabled}
-            onValueChange={setNotificationsEnabled}
+            onValueChange={handleNotificationToggle}
             trackColor={{ false: colors.border, true: colors.primary }}
             thumbColor={colors.background}
           />

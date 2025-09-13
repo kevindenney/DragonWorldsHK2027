@@ -1,0 +1,29 @@
+{
+  "name": "dragon-worlds-functions",
+  "version": "1.0.0",
+  "description": "Firebase Cloud Functions for Dragon Worlds HK 2027 race data scraping",
+  "main": "index.js",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "firebase-admin": "^12.1.0",
+    "firebase-functions": "^6.0.1",
+    "node-fetch": "^2.6.7",
+    "pdf-parse": "^1.1.1",
+    "puppeteer": "^21.11.0",
+    "axios": "^1.6.2"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.1.0"
+  },
+  "private": true
+}

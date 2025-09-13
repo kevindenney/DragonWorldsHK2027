@@ -33,7 +33,7 @@ export interface SponsorLocation {
   id: string;
   name: string;
   sponsor: 'HSBC' | 'Sino_Group' | 'BMW' | 'Garmin';
-  type: 'ATM' | 'branch' | 'hotel' | 'restaurant' | 'service_center' | 'hospitality';
+  type: 'ATM' | 'branch' | 'hotel' | 'restaurant' | 'service_center' | 'hospitality' | 'transportation';
   coordinates: {
     latitude: number;
     longitude: number;
@@ -50,6 +50,19 @@ export interface SponsorLocation {
   };
   vipAccess?: boolean;
   premiereAccess?: boolean;
+  deals?: {
+    title: string;
+    description: string;
+    validUntil: string;
+    discount?: string;
+    code?: string;
+  }[];
+  transportation?: {
+    type: 'ferry' | 'taxi' | 'bus' | 'shuttle';
+    route: string;
+    schedule?: string;
+    cost?: string;
+  }[];
 }
 
 export interface NavigationRoute {
@@ -248,7 +261,23 @@ class GarminService {
             phone: '+852 2233 3000',
             website: 'hsbc.com.hk'
           },
-          premiereAccess: user.userType === 'vip' || user.profile?.hsbc?.isPremier
+          premiereAccess: user.userType === 'vip' || user.profile?.hsbc?.isPremier,
+          deals: [
+            {
+              title: 'Dragon Worlds Banking Package',
+              description: 'Free international transfers & Premier services for participants',
+              validUntil: '2027-04-30',
+              discount: 'Waived fees',
+              code: 'DRAGON2027'
+            }
+          ],
+          transportation: [
+            {
+              type: 'taxi',
+              route: 'To/From Aberdeen Marina',
+              cost: 'HK$120-150'
+            }
+          ]
         },
         {
           id: 'hsbc_atm_marina',
@@ -291,7 +320,24 @@ class GarminService {
             phone: '+852 2521 3838',
             website: 'conradhongkong.com'
           },
-          vipAccess: user.userType === 'vip'
+          vipAccess: user.userType === 'vip',
+          deals: [
+            {
+              title: 'Dragon Worlds Hotel Package',
+              description: '20% off accommodation + complimentary breakfast',
+              validUntil: '2027-04-30',
+              discount: '20% off',
+              code: 'DRAGON20'
+            }
+          ],
+          transportation: [
+            {
+              type: 'shuttle',
+              route: 'Aberdeen Marina Express',
+              schedule: 'Every 30 minutes',
+              cost: 'Complimentary for guests'
+            }
+          ]
         },
         {
           id: 'sino_peninsula',
@@ -314,7 +360,24 @@ class GarminService {
             phone: '+852 2920 2888',
             website: 'peninsula.com'
           },
-          vipAccess: true
+          vipAccess: true,
+          deals: [
+            {
+              title: 'Luxury Racing Package',
+              description: 'VIP suite + Rolls-Royce transfers + fine dining',
+              validUntil: '2027-04-30',
+              discount: '30% off',
+              code: 'PENINSULA30'
+            }
+          ],
+          transportation: [
+            {
+              type: 'shuttle',
+              route: 'Rolls-Royce to Marina',
+              schedule: 'On-demand',
+              cost: 'Included for VIP guests'
+            }
+          ]
         },
 
         // BMW Locations
@@ -338,7 +401,24 @@ class GarminService {
           contact: {
             phone: '+852 2234 5678',
             website: 'bmw.com.hk'
-          }
+          },
+          deals: [
+            {
+              title: 'Racing Transport Package',
+              description: '15% off all transfers & complimentary airport service',
+              validUntil: '2027-04-30',
+              discount: '15% off',
+              code: 'BMW15'
+            }
+          ],
+          transportation: [
+            {
+              type: 'taxi',
+              route: 'Premium BMW fleet available',
+              schedule: '24/7 on-demand',
+              cost: 'Starting from HK$200/hour'
+            }
+          ]
         },
 
         // Garmin Locations
@@ -362,7 +442,64 @@ class GarminService {
           contact: {
             phone: '+852 2345 6789',
             website: 'garmin.com.hk'
-          }
+          },
+          deals: [
+            {
+              title: 'Dragon Worlds Marine Package',
+              description: 'Free chart updates + 20% off GPS devices',
+              validUntil: '2027-04-30',
+              discount: '20% off',
+              code: 'GARMIN20'
+            }
+          ],
+          transportation: [
+            {
+              type: 'shuttle',
+              route: 'Marina shuttle service',
+              schedule: 'Every hour 8AM-8PM',
+              cost: 'Free for customers'
+            }
+          ]
+        },
+
+        // Transportation Hub
+        {
+          id: 'transport_hub',
+          name: 'Dragon Worlds Transport Hub',
+          sponsor: 'BMW',
+          type: 'transportation',
+          coordinates: { latitude: 22.2650, longitude: 114.1750 },
+          address: 'Central Pier, Ferry Terminal',
+          services: ['Ferry to Marina', 'Taxi Stand', 'Bus Terminal', 'Event Shuttle'],
+          hours: {
+            'Monday': '6:00 AM - 11:00 PM',
+            'Tuesday': '6:00 AM - 11:00 PM',
+            'Wednesday': '6:00 AM - 11:00 PM',
+            'Thursday': '6:00 AM - 11:00 PM',
+            'Friday': '6:00 AM - 11:00 PM',
+            'Saturday': '6:00 AM - 11:00 PM',
+            'Sunday': '6:00 AM - 11:00 PM'
+          },
+          transportation: [
+            {
+              type: 'ferry',
+              route: 'Central → Aberdeen Marina',
+              schedule: 'Every 15 minutes during racing',
+              cost: 'HK$25 per trip'
+            },
+            {
+              type: 'bus',
+              route: 'Airport Express → Marina',
+              schedule: 'Every 30 minutes',
+              cost: 'HK$50 per trip'
+            },
+            {
+              type: 'shuttle',
+              route: 'Hotels → Marina VIP Service',
+              schedule: 'On-demand for VIP guests',
+              cost: 'Complimentary'
+            }
+          ]
         }
       ];
     } catch (error) {

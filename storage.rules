@@ -1,0 +1,173 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function hasRole(role) {
+      return isAuthenticated() && 
+             request.auth.token.role == role;
+    }
+    
+    function hasAnyRole(roles) {
+      return isAuthenticated() && 
+             request.auth.token.role in roles;
+    }
+    
+    function isValidImageFile() {
+      return resource.contentType != null &&
+             resource.contentType.matches('image/.*') &&
+             resource.size < 10 * 1024 * 1024; // 10MB limit
+    }
+    
+    function isValidDocumentFile() {
+      return resource.contentType != null &&
+             (resource.contentType.matches('application/pdf') ||
+              resource.contentType.matches('application/msword') ||
+              resource.contentType.matches('application/vnd.openxmlformats-officedocument.wordprocessingml.document')) &&
+             resource.size < 25 * 1024 * 1024; // 25MB limit
+    }
+
+    function isValidVideoFile() {
+      return resource.contentType != null &&
+             resource.contentType.matches('video/.*') &&
+             resource.size < 100 * 1024 * 1024; // 100MB limit
+    }
+
+    // User profile images
+    match /users/{userId}/profile/{imageId} {
+      // Users can read/write their own profile images, admins can access any
+      allow read: if isOwner(userId) || hasAnyRole(['admin', 'superadmin']);
+      allow write: if (isOwner(userId) || hasAnyRole(['admin', 'superadmin'])) &&
+                      isValidImageFile();
+      allow delete: if isOwner(userId) || hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // User document uploads (certificates, etc.)
+    match /users/{userId}/documents/{documentId} {
+      allow read: if isOwner(userId) || hasAnyRole(['admin', 'superadmin']);
+      allow write: if (isOwner(userId) || hasAnyRole(['admin', 'superadmin'])) &&
+                      (isValidDocumentFile() || isValidImageFile());
+      allow delete: if isOwner(userId) || hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // Race-related images and videos
+    match /races/{raceId}/media/{mediaId} {
+      // Anyone can read race media
+      allow read: if true;
+      
+      // Only admins can upload race media
+      allow write: if hasAnyRole(['admin', 'superadmin']) &&
+                      (isValidImageFile() || isValidVideoFile());
+      allow delete: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // Team logos and images
+    match /teams/{teamId}/images/{imageId} {
+      // Anyone can read team images
+      allow read: if true;
+      
+      // Team members can upload images, admins can manage any
+      allow write: if (isAuthenticated() && 
+                      request.auth.uid in resource.metadata.teamMembers) ||
+                     hasAnyRole(['admin', 'superadmin']) &&
+                     isValidImageFile();
+      allow delete: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // Event media (photos, videos from events)
+    match /events/{eventId}/media/{mediaId} {
+      // Anyone can read event media
+      allow read: if true;
+      
+      // Authenticated users can upload event media, admins can manage
+      allow write: if isAuthenticated() &&
+                      (isValidImageFile() || isValidVideoFile());
+      allow delete: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // Social post media
+    match /social/{postId}/media/{mediaId} {
+      // Anyone can read social media
+      allow read: if true;
+      
+      // Authenticated users can upload media for their posts
+      allow write: if isAuthenticated() &&
+                      (isValidImageFile() || isValidVideoFile());
+      
+      // Users can delete their own media, admins can delete any
+      allow delete: if isAuthenticated() &&
+                       (request.auth.uid == resource.metadata.authorId ||
+                        hasAnyRole(['admin', 'superadmin']));
+    }
+
+    // Boat registration documents
+    match /boats/{boatId}/documents/{documentId} {
+      // Boat owners and admins can access documents
+      allow read: if isAuthenticated() &&
+                     (request.auth.uid in resource.metadata.owners ||
+                      hasAnyRole(['admin', 'superadmin']));
+      
+      allow write: if isAuthenticated() &&
+                      (request.auth.uid in resource.metadata.owners ||
+                       hasAnyRole(['admin', 'superadmin'])) &&
+                      (isValidDocumentFile() || isValidImageFile());
+                      
+      allow delete: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // Weather data and charts (if storing locally)
+    match /weather/{locationId}/charts/{chartId} {
+      // Anyone can read weather charts
+      allow read: if true;
+      
+      // Only admins can upload weather data
+      allow write: if hasAnyRole(['admin', 'superadmin']) &&
+                      (isValidImageFile() || 
+                       resource.contentType.matches('application/json'));
+    }
+
+    // App assets and public files
+    match /public/{allPaths=**} {
+      // Anyone can read public files
+      allow read: if true;
+      
+      // Only admins can manage public files
+      allow write: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // Backup and export data
+    match /backups/{backupId}/{allPaths=**} {
+      // Only admins can access backups
+      allow read, write: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // Temp uploads (for processing)
+    match /temp/{userId}/{uploadId} {
+      // Users can upload to their temp folder for processing
+      allow write: if isOwner(userId) &&
+                      (isValidImageFile() || isValidDocumentFile() || isValidVideoFile());
+      
+      // System can read/delete temp files (via Cloud Functions)
+      allow read, delete: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // System logs and analytics (if storing files)
+    match /system/{allPaths=**} {
+      // Only admins can access system files
+      allow read, write: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // Default deny rule
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -5,7 +5,7 @@ declare module '@env' {
   export const EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET: string;
   export const EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: string;
   export const EXPO_PUBLIC_FIREBASE_APP_ID: string;
-  export const EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID?: string;
+  export const EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID: string | undefined;
   
   export const EXPO_PUBLIC_BACKEND_URL: string;
   export const EXPO_PUBLIC_API_VERSION: string;
@@ -16,7 +16,7 @@ declare module '@env' {
   
   export const EXPO_PUBLIC_NODE_ENV: string;
   export const EXPO_PUBLIC_DEBUG_MODE: string;
-  export const EXPO_PUBLIC_EMULATOR_HOST?: string;
+  export const EXPO_PUBLIC_EMULATOR_HOST: string | undefined;
 }
 
 // Extend process.env type for better TypeScript support

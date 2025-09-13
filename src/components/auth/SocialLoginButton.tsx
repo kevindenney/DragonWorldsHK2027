@@ -1,7 +1,15 @@
 import React from 'react';
 import { TouchableOpacity, Text, View, StyleSheet, Platform, ActivityIndicator } from 'react-native';
+import { AntDesign, FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
-import { AuthProvider } from '../../types/auth';
+import { AuthProvider } from '../../auth/authTypes';
+
+// DEBUG: Log AuthProvider import to validate type and properties
+console.log('🔍 [SocialLoginButton] AuthProvider imported:', AuthProvider);
+console.log('🔍 [SocialLoginButton] typeof AuthProvider:', typeof AuthProvider);
+console.log('🔍 [SocialLoginButton] AuthProvider.GOOGLE:', AuthProvider?.GOOGLE);
+console.log('🔍 [SocialLoginButton] AuthProvider.APPLE:', AuthProvider?.APPLE);
+console.log('🔍 [SocialLoginButton] AuthProvider.FACEBOOK:', AuthProvider?.FACEBOOK);
 
 // Social login brand colors and configurations
 const socialConfigs = {
@@ -10,7 +18,9 @@ const socialConfigs = {
     backgroundColor: '#ffffff',
     textColor: '#1f1f1f',
     borderColor: '#dadce0',
-    icon: '🔗', // Will be replaced with actual Google icon
+    iconComponent: AntDesign,
+    iconName: 'google',
+    iconColor: '#4285F4',
     accessibilityHint: 'Sign in with your Google account',
   },
   [AuthProvider.APPLE]: {
@@ -18,7 +28,9 @@ const socialConfigs = {
     backgroundColor: '#000000',
     textColor: '#ffffff',
     borderColor: '#000000',
-    icon: '🍎', // Will be replaced with actual Apple icon
+    iconComponent: AntDesign,
+    iconName: 'apple1',
+    iconColor: '#ffffff',
     accessibilityHint: 'Sign in with your Apple ID',
   },
   [AuthProvider.FACEBOOK]: {
@@ -26,7 +38,9 @@ const socialConfigs = {
     backgroundColor: '#1877f2',
     textColor: '#ffffff',
     borderColor: '#1877f2',
-    icon: '📘', // Will be replaced with actual Facebook icon
+    iconComponent: FontAwesome,
+    iconName: 'facebook',
+    iconColor: '#ffffff',
     accessibilityHint: 'Sign in with your Facebook account',
   },
   [AuthProvider.GITHUB]: {
@@ -34,7 +48,9 @@ const socialConfigs = {
     backgroundColor: '#24292e',
     textColor: '#ffffff',
     borderColor: '#24292e',
-    icon: '🐙', // Will be replaced with actual GitHub icon
+    iconComponent: AntDesign,
+    iconName: 'github',
+    iconColor: '#ffffff',
     accessibilityHint: 'Sign in with your GitHub account',
   },
 } as const;
@@ -148,7 +164,11 @@ export function SocialLoginButton({
         ) : (
           showIcon && (
             <View style={styles.iconContainer}>
-              <Text style={styles.icon}>{config.icon}</Text>
+              <config.iconComponent 
+                name={config.iconName} 
+                size={20} 
+                color={config.iconColor}
+              />
             </View>
           )
         )}
@@ -262,9 +282,6 @@ const styles = StyleSheet.create({
     height: 24,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  icon: {
-    fontSize: 20,
   },
   spinner: {
     marginRight: spacing.sm,

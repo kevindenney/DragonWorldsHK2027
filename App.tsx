@@ -1,16 +1,14 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { AppProviders, AppNavigationContainer, setupNotifications } from './src';
+import { AppNavigationContainer } from './src/services/navigation/NavigationContainer';
 
 export default function App() {
-  useEffect(() => {
-    setupNotifications();
-  }, []);
-
+  console.log('🏁 Main App function called');
   return (
-    <AppProviders>
+    <SafeAreaProvider>
       <AppNavigationContainer />
       <StatusBar style="auto" />
-    </AppProviders>
+    </SafeAreaProvider>
   );
 }

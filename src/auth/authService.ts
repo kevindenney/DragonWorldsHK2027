@@ -8,17 +8,10 @@ import {
   sendEmailVerification,
   updateProfile,
   deleteUser,
-  signInWithPopup,
-  signInWithRedirect,
-  GoogleAuthProvider,
-  OAuthProvider,
-  getAdditionalUserInfo,
   AuthError as FirebaseAuthError,
   onAuthStateChanged,
   Unsubscribe,
 } from 'firebase/auth';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import appleAuth from '@invertase/react-native-apple-authentication';
 import { Platform } from 'react-native';
 import { auth } from '../config/firebase';
 import {
@@ -54,7 +47,7 @@ class AuthService {
     const providerIds = firebaseUser.providerData.map(p => {
       switch (p.providerId) {
         case 'google.com':
-          return AuthProvider.GOOGLE;
+          return AuthProvider.EMAIL; // Google temporarily disabled
         case 'apple.com':
           return AuthProvider.APPLE;
         case 'facebook.com':
@@ -156,92 +149,14 @@ class AuthService {
     }
   };
 
-  // Google Sign-In
+  // Google Sign-In (placeholder - disabled for now)
   signInWithGoogle = async (method: 'popup' | 'redirect' = 'popup'): Promise<User> => {
-    try {
-      if (Platform.OS === 'web') {
-        return await this.signInWithGoogleWeb(method);
-      } else {
-        return await this.signInWithGoogleNative();
-      }
-    } catch (error) {
-      throw this.handleAuthError(error as FirebaseAuthError);
-    }
+    throw new Error('Google Sign-In is temporarily disabled');
   };
 
-  private signInWithGoogleWeb = async (method: 'popup' | 'redirect'): Promise<User> => {
-    const provider = new GoogleAuthProvider();
-    provider.addScope('email');
-    provider.addScope('profile');
-
-    const result = method === 'popup' 
-      ? await signInWithPopup(this.auth, provider)
-      : await signInWithRedirect(this.auth, provider);
-
-    return await this.mapFirebaseUserToUser(result.user);
-  };
-
-  private signInWithGoogleNative = async (): Promise<User> => {
-    // Check if your device supports Google Play services
-    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-
-    // Get the users ID token
-    const { idToken } = await GoogleSignin.signIn();
-
-    // Create a Google credential with the token
-    const googleCredential = GoogleAuthProvider.credential(idToken);
-
-    // Sign-in the user with the credential
-    const result = await signInWithEmailAndPassword(this.auth, googleCredential.providerId, googleCredential.secret || '');
-    
-    return await this.mapFirebaseUserToUser(result.user);
-  };
-
-  // Apple Sign-In
+  // Apple Sign-In (placeholder - disabled for now)
   signInWithApple = async (): Promise<User> => {
-    try {
-      if (Platform.OS === 'web') {
-        return await this.signInWithAppleWeb();
-      } else {
-        return await this.signInWithAppleNative();
-      }
-    } catch (error) {
-      throw this.handleAuthError(error as FirebaseAuthError);
-    }
-  };
-
-  private signInWithAppleWeb = async (): Promise<User> => {
-    const provider = new OAuthProvider('apple.com');
-    provider.addScope('email');
-    provider.addScope('name');
-
-    const result = await signInWithPopup(this.auth, provider);
-    return await this.mapFirebaseUserToUser(result.user);
-  };
-
-  private signInWithAppleNative = async (): Promise<User> => {
-    // Perform the sign-in request
-    const appleAuthRequestResponse = await appleAuth.performRequest({
-      requestedOperation: appleAuth.Operation.LOGIN,
-      requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
-    });
-
-    // Ensure Apple returned a user identityToken
-    if (!appleAuthRequestResponse.identityToken) {
-      throw new Error('Apple Sign-In failed - no identify token returned');
-    }
-
-    // Create a Firebase credential from the response
-    const { identityToken, nonce } = appleAuthRequestResponse;
-    const appleCredential = new OAuthProvider('apple.com').credential({
-      idToken: identityToken,
-      rawNonce: nonce,
-    });
-
-    // Sign the user in with the credential
-    const result = await signInWithEmailAndPassword(this.auth, appleCredential.providerId, appleCredential.secret || '');
-    
-    return await this.mapFirebaseUserToUser(result.user);
+    throw new Error('Apple Sign-In is temporarily disabled');
   };
 
   // Password Reset
@@ -291,15 +206,6 @@ class AuthService {
   // Sign Out
   signOut = async (): Promise<void> => {
     try {
-      // Sign out from Google if signed in with Google
-      if (Platform.OS !== 'web') {
-        try {
-          await GoogleSignin.signOut();
-        } catch (error) {
-          // Ignore Google sign out errors as user might not be signed in with Google
-        }
-      }
-
       await signOut(this.auth);
     } catch (error) {
       throw this.handleAuthError(error as FirebaseAuthError);
@@ -335,14 +241,10 @@ class AuthService {
     });
   };
 
-  // Initialize Google Sign-In (for React Native)
+  // Initialize Google Sign-In (placeholder - disabled for now)
   initializeGoogleSignIn = (webClientId: string) => {
-    if (Platform.OS !== 'web') {
-      GoogleSignin.configure({
-        webClientId,
-        offlineAccess: true,
-      });
-    }
+    // Google Sign-In initialization disabled
+    console.log('Google Sign-In initialization skipped');
   };
 
   // Check if user is signed in

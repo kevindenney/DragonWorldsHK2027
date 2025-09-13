@@ -5,9 +5,7 @@ import { MapPin, Anchor, Flag, Shield, Navigation, Building } from 'lucide-react
 
 import GarminService, { RaceAreaBoundary, SponsorLocation, GarminChartData } from '../../services/garminService';
 import { useUserStore } from '../../stores/userStore';
-import { IOSText } from '../ui/IOSText';
-import { IOSButton } from '../ui/IOSButton';
-import { IOSCard } from '../ui/IOSCard';
+import { IOSText, IOSButton, IOSCard } from '../ios';
 
 interface InteractiveRaceMapProps {
   showRaceAreas?: boolean;
@@ -123,6 +121,8 @@ export const InteractiveRaceMap: React.FC<InteractiveRaceMapProps> = ({
       case 'hotel':
       case 'restaurant':
         return <Building size={24} color="#8B4513" />; // Sino Brown
+      case 'transportation':
+        return <Navigation size={24} color="#FF6B00" />; // Transport Orange
       case 'service_center':
         if (sponsor === 'BMW') {
           return <Navigation size={24} color="#0066CC" />; // BMW Blue
@@ -340,6 +340,10 @@ export const InteractiveRaceMap: React.FC<InteractiveRaceMapProps> = ({
             <View style={styles.legendItem}>
               <MapPin size={16} color="#007CC3" />
               <IOSText style={styles.legendText}>Garmin Marine</IOSText>
+            </View>
+            <View style={styles.legendItem}>
+              <Navigation size={16} color="#FF6B00" />
+              <IOSText style={styles.legendText}>Transport Hub</IOSText>
             </View>
           </>
         )}
