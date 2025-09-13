@@ -28,23 +28,23 @@ export function TabNavigator() {
           const iconSize = focused ? size + 2 : size;
           
           switch (route.name) {
-            case 'Map':
-              IconComponent = Anchor;
-              break;
             case 'Schedule':
               IconComponent = Calendar;
+              break;
+            case 'NoticeBoard':
+              IconComponent = FileText;
               break;
             case 'Results':
               IconComponent = Trophy;
               break;
-            case 'NoticeBoard':
-              IconComponent = FileText;
+            case 'Map':
+              IconComponent = Anchor;
               break;
             case 'More':
               IconComponent = MoreHorizontal;
               break;
             default:
-              IconComponent = Anchor;
+              IconComponent = Calendar;
           }
           
           const iconElement = (
@@ -119,27 +119,11 @@ export function TabNavigator() {
       })}
     >
       <Tab.Screen 
-        name="Map" 
-        component={MapScreen}
-        options={{
-          tabBarLabel: 'Map',
-          tabBarAccessibilityLabel: 'Interactive sailing locations and race course map',
-        }}
-      />
-      <Tab.Screen 
         name="Schedule" 
         component={ScheduleScreen}
         options={{
           tabBarLabel: 'Schedule',
           tabBarAccessibilityLabel: 'Race schedule and timing',
-        }}
-      />
-      <Tab.Screen 
-        name="Results" 
-        component={ResultsStackNavigator}
-        options={{
-          tabBarLabel: 'Results',
-          tabBarAccessibilityLabel: 'Championship standings and results',
         }}
       />
       <Tab.Screen 
@@ -150,6 +134,22 @@ export function TabNavigator() {
           tabBarAccessibilityLabel: 'Official notices and documents',
         }}
         initialParams={{ eventId: 'dragon-worlds-2027' }}
+      />
+      <Tab.Screen 
+        name="Results" 
+        component={ResultsStackNavigator}
+        options={{
+          tabBarLabel: 'Results',
+          tabBarAccessibilityLabel: 'Championship standings and results',
+        }}
+      />
+      <Tab.Screen 
+        name="Map" 
+        component={MapScreen}
+        options={{
+          tabBarLabel: 'Map',
+          tabBarAccessibilityLabel: 'Interactive sailing locations and race course map',
+        }}
       />
       <Tab.Screen 
         name="More" 
