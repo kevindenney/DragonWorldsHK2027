@@ -17,7 +17,7 @@
 
 import React, { useMemo, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Polyline, Circle, Marker } from 'react-native-maps';
+import { Polyline, Circle, Marker } from '../../utils/mapComponentStubs';
 import Animated, {
   useSharedValue,
   withRepeat,
@@ -25,7 +25,7 @@ import Animated, {
   useAnimatedStyle,
   interpolate,
   Easing,
-} from 'react-native-reanimated';
+} from '../../utils/reanimatedWrapper';
 import { 
   TrendingUp, 
   TrendingDown, 

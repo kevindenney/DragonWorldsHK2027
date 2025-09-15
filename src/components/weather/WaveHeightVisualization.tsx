@@ -17,7 +17,7 @@
 
 import React, { useMemo, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Circle, Marker, Polygon } from 'react-native-maps';
+import { Circle, Marker, Polygon } from '../../utils/mapComponentStubs';
 import Animated, {
   useSharedValue,
   withRepeat,
@@ -25,7 +25,7 @@ import Animated, {
   useAnimatedStyle,
   interpolate,
   Easing,
-} from 'react-native-reanimated';
+} from '../../utils/reanimatedWrapper';
 import { Waves, TrendingUp, AlertTriangle, Navigation } from 'lucide-react-native';
 import { IOSText } from '../ios';
 import { colors, typography, spacing } from '../../constants/theme';

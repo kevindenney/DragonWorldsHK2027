@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import Animated, { FadeInUp, SlideInRight } from 'react-native-reanimated';
+import Animated, { FadeInUp, SlideInRight } from '../../utils/reanimatedWrapper';
 import { 
   Target, 
   Compass, 

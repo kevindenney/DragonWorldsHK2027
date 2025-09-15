@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
-import MapView, { Marker, Heatmap, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Heatmap, PROVIDER_GOOGLE } from '../../utils/mapComponentStubs';
 import { Wind, Waves, Thermometer, Eye } from 'lucide-react-native';
 
 import { IOSText, IOSButton, IOSSegmentedControl } from '../ios';

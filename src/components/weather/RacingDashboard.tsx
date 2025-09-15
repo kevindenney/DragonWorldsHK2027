@@ -8,7 +8,7 @@ import Animated, {
   withSpring,
   withRepeat,
   withSequence 
-} from 'react-native-reanimated';
+} from '../../utils/reanimatedWrapper';
 import { 
   Wind, 
   Navigation, 

@@ -4,19 +4,28 @@ import { Anchor, Calendar, Trophy, FileText, MoreHorizontal } from 'lucide-react
 import { View, Text, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import type { MainTabParamList } from '../../types/navigation';
-import { MapScreen } from '../../screens/MapScreen';
+
+// Add screen loading logging
+console.log('🔍 [TabNavigator] Starting to import screens...');
+
+import { MapScreen } from '../../screens/MapScreenSafe';
 import { ScheduleScreen } from '../../screens/tabs/ScheduleScreen';
 import { ResultsStackNavigator } from './ResultsStackNavigator';
-import { NoticeBoardScreen } from '../../screens/NoticeBoardScreen';
+import { NoticesScreen } from '../../screens/tabs/NoticesScreen';
 import { MoreScreen } from '../../screens/tabs/MoreScreen';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
+
+console.log('✅ [TabNavigator] All screens imported (using safe MapScreen)');
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 const { colors, spacing, shadows, borderRadius } = dragonChampionshipsLightTheme;
 
 export function TabNavigator() {
+  console.log('🚀 [TabNavigator] TabNavigator component rendering...');
+
   const handleTabPress = async () => {
+    console.log('📱 [TabNavigator] Tab pressed');
     await Haptics.selectionAsync();
   };
 
@@ -126,25 +135,25 @@ export function TabNavigator() {
           tabBarAccessibilityLabel: 'Race schedule and timing',
         }}
       />
-      <Tab.Screen 
-        name="NoticeBoard" 
-        component={NoticeBoardScreen}
+      <Tab.Screen
+        name="NoticeBoard"
+        component={NoticesScreen}
         options={{
           tabBarLabel: 'Notices',
           tabBarAccessibilityLabel: 'Official notices and documents',
         }}
         initialParams={{ eventId: 'dragon-worlds-2027' }}
       />
-      <Tab.Screen 
-        name="Results" 
+      <Tab.Screen
+        name="Results"
         component={ResultsStackNavigator}
         options={{
           tabBarLabel: 'Results',
           tabBarAccessibilityLabel: 'Championship standings and results',
         }}
       />
-      <Tab.Screen 
-        name="Map" 
+      <Tab.Screen
+        name="Map"
         component={MapScreen}
         options={{
           tabBarLabel: 'Map',

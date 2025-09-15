@@ -36,11 +36,13 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
   },
   segmentedControl: {
-    marginHorizontal: 8,
+    marginHorizontal: 4,
   },
 });

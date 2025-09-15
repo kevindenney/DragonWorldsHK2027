@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, StyleSheet, Alert, Dimensions } from 'react-native';
-import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from '../../utils/mapComponentStubs';
 import { MapPin, Anchor, Flag, Shield, Navigation, Building } from 'lucide-react-native';
 
 import GarminService, { RaceAreaBoundary, SponsorLocation, GarminChartData } from '../../services/garminService';
@@ -66,7 +66,7 @@ export const InteractiveRaceMap: React.FC<InteractiveRaceMapProps> = ({
   });
   
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(selectedLocationId || null);
-  const [mapType, setMapType] = useState<'standard' | 'satellite' | 'hybrid'>('hybrid');
+  const [mapType, setMapType] = useState<'standard' | 'satellite' | 'hybrid'>('standard');
 
   useEffect(() => {
     loadMapData();

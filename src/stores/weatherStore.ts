@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Note: Import weatherManager dynamically to avoid circular dependency
 import { subscriptionService } from '../services/subscriptionService';
 import { errorHandler, handleWeatherAPIError } from '../services/errorHandler';
-import { WeatherUnits, TemperatureUnit, WindSpeedUnit, PressureUnit, DistanceUnit } from '../components/weather/UnitConverter';
+import { WeatherUnits, TemperatureUnit, WindSpeedUnit, PressureUnit } from '../components/weather/UnitConverter';
 
 // TypeScript interfaces
 export interface WeatherCondition {
@@ -200,7 +200,6 @@ interface WeatherState {
   setTemperatureUnit: (unit: TemperatureUnit) => void;
   setWindSpeedUnit: (unit: WindSpeedUnit) => void;
   setPressureUnit: (unit: PressureUnit) => void;
-  setDistanceUnit: (unit: DistanceUnit) => void;
   
   // Day selection actions
   setSelectedDayId: (dayId: string | null) => void;
@@ -360,8 +359,7 @@ export const useWeatherStore = create<WeatherState>()(
       units: {
         temperature: 'C',
         windSpeed: 'kts',
-        pressure: 'hPa',
-        distance: 'metric'
+        pressure: 'hPa'
       },
       selectedDayId: null,
 
@@ -818,11 +816,6 @@ export const useWeatherStore = create<WeatherState>()(
         }));
       },
 
-      setDistanceUnit: (unit: DistanceUnit) => {
-        set(state => ({ 
-          units: { ...state.units, distance: unit } 
-        }));
-      },
 
       // Day selection actions
       setSelectedDayId: (dayId: string | null) => {
@@ -893,7 +886,6 @@ export const useWeatherUnits = () => useWeatherStore(state => state.units);
 export const useTemperatureUnit = () => useWeatherStore(state => state.units.temperature);
 export const useWindSpeedUnit = () => useWeatherStore(state => state.units.windSpeed);
 export const usePressureUnit = () => useWeatherStore(state => state.units.pressure);
-export const useDistanceUnit = () => useWeatherStore(state => state.units.distance);
 
 // Day selection selectors
 export const useSelectedDayId = () => useWeatherStore(state => state.selectedDayId);

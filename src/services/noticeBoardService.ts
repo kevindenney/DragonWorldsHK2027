@@ -1,23 +1,29 @@
-import { 
-  NoticeBoardEvent, 
-  EventDocument, 
-  OfficialNotification, 
-  SailingInstruction, 
-  NoticeOfRace, 
-  Competitor, 
-  ProtestSubmission, 
-  Hearing, 
-  ScoringInquiry, 
+import {
+  NoticeBoardEvent,
+  EventDocument,
+  OfficialNotification,
+  SailingInstruction,
+  NoticeOfRace,
+  Competitor,
+  ProtestSubmission,
+  Hearing,
+  ScoringInquiry,
   OnWaterPenalty,
   CourseChange,
   WeatherNotice,
   RegistrationStatus,
   ProtestDecision,
-  NoticeBoardServiceConfig 
+  NoticeBoardServiceConfig
 } from '../types/noticeBoard';
 import { UserStore } from '../stores/userStore';
 import { RealDataService } from './realDataService';
 import { CCR2024NoticesService, ActionForm } from './ccr2024NoticesService';
+import {
+  generateMockEvent,
+  AVAILABLE_EVENTS,
+  DEFAULT_EVENT_ID,
+  EVENT_INFO
+} from '../data/mockEventData';
 
 export class NoticeBoardService {
   private config: NoticeBoardServiceConfig;
@@ -410,9 +416,15 @@ export class NoticeBoardService {
    * Generate demo event data
    */
   private generateDemoEvent(eventId: string): NoticeBoardEvent {
+    // Use centralized mock data if available, otherwise fall back to default
+    if (AVAILABLE_EVENTS.includes(eventId)) {
+      return generateMockEvent(eventId);
+    }
+
+    // Fallback for unknown event IDs
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() + 30); // Event in 30 days
-    
+    startDate.setDate(startDate.getDate() + 30);
+
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + 5);
 
@@ -441,6 +453,20 @@ export class NoticeBoardService {
         weatherNotices: this.generateDemoWeatherNotices()
       }
     };
+  }
+
+  /**
+   * Get available events
+   */
+  getAvailableEvents(): typeof EVENT_INFO {
+    return EVENT_INFO;
+  }
+
+  /**
+   * Get default event ID
+   */
+  getDefaultEventId(): string {
+    return DEFAULT_EVENT_ID;
   }
 
   /**

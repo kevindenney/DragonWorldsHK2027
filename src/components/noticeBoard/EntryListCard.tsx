@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, TextInput, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, TextInput, Alert, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { 
+import {
   Search, 
   Filter, 
   Users, 
@@ -164,9 +163,8 @@ export const EntryList: React.FC<EntryListProps> = ({
     const StatusIcon = getStatusIcon(competitor.registrationStatus);
     
     return (
-      <Animated.View
+      <View
         key={competitor.id}
-        entering={FadeInDown.delay(competitors.indexOf(competitor) * 50)}
       >
         <IOSCard 
           variant="elevated" 
@@ -256,7 +254,7 @@ export const EntryList: React.FC<EntryListProps> = ({
             </View>
           </View>
         </IOSCard>
-      </Animated.View>
+      </View>
     );
   };
 

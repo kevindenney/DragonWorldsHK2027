@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { RACING_AREA_LAT as CENTRAL_RACING_LAT, RACING_AREA_LON as CENTRAL_RACING_LON, HK_GENERAL } from '../constants/raceCoordinates';
 
 // TypeScript interfaces for weather API responses
 export interface OpenMeteoMarineResponse {
@@ -177,10 +178,10 @@ export class WeatherAPI {
   private cacheExpiry = 10 * 60 * 1000; // 10 minutes
   
   // Hong Kong coordinates for Dragon Worlds
-  private readonly HK_LAT = 22.2783;
-  private readonly HK_LON = 114.1757;
-  private readonly RACING_AREA_LAT = 22.265263983780926;
-  private readonly RACING_AREA_LON = 114.32704442168033;
+  private readonly HK_LAT = HK_GENERAL.latitude;
+  private readonly HK_LON = HK_GENERAL.longitude;
+  private readonly RACING_AREA_LAT = CENTRAL_RACING_LAT;
+  private readonly RACING_AREA_LON = CENTRAL_RACING_LON;
 
   constructor(
     openWeatherMapKey: string = process.env.EXPO_PUBLIC_OPENWEATHERMAP_API_KEY || '',

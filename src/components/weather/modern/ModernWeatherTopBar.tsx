@@ -13,7 +13,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-} from 'react-native-reanimated';
+} from '../../../utils/reanimatedWrapper';
 import {
   MapPin,
   Clock,

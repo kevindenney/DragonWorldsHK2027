@@ -11,7 +11,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   interpolate,
-} from 'react-native-reanimated';
+} from '../../../utils/reanimatedWrapper';
 import {
   Wind,
   Waves,

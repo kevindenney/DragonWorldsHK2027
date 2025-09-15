@@ -13,7 +13,7 @@ import {
   Dimensions 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown } from '../utils/reanimatedWrapper';
 import { 
   Trophy,
   Medal,

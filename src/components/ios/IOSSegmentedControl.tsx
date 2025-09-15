@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ViewStyle, Animated } from 'react-native';
 import { IOSText } from './IOSText';
 
 export interface IOSSegmentedControlOption {
@@ -37,16 +37,18 @@ export const IOSSegmentedControl: React.FC<IOSSegmentedControlProps> = ({
               isLast && styles.lastSegment
             ]}
             onPress={() => onValueChange(option.value)}
-            activeOpacity={0.7}
+            activeOpacity={0.6}
           >
-            <IOSText
-              style={[
-                styles.segmentText,
-                isSelected && styles.selectedSegmentText
-              ]}
-            >
-              {option.label}
-            </IOSText>
+            <Animated.View style={styles.segmentContent}>
+              <IOSText
+                style={[
+                  styles.segmentText,
+                  isSelected && styles.selectedSegmentText
+                ]}
+              >
+                {option.label}
+              </IOSText>
+            </Animated.View>
           </TouchableOpacity>
         );
       })}
@@ -58,43 +60,60 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     backgroundColor: '#F2F2F7',
-    borderRadius: 8,
-    padding: 2,
-  },
-  segment: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 6,
-  },
-  selectedSegment: {
-    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 4,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 2,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  segment: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    minHeight: 44,
+  },
+  segmentContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedSegment: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#007AFF',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#007AFF',
   },
   firstSegment: {
-    borderTopLeftRadius: 6,
-    borderBottomLeftRadius: 6,
+    borderTopLeftRadius: 8,
+    borderBottomLeftRadius: 8,
   },
   lastSegment: {
-    borderTopRightRadius: 6,
-    borderBottomRightRadius: 6,
+    borderTopRightRadius: 8,
+    borderBottomRightRadius: 8,
   },
   segmentText: {
-    fontSize: 13,
-    fontWeight: '400',
+    fontSize: 15,
+    fontWeight: '500',
     color: '#007AFF',
+    textAlign: 'center',
   },
   selectedSegmentText: {
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#007AFF',
+    fontSize: 15,
   },
 });

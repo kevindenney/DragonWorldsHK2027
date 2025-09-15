@@ -5,7 +5,7 @@ import MapView, {
   MapType, 
   Region,
   PROVIDER_DEFAULT 
-} from 'react-native-maps';
+} from '../../../utils/mapComponentStubs';
 
 interface OpenSeaMapViewProps {
   initialRegion?: Region;

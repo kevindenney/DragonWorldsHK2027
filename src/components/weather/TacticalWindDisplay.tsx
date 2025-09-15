@@ -5,7 +5,7 @@ import Animated, {
   useAnimatedStyle, 
   withTiming,
   FadeInDown 
-} from 'react-native-reanimated';
+} from '../../utils/reanimatedWrapper';
 import { 
   TrendingUp, 
   TrendingDown, 

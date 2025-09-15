@@ -16,7 +16,7 @@ import {
   Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+// Removed react-native-reanimated import
 import { 
   Trophy,
   Medal,
@@ -349,9 +349,8 @@ export function SimplifiedResultsScreen({ navigation }: ResultsScreenProps) {
     const racingClassColor = getRacingClassColor(racingClass);
     
     return (
-      <Animated.View
+      <View
         key={standing.sailNumber}
-        entering={FadeInDown.delay(index * 30)}
       >
         <TouchableOpacity 
           style={styles.standingCard}
@@ -405,7 +404,7 @@ export function SimplifiedResultsScreen({ navigation }: ResultsScreenProps) {
             <ChevronRight color={colors.textMuted} size={16} style={styles.chevronIcon} />
           </View>
         </TouchableOpacity>
-      </Animated.View>
+      </View>
     );
   };
 
@@ -602,17 +601,17 @@ const styles = StyleSheet.create({
   },
   filterContent: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+    gap: 6,
   },
   racingClassTab: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
     backgroundColor: colors.backgroundSecondary,
     borderRadius: borderRadius.round,
     borderWidth: 1,
     borderColor: colors.borderLight,
-    minHeight: 36,
+    minHeight: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -623,38 +622,41 @@ const styles = StyleSheet.create({
   racingClassTabContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: 4,
   },
   racingClassTabText: {
     ...typography.labelMedium,
     color: colors.textSecondary,
     fontWeight: '500',
-    fontSize: 12,
+    fontSize: 11,
   },
   racingClassTabTextSelected: {
     color: colors.textInverted,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   countBadge: {
-    paddingHorizontal: spacing.xs,
+    paddingHorizontal: 6,
     paddingVertical: 1,
-    borderRadius: borderRadius.round,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.borderLight,
     backgroundColor: colors.surface,
+    minWidth: 18,
+    alignItems: 'center',
   },
   countBadgeSelected: {
-    backgroundColor: colors.textInverted + '20',
-    borderColor: colors.textInverted + '30',
+    backgroundColor: colors.textInverted + '15',
+    borderColor: colors.textInverted + '25',
   },
   countBadgeText: {
     ...typography.labelSmall,
-    fontSize: 10,
+    fontSize: 9,
     color: colors.textSecondary,
+    fontWeight: '500',
   },
   countBadgeTextSelected: {
     color: colors.textInverted,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   scrollView: {
     flex: 1,

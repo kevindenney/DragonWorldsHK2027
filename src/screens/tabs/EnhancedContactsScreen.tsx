@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Alert, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
@@ -20,22 +20,10 @@ import { ContactCard, EmergencyContactCard, CommunicationChannelCard } from '../
 import { IOSText, IOSButton, IOSCard, IOSSection, IOSSegmentedControl, IOSModal } from '../../components/ios';
 import { 
   useSocialStore,
-  useWhatsAppGroups,
-  useJoinedGroups,
-  useActiveDiscussions,
-  useSocialLoading,
-  useSocialError,
   type GroupCategory
 } from '../../stores/socialStore';
 import {
-  useContactsStore,
-  useKeyContacts,
-  useEmergencyContacts,
-  useCommunicationChannels,
-  useFilteredContacts,
-  useFilteredEmergencyContacts,
-  useContactsLoading,
-  useContactsError
+  useContactsStore
 } from '../../stores/contactsStore';
 import { useUserStore, useUserType } from '../../stores/userStore';
 import type { MoreScreenProps } from '../../types/navigation';
@@ -94,42 +82,38 @@ const LiveCommentary: React.FC<LiveCommentaryProps> = ({
 export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation = null }) => {
   const userType = useUserType();
   
-  // Social store actions (for WhatsApp groups)
-  const refreshGroups = useSocialStore(state => state.refreshGroups);
-  const joinGroup = useSocialStore(state => state.joinGroup);
-  const leaveGroup = useSocialStore(state => state.leaveGroup);
-  const requestGroupAccess = useSocialStore(state => state.requestGroupAccess);
-  const getGroupsByCategory = useSocialStore(state => state.getGroupsByCategory);
-  const trackGroupInteraction = useSocialStore(state => state.trackGroupInteraction);
+  // Use single store subscriptions to prevent cascading re-renders
+  const socialStore = useSocialStore();
+  const contactsStore = useContactsStore();
   
-  // Social store data
-  const allGroups = useWhatsAppGroups();
-  const joinedGroups = useJoinedGroups();
-  const activeDiscussions = useActiveDiscussions();
-  const socialLoading = useSocialLoading();
-  const socialError = useSocialError();
+  // Extract data directly from stores to prevent individual hook subscriptions
+  const allGroups = socialStore.whatsAppGroups;
+  const joinedGroups = socialStore.joinedGroups;
+  const activeDiscussions = socialStore.activeDiscussions;
+  const socialLoading = socialStore.loading;
+  const socialError = socialStore.error;
   
-  // Contacts store actions and data
-  const { 
-    initializeDefaultContacts, 
-    refreshContacts,
-    setSearchQuery,
-    clearFilters 
-  } = useContactsStore();
-  const keyContacts = useKeyContacts();
-  const emergencyContacts = useEmergencyContacts();
-  const communicationChannels = useCommunicationChannels();
-  const filteredContacts = useFilteredContacts();
-  const filteredEmergencyContacts = useFilteredEmergencyContacts();
-  const contactsLoading = useContactsLoading();
-  const contactsError = useContactsError();
+  const keyContacts = contactsStore.keyContacts;
+  const emergencyContacts = contactsStore.emergencyContacts;
+  const communicationChannels = contactsStore.communicationChannels;
+  const contactsLoading = contactsStore.loading;
+  const contactsError = contactsStore.error;
+  const searchQuery = contactsStore.searchQuery;
+  
+  // Get filtered data safely with stable memoization
+  const filteredContacts = useMemo(() => {
+    return contactsStore.getFilteredContacts();
+  }, [keyContacts, searchQuery, contactsStore.activeFilters]);
+  
+  const filteredEmergencyContacts = useMemo(() => {
+    return contactsStore.getFilteredEmergencyContacts();
+  }, [emergencyContacts, searchQuery]);
   
   const [refreshing, setRefreshing] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'emergency' | 'contacts' | 'groups' | 'channels'>('emergency');
-  const [searchQuery, setSearchQueryLocal] = useState('');
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const isInitialized = useRef(false);
 
   const tabOptions = [
     { label: 'Emergency', value: 'emergency' },
@@ -140,28 +124,21 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
 
   // Initialize data only once on mount
   useEffect(() => {
-    let isMounted = true;
-    
     const initializeData = async () => {
       try {
-        console.log('🔄 Initializing EnhancedContactsScreen data...');
-        
-        // Initialize contacts if not already done
-        const currentState = useContactsStore.getState();
-        if (currentState.keyContacts.length === 0) {
+        // Only initialize once to prevent infinite loops
+        if (!isInitialized.current) {
+          console.log('🔄 Initializing EnhancedContactsScreen data...');
+          
+          // Always initialize default contacts on first load
           console.log('📞 Initializing default contacts...');
-          initializeDefaultContacts();
-        }
-        
-        // Initialize social data if not already done
-        const socialState = useSocialStore.getState();
-        if (socialState.whatsappGroups.length === 0) {
+          useContactsStore.getState().initializeDefaultContacts();
+          
+          // Load social data
           console.log('👥 Refreshing social groups...');
-          await socialState.refreshGroups();
-        }
-        
-        if (isMounted) {
-          setIsInitialized(true);
+          await useSocialStore.getState().refreshGroups();
+          
+          isInitialized.current = true;
           console.log('✅ EnhancedContactsScreen initialization complete');
         }
       } catch (error) {
@@ -170,18 +147,14 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
     };
 
     initializeData();
-    
-    return () => {
-      isMounted = false;
-    };
   }, []); // Empty dependency array - only run once on mount
 
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
       await Promise.all([
-        refreshGroups(),
-        refreshContacts()
+        socialStore.refreshGroups(),
+        contactsStore.refreshContacts()
       ]);
     } catch (error) {
       console.error('Error refreshing data:', error);
@@ -192,7 +165,7 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
 
   const handleJoinGroup = async (groupId: string) => {
     try {
-      await joinGroup(groupId);
+      await socialStore.joinGroup(groupId);
       Alert.alert('Success', 'Joined group successfully!');
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Failed to join group');
@@ -205,7 +178,7 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
       'Add a message to your access request (optional):',
       async (message) => {
         try {
-          await requestGroupAccess(groupId, message);
+          await socialStore.requestGroupAccess(groupId, message);
           Alert.alert('Request Sent', 'Your access request has been submitted.');
         } catch (error) {
           Alert.alert('Error', error instanceof Error ? error.message : 'Failed to request access');
@@ -219,7 +192,7 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
 
   const handleLeaveGroup = async (groupId: string) => {
     try {
-      await leaveGroup(groupId);
+      await socialStore.leaveGroup(groupId);
       Alert.alert('Left Group', 'You have left the group.');
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Failed to leave group');
@@ -227,7 +200,7 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
   };
 
   const handleViewGroup = (groupId: string) => {
-    trackGroupInteraction({
+    socialStore.trackGroupInteraction({
       groupId,
       type: 'view',
       timestamp: new Date().toISOString()
@@ -253,13 +226,11 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
   };
 
   const handleSearch = (query: string) => {
-    setSearchQueryLocal(query);
-    setSearchQuery(query);
+    contactsStore.setSearchQuery(query);
   };
 
   const handleClearFilters = () => {
-    setSearchQueryLocal('');
-    clearFilters();
+    contactsStore.clearFilters();
   };
 
   const handleShowSearch = () => {
@@ -271,9 +242,10 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
   };
 
   const getFilteredGroups = () => {
-    let filtered = allGroups;
+    // Handle case where allGroups might be undefined
+    let filtered = allGroups || [];
     
-    if (searchQuery.trim()) {
+    if (searchQuery && searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(group => 
         group.title.toLowerCase().includes(query) ||
@@ -285,10 +257,20 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
   };
 
   const filteredGroups = getFilteredGroups();
-  const joinedGroupIds = joinedGroups.map(g => g.id);
-  const liveDiscussion = activeDiscussions.find(d => d.isLive);
+  const joinedGroupIds = (joinedGroups || []).map(g => g.id);
+  const liveDiscussion = (activeDiscussions || []).find(d => d.isLive);
   const loading = socialLoading || contactsLoading;
   const error = socialError || contactsError;
+  
+  // Memoize the recent messages array to prevent infinite re-renders
+  const recentMessages = useMemo(() => {
+    if (!liveDiscussion?.lastMessage) return [];
+    return [{
+      author: liveDiscussion.lastMessage.author,
+      message: liveDiscussion.lastMessage.content,
+      timestamp: liveDiscussion.lastMessage.timestamp
+    }];
+  }, [liveDiscussion?.lastMessage]);
 
   const renderTabContent = () => {
     switch (selectedTab) {
@@ -442,13 +424,7 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
             <LiveCommentary
               isActive={liveDiscussion.isLive}
               participantCount={liveDiscussion.participantCount}
-              recentMessages={liveDiscussion.lastMessage ? [
-                {
-                  author: liveDiscussion.lastMessage.author,
-                  message: liveDiscussion.lastMessage.content,
-                  timestamp: liveDiscussion.lastMessage.timestamp
-                }
-              ] : []}
+              recentMessages={recentMessages}
               onJoin={handleJoinLiveDiscussion}
             />
           </IOSSection>

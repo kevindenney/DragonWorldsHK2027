@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IOSText } from '../../components/ios/IOSText';
@@ -9,7 +9,7 @@ import { colors, spacing } from '../../constants/theme';
 import { eventSchedules } from '../../data/scheduleData';
 import type { ScheduleScreenProps } from '../../types/navigation';
 
-export function ScheduleScreen({ navigation }: ScheduleScreenProps) {
+export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
   const [selectedEvent, setSelectedEvent] = useState<string>('world-championship');
   const [refreshing, setRefreshing] = useState(false);
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
@@ -17,6 +17,25 @@ export function ScheduleScreen({ navigation }: ScheduleScreenProps) {
   const currentEvent = selectedEvent === 'world-championship' 
     ? eventSchedules.worldChampionship 
     : eventSchedules.asiaPacificChampionships;
+
+  // Handle navigation parameters to auto-expand and highlight specific events
+  useEffect(() => {
+    const { date, eventId } = route?.params || {};
+    
+    if (date) {
+      // Find the day that matches the date and expand it
+      const matchingDay = currentEvent.days.find(day => 
+        day.date === date || day.activities.some(activity => 
+          activity.title === eventId || activity.subtitle?.includes(eventId || '')
+        )
+      );
+      
+      if (matchingDay) {
+        const dayId = matchingDay.date;
+        setExpandedDays(new Set([dayId]));
+      }
+    }
+  }, [route?.params, currentEvent]);
 
   const onRefresh = async () => {
     setRefreshing(true);

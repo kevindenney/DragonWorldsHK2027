@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Marker, Polyline, Circle } from 'react-native-maps';
+import { Marker, Polyline, Circle } from '../../utils/mapComponentStubs';
 import { TrendingUp, TrendingDown, Navigation, Waves } from 'lucide-react-native';
-import Animated, { useSharedValue, withRepeat, withSequence, withTiming, useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { useSharedValue, withRepeat, withSequence, withTiming, useAnimatedStyle } from '../../utils/reanimatedWrapper';
 import { IOSText } from '../ios';
 import { colors, typography, spacing } from '../../constants/theme';
 import type { WeatherDataPoint } from './WeatherMapLayer';

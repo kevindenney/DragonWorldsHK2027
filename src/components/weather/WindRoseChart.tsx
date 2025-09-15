@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown } from '../../utils/reanimatedWrapper';
 import { Navigation, ArrowUp } from 'lucide-react-native';
 import { colors, typography, spacing } from '../../constants/theme';
 import { darkSkyColors, darkSkyTypography, darkSkySpacing } from '../../constants/darkSkyTheme';

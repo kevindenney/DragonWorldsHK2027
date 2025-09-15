@@ -8,8 +8,7 @@ const { colors } = dragonChampionshipsLightTheme;
 
 export const SailingLocationMarker: React.FC<SailingLocationMarkerProps> = ({
   location,
-  isSelected,
-  onPress
+  isSelected
 }) => {
   const getMarkerIcon = (type: SailingLocationType) => {
     const iconSize = 20;
@@ -78,14 +77,16 @@ export const SailingLocationMarker: React.FC<SailingLocationMarkerProps> = ({
   const markerColor = getMarkerColor(location.type, location.importance);
   
   return (
-    <View style={[
-      styles.markerContainer,
-      { backgroundColor: markerColor },
-      isSelected && styles.selectedMarker,
-      location.importance === 'primary' && styles.primaryMarker
-    ]}>
+    <View
+      style={[
+        styles.markerContainer,
+        { backgroundColor: markerColor },
+        isSelected && styles.selectedMarker,
+        location.importance === 'primary' && styles.primaryMarker
+      ]}
+    >
       {getMarkerIcon(location.type)}
-      
+
       {/* Championship-specific indicator */}
       {location.championshipSpecific && (
         <View style={styles.championshipIndicator} />

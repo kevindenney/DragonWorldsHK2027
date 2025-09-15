@@ -5,7 +5,7 @@ import Animated, {
   useAnimatedStyle, 
   withTiming, 
   withSpring 
-} from 'react-native-reanimated';
+} from '../../../utils/reanimatedWrapper';
 import { 
   ChevronDown, 
   ChevronRight,

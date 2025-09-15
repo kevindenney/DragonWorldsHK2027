@@ -72,7 +72,7 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
       
       Alert.alert(
         'Navigation Started',
-        `Route to ${selectedLocation.location.name}\nDistance: ${route.distance.toFixed(1)} nm\nETA: ${Math.round(route.estimatedTime)} minutes`,
+        `Route to ${selectedLocation.location.name}\nETA: ${Math.round(route.estimatedTime)} minutes`,
         [{ text: 'OK' }]
       );
     } catch (error) {
@@ -237,10 +237,6 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
           <View style={styles.routeInfo}>
             <IOSText style={styles.routeTitle}>Navigation Route</IOSText>
             <View style={styles.routeStats}>
-              <View style={styles.routeStat}>
-                <IOSText style={styles.routeStatLabel}>Distance</IOSText>
-                <IOSText style={styles.routeStatValue}>{route.distance.toFixed(1)} nm</IOSText>
-              </View>
               <View style={styles.routeStat}>
                 <IOSText style={styles.routeStatLabel}>ETA</IOSText>
                 <IOSText style={styles.routeStatValue}>{Math.round(route.estimatedTime)} min</IOSText>

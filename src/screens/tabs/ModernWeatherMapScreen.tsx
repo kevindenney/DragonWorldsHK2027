@@ -17,7 +17,7 @@ import MapView, {
   Circle,
   PROVIDER_DEFAULT,
   Region 
-} from 'react-native-maps';
+} from '../../utils/mapComponentStubs';
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -26,7 +26,7 @@ import Animated, {
   withSpring,
   withTiming,
   interpolate,
-} from 'react-native-reanimated';
+} from '../../utils/reanimatedWrapper';
 import {
   Cloud,
   Wind,
@@ -58,6 +58,7 @@ import {
 } from '../../stores/weatherStore';
 import type { MoreScreenProps } from '../../types/navigation';
 import type { LocationData } from '../../stores/weatherStore';
+import { RACE_AREA_REGION, NINEPINS_RACE_COURSE_CENTER } from '../../constants/raceCoordinates';
 
 // Import new modern components
 import { 
@@ -76,6 +77,8 @@ import { tideDataService, type TideStation } from '../../services/tideDataServic
 import { deduplicateStations, mergeAndDeduplicateStations } from '../../utils/stationDeduplication';
 // Import location weather service
 import { locationWeatherService } from '../../services/locationWeatherService';
+// Import weather conditions overlay
+import WeatherConditionsOverlay from '../../components/weather/WeatherConditionsOverlay';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -86,18 +89,10 @@ const OPENSEAMAP_CONFIG = {
 };
 
 // Hong Kong racing area - Clearwater Bay
-const INITIAL_REGION: Region = {
-  latitude: 22.265263983780926,
-  longitude: 114.32704442168033,
-  latitudeDelta: 0.08,
-  longitudeDelta: 0.08,
-};
+const INITIAL_REGION: Region = RACE_AREA_REGION;
 
 // Center of race area coordinates
-const RACE_AREA_CENTER = {
-  latitude: 22.255796757885822,
-  longitude: 114.32596534115692,
-};
+const RACE_AREA_CENTER = NINEPINS_RACE_COURSE_CENTER;
 
 // Five specific station locations around Hong Kong waters
 const STATION_LOCATIONS = [
@@ -1149,6 +1144,8 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
         {/* Center of Race Area marker removed */}
       </MapView>
 
+        {/* Weather Conditions Overlay */}
+        <WeatherConditionsOverlay />
 
           {/* Map Layer Controls - Removed - All overlays always on */}
 

@@ -87,7 +87,7 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.dragonworldshk2027"
+    namespace 'com.dragonworlds.hk2027'
     defaultConfig {
         applicationId 'com.dragonworlds.hk2027'
         minSdkVersion rootProject.ext.minSdkVersion

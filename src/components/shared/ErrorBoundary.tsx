@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import Animated, { FadeIn, SlideInUp } from 'react-native-reanimated';
 import { AlertTriangle, RefreshCw, ArrowLeft, Bug } from 'lucide-react-native';
 import { colors, typography, spacing, shadows } from '../../constants/theme';
 import { errorHandler } from '../../services/errorHandler';
@@ -115,18 +114,16 @@ function ErrorFallback({
   const [showDetailedError, setShowDetailedError] = React.useState(showDetails);
 
   return (
-    <Animated.View 
+    <View
       style={styles.container}
-      entering={FadeIn.duration(300)}
       testID={testID}
     >
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View 
+        <View
           style={styles.errorCard}
-          entering={SlideInUp.delay(200)}
         >
           <View style={styles.iconContainer}>
             <AlertTriangle color={colors.error} size={48} />
@@ -166,9 +163,8 @@ function ErrorFallback({
           </View>
 
           {showDetailedError && (
-            <Animated.View 
+            <View
               style={styles.errorDetails}
-              entering={SlideInUp.delay(100)}
             >
               <Text style={styles.errorId}>Error ID: {errorId}</Text>
               
@@ -202,11 +198,11 @@ function ErrorFallback({
                   </ScrollView>
                 </View>
               )}
-            </Animated.View>
+            </View>
           )}
-        </Animated.View>
+        </View>
       </ScrollView>
-    </Animated.View>
+    </View>
   );
 }
 

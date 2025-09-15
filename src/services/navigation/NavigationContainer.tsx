@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { SplashScreen } from '../../screens/SplashScreen';
-import { EnhancedLoginScreen } from '../../screens/auth/EnhancedLoginScreen';
-import { EnhancedRegisterScreen } from '../../screens/auth/EnhancedRegisterScreen';
-import { ForgotPasswordScreen } from '../../screens/auth/ForgotPasswordScreen';
+import { SimpleLoginScreen } from '../../screens/auth/SimpleLoginScreen';
+import { SimpleRegisterScreen } from '../../screens/auth/SimpleRegisterScreen';
+import { SimplePasswordResetScreen } from '../../screens/auth/SimplePasswordResetScreen';
 import { ProfileScreen } from '../../screens/ProfileScreen';
 // CompetitorDetail is now nested under the Results stack so we do not import it here
 import { DocumentViewer } from '../../components/noticeBoard/DocumentViewer';
@@ -46,49 +45,30 @@ const AuthStack = () => (
     screenOptions={{ headerShown: false }}
     initialRouteName="Login"
   >
-    <Stack.Screen name="Login" component={EnhancedLoginScreen} />
-    <Stack.Screen name="Register" component={EnhancedRegisterScreen} />
-    <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+    <Stack.Screen name="Login" component={SimpleLoginScreen} />
+    <Stack.Screen name="Register" component={SimpleRegisterScreen} />
+    <Stack.Screen name="ForgotPassword" component={SimplePasswordResetScreen} />
   </Stack.Navigator>
 );
 
 // App content with minimal auth friction for racing app
 const AppContent = () => {
   const { isAuthenticated, isInitialized } = useAuth();
-  const [showSplash, setShowSplash] = useState(true);
-  
-  // Handle splash screen completion
-  const handleSplashComplete = () => {
-    console.log('🎬 Splash screen completed');
-    setShowSplash(false);
-  };
-  
-  // Development mode auto-bypass splash timeout
-  useEffect(() => {
-    if (__DEV__ && showSplash) {
-      const devBypassTimer = setTimeout(() => {
-        console.log('🚀 Dev Mode - Auto-bypassing splash screen');
-        setShowSplash(false);
-      }, 2000); // Reduced to 2 seconds
 
-      return () => clearTimeout(devBypassTimer);
-    }
-  }, []); // Only run once on mount
-  
-  // Show splash screen first
-  if (showSplash || !isInitialized) {
-    return <SplashScreen onSplashComplete={handleSplashComplete} />;
+  // Wait for auth initialization
+  if (!isInitialized) {
+    return null; // Let native splash screen handle the loading state
   }
-  
+
   // For racing app: Allow guest access to all features
   // Users can optionally authenticate for personalized features
   // Skip auth requirement for core functionality
   const skipAuthForRacing = true; // Set to false if auth is required
-  
+
   if (!skipAuthForRacing && !isAuthenticated) {
     return <AuthStack />;
   }
-  
+
   // Show main app with guest/authenticated access
   return <MainApp />;
 };

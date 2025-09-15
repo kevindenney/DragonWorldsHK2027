@@ -16,17 +16,12 @@
 
 import { WeatherCondition, MarineCondition } from '../stores/weatherStore';
 import type { WeatherDataPoint } from '../components/weather/WeatherMapLayer';
+import { NINEPINS_RACE_COURSE_CENTER, CLEARWATER_BAY_MARINA as CLEARWATER_BAY_COORDS } from '../constants/raceCoordinates';
 
 // Hong Kong Racing Area Constants
-const RACING_AREA_CENTER = {
-  latitude: 22.265263983780926,
-  longitude: 114.32704442168033,
-};
+const RACING_AREA_CENTER = NINEPINS_RACE_COURSE_CENTER;
 
-const CLEARWATER_BAY_MARINA = {
-  latitude: 22.2783,
-  longitude: 114.1757,
-};
+const CLEARWATER_BAY_MARINA = CLEARWATER_BAY_COORDS;
 
 /**
  * Weather Pattern Types for Hong Kong

@@ -1,4 +1,5 @@
 const functions = require('firebase-functions');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
 const admin = require('firebase-admin');
 const axios = require('axios');
 const pdf = require('pdf-parse');
@@ -220,11 +221,16 @@ exports.scrapeCCR2024Results = functions.https.onCall(async (data, context) => {
 /**
  * Scheduled function to update CCR 2024 results periodically
  */
-exports.updateCCR2024Results = functions.pubsub.schedule('every 6 hours').onRun(async (context) => {
+exports.updateCCR2024Results = onSchedule({
+  schedule: 'every 6 hours',
+  timeZone: 'Asia/Hong_Kong',
+  memory: '512MiB',
+  timeoutSeconds: 300
+}, async (event) => {
   console.log('Running scheduled CCR 2024 results update...');
   try {
     // Call the scraping function
-    await exports.scrapeCCR2024Results.run({}, { auth: { uid: 'system' } });
+    await exports.scrapeCCR2024Results({}, { auth: { uid: 'system' } });
     console.log('Scheduled CCR 2024 update completed successfully');
   } catch (error) {
     console.error('Scheduled CCR 2024 update failed:', error);

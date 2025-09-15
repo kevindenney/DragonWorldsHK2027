@@ -6,7 +6,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming
-} from 'react-native-reanimated';
+} from '../../utils/reanimatedWrapper';
 import { 
   RefreshCw, 
   Compass, 

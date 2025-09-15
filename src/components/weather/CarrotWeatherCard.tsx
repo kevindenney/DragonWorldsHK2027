@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import Animated, { FadeInDown, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { FadeInDown, useSharedValue, withSpring } from '../../utils/reanimatedWrapper';
 import { 
   Cloud, 
   Sun, 

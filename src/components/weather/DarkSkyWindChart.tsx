@@ -7,7 +7,7 @@ import Animated, {
   withRepeat,
   withSequence,
   interpolate
-} from 'react-native-reanimated';
+} from '../../utils/reanimatedWrapper';
 import { ArrowUp, TrendingUp, TrendingDown } from 'lucide-react-native';
 import { colors, typography, spacing } from '../../constants/theme';
 import { darkSkyColors, darkSkyTypography, darkSkySpacing } from '../../constants/darkSkyTheme';

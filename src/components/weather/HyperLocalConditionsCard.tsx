@@ -7,7 +7,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   interpolateColor
-} from 'react-native-reanimated';
+} from '../../utils/reanimatedWrapper';
 import { 
   MapPin, 
   Wind, 

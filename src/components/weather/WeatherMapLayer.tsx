@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Marker, Circle } from 'react-native-maps';
+import { Marker, Circle } from '../../utils/mapComponentStubs';
 import { Wind, Waves, TrendingUp, Thermometer, Navigation } from 'lucide-react-native';
 import { IOSText } from '../ios';
 import { colors, typography, spacing } from '../../constants/theme';

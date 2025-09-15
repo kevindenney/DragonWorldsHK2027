@@ -29,7 +29,8 @@ const { colors, spacing, typography, shadows, borderRadius } = dragonChampionshi
 export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
   location,
   onClose,
-  onNavigate
+  onNavigate,
+  onScheduleNavigate
 }) => {
   const handleContactPress = async (type: 'phone' | 'email' | 'website', value: string) => {
     try {
@@ -59,7 +60,8 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
 
   const handleGetDirections = () => {
     const { latitude, longitude } = location.coordinates;
-    const url = `https://maps.google.com/maps?q=${latitude},${longitude}`;
+    const encodedName = encodeURIComponent(location.name);
+    const url = `https://maps.google.com/maps?q=${encodedName}&ll=${latitude},${longitude}`;
     
     Linking.canOpenURL(url).then(supported => {
       if (supported) {
@@ -102,7 +104,7 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
 
   return (
     <Modal
-      visible={true}
+      visible={!!location}
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={onClose}
@@ -207,13 +209,25 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                 <Text style={styles.sectionTitle}>Championship Events</Text>
               </View>
               {location.championshipEvents.map((event, index) => (
-                <View key={index} style={styles.eventItem}>
-                  <Text style={styles.eventDate}>{event.date} at {event.time}</Text>
-                  <Text style={styles.eventTitle}>{event.event}</Text>
-                  {event.description && (
-                    <Text style={styles.eventDescription}>{event.description}</Text>
-                  )}
-                </View>
+                <TouchableOpacity 
+                  key={index} 
+                  style={styles.eventItem}
+                  onPress={() => onScheduleNavigate?.(event.date, event.event)}
+                  disabled={!onScheduleNavigate}
+                >
+                  <View style={styles.eventContent}>
+                    <View>
+                      <Text style={styles.eventDate}>{event.date} at {event.time}</Text>
+                      <Text style={styles.eventTitle}>{event.event}</Text>
+                      {event.description && (
+                        <Text style={styles.eventDescription}>{event.description}</Text>
+                      )}
+                    </View>
+                    {onScheduleNavigate && (
+                      <Calendar size={16} color={colors.primary} style={styles.eventIcon} />
+                    )}
+                  </View>
+                </TouchableOpacity>
               ))}
             </View>
           )}
@@ -407,6 +421,14 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
+  },
+  eventContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  eventIcon: {
+    marginLeft: spacing.sm,
   },
   eventDate: {
     ...typography.caption,

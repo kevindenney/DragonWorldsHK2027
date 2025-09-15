@@ -17,7 +17,7 @@ import {
   Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown, SlideInRight } from 'react-native-reanimated';
+import Animated, { FadeInDown, SlideInRight } from '../../utils/reanimatedWrapper';
 import { 
   Trophy,
   Medal,

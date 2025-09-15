@@ -34,13 +34,13 @@ import MapView, {
   Polygon, 
   PROVIDER_GOOGLE,
   Region
-} from 'react-native-maps';
+} from '../../utils/mapComponentStubs';
 import Animated, { 
   FadeInDown, 
   useSharedValue, 
   withSpring,
   useAnimatedStyle 
-} from 'react-native-reanimated';
+} from '../../utils/reanimatedWrapper';
 import { 
   Wind, 
   Waves, 
@@ -57,6 +57,7 @@ import {
 import { IOSText, IOSButton, IOSSegmentedControl } from '../../components/ios';
 import { colors, typography, spacing } from '../../constants/theme';
 import type { WeatherScreenProps } from '../../types/navigation';
+import { NINEPINS_RACE_COURSE_CENTER, CLEARWATER_BAY_MARINA as CLEARWATER_BAY_COORDS } from '../../constants/raceCoordinates';
 
 // Import weather infrastructure
 import { useWeatherStore } from '../../stores/weatherStore';
@@ -69,17 +70,12 @@ import { WindPatternHeatmap } from '../../components/weather/WindPatternHeatmap'
 import { TideCurrentOverlay } from '../../components/weather/TideCurrentOverlay';
 import { WaveHeightVisualization } from '../../components/weather/WaveHeightVisualization';
 import { PressureGradientOverlay } from '../../components/weather/PressureGradientOverlay';
+import WeatherConditionsOverlay from '../../components/weather/WeatherConditionsOverlay';
 
 // Geographic Constants - Hong Kong Racing Waters
-const RACING_AREA_CENTER = {
-  latitude: 22.265263983780926,
-  longitude: 114.32704442168033,
-};
+const RACING_AREA_CENTER = NINEPINS_RACE_COURSE_CENTER;
 
-const CLEARWATER_BAY_MARINA = {
-  latitude: 22.2783,
-  longitude: 114.1757,
-};
+const CLEARWATER_BAY_MARINA = CLEARWATER_BAY_COORDS;
 
 // Racing area boundary (approximate 8km x 8km)
 const RACING_BOUNDARY = [
@@ -564,6 +560,9 @@ Temperature: ${point.temperature.toFixed(1)}°C
             )}
           </View>
         )}
+
+        {/* Weather Conditions Overlay */}
+        <WeatherConditionsOverlay />
       </View>
 
       {/* Status Bar - Living Document: Current conditions summary */}

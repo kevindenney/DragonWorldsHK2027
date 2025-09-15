@@ -11,7 +11,7 @@ import { Users, Cloud, ChevronRight, FileText } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
 import { EnhancedContactsScreen } from './EnhancedContactsScreen';
-import { ModernWeatherMapScreen } from './ModernWeatherMapScreen';
+// TEMPORARILY DISABLED: import { ModernWeatherMapScreen } from './ModernWeatherMapScreen';
 
 const { colors, spacing, typography, shadows, borderRadius } = dragonChampionshipsLightTheme;
 
@@ -33,14 +33,15 @@ const moreOptions: MoreOption[] = [
     component: EnhancedContactsScreen,
     accessibilityLabel: 'Contacts, WhatsApp groups, and emergency information',
   },
-  {
-    id: 'weather',
-    title: 'Weather',
-    description: 'Modern weather interface with OpenSeaMaps nautical charts',
-    icon: Cloud,
-    component: ModernWeatherMapScreen,
-    accessibilityLabel: 'Weather maps and nautical charts',
-  },
+  // TEMPORARILY DISABLED: Weather screen with maps
+  // {
+  //   id: 'weather',
+  //   title: 'Weather',
+  //   description: 'Modern weather interface with OpenSeaMaps nautical charts',
+  //   icon: Cloud,
+  //   component: ModernWeatherMapScreen,
+  //   accessibilityLabel: 'Weather maps and nautical charts',
+  // },
   {
     id: 'data-sources',
     title: 'Data Sources',

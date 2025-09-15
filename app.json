@@ -6,14 +6,15 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
+    "jsEngine": "hermes",
     "scheme": "dragonworlds",
     "description": "Official app for the Dragon World Championships 2027 in Hong Kong. Get real-time weather data, race schedules, results, and connect with fellow sailors.",
     "keywords": ["sailing", "dragon class", "regatta", "weather", "racing", "hong kong", "yachting"],
     "primaryColor": "#DC2626",
     "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
+      "image": "./assets/dragon-logo.png",
+      "resizeMode": "cover",
       "backgroundColor": "#DC2626"
     },
     "assetBundlePatterns": [
@@ -25,6 +26,12 @@
       "buildNumber": "1",
       "requireFullScreen": false,
       "userInterfaceStyle": "light",
+      "jsEngine": "hermes",
+      "splash": {
+        "image": "./assets/dragon-logo.png",
+        "resizeMode": "cover",
+        "backgroundColor": "#DC2626"
+      },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app uses your location to provide accurate local weather conditions and nearby sailing venues.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app uses your location to provide accurate local weather conditions and nearby sailing venues.",
@@ -61,6 +68,11 @@
       "versionCode": 1,
       "compileSdkVersion": 34,
       "targetSdkVersion": 34,
+      "splash": {
+        "image": "./assets/dragon-logo.png",
+        "resizeMode": "cover",
+        "backgroundColor": "#DC2626"
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundImage": "./assets/adaptive-background.png",
@@ -106,6 +118,14 @@
       "orientation": "portrait"
     },
     "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/dragon-logo.png",
+          "resizeMode": "cover",
+          "backgroundColor": "#DC2626"
+        }
+      ],
       [
         "expo-notifications",
         {

@@ -13,7 +13,7 @@ import Animated, {
   withSpring,
   interpolate,
   runOnJS,
-} from 'react-native-reanimated';
+} from '../../../utils/reanimatedWrapper';
 import Svg, {
   Path,
   Circle,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown } from '../../utils/reanimatedWrapper';
 import { Waves, Navigation, TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
 import { colors, typography, spacing } from '../../constants/theme';
 

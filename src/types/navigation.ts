@@ -17,7 +17,7 @@ export type RootStackParamList = {
 
 export type MainTabParamList = {
   Map: undefined;
-  Schedule: undefined;
+  Schedule: { date?: string; eventId?: string } | undefined;
   Results: undefined;
   NoticeBoard: { eventId: string };
   More: undefined;

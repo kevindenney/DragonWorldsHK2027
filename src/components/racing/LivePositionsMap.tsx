@@ -11,7 +11,7 @@ import MapView, {
   Polyline, 
   Circle,
   PROVIDER_APPLE 
-} from 'react-native-maps';
+} from '../../utils/mapComponentStubs';
 import { 
   Crosshair, 
   Maximize2, 
@@ -446,7 +446,7 @@ export const LivePositionsMap: React.FC<LivePositionsMapProps> = ({
                   </IOSText>
                   {boat.heading && (
                     <IOSText style={styles.statText}>
-                      Heading: {Math.round(boat.heading)}° • DTF: {boat.distanceToFinish?.toFixed(2) || '—'} nm
+                      Heading: {Math.round(boat.heading)}°
                     </IOSText>
                   )}
                 </View>

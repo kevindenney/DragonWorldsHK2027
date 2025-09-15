@@ -15,7 +15,7 @@ import Animated, {
   withSpring,
   withTiming,
   interpolate,
-} from 'react-native-reanimated';
+} from '../../../utils/reanimatedWrapper';
 import {
   Cloud,
   Sun,

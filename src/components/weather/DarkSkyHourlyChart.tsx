@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import Animated, { FadeInRight } from 'react-native-reanimated';
+import Animated, { FadeInRight } from '../../utils/reanimatedWrapper';
 import { 
   Cloud, 
   CloudRain, 

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { debugZustandStore } from '../utils/hermesDebugger';
 import { 
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -46,6 +47,9 @@ interface AuthState {
 /**
  * Authentication store using Zustand with persistence
  */
+const authDebugger = debugZustandStore('authStore');
+authDebugger.beforeCreate();
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -444,7 +448,19 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: (() => {
+        authDebugger.beforePersist();
+        console.log('🔍 [AuthStore] Creating AsyncStorage for Zustand persistence...');
+        try {
+          const storage = createJSONStorage(() => AsyncStorage);
+          authDebugger.afterPersist();
+          console.log('🔍 [AuthStore] AsyncStorage persistence setup successful');
+          return storage;
+        } catch (error) {
+          console.error('🚨 [AuthStore] AsyncStorage persistence setup failed:', error);
+          throw error;
+        }
+      })(),
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
@@ -452,6 +468,9 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+
+// Post-creation debugging
+authDebugger.afterCreate(useAuthStore);
 
 /**
  * Auth store selectors for optimized re-renders

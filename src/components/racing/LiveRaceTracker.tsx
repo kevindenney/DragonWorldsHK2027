@@ -175,7 +175,7 @@ export const LiveRaceTracker: React.FC<LiveRaceTrackerProps> = ({
         <View style={styles.titleSection}>
           <IOSText style={styles.raceTitle}>Race {raceData.raceNumber}</IOSText>
           <IOSText style={styles.courseInfo}>
-            {raceData.course.name} • {raceData.course.distance} nm
+            {raceData.course.name}
           </IOSText>
         </View>
         

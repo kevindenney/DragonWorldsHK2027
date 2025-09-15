@@ -1,7 +1,7 @@
 import { initializeApp, getApp, getApps, FirebaseApp } from 'firebase/app';
-import { 
-  getAuth, 
-  Auth, 
+import {
+  getAuth,
+  Auth,
   connectAuthEmulator,
   initializeAuth,
   getReactNativePersistence
@@ -11,6 +11,7 @@ import { getStorage, FirebaseStorage, connectStorageEmulator } from 'firebase/st
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Analytics conditionally imported only for web
 import { Platform } from 'react-native';
+import { debugFirebaseConfig } from '../utils/hermesDebugger';
 
 export interface FirebaseConfig {
   apiKey: string;
@@ -34,6 +35,10 @@ const firebaseConfig: FirebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || '',
   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID || undefined,
 };
+
+// Debug Firebase config object for Hermes compatibility
+console.log('🔍 [Firebase] Debugging Firebase config object...');
+debugFirebaseConfig(firebaseConfig);
 
 /**
  * Validation function for Firebase configuration

@@ -261,36 +261,12 @@ export const usePerformanceTracking = (componentName: string) => {
   };
 };
 
-// Performance decorator for methods
+// Performance decorator for methods - DISABLED for Hermes compatibility
 export const performanceTracked = (name?: string) => {
   return (target: any, propertyName: string, descriptor: PropertyDescriptor) => {
-    const method = descriptor.value;
-    const metricName = name || `${target.constructor.name}_${propertyName}`;
-
-    descriptor.value = function (...args: any[]) {
-      performanceMonitor.startTiming(metricName);
-      try {
-        const result = method.apply(this, args);
-        
-        if (result instanceof Promise) {
-          return result
-            .then((res) => {
-              performanceMonitor.endTiming(metricName);
-              return res;
-            })
-            .catch((error) => {
-              performanceMonitor.endTiming(metricName, { error: error.message });
-              throw error;
-            });
-        }
-        
-        performanceMonitor.endTiming(metricName);
-        return result;
-      } catch (error) {
-        performanceMonitor.endTiming(metricName, { error: error.message });
-        throw error;
-      }
-    };
+    console.log('🚨 [Performance] Decorator disabled for Hermes compatibility:', propertyName);
+    // Return descriptor unchanged to avoid property configuration issues
+    return descriptor;
   };
 };
 

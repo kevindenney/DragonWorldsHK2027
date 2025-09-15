@@ -2,6 +2,7 @@ import Expo
 import React
 import ReactAppDependencyProvider
 
+// react-native-maps imports removed for Expo Go compatibility
 @UIApplicationMain
 public class AppDelegate: ExpoAppDelegate {
   var window: UIWindow?
@@ -29,6 +30,7 @@ public class AppDelegate: ExpoAppDelegate {
       launchOptions: launchOptions)
 #endif
 
+// react-native-maps initialization removed for Expo Go compatibility
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -62,10 +64,7 @@ class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
 
   override func bundleURL() -> URL? {
 #if DEBUG
-    // For Expo development client, use the network IP instead of localhost
-    // iOS Simulator needs the actual IP address to connect to the development server
-    let settings = RCTBundleURLProvider.sharedSettings()
-    return URL(string: "http://192.168.8.146:8081/index.bundle?platform=ios&dev=true")
+    return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: ".expo/.virtual-metro-entry")
 #else
     return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif

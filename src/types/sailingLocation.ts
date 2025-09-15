@@ -74,10 +74,10 @@ export interface LocationDetailModalProps {
   location: SailingLocation;
   onClose: () => void;
   onNavigate?: (location: SailingLocation) => void;
+  onScheduleNavigate?: (date: string, eventId?: string) => void;
 }
 
 export interface SailingLocationMarkerProps {
   location: SailingLocation;
   isSelected: boolean;
-  onPress: (location: SailingLocation) => void;
 }

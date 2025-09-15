@@ -31,7 +31,7 @@ import MapView, {
   PROVIDER_GOOGLE, 
   Region,
   MapPressEvent 
-} from 'react-native-maps';
+} from '../../utils/mapComponentStubs';
 import { 
   MapPin, 
   Search, 

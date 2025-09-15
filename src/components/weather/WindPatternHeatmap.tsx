@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Marker, Heatmap, Circle } from 'react-native-maps';
+import { Marker, Heatmap, Circle } from '../../utils/mapComponentStubs';
 import { Wind, Navigation, TrendingUp, ArrowUp } from 'lucide-react-native';
 import Animated, { 
   useSharedValue, 
@@ -8,7 +8,7 @@ import Animated, {
   withTiming, 
   useAnimatedStyle,
   interpolateColor 
-} from 'react-native-reanimated';
+} from '../../utils/reanimatedWrapper';
 import { IOSText } from '../ios';
 import { colors, typography, spacing } from '../../constants/theme';
 import type { WeatherDataPoint } from './WeatherMapLayer';

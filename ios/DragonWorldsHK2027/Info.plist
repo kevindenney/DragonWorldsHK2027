@@ -25,10 +25,11 @@
     <key>CFBundleURLTypes</key>
     <array>
       <dict>
+        <key>CFBundleURLName</key>
+        <string>dragonworlds-deep-linking</string>
         <key>CFBundleURLSchemes</key>
         <array>
           <string>dragonworlds</string>
-          <string>com.dragonworlds.hk2027</string>
         </array>
       </dict>
     </array>

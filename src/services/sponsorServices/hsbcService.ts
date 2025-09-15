@@ -25,8 +25,6 @@ export interface HSBCLocation {
   };
   premiereAccess: boolean;
   privateAccess: boolean;
-  distance?: number; // calculated from user location
-  estimatedWalkTime?: number; // in minutes
 }
 
 export interface HSBCService {
@@ -257,17 +255,6 @@ class HSBCService {
         }
       ];
 
-      // Calculate distances if user location provided
-      if (userLocation) {
-        locations.forEach(location => {
-          const distance = this.calculateDistance(userLocation, location.coordinates);
-          location.distance = distance;
-          location.estimatedWalkTime = Math.round(distance * 12); // ~12 minutes per km walking
-        });
-
-        // Sort by distance
-        locations.sort((a, b) => (a.distance || 0) - (b.distance || 0));
-      }
 
       return locations;
     } catch (error) {
@@ -565,25 +552,6 @@ class HSBCService {
     };
   }
 
-  /**
-   * Calculate distance between two points in kilometers
-   */
-  private calculateDistance(point1: { latitude: number; longitude: number }, point2: { latitude: number; longitude: number }): number {
-    const R = 6371; // Earth's radius in kilometers
-    const dLat = this.toRadians(point2.latitude - point1.latitude);
-    const dLon = this.toRadians(point2.longitude - point1.longitude);
-    
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(this.toRadians(point1.latitude)) * Math.cos(this.toRadians(point2.latitude)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
-
-  private toRadians(degrees: number): number {
-    return degrees * (Math.PI / 180);
-  }
 }
 
 export default HSBCService;
