@@ -1,16 +1,25 @@
 {
   "expo": {
     "name": "Dragon Worlds HK 2027",
-    "slug": "dragon-worlds-hk-2027",
+    "slug": "dragonworldshk2027",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": false,
     "jsEngine": "hermes",
+    "hermes": true,
     "scheme": "dragonworlds",
     "description": "Official app for the Dragon World Championships 2027 in Hong Kong. Get real-time weather data, race schedules, results, and connect with fellow sailors.",
-    "keywords": ["sailing", "dragon class", "regatta", "weather", "racing", "hong kong", "yachting"],
+    "keywords": [
+      "sailing",
+      "dragon class",
+      "regatta",
+      "weather",
+      "racing",
+      "hong kong",
+      "yachting"
+    ],
     "primaryColor": "#DC2626",
     "splash": {
       "image": "./assets/dragon-logo.png",
@@ -22,11 +31,13 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dragonworlds.hk2027",
+      "bundleIdentifier": "com.denneyke.dragonworldshk2027",
       "buildNumber": "1",
+      "deploymentTarget": "15.0",
       "requireFullScreen": false,
       "userInterfaceStyle": "light",
       "jsEngine": "hermes",
+      "hermes": true,
       "splash": {
         "image": "./assets/dragon-logo.png",
         "resizeMode": "cover",
@@ -42,11 +53,24 @@
         "CFBundleURLTypes": [
           {
             "CFBundleURLName": "dragonworlds-deep-linking",
-            "CFBundleURLSchemes": ["dragonworlds"]
+            "CFBundleURLSchemes": [
+              "dragonworlds"
+            ]
+          },
+          {
+            "CFBundleURLName": "dragonworlds-deep-linking",
+            "CFBundleURLSchemes": [
+              "dragonworlds"
+            ]
           }
         ],
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": ["background-fetch", "background-processing"],
+        "UIBackgroundModes": [
+          "background-fetch",
+          "background-processing",
+          "background-fetch",
+          "background-processing"
+        ],
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": false,
           "NSExceptionDomains": {
@@ -57,11 +81,15 @@
           }
         }
       },
-      "associatedDomains": ["applinks:dragonworlds.com"],
+      "associatedDomains": [
+        "applinks:dragonworlds.com",
+        "applinks:dragonworlds.com"
+      ],
       "config": {
         "usesNonExemptEncryption": false,
         "googleMapsApiKey": "AIzaSyASvagpRFBzK0HhRGqSqeW7W4FiEoFTf1w"
-      }
+      },
+      "runtimeVersion": "1.0.0"
     },
     "android": {
       "package": "com.dragonworlds.hk2027",
@@ -87,6 +115,15 @@
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
         "WRITE_CALENDAR",
+        "READ_CALENDAR",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_NETWORK_STATE",
+        "INTERNET",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "WRITE_CALENDAR",
         "READ_CALENDAR"
       ],
       "edgeToEdgeEnabled": true,
@@ -100,13 +137,33 @@
               "host": "dragonworlds.com"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "dragonworlds.com"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyASvagpRFBzK0HhRGqSqeW7W4FiEoFTf1w"
         }
+      },
+      "runtimeVersion": {
+        "policy": "appVersion"
       }
     },
     "web": {
@@ -133,14 +190,15 @@
           "color": "#DC2626",
           "defaultChannel": "default"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": false
     },
     "extra": {
       "eas": {
-        "projectId": "dragon-worlds-hk-2027"
+        "projectId": "c1bd372f-8ae3-4a4d-a4d0-d1300ce6e95a"
       },
       "apiUrl": "https://api.dragonworlds.com",
       "weatherApiUrl": "https://weather-api.dragonworlds.com",
@@ -148,8 +206,11 @@
       "sentryDsn": "https://your-sentry-dsn@sentry.io/project-id",
       "enableDeveloperMenu": false
     },
-    "owner": "dragonworlds",
+    "owner": "denneyke",
     "privacy": "public",
-    "githubUrl": "https://github.com/dragonworlds/hk2027-app"
+    "githubUrl": "https://github.com/dragonworlds/hk2027-app",
+    "updates": {
+      "url": "https://u.expo.dev/c1bd372f-8ae3-4a4d-a4d0-d1300ce6e95a"
+    }
   }
 }

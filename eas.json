@@ -1,13 +1,15 @@
 {
   "cli": {
-    "version": ">= 12.0.0"
+    "version": ">= 12.0.0",
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
-        "resourceClass": "m-medium"
+        "resourceClass": "m-medium",
+        "simulator": true
       },
       "android": {
         "resourceClass": "medium",
@@ -69,8 +71,7 @@
         "resourceClass": "m-large",
         "buildConfiguration": "Release",
         "simulator": false,
-        "autoIncrement": "buildNumber",
-        "enterpriseProvisioning": false
+        "autoIncrement": "buildNumber"
       }
     },
     "production-android": {
@@ -79,6 +80,24 @@
         "resourceClass": "large",
         "buildType": "app-bundle",
         "gradleCommand": ":app:bundleRelease"
+      }
+    },
+    "jsc-test": {
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium",
+        "simulator": true,
+        "buildConfiguration": "Debug"
+      },
+      "android": {
+        "resourceClass": "medium",
+        "gradleCommand": ":app:assembleDebug"
+      },
+      "channel": "jsc-test",
+      "env": {
+        "NODE_ENV": "development",
+        "EXPO_USE_HERMES": "false",
+        "FORCE_JSC": "true"
       }
     }
   },
@@ -106,17 +125,6 @@
         "track": "internal",
         "releaseStatus": "draft"
       }
-    }
-  },
-  "updates": {
-    "development": {
-      "channel": "development"
-    },
-    "preview": {
-      "channel": "preview"
-    },
-    "production": {
-      "channel": "production"
     }
   }
 }

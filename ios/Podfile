@@ -13,7 +13,7 @@ install! 'cocoapods',
 
 prepare_react_native_project!
 
-target 'DragonWorldsHK2027' do
+target 'dragonworldshk2027' do
   use_expo_modules!
 
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
@@ -29,7 +29,6 @@ target 'DragonWorldsHK2027' do
     ]
   end
 
-# react-native-maps removed for Expo Go compatibility
   config = use_native_modules!(config_command)
 
   use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']

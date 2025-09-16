@@ -2,7 +2,6 @@ import Expo
 import React
 import ReactAppDependencyProvider
 
-// react-native-maps imports removed for Expo Go compatibility
 @UIApplicationMain
 public class AppDelegate: ExpoAppDelegate {
   var window: UIWindow?
@@ -30,7 +29,6 @@ public class AppDelegate: ExpoAppDelegate {
       launchOptions: launchOptions)
 #endif
 
-// react-native-maps initialization removed for Expo Go compatibility
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 

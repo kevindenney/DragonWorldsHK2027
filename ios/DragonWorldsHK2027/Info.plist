@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>Dragon Worlds HK 2027</string>
+    <string>dragonworldshk2027</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -25,20 +25,20 @@
     <key>CFBundleURLTypes</key>
     <array>
       <dict>
-        <key>CFBundleURLName</key>
-        <string>dragonworlds-deep-linking</string>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>dragonworlds</string>
+          <string>com.denneyke.dragonworldshk2027</string>
+        </array>
+      </dict>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>exp+dragonworldshk2027</string>
         </array>
       </dict>
     </array>
     <key>CFBundleVersion</key>
     <string>1</string>
-    <key>GMSApiKey</key>
-    <string>AIzaSyASvagpRFBzK0HhRGqSqeW7W4FiEoFTf1w</string>
-    <key>ITSAppUsesNonExemptEncryption</key>
-    <false/>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSRequiresIPhoneOS</key>
@@ -47,34 +47,9 @@
     <dict>
       <key>NSAllowsArbitraryLoads</key>
       <false/>
-      <key>NSExceptionDomains</key>
-      <dict>
-        <key>api.dragonworlds.com</key>
-        <dict>
-          <key>NSExceptionAllowsInsecureHTTPLoads</key>
-          <false/>
-          <key>NSExceptionMinimumTLSVersion</key>
-          <string>TLSv1.2</string>
-        </dict>
-      </dict>
+      <key>NSAllowsLocalNetworking</key>
+      <true/>
     </dict>
-    <key>NSCalendarsUsageDescription</key>
-    <string>This app can add race events to your calendar to help you stay organized.</string>
-    <key>NSCameraUsageDescription</key>
-    <string>This app uses the camera to allow you to share photos of racing moments and connect with other sailors.</string>
-    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>This app uses your location to provide accurate local weather conditions and nearby sailing venues.</string>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>This app uses your location to provide accurate local weather conditions and nearby sailing venues.</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>This app accesses your photo library to let you share sailing photos and memories.</string>
-    <key>NSRemindersUsageDescription</key>
-    <string>This app can create reminders for important race events and weather conditions.</string>
-    <key>UIBackgroundModes</key>
-    <array>
-      <string>background-fetch</string>
-      <string>background-processing</string>
-    </array>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>
@@ -86,11 +61,6 @@
     <key>UIStatusBarStyle</key>
     <string>UIStatusBarStyleDefault</string>
     <key>UISupportedInterfaceOrientations</key>
-    <array>
-      <string>UIInterfaceOrientationPortrait</string>
-      <string>UIInterfaceOrientationPortraitUpsideDown</string>
-    </array>
-    <key>UISupportedInterfaceOrientations~ipad</key>
     <array>
       <string>UIInterfaceOrientationPortrait</string>
       <string>UIInterfaceOrientationPortraitUpsideDown</string>
