@@ -20,7 +20,12 @@ import {
 } from 'lucide-react-native';
 
 import { colors, spacing } from '../constants/theme';
-import { ErrorBoundary, LoadingSpinner, SkeletonLoader, SimpleError, OfflineError } from '../components/shared';
+// Direct imports used instead of barrel exports due to Hermes engine incompatibility
+import { ErrorBoundary } from '../components/shared/ErrorBoundary';
+import { LoadingSpinner } from '../components/shared/LoadingSpinner';
+import { SkeletonLoader } from '../components/shared/SkeletonLoader';
+import { SimpleError } from '../components/shared/SimpleError';
+import { OfflineError } from '../components/shared/OfflineError';
 import { haptics } from '../utils/haptics';
 import { offlineManager } from '../services/offlineManager';
 import {

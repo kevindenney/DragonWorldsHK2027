@@ -7,14 +7,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Bell,
   Search,
-  Filter,
   WifiOff,
   Settings,
   ChevronLeft
 } from 'lucide-react-native';
 
 import { colors, spacing } from '../../constants/theme';
-import { ErrorBoundary, LoadingSpinner, OfflineError, SimpleError } from '../../components/shared';
+// Direct imports used instead of barrel exports due to Hermes engine incompatibility
+import { ErrorBoundary } from '../../components/shared/ErrorBoundary';
+import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
+import { SimpleError } from '../../components/shared/SimpleError';
+import { OfflineError } from '../../components/shared/OfflineError';
 import { haptics } from '../../utils/haptics';
 import { offlineManager } from '../../services/offlineManager';
 import {
@@ -83,7 +86,6 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
 
   // UI State
   const [searchQuery, setSearchQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<RegattaCategory | 'all'>('all');
   const [activeFilters, setActiveFilters] = useState<SearchFilters>({
     categories: [],
@@ -336,20 +338,12 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
     setActiveFilters(filters);
   }, []);
 
-  const handleToggleFilters = useCallback(async () => {
-    await haptics.buttonPress();
-    setShowFilters(!showFilters);
-  }, [showFilters]);
 
   // Handle category selection
   const handleCategoryChange = useCallback(async (category: RegattaCategory | 'all') => {
     await haptics.selection();
     setSelectedCategory(category);
-    // Close filters when switching categories for cleaner UI
-    if (showFilters) {
-      setShowFilters(false);
-    }
-  }, [showFilters]);
+  }, []);
 
   // Get unread count
   const unreadCount = useMemo(() => {
@@ -373,7 +367,6 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <IOSNavigationBar
-          title="Notices"
           style="large"
           leftAction={{
             icon: <ChevronLeft size={20} color={colors.primary} />,
@@ -396,7 +389,6 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <IOSNavigationBar
-          title="Notices"
           style="large"
           leftAction={{
             icon: <ChevronLeft size={20} color={colors.primary} />,
@@ -427,23 +419,9 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
     >
       <SafeAreaView style={styles.container} edges={['top']}>
         <IOSNavigationBar
-          title="Notices"
           style="large"
-          rightActions={[
-            {
-              icon: <Filter size={20} color={colors.primary} />,
-              onPress: handleToggleFilters,
-              badge: Object.values(activeFilters).some(filter =>
-                Array.isArray(filter) ? filter.length > 0 :
-                typeof filter === 'boolean' ? filter :
-                typeof filter === 'object' && filter !== null ? Object.keys(filter).length > 0 :
-                filter !== 'all'
-              ) ? '' : undefined
-            }
-          ]}
           badge={unreadCount > 0 ? unreadCount.toString() : undefined}
         />
-
         {/* Event Selector */}
         <EventSelector
           selectedEventId={selectedEventId}
@@ -484,21 +462,6 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
           onCategoryChange={handleCategoryChange}
         />
 
-        {/* Filters */}
-        {showFilters && (
-          <IOSSection spacing="compact">
-            <NoticeFilters
-              filters={activeFilters}
-              onChange={handleFiltersChange}
-              availableCategories={event?.noticeBoard ?
-                [...new Set([
-                  ...event.noticeBoard.notifications.map(n => n.metadata?.category).filter(Boolean),
-                  ...event.noticeBoard.documents.map(d => d.category).filter(Boolean)
-                ])] : []
-              }
-            />
-          </IOSSection>
-        )}
 
         {/* Notices Content */}
         <ScrollView

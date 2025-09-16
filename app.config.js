@@ -1,11 +1,9 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-// Dynamic configuration for JS engine testing
+// Production-ready configuration with Hermes engine
 export default ({ config }) => {
-  console.log('🔧 [app.config.js] Processing dynamic configuration...');
-  console.log('🔧 [app.config.js] EXPO_USE_HERMES:', process.env.EXPO_USE_HERMES);
-  console.log('🔧 [app.config.js] FORCE_JSC:', process.env.FORCE_JSC);
+  console.log('🔧 [app.config.js] Loading production configuration with Hermes');
 
   // If config is empty or missing expo, load from app.json
   if (!config.expo || Object.keys(config).length === 0) {
@@ -30,34 +28,13 @@ export default ({ config }) => {
     config.expo.extra = {};
   }
 
-  // Override JS engine based on environment variables (legacy JSC support)
-  if (process.env.FORCE_JSC === 'true') {
-    console.log('🔧 [app.config.js] Forcing JSC engine for legacy compatibility');
-    config.expo.jsEngine = 'jsc';
-    config.expo.hermes = false;
-  } else {
-    console.log('🔧 [app.config.js] Using Hermes engine for production performance');
-    // Use Hermes for better performance (default from app.json)
-    config.expo.jsEngine = config.expo?.jsEngine || 'hermes';
-    config.expo.hermes = config.expo?.hermes !== undefined ? config.expo.hermes : true;
-  }
-
-  // Additional build-specific configurations for JSC testing
-  if (process.env.NODE_ENV === 'development' && process.env.FORCE_JSC === 'true') {
-    console.log('🔧 [app.config.js] Applying JSC test build optimizations');
-
-    // Keep New Architecture disabled for Expo Go compatibility
-    config.expo.newArchEnabled = false;
-
-    // Add build-specific extra configurations while preserving existing extra
-    config.expo.extra = {
-      ...config.expo.extra,
-      jsEngineTest: true,
-      buildType: 'jsc-test',
-      enableHermesDebugging: false
-    };
-  }
+  // Use Hermes for optimal performance in production
+  console.log('🔧 [app.config.js] Configuring Hermes engine for production performance');
+  config.expo.jsEngine = 'hermes';
+  config.expo.hermes = true;
 
   console.log('🔧 [app.config.js] Final jsEngine setting:', config.expo.jsEngine);
+  console.log('🔧 [app.config.js] Configuration complete with Hermes optimization');
+
   return config;
 };
