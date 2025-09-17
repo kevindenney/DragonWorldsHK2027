@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { IOSText } from '../components/ios';
 import { Thermometer, Wind, Waves, Anchor, ExternalLink, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react-native';
 import { useWeatherStore } from '../stores/weatherStore';
+import { DevelopedByAttribution } from '../components/branding/PoweredByRegattaFlow';
 
 const open = async (url: string) => {
   try {
@@ -278,6 +279,11 @@ export function DataSourcesScreen() {
           <ExternalLink size={14} color="#6C757D" />
           <IOSText style={styles.noteText}>Tap any source name above to open its website.</IOSText>
         </View>
+
+        {/* RegattaFlow Attribution */}
+        <View style={styles.attributionSection}>
+          <DevelopedByAttribution />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -399,6 +405,12 @@ const styles = StyleSheet.create({
   noteText: {
     fontSize: 12,
     color: '#6C757D',
+  },
+  attributionSection: {
+    marginTop: 24,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    alignItems: 'center',
   },
 });
 

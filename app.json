@@ -10,7 +10,7 @@
     "jsEngine": "hermes",
     "hermes": true,
     "scheme": "dragonworlds",
-    "description": "Official app for the Dragon World Championships 2027 in Hong Kong. Get real-time weather data, race schedules, results, and connect with fellow sailors.",
+    "description": "Official app for the Dragon World Championships 2027 in Hong Kong. Developed by RegattaFlow - specialists in sailing technology solutions. Features real-time weather data, race schedules, results, and sailor connectivity.",
     "keywords": [
       "sailing",
       "dragon class",
@@ -18,7 +18,10 @@
       "weather",
       "racing",
       "hong kong",
-      "yachting"
+      "yachting",
+      "regattaflow",
+      "sailing technology",
+      "yacht club apps"
     ],
     "primaryColor": "#DC2626",
     "splash": {
@@ -31,7 +34,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.denneyke.dragonworldshk2027",
+      "bundleIdentifier": "com.regattaflow.dragonworldshk2027",
       "buildNumber": "1",
       "deploymentTarget": "15.0",
       "requireFullScreen": false,
@@ -206,9 +209,9 @@
       "sentryDsn": "https://your-sentry-dsn@sentry.io/project-id",
       "enableDeveloperMenu": false
     },
-    "owner": "denneyke",
+    "owner": "regattaflow",
     "privacy": "public",
-    "githubUrl": "https://github.com/dragonworlds/hk2027-app",
+    "githubUrl": "https://github.com/regattaflow/dragonworlds-hk2027",
     "updates": {
       "url": "https://u.expo.dev/c1bd372f-8ae3-4a4d-a4d0-d1300ce6e95a"
     }

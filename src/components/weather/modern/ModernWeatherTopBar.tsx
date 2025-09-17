@@ -19,6 +19,8 @@ import {
   Clock,
   ChevronDown,
   Check,
+  ChevronLeft,
+  MoreHorizontal,
 } from 'lucide-react-native';
 
 import { IOSText } from '../../ios';
@@ -34,6 +36,8 @@ interface ModernWeatherTopBarProps {
   onLocationChange: (location: LocationData) => void;
   onDateChange: (date: Date) => void;
   onTimeChange: (time: Date) => void;
+  onBack?: () => void;
+  onMore?: () => void;
   isLoading?: boolean;
   error?: string | null;
 }
@@ -100,6 +104,8 @@ export const ModernWeatherTopBar: React.FC<ModernWeatherTopBarProps> = ({
   onLocationChange,
   onDateChange,
   onTimeChange,
+  onBack,
+  onMore,
   isLoading = false,
   error = null,
 }) => {
@@ -264,76 +270,104 @@ export const ModernWeatherTopBar: React.FC<ModernWeatherTopBarProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Top Row - Location and Time Selectors */}
-      <View style={styles.topRow}>
+      {/* Navigation Header with Weather Title */}
+      <View style={styles.navigationRow}>
         <TouchableOpacity
-          style={styles.selectorButton}
-          onPress={() => setShowLocationModal(true)}
+          style={styles.navButton}
+          onPress={onBack}
           activeOpacity={0.7}
         >
-          <MapPin size={16} color="#007AFF" />
-          <IOSText style={styles.selectorText}>
-            {selectedLocation?.name || 'Hong Kong Central'}
-          </IOSText>
-          <ChevronDown size={14} color="#8E8E93" />
+          <ChevronLeft size={20} color="#007AFF" />
+          <IOSText style={styles.navButtonText}>More</IOSText>
         </TouchableOpacity>
-        
+
+        <IOSText style={styles.weatherTitle}>Weather</IOSText>
+
         <TouchableOpacity
-          style={styles.selectorButton}
-          onPress={() => setShowTimeModal(true)}
+          style={styles.moreButton}
+          onPress={onMore}
           activeOpacity={0.7}
         >
-          <Clock size={16} color="#FF9500" />
-          <IOSText style={styles.selectorText}>
-            {formatTime(selectedTime)}
-          </IOSText>
-          <ChevronDown size={14} color="#8E8E93" />
+          <MoreHorizontal size={20} color="#007AFF" />
         </TouchableOpacity>
       </View>
-
-      {/* Date Selector Row */}
-      <View style={styles.dateRow}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.dateScrollContent}
-        >
-          {dateOptions.map((date, index) => {
-            const isSelected = date.toDateString() === selectedDate.toDateString();
-            return (
-              <DateButton
-                key={index}
-                date={date}
-                isSelected={isSelected}
-                onPress={() => onDateChange(date)}
-              />
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      {renderLocationModal()}
-      {renderTimeModal()}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: 'transparent',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(229, 229, 234, 0.5)',
+  },
+  navigationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  navButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    gap: 6,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
       },
       android: {
-        elevation: 5,
+        elevation: 2,
+      },
+    }),
+  },
+  navButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  weatherTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1C1C1E',
+    flex: 1,
+    textAlign: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  moreButton: {
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
       },
     }),
   },

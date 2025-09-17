@@ -33,6 +33,7 @@ import {
   MapPin,
   Layers,
   ChevronUp,
+  ChevronLeft,
   AlertTriangle,
   Compass,
   ArrowUp,
@@ -992,8 +993,23 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
 
   return (
     <View style={styles.container}>
-      {/* Modern Weather Top Bar - Positioned absolutely over the map */}
-      <View style={styles.topBarContainer}>
+      {/* Floating Back Button for Full Screen Experience */}
+      <View style={styles.floatingBackButton}>
+        <TouchableOpacity
+          style={styles.backButtonContainer}
+          onPress={() => {
+            if (navigation) {
+              navigation.goBack();
+            }
+          }}
+          activeOpacity={0.7}
+        >
+          <ChevronLeft size={20} color="#007AFF" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Modern Weather Top Bar - HIDDEN FOR FULL SCREEN MAP EXPERIENCE */}
+      {/* <View style={styles.topBarContainer}>
         <ModernWeatherTopBar
         selectedLocation={selectedLocation}
         selectedDate={selectedDate}
@@ -1010,10 +1026,19 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
           setSelectedTime(time);
           // Additional time change logic can be added here
         }}
+        onBack={() => {
+          if (navigation) {
+            navigation.goBack();
+          }
+        }}
+        onMore={() => {
+          // Could open additional weather options or settings
+          console.log('More button pressed');
+        }}
         isLoading={isLoadingLocationData}
         error={locationDataError}
         />
-      </View>
+      </View> */}
 
       {/* Map View - Full Screen */}
       <View style={styles.mapContainer}>
@@ -1099,6 +1124,11 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
             <View style={styles.ninePinsLabelContainer}>
               <IOSText style={styles.ninePinsLabelText}>⚡ NINE PINS RACING AREA ⚡</IOSText>
             </View>
+            <View style={styles.ninePinsEstimateContainer}>
+              <IOSText style={styles.ninePinsEstimateText}>
+                ≈ Estimate based on nearby stations
+              </IOSText>
+            </View>
             <View style={[styles.ninePinsMarkerContent]}>
               <View style={styles.ninePinsDataContainer}>
                 {/* Wind Data */}
@@ -1107,6 +1137,9 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
                   <IOSText style={styles.waterMarkerText}>
                     {Math.round(snapshot?.windSpeed ?? currentWeather?.windSpeed ?? 12)} kts
                   </IOSText>
+                  <View style={styles.tideTrendIndicator}>
+                    <ArrowUp size={10} color="#FFF" />
+                  </View>
                 </View>
 
                 {/* Wave Data */}
@@ -1115,6 +1148,9 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
                   <IOSText style={styles.waterMarkerText}>
                     {(snapshot?.waveHeight ?? currentMarine?.waveHeight ?? 1.2).toFixed(1)} m
                   </IOSText>
+                  <View style={styles.tideTrendIndicator}>
+                    <ArrowUp size={10} color="#FFF" />
+                  </View>
                 </View>
 
                 {/* Tide Data */}
@@ -1123,106 +1159,17 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
                   <IOSText style={styles.waterMarkerText}>
                     {(snapshot?.tideHeight ?? currentMarine?.tideHeight ?? 1.5).toFixed(1)} m
                   </IOSText>
+                  <View style={styles.tideTrendIndicator}>
+                    <ArrowDown size={10} color="#FFF" />
+                  </View>
                 </View>
               </View>
             </View>
           </View>
         </Marker>
 
-        {/* Combined Datagram Markers for each station location */}
-        {STATION_LOCATIONS.map((location, index) => {
-          // Get location-specific weather data from cache
-          const cacheKey = `${location.id}_${selectedDate.toDateString()}_${selectedTime.getHours()}`;
-          const cachedData = locationWeatherCache.get(cacheKey);
-          const isLoading = locationLoadingStates.get(location.id) || false;
-          
-          // Use cached location-specific data or fallback to global data
-          const windSpeed = cachedData?.windSpeed ?? snapshot?.windSpeed ?? currentWeather?.windSpeed ?? 8;
-          const windDirection = cachedData?.windDirection ?? snapshot?.windDirection ?? currentWeather?.windDirection ?? 45;
-          const waveHeight = cachedData?.waveHeight ?? snapshot?.waveHeight ?? currentMarine?.waveHeight ?? 0.8;
-          const tideHeight = cachedData?.tideHeight ?? snapshot?.tideHeight ?? currentMarine?.tideHeight ?? 1.2;
-          
-          // Generate realistic trends based on the actual data values
-          const windTrend = windSpeed > 10 ? 'up' : windSpeed < 6 ? 'down' : 'up';
-          const waveTrend = waveHeight > 1.0 ? 'up' : waveHeight < 0.5 ? 'down' : 'up';
-          const tideTrend = tideHeight > 1.5 ? 'up' : tideHeight < 0.8 ? 'down' : 'up';
-          
-          const trend = {
-            wind: windTrend as 'up' | 'down',
-            wave: waveTrend as 'up' | 'down',
-            tide: tideTrend as 'up' | 'down',
-          };
-
-          return (
-            <Marker
-              key={`datagram-${location.id}`}
-              coordinate={location.coordinate}
-              title={location.name}
-              description={`Wind ${Math.round(windSpeed)}kts • Waves ${waveHeight.toFixed(1)}m • Tide ${tideHeight.toFixed(1)}m`}
-              onPress={() => {
-                console.log('🟡 Combined datagram pressed', { location: location.name, windSpeed, waveHeight, tideHeight });
-                setSelectedDatagramLocation({
-                  id: location.id,
-                  name: location.name,
-                  coordinate: location.coordinate,
-                });
-                setDatagramModalVisible(true);
-              }}
-              zIndex={600}
-            >
-              <View style={styles.waterMarkerContainer}>
-                <View style={styles.datagramLabelContainer}>
-                  <IOSText style={styles.datagramLabelText}>{location.name}</IOSText>
-                </View>
-                <View style={[styles.waterMarkerContent, styles.windWaterMarker, isLoading && styles.loadingMarker]}>
-                  <Wind size={16} color="#FFF" />
-                  <IOSText style={styles.waterMarkerText}>
-                    {isLoading ? '...' : `${Math.round(windSpeed)} kts`}
-                  </IOSText>
-                  {!isLoading && (
-                    <View style={styles.tideTrendIndicator}>
-                      {trend.wind === 'up' ? (
-                        <ArrowUp size={12} color="#FFF" />
-                      ) : (
-                        <ArrowDown size={12} color="#FFF" />
-                      )}
-                    </View>
-                  )}
-                </View>
-                <View style={[styles.waterMarkerContent, styles.waveWaterMarker, isLoading && styles.loadingMarker]}>
-                  <Waves size={16} color="#FFF" />
-                  <IOSText style={styles.waterMarkerText}>
-                    {isLoading ? '...' : `${waveHeight.toFixed(1)} m`}
-                  </IOSText>
-                  {!isLoading && (
-                    <View style={styles.tideTrendIndicator}>
-                      {trend.wave === 'up' ? (
-                        <ArrowUp size={12} color="#FFF" />
-                      ) : (
-                        <ArrowDown size={12} color="#FFF" />
-                      )}
-                    </View>
-                  )}
-                </View>
-                <View style={[styles.waterMarkerContent, styles.tideWaterMarker, isLoading && styles.loadingMarker]}>
-                  <Anchor size={16} color="#FFF" />
-                  <IOSText style={styles.waterMarkerText}>
-                    {isLoading ? '...' : `${tideHeight.toFixed(1)} m`}
-                  </IOSText>
-                  {!isLoading && (
-                    <View style={styles.tideTrendIndicator}>
-                      {trend.tide === 'up' ? (
-                        <ArrowUp size={12} color="#FFF" />
-                      ) : (
-                        <ArrowDown size={12} color="#FFF" />
-                      )}
-                    </View>
-                  )}
-                </View>
-              </View>
-            </Marker>
-          );
-        })}
+        {/* Combined Datagram Markers for each station location - REMOVED to keep only Nine Pins */}
+        {/* Keeping only Nine Pins Racing Area as requested */}
 
         {/* Center of Race Area marker removed */}
       </MapView>
@@ -1232,171 +1179,8 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
 
           {/* Map Layer Controls - Removed - All overlays always on */}
 
-          {/* Bottom Sheet for Detailed Info */}
-          <Animated.View
-            style={[styles.bottomSheet, animatedBottomSheetStyle, styles.glassmorphism]}
-          >
-            <TouchableOpacity
-              style={[styles.bottomSheetHandle, { pointerEvents: 'auto' }]} // Enable handle interaction
-              onPress={() => {
-                console.log('🔽 Bottom sheet handle pressed');
-                // Get current value and determine target
-                bottomSheetOffset.stopAnimation((currentValue) => {
-                  const targetValue = currentValue === 0 ? SCREEN_HEIGHT * 0.3 : 0;
-                  console.log('🔽 Animating from', currentValue, 'to:', targetValue);
-                  Animated.spring(bottomSheetOffset, {
-                    toValue: targetValue,
-                    useNativeDriver: true,
-                  }).start();
-                });
-              }}
-            >
-              <View style={styles.handle} />
-            </TouchableOpacity>
-
-            <ScrollView
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-              }
-              showsVerticalScrollIndicator={false}
-              style={{ pointerEvents: 'auto' }} // Enable scrolling inside sheet content
-            >
-              <View style={styles.markerDetails}>
-                <IOSText style={styles.markerTitle}>
-                  {selectedMarker ? selectedMarker.title : 'Clearwater Bay'}
-                </IOSText>
-                <View style={styles.markerMetrics}>
-                  <View style={styles.detailRow}>
-                    <Wind size={16} color="#007AFF" />
-                    <IOSText style={styles.detailText}>
-                      Wind: {selectedMarker ? selectedMarker.windSpeed : currentWeather?.windSpeed || 12} kts {formatWindDirection(selectedMarker ? selectedMarker.windDirection : currentWeather?.windDirection || 45)}
-                    </IOSText>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <Waves size={16} color="#007AFF" />
-                    <IOSText style={styles.detailText}>
-                      Waves: {selectedMarker ? selectedMarker.waveHeight : currentMarine?.waveHeight || 1.2}m
-                    </IOSText>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <Thermometer size={16} color="#007AFF" />
-                    <IOSText style={styles.detailText}>
-                      Temperature: {selectedMarker ? selectedMarker.temperature : currentWeather?.temperature || 24}°C
-                    </IOSText>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <Anchor size={16} color="#007AFF" />
-                    <IOSText style={styles.detailText}>
-                      Tide: {currentMarine?.tideHeight || 1.8}m {getTideDirection()}
-                    </IOSText>
-                  </View>
-                </View>
-              </View>
-
-              {/* Wave Data Status */}
-              {selectedOverlays.includes('wave') && (
-                <View style={styles.waveDataStatus}>
-                  <View style={styles.statusHeader}>
-                    <IOSText style={styles.sectionTitle}>Wave Data Status</IOSText>
-                    <View style={styles.dataStatusIndicator}>
-                      <View style={[styles.statusDot, { backgroundColor: waveStations.length > 0 ? '#00C864' : '#FF3B30' }]} />
-                      <IOSText style={styles.statusIndicatorText}>
-                        {waveStations.length > 0 ? 'LIVE' : 'OFFLINE'}
-                      </IOSText>
-                    </View>
-                  </View>
-                  {waveDataLoading ? (
-                    <IOSText style={styles.statusText}>Loading wave data...</IOSText>
-                  ) : waveDataError ? (
-                    <IOSText style={[styles.statusText, styles.errorText]}>
-                      {waveDataError}
-                    </IOSText>
-                  ) : (
-                    <View>
-                      <IOSText style={styles.statusText}>
-                        {waveStations.length} wave stations active
-                      </IOSText>
-                      {waveStations.length > 0 && (
-                        <IOSText style={styles.lastUpdatedText}>
-                          Last updated: {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                        </IOSText>
-                      )}
-                    </View>
-                  )}
-                </View>
-              )}
-
-              {/* Tide Data Status */}
-              {selectedOverlays.includes('tide') && (
-                <View style={styles.tideDataStatus}>
-                  <View style={styles.statusHeader}>
-                    <IOSText style={styles.sectionTitle}>Tide Data Status</IOSText>
-                    <View style={styles.dataStatusIndicator}>
-                      <View style={[styles.statusDot, { backgroundColor: tideStations.length > 0 ? '#00C864' : '#FF3B30' }]} />
-                      <IOSText style={styles.statusIndicatorText}>
-                        {tideStations.length > 0 ? 'LIVE' : 'OFFLINE'}
-                      </IOSText>
-                    </View>
-                  </View>
-                  {tideDataLoading ? (
-                    <IOSText style={styles.statusText}>Loading tide data...</IOSText>
-                  ) : tideDataError ? (
-                    <IOSText style={[styles.statusText, styles.errorText]}>
-                      {tideDataError}
-                    </IOSText>
-                  ) : (
-                    <View>
-                      <IOSText style={styles.statusText}>
-                        {tideStations.length} tide stations active
-                      </IOSText>
-                      {tideStations.length > 0 && (
-                        <IOSText style={styles.lastUpdatedText}>
-                          Last updated: {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                        </IOSText>
-                      )}
-                    </View>
-                  )}
-                </View>
-              )}
-
-              {/* Hourly Forecast */}
-              <View style={styles.forecastSection}>
-                <IOSText style={styles.sectionTitle}>Hourly Forecast</IOSText>
-                {hourlyForecast.length > 0 ? (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    {hourlyForecast.slice(0, 12).map((hour, index) => {
-                      const hourTime = new Date();
-                      hourTime.setHours(hourTime.getHours() + index);
-                      const tideCycle = (hourTime.getHours() * Math.PI) / 6.2;
-                      const tideValue = Math.sin(tideCycle);
-                      const tideDirection = tideValue > 0.1 ? '↗' : tideValue < -0.1 ? '↘' : '→';
-                      
-                      return (
-                        <View key={index} style={styles.hourlyItem}>
-                          <IOSText style={styles.hourlyTime}>
-                            {hourTime.getHours()}:00
-                          </IOSText>
-                          <Cloud size={20} color="#007AFF" />
-                          <IOSText style={styles.hourlyTemp}>{hour.temperature}°</IOSText>
-                          <IOSText style={styles.hourlyWind}>{hour.windSpeed}kt</IOSText>
-                          <IOSText style={styles.hourlyTide}>
-                            {hour.tideHeight.toFixed(1)}m {tideDirection}
-                          </IOSText>
-                        </View>
-                      );
-                    })}
-                  </ScrollView>
-                ) : (
-                  <View style={styles.noDataContainer}>
-                    <IOSText style={styles.noDataText}>
-                      Loading hourly forecast...
-                    </IOSText>
-                  </View>
-                )}
-              </View>
-            </ScrollView>
-          </Animated.View>
-        </View>
+          {/* Bottom Sheet for Detailed Info - HIDDEN FOR FULL SCREEN MAP EXPERIENCE */}
+      </View>
 
       {/* Station Detail Chart Modal */}
       <IOSModal
@@ -1450,6 +1234,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  floatingBackButton: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 20,
+    left: 20,
+    zIndex: 2000,
+  },
+  backButtonContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   topBarContainer: {
     position: 'absolute',
@@ -1777,6 +1586,22 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     textAlign: 'center',
+  },
+  ninePinsEstimateContainer: {
+    backgroundColor: 'rgba(255, 165, 0, 0.9)', // Orange background for estimate indicator
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: '#FF8C00', // Darker orange border
+  },
+  ninePinsEstimateText: {
+    color: '#000',
+    fontSize: 9,
+    fontWeight: '600',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   ninePinsMarkerContent: {
     backgroundColor: 'rgba(255, 215, 0, 0.95)', // Gold background

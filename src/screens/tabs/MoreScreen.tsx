@@ -7,7 +7,7 @@ import {
   SafeAreaView,
   ScrollView
 } from 'react-native';
-import { Users, Cloud, ChevronRight, FileText, User, LogIn, LogOut, Trophy } from 'lucide-react-native';
+import { Users, Cloud, ChevronRight, FileText, User, LogIn, LogOut, Trophy, Info } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
@@ -17,6 +17,7 @@ import { useAuth } from '../../auth/useAuth';
 import { ProgressiveAuthExample } from '../../components/auth/ProgressiveAuthExample';
 import { ModernWeatherMapScreen } from './ModernWeatherMapScreen';
 import { DataSourcesScreen } from '../DataSourcesScreen';
+import { AboutRegattaFlowScreen } from '../AboutRegattaFlowScreen';
 
 // Component validation logging
 console.log('🔍 [MoreScreen] Component imports validation:');
@@ -25,6 +26,7 @@ console.log('🔍 [MoreScreen] SponsorsScreen:', typeof SponsorsScreen);
 console.log('🔍 [MoreScreen] ProgressiveAuthExample:', typeof ProgressiveAuthExample);
 console.log('🔍 [MoreScreen] ModernWeatherMapScreen:', typeof ModernWeatherMapScreen);
 console.log('🔍 [MoreScreen] DataSourcesScreen:', typeof DataSourcesScreen);
+console.log('🔍 [MoreScreen] AboutRegattaFlowScreen:', typeof AboutRegattaFlowScreen);
 
 const { colors, spacing, typography, shadows, borderRadius } = dragonChampionshipsLightTheme;
 
@@ -73,6 +75,14 @@ const getMoreOptions = (isAuthenticated: boolean, user: any): MoreOption[] => {
       icon: FileText,
       component: DataSourcesScreen,
       accessibilityLabel: 'Information about live data sources and update schedule',
+    },
+    {
+      id: 'about-regattaflow',
+      title: 'About RegattaFlow',
+      description: 'Company info, services, and contact details',
+      icon: Info,
+      component: AboutRegattaFlowScreen,
+      accessibilityLabel: 'Information about RegattaFlow company and services',
     },
   ];
 
@@ -138,8 +148,13 @@ export function MoreScreen() {
 
   // Get dynamic options based on auth state
   const moreOptions = React.useMemo(() => {
+    console.log('🔍 [MoreScreen] GENERATING OPTIONS - Auth state:', {
+      isAuthenticated,
+      user: user ? { email: user.email, displayName: user.displayName } : null
+    });
+
     const options = getMoreOptions(isAuthenticated, user);
-    console.log('🔍 [MoreScreen] Generated options validation:');
+    console.log('🔍 [MoreScreen] Generated options validation - Total count:', options.length);
     options.forEach((option, index) => {
       console.log(`🔍 [MoreScreen] Option ${index} [${option.id}]:`, {
         title: option.title,
@@ -148,6 +163,14 @@ export function MoreScreen() {
         component: option.component
       });
     });
+
+    // Check specifically for AboutRegattaFlow option
+    const aboutOption = options.find(opt => opt.id === 'about-regattaflow');
+    console.log('🔍 [MoreScreen] ABOUT-REGATTAFLOW option found:', aboutOption ? 'YES' : 'NO');
+    if (aboutOption) {
+      console.log('🔍 [MoreScreen] AboutRegattaFlow details:', aboutOption);
+    }
+
     return options;
   }, [isAuthenticated, user]);
 
@@ -204,6 +227,17 @@ export function MoreScreen() {
         componentName: option.component.name || 'unnamed'
       });
       const Component = option.component;
+
+      // Special handling for weather screen - render without header for full-screen experience
+      if (option.id === 'weather') {
+        return (
+          <View style={styles.container}>
+            <Component navigation={{ goBack: handleBackPress }} />
+          </View>
+        );
+      }
+
+      // Standard rendering with header for other components
       return (
         <View style={styles.container}>
           <SafeAreaView style={styles.header}>
