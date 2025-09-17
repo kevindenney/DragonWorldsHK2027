@@ -41,7 +41,7 @@ const getActivityColor = (type: ActivityType): string => {
 export const ActivityItem: React.FC<ActivityItemProps> = ({ activity }) => {
   const IconComponent = getActivityIcon(activity.type);
   const activityColor = getActivityColor(activity.type);
-  
+
   return (
     <View style={styles.container}>
       <View style={styles.timeSection}>
@@ -49,29 +49,31 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity }) => {
           {activity.time}
         </IOSText>
       </View>
-      
+
       <View style={styles.contentSection}>
         <View style={styles.activityHeader}>
+          <View style={[styles.iconContainer, { backgroundColor: `${activityColor}15` }]}>
+            <IconComponent size={16} color={activityColor} strokeWidth={2} />
+          </View>
           <View style={styles.activityInfo}>
-            <View style={[styles.iconContainer, { backgroundColor: `${activityColor}15` }]}>
-              <IconComponent size={14} color={activityColor} strokeWidth={2} />
-            </View>
-            <IOSText textStyle="subheadline" weight="medium" style={styles.activityTitle}>
+            <IOSText textStyle="body" weight="semibold" style={styles.activityTitle}>
               {activity.activity}
             </IOSText>
+            <View style={styles.metaRow}>
+              <IOSBadge
+                variant="filled"
+                color="systemBlue"
+                size="small"
+                style={[styles.badge, { backgroundColor: `${activityColor}20` }]}
+              >
+                <IOSText textStyle="caption2" style={[styles.badgeText, { color: activityColor }]}>
+                  {activityTypes[activity.type].label}
+                </IOSText>
+              </IOSBadge>
+            </View>
           </View>
-          <IOSBadge 
-            variant="filled" 
-            color="systemBlue" 
-            size="small"
-            style={[styles.badge, { backgroundColor: `${activityColor}20` }]}
-          >
-            <IOSText textStyle="caption2" style={[styles.badgeText, { color: activityColor }]}>
-              {activityTypes[activity.type].label}
-            </IOSText>
-          </IOSBadge>
         </View>
-        
+
         <View style={styles.locationRow}>
           <MapPin size={12} color={colors.textMuted} strokeWidth={2} />
           <IOSText textStyle="caption" color="secondaryLabel" style={styles.locationText}>
@@ -86,53 +88,55 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity }) => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
   },
   timeSection: {
-    width: 80,
-    paddingRight: spacing.sm,
+    minWidth: 72,
+    paddingRight: spacing.md,
     justifyContent: 'flex-start',
   },
   timeText: {
     color: colors.primary,
     fontSize: 13,
+    lineHeight: 16,
   },
   contentSection: {
     flex: 1,
-    paddingLeft: spacing.sm,
+    paddingLeft: spacing.md,
     borderLeftWidth: 2,
     borderLeftColor: colors.borderLight,
   },
   activityHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
   },
   activityInfo: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginRight: spacing.sm,
   },
   iconContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 2,
   },
   activityTitle: {
-    flex: 1,
     color: colors.text,
-    lineHeight: 18,
+    lineHeight: 20,
+    marginBottom: spacing.xs,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   badge: {
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
   },
   badgeText: {
     fontSize: 10,
@@ -142,10 +146,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    marginTop: 2,
+    marginTop: spacing.xs,
+    marginLeft: 40, // Align with activity title
   },
   locationText: {
     fontSize: 12,
     flex: 1,
+    lineHeight: 16,
   },
 });

@@ -45,10 +45,111 @@ function convertFirebaseUser(firebaseUser: FirebaseUser, additionalData?: any): 
  */
 export class FirebaseAuthService {
   /**
+   * Test Firebase connection and configuration
+   */
+  async testConnection(): Promise<{ isConnected: boolean; error?: string }> {
+    try {
+      console.log('🔍 [FirebaseAuth] Testing Firebase connection...');
+
+      // Check if auth instance is available
+      if (!auth) {
+        return { isConnected: false, error: 'Firebase auth instance not initialized' };
+      }
+
+      // Check current auth state
+      const currentUser = auth.currentUser;
+      console.log('🔍 [FirebaseAuth] Current user:', currentUser ? currentUser.uid : 'None');
+
+      // Test auth configuration by attempting to get current user
+      try {
+        await auth.authStateReady();
+        console.log('✅ [FirebaseAuth] Auth state ready');
+      } catch (error) {
+        console.error('❌ [FirebaseAuth] Auth state not ready:', error);
+        return { isConnected: false, error: `Auth state not ready: ${error.message}` };
+      }
+
+      // Check if we're using emulator
+      const isUsingEmulator = auth.config?.emulator || false;
+      console.log('🔍 [FirebaseAuth] Using emulator:', isUsingEmulator);
+
+      // Test basic auth functionality by checking if we can access auth methods
+      if (typeof signInWithEmailAndPassword !== 'function') {
+        return { isConnected: false, error: 'Firebase auth methods not available' };
+      }
+
+      console.log('✅ [FirebaseAuth] Connection test passed');
+      return { isConnected: true };
+    } catch (error: any) {
+      console.error('❌ [FirebaseAuth] Connection test failed:', error);
+      return { isConnected: false, error: error.message || 'Unknown connection error' };
+    }
+  }
+
+  /**
+   * Check Firebase service health
+   */
+  async checkServiceHealth(): Promise<{ isHealthy: boolean; details: any }> {
+    try {
+      console.log('🏥 [FirebaseAuth] Checking service health...');
+
+      const details = {
+        authInstance: !!auth,
+        firestoreInstance: !!firestore,
+        currentUser: auth?.currentUser ? {
+          uid: auth.currentUser.uid,
+          email: auth.currentUser.email,
+          emailVerified: auth.currentUser.emailVerified
+        } : null,
+        emulatorMode: auth?.config?.emulator || false,
+        authMethods: {
+          signIn: typeof signInWithEmailAndPassword === 'function',
+          signUp: typeof createUserWithEmailAndPassword === 'function',
+          signOut: typeof signOut === 'function',
+          resetPassword: typeof sendPasswordResetEmail === 'function'
+        }
+      };
+
+      console.log('🏥 [FirebaseAuth] Service health details:', details);
+
+      const isHealthy = details.authInstance &&
+                       details.authMethods.signIn &&
+                       details.authMethods.signUp &&
+                       details.authMethods.signOut;
+
+      return { isHealthy, details };
+    } catch (error: any) {
+      console.error('❌ [FirebaseAuth] Service health check failed:', error);
+      return {
+        isHealthy: false,
+        details: { error: error.message || 'Unknown health check error' }
+      };
+    }
+  }
+
+  /**
    * Login with email and password
    */
   async login(credentials: LoginCredentials): Promise<User> {
     try {
+      console.log('🔐 [FirebaseAuth] Starting login process...');
+
+      // Test connection first
+      const connectionTest = await this.testConnection();
+      if (!connectionTest.isConnected) {
+        console.error('❌ [FirebaseAuth] Connection test failed:', connectionTest.error);
+        throw new Error(`Firebase connection failed: ${connectionTest.error}`);
+      }
+
+      // Check service health
+      const healthCheck = await this.checkServiceHealth();
+      if (!healthCheck.isHealthy) {
+        console.error('❌ [FirebaseAuth] Service health check failed:', healthCheck.details);
+        throw new Error(`Firebase service unhealthy: ${JSON.stringify(healthCheck.details)}`);
+      }
+
+      console.log('✅ [FirebaseAuth] Pre-login checks passed, attempting authentication...');
+
       const userCredential = await signInWithEmailAndPassword(
         auth,
         credentials.email,
@@ -77,16 +178,22 @@ export class FirebaseAuthService {
    */
   async register(credentials: RegisterCredentials): Promise<User> {
     try {
+      console.log('🔐 [FirebaseAuth] Starting user registration...');
+
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         credentials.email,
         credentials.password
       );
 
+      console.log('✅ [FirebaseAuth] User created successfully:', userCredential.user.uid);
+
       // Update display name in Firebase Auth
       await updateProfile(userCredential.user, {
         displayName: credentials.displayName,
       });
+
+      console.log('✅ [FirebaseAuth] Display name updated');
 
       // Create user document in Firestore
       const userData = {
@@ -108,17 +215,26 @@ export class FirebaseAuthService {
       if (firestore) {
         try {
           await setDoc(doc(firestore, 'users', userCredential.user.uid), userData);
-          console.log('User document created in Firestore');
+          console.log('✅ [FirebaseAuth] User document created in Firestore');
         } catch (error) {
-          console.warn('Could not create user document in Firestore:', error);
+          console.warn('⚠️ [FirebaseAuth] Could not create user document in Firestore:', error);
         }
       }
 
       // Send verification email
-      await sendEmailVerification(userCredential.user);
+      try {
+        await sendEmailVerification(userCredential.user);
+        console.log('✅ [FirebaseAuth] Verification email sent');
+      } catch (error) {
+        console.warn('⚠️ [FirebaseAuth] Could not send verification email:', error);
+      }
+
+      console.log('🎉 [FirebaseAuth] Registration complete! User should be signed in.');
+      console.log('🔐 [FirebaseAuth] Current user after registration:', auth.currentUser?.uid);
 
       return convertFirebaseUser(userCredential.user, userData);
     } catch (error: any) {
+      console.error('❌ [FirebaseAuth] Registration failed:', error);
       throw this.handleAuthError(error);
     }
   }
@@ -211,21 +327,37 @@ export class FirebaseAuthService {
    */
   onAuthStateChanged(callback: (user: User | null) => void): () => void {
     return onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('🔄 [FirebaseAuth] Auth state changed:', firebaseUser ? `User: ${firebaseUser.uid}` : 'No user');
+
       if (firebaseUser) {
+        console.log('✅ [FirebaseAuth] User is signed in:', {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+          emailVerified: firebaseUser.emailVerified
+        });
+
         // Fetch additional user data from Firestore
         let userData = null;
         if (firestore) {
           try {
             const userDoc = await getDoc(doc(firestore, 'users', firebaseUser.uid));
             userData = userDoc.data();
+            console.log('✅ [FirebaseAuth] Firestore user data fetched:', userData ? 'Found' : 'Not found');
           } catch (error) {
-            console.warn('Could not fetch user data from Firestore:', error);
+            console.warn('⚠️ [FirebaseAuth] Could not fetch user data from Firestore:', error);
           }
         }
-        
+
         const user = convertFirebaseUser(firebaseUser, userData);
+        console.log('📋 [FirebaseAuth] Converted user object:', {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName
+        });
         callback(user);
       } else {
+        console.log('❌ [FirebaseAuth] User is signed out');
         callback(null);
       }
     });

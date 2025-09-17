@@ -36,10 +36,31 @@ const MainApp = () => {
         name="Profile"
         component={ProfileScreen}
       />
-      {/* Auth screens - accessible from More tab */}
-      <Stack.Screen name="Login" component={SimpleLoginScreen} />
-      <Stack.Screen name="Register" component={SimpleRegisterScreen} />
-      <Stack.Screen name="ForgotPassword" component={SimplePasswordResetScreen} />
+      {/* Auth screens - accessible from More tab and within app flow */}
+      <Stack.Screen
+        name="Login"
+        component={SimpleLoginScreen}
+        options={{
+          headerShown: false,
+          presentation: 'modal'
+        }}
+      />
+      <Stack.Screen
+        name="Register"
+        component={SimpleRegisterScreen}
+        options={{
+          headerShown: false,
+          presentation: 'modal'
+        }}
+      />
+      <Stack.Screen
+        name="ForgotPassword"
+        component={SimplePasswordResetScreen}
+        options={{
+          headerShown: false,
+          presentation: 'modal'
+        }}
+      />
       {/** Detail screens within tab stacks should not be declared here to preserve the tab bar */}
       <Stack.Screen
         name="DocumentViewer"

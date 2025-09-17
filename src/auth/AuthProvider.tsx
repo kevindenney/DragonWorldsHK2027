@@ -121,46 +121,115 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
    */
   useEffect(() => {
     async function initializeAuth() {
+      const initStartTime = Date.now();
       console.log('🔐 [AuthProvider] Initializing authentication...');
 
-      // Check Firebase configuration
-      const firebaseConfigured = isFirebaseConfigured();
-      console.log('🔐 [AuthProvider] Firebase configured:', firebaseConfigured);
+      try {
+        // Check Firebase configuration with detailed logging
+        const firebaseConfigured = isFirebaseConfigured();
+        console.log('🔐 [AuthProvider] Firebase configuration check:', {
+          isConfigured: firebaseConfigured,
+          hasApiKey: !!process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+          hasAppId: !!process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+          nodeEnv: process.env.EXPO_PUBLIC_NODE_ENV,
+          isDev: __DEV__
+        });
 
-      if (firebaseConfigured) {
-        try {
-          console.log('🔐 [AuthProvider] Attempting to use Firebase authentication');
-          setUseFirebase(true);
+        if (firebaseConfigured) {
+          try {
+            console.log('🔐 [AuthProvider] Attempting to use Firebase authentication');
+            setUseFirebase(true);
 
-          // Lazy load Firebase auth service
-          const firebaseAuthService = await getFirebaseAuthService();
-          firebaseServiceRef.current = firebaseAuthService;
+            // Add timeout for Firebase service loading
+            const firebaseLoadPromise = getFirebaseAuthService();
+            const timeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Firebase service loading timed out')), 10000);
+            });
 
-          // Set up Firebase auth state listener
-          const unsubscribe = firebaseAuthService.onAuthStateChanged((user) => {
-            console.log('🔐 [AuthProvider] Firebase auth state changed:', user ? 'User signed in' : 'User signed out');
-            dispatch({ type: 'SET_USER', payload: user });
+            const firebaseAuthService = await Promise.race([firebaseLoadPromise, timeoutPromise]);
+            firebaseServiceRef.current = firebaseAuthService;
 
-            if (!state.isInitialized) {
-              dispatch({ type: 'SET_INITIALIZED', payload: true });
+            console.log('🔐 [AuthProvider] Firebase auth service loaded, setting up listener...');
+
+            // Set up Firebase auth state listener
+            const unsubscribe = firebaseAuthService.onAuthStateChanged((user) => {
+              console.log('🔐 [AuthProvider] Firebase auth state changed:', {
+                hasUser: !!user,
+                userId: user?.uid,
+                email: user?.email,
+                emailVerified: user?.emailVerified
+              });
+              dispatch({ type: 'SET_USER', payload: user });
+
+              if (!state.isInitialized) {
+                console.log('🔐 [AuthProvider] Marking auth as initialized');
+                dispatch({ type: 'SET_INITIALIZED', payload: true });
+              }
+            });
+
+            unsubscribeRef.current = unsubscribe;
+
+            const initDuration = Date.now() - initStartTime;
+            console.log(`✅ [AuthProvider] Firebase authentication initialized successfully in ${initDuration}ms`);
+
+            // Test Firebase connection
+            try {
+              const connectionTest = await testFirebaseConnection();
+              console.log('🔐 [AuthProvider] Firebase connection test:', connectionTest);
+            } catch (connError) {
+              console.warn('⚠️ [AuthProvider] Firebase connection test failed:', connError);
             }
-          });
 
-          unsubscribeRef.current = unsubscribe;
-          console.log('✅ [AuthProvider] Firebase authentication initialized successfully');
-        } catch (error) {
-          console.error('❌ [AuthProvider] Firebase initialization failed, falling back to mock auth:', error);
-          // Fall back to mock authentication if Firebase fails to load
+          } catch (error) {
+            const initDuration = Date.now() - initStartTime;
+            console.error(`❌ [AuthProvider] Firebase initialization failed after ${initDuration}ms:`, error);
+            console.error('❌ [AuthProvider] Error details:', {
+              message: error?.message,
+              name: error?.name,
+              stack: error?.stack?.substring(0, 300)
+            });
+
+            // Fall back to mock authentication if Firebase fails to load
+            console.log('🔄 [AuthProvider] Falling back to mock authentication...');
+            setUseFirebase(false);
+            await initializeMockAuth();
+          }
+        } else {
+          console.log('🔧 [AuthProvider] Firebase not configured, using mock authentication');
           setUseFirebase(false);
           await initializeMockAuth();
         }
-      } else {
-        console.log('🔧 [AuthProvider] Firebase not configured, using mock authentication');
-        setUseFirebase(false);
-        await initializeMockAuth();
-      }
 
-      setAuthServiceReady(true);
+        setAuthServiceReady(true);
+        const totalDuration = Date.now() - initStartTime;
+        console.log(`🎉 [AuthProvider] Authentication initialization completed in ${totalDuration}ms`);
+
+      } catch (error) {
+        const initDuration = Date.now() - initStartTime;
+        console.error(`💥 [AuthProvider] Critical initialization error after ${initDuration}ms:`, error);
+
+        // Last resort: ensure we have some form of auth working
+        try {
+          setUseFirebase(false);
+          await initializeMockAuth();
+          setAuthServiceReady(true);
+          console.log('🆘 [AuthProvider] Emergency mock auth fallback successful');
+        } catch (mockError) {
+          console.error('💀 [AuthProvider] Even mock auth failed:', mockError);
+          throw mockError;
+        }
+      }
+    }
+
+    // Helper function to test Firebase connection
+    async function testFirebaseConnection() {
+      try {
+        const { testFirebaseConnection } = await import('../config/firebase');
+        return await testFirebaseConnection();
+      } catch (error) {
+        console.warn('⚠️ [AuthProvider] Could not load Firebase connection test:', error);
+        return { success: false, error: 'Connection test unavailable' };
+      }
     }
 
     async function initializeMockAuth() {
@@ -197,22 +266,69 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
    * Login with email and password
    */
   const login = async (credentials: LoginCredentials): Promise<void> => {
+    // TEMPORARY: Add alert for debugging auth provider access
+    alert('🔐 AUTH PROVIDER LOGIN CALLED - Provider is accessible');
+
+    const loginStartTime = Date.now();
+
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
 
       console.log('🔐 [AuthProvider] Starting login process...');
+      console.log('🔐 [AuthProvider] DEBUGGING: AuthProvider login method called successfully');
+      console.log('🔐 [AuthProvider] Service status:', {
+        useFirebase,
+        authServiceReady,
+        firebaseServiceReady: !!firebaseServiceRef.current,
+        credentials: { email: credentials.email, hasPassword: !!credentials.password }
+      });
+
+      // Add timeout for authentication requests
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Authentication request timed out after 15 seconds')), 15000);
+      });
+
+      let authPromise: Promise<any>;
 
       if (useFirebase && firebaseServiceRef.current) {
         console.log('🔐 [AuthProvider] Using Firebase for login');
-        await firebaseServiceRef.current.login(credentials);
+        console.log('🔐 [AuthProvider] Firebase service type:', typeof firebaseServiceRef.current.login);
+
+        // TEMPORARY: Add alert for debugging which service is used
+        alert(`🔍 USING FIREBASE AUTH SERVICE\nCredentials: ${credentials.email}`);
+
+        authPromise = firebaseServiceRef.current.login(credentials);
       } else {
         console.log('🔧 [AuthProvider] Using mock service for login');
-        await mockAuthService.login(credentials);
+        console.log('🔧 [AuthProvider] Mock service status:', {
+          initialized: !!mockAuthService,
+          hasLoginMethod: typeof mockAuthService.login === 'function'
+        });
+
+        // TEMPORARY: Add alert for debugging which service is used
+        alert(`🔍 USING MOCK AUTH SERVICE\nCredentials: ${credentials.email}`);
+
+        authPromise = mockAuthService.login(credentials);
       }
+
+      // Race between auth request and timeout
+      await Promise.race([authPromise, timeoutPromise]);
+
+      const loginDuration = Date.now() - loginStartTime;
+      console.log(`✅ [AuthProvider] Login completed successfully in ${loginDuration}ms`);
+
       // User state will be updated via onAuthStateChanged listener
     } catch (error) {
-      console.error('❌ [AuthProvider] Login failed:', error);
+      const loginDuration = Date.now() - loginStartTime;
+      console.error(`❌ [AuthProvider] Login failed after ${loginDuration}ms:`, error);
+      console.error('❌ [AuthProvider] Error details:', {
+        message: error?.message,
+        code: error?.code,
+        name: error?.name,
+        stack: error?.stack?.substring(0, 300)
+      });
+
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Login failed' });
       throw error;
     } finally {

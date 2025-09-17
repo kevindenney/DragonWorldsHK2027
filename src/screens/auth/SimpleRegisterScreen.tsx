@@ -118,7 +118,31 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
         };
       }
 
+      console.log('🎉 [Register] Starting registration process...');
       await register({ email, password, displayName });
+
+      console.log('🎉 [Register] Registration successful!');
+
+      // Check if navigation is available and navigate appropriately
+      try {
+        console.log('🔗 [Register] Attempting to navigate back to main app');
+
+        // Check if we can navigate to MainTabs, otherwise go back to login
+        if (navigation.canGoBack()) {
+          console.log('🔗 [Register] Can go back, navigating to MainTabs');
+          navigation.navigate('MainTabs');
+        } else {
+          console.log('🔗 [Register] Cannot go back, resetting to MainTabs');
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'MainTabs' }],
+          });
+        }
+      } catch (navError) {
+        console.error('❌ [Register] Navigation error after successful registration:', navError);
+        // If navigation fails, the auth state change should still trigger proper navigation
+        console.log('🔗 [Register] Navigation failed, relying on auth state change');
+      }
     } catch (error: any) {
       console.error('Registration error:', error);
 
@@ -175,7 +199,14 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
   };
 
   const handleSwitchToLogin = () => {
-    navigation.navigate('Login');
+    console.log('🔗 [SimpleRegisterScreen] handleSwitchToLogin called');
+    try {
+      console.log('🔗 [SimpleRegisterScreen] Attempting to navigate to Login screen');
+      navigation.navigate('Login');
+      console.log('✅ [SimpleRegisterScreen] Navigation to Login completed successfully');
+    } catch (error) {
+      console.error('❌ [SimpleRegisterScreen] Navigation to Login failed:', error);
+    }
   };
 
   // Simple network connectivity check

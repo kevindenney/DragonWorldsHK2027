@@ -49,9 +49,9 @@ console.log('EXPO_PUBLIC_FIREBASE_PROJECT_ID:', process.env.EXPO_PUBLIC_FIREBASE
 console.log('EXPO_PUBLIC_FIREBASE_APP_ID:', process.env.EXPO_PUBLIC_FIREBASE_APP_ID ? '***set***' : 'MISSING');
 
 /**
- * Validation function for Firebase configuration
+ * Enhanced validation function for Firebase configuration with emulator support
  */
-function validateFirebaseConfig(config: FirebaseConfig): void {
+function validateFirebaseConfig(config: FirebaseConfig): { isValid: boolean; isEmulator: boolean; errors: string[] } {
   const requiredFields: (keyof FirebaseConfig)[] = [
     'apiKey',
     'authDomain',
@@ -63,29 +63,50 @@ function validateFirebaseConfig(config: FirebaseConfig): void {
 
   console.log('🔍 [Firebase] Validating configuration...');
   const missingFields = requiredFields.filter(field => !config[field]);
+  const errors: string[] = [];
+
+  // Check if we're likely using emulator mode (missing API key but have project ID)
+  const isEmulatorMode = !config.apiKey && config.projectId;
 
   if (missingFields.length > 0) {
-    console.error('❌ [Firebase] Missing required configuration fields:', missingFields);
-    console.error('❌ [Firebase] Current config values:');
+    console.warn('⚠️ [Firebase] Missing configuration fields:', missingFields);
+    console.warn('⚠️ [Firebase] Current config values:');
     requiredFields.forEach(field => {
       const value = config[field];
-      console.error(`  ${field}: ${value ? (field === 'apiKey' ? '***set***' : value) : 'MISSING'}`);
+      console.warn(`  ${field}: ${value ? (field === 'apiKey' ? '***set***' : value) : 'MISSING'}`);
     });
 
-    throw new Error(
-      `Missing required Firebase configuration: ${missingFields.join(', ')}. ` +
-      'Please check your .env files and environment variables.'
-    );
+    if (isEmulatorMode) {
+      console.log('🔥 [Firebase] Emulator mode detected - relaxing validation requirements');
+      // For emulator mode, only project ID is strictly required
+      if (!config.projectId) {
+        errors.push('Project ID is required even in emulator mode');
+      }
+    } else {
+      errors.push(`Missing required Firebase configuration: ${missingFields.join(', ')}`);
+    }
   }
 
-  console.log('✅ [Firebase] Configuration validation passed');
+  const isValid = errors.length === 0;
+
+  if (isValid) {
+    console.log('✅ [Firebase] Configuration validation passed');
+    if (isEmulatorMode) {
+      console.log('🔥 [Firebase] Running in emulator mode');
+    }
+  } else {
+    console.error('❌ [Firebase] Configuration validation failed:', errors);
+  }
 
   if (__DEV__) {
     console.log('🔍 [Firebase] Configuration summary:');
     console.log('  Project ID:', config.projectId);
     console.log('  Auth Domain:', config.authDomain);
     console.log('  API Key:', config.apiKey ? '***set***' : 'MISSING');
+    console.log('  Emulator Mode:', isEmulatorMode);
   }
+
+  return { isValid, isEmulator: isEmulatorMode, errors };
 }
 
 /**
@@ -114,14 +135,12 @@ export async function testFirebaseConnection(): Promise<{ success: boolean; erro
   }
 }
 
-// Validate configuration with additional diagnostics
-try {
-  validateFirebaseConfig(firebaseConfig);
-  if (__DEV__) {
-    console.log('[firebase.ts] ✅ Config validated. projectId=', firebaseConfig.projectId);
-  }
-} catch (e) {
-  console.error('[firebase.ts] ❌ Firebase config validation failed:', e);
+// Validate configuration with enhanced emulator support
+const configValidation = validateFirebaseConfig(firebaseConfig);
+let isEmulatorMode = false;
+
+if (!configValidation.isValid) {
+  console.error('[firebase.ts] ❌ Firebase config validation failed:', configValidation.errors);
   console.log('[firebase.ts] Env snapshot', {
     NODE_ENV: process.env.EXPO_PUBLIC_NODE_ENV,
     hasApiKey: Boolean(process.env.EXPO_PUBLIC_FIREBASE_API_KEY),
@@ -131,7 +150,22 @@ try {
     hasMessagingSenderId: Boolean(process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID),
     hasAppId: Boolean(process.env.EXPO_PUBLIC_FIREBASE_APP_ID)
   });
-  throw e;
+
+  // In development with emulator mode, continue with warnings instead of throwing
+  if (__DEV__ && configValidation.isEmulator) {
+    console.warn('[firebase.ts] ⚠️ Continuing in emulator mode with incomplete config');
+    isEmulatorMode = true;
+  } else {
+    throw new Error(`Firebase configuration invalid: ${configValidation.errors.join(', ')}`);
+  }
+} else {
+  if (__DEV__) {
+    console.log('[firebase.ts] ✅ Config validated. projectId=', firebaseConfig.projectId);
+    if (configValidation.isEmulator) {
+      console.log('[firebase.ts] 🔥 Running in emulator mode');
+      isEmulatorMode = true;
+    }
+  }
 }
 
 /**
@@ -185,27 +219,50 @@ export const isFirestoreReady = () => Boolean(firestore);
 export let analytics: any = null;
 
 /**
- * Connect to Firebase emulators in development
+ * Connect to Firebase emulators in development with enhanced debugging
  */
-if (__DEV__ && process.env.EXPO_PUBLIC_NODE_ENV === 'development') {
+if (__DEV__ && (process.env.EXPO_PUBLIC_NODE_ENV === 'development' || isEmulatorMode)) {
   const EMULATOR_HOST = process.env.EXPO_PUBLIC_EMULATOR_HOST || 'localhost';
-  
+
+  console.log('🔥 [Firebase] Attempting to connect to emulators...');
+  console.log('🔥 [Firebase] Emulator host:', EMULATOR_HOST);
+
+  const emulatorConnections = {
+    auth: false,
+    firestore: false,
+    storage: false
+  };
+
   try {
     // Connect Auth Emulator
     try {
       connectAuthEmulator(auth, `http://${EMULATOR_HOST}:9099`, {
         disableWarnings: true
       });
-    } catch (error) {
-      // Emulator might already be connected
+      emulatorConnections.auth = true;
+      console.log('✅ [Firebase] Auth emulator connected');
+    } catch (error: any) {
+      if (error.message.includes('already')) {
+        emulatorConnections.auth = true;
+        console.log('✅ [Firebase] Auth emulator already connected');
+      } else {
+        console.warn('⚠️ [Firebase] Auth emulator connection failed:', error.message);
+      }
     }
 
-    // Connect Firestore Emulator only if firestore is available 
+    // Connect Firestore Emulator only if firestore is available
     if (firestore) {
       try {
-        connectFirestoreEmulator(firestore, EMULATOR_HOST, 8080);
-      } catch (error) {
-        // Emulator might already be connected
+        connectFirestoreEmulator(firestore, EMULATOR_HOST, 8090);
+        emulatorConnections.firestore = true;
+        console.log('✅ [Firebase] Firestore emulator connected');
+      } catch (error: any) {
+        if (error.message.includes('already')) {
+          emulatorConnections.firestore = true;
+          console.log('✅ [Firebase] Firestore emulator already connected');
+        } else {
+          console.warn('⚠️ [Firebase] Firestore emulator connection failed:', error.message);
+        }
       }
     }
 
@@ -213,17 +270,30 @@ if (__DEV__ && process.env.EXPO_PUBLIC_NODE_ENV === 'development') {
     if (storage) {
       try {
         connectStorageEmulator(storage, EMULATOR_HOST, 9199);
-      } catch (error) {
-        // Emulator might already be connected
+        emulatorConnections.storage = true;
+        console.log('✅ [Firebase] Storage emulator connected');
+      } catch (error: any) {
+        if (error.message.includes('already')) {
+          emulatorConnections.storage = true;
+          console.log('✅ [Firebase] Storage emulator already connected');
+        } else {
+          console.warn('⚠️ [Firebase] Storage emulator connection failed:', error.message);
+        }
       }
     }
 
-    console.log('🔥 Connected to Firebase emulators');
+    console.log('🔥 [Firebase] Emulator connection summary:', emulatorConnections);
+
+    if (emulatorConnections.auth) {
+      console.log('🔥 [Firebase] Auth emulator ready at http://localhost:9099');
+    }
   } catch (error) {
-    // Emulators might already be connected
-    console.log('Firebase emulators connection info:', error);
+    console.error('❌ [Firebase] Emulator connection error:', error);
   }
 }
+
+// Export emulator mode for other modules to use
+export { isEmulatorMode };
 
 /**
  * Backend API configuration

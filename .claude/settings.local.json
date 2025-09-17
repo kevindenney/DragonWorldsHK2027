@@ -20,7 +20,8 @@
       "mcp__XcodeBuildMCP__tap",
       "mcp__XcodeBuildMCP__stop_sim_log_cap",
       "mcp__XcodeBuildMCP__describe_ui",
-      "mcp__XcodeBuildMCP__start_sim_log_cap"
+      "mcp__XcodeBuildMCP__start_sim_log_cap",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []
