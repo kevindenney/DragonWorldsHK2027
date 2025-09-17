@@ -36,13 +36,13 @@ export interface RegisterCredentials {
   confirmPassword?: string;
 }
 
-// AuthProvider as enum-like object for backward compatibility
+// AuthProvider as plain object (removed 'as const' to avoid Hermes property descriptor conflicts)
 export const AuthProvider = {
   GOOGLE: 'google',
   APPLE: 'apple',
   FACEBOOK: 'facebook',
   EMAIL: 'email'
-} as const;
+};
 
 // Type derived from the const object
 export type AuthProviderType = typeof AuthProvider[keyof typeof AuthProvider];

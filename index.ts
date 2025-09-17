@@ -1,10 +1,10 @@
 // Dragon Worlds HK 2027 - React Native Entry Point with Hermes
 console.log('🏁 [index.ts] Initializing Dragon Worlds HK 2027 app with Hermes');
 
-// Import Reanimated early for proper initialization with Hermes
-console.log(`⏰ [MODULE-TIMING] ${performance.now()}ms - Before react-native-reanimated import`);
-import 'react-native-reanimated';
-console.log(`✅ [MODULE-TIMING] ${performance.now()}ms - After react-native-reanimated import`);
+// Skip direct Reanimated import - using wrapper system for Hermes compatibility
+console.log(`🚫 [MODULE-TIMING] ${performance.now()}ms - Skipping direct react-native-reanimated import (using wrapper system)`);
+// import 'react-native-reanimated'; // Commented out due to Hermes + Expo Go conflicts
+console.log(`✅ [MODULE-TIMING] ${performance.now()}ms - Direct reanimated import bypassed`);
 
 console.log(`⏰ [MODULE-TIMING] ${performance.now()}ms - Before react-native-gesture-handler import`);
 import 'react-native-gesture-handler';

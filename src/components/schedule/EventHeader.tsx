@@ -37,7 +37,7 @@ export const EventHeader: React.FC<EventHeaderProps> = ({ event }) => {
             <MapPin size={16} color={colors.primary} strokeWidth={2} />
           </View>
           <IOSText textStyle="callout" style={styles.detailText}>
-            {event.venue}
+            {event.venue.replace(', Port Shelter', '')}
           </IOSText>
         </View>
       </View>

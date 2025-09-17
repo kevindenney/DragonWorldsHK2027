@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 
 console.log('[NoticesScreen] Module loading...');
 import { View, StyleSheet, FlatList, RefreshControl, ScrollView } from 'react-native';
@@ -157,6 +158,7 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
     loadEventData();
   }, [loadEventData]);
 
+
   // Combine and process notices
   const allNotices = useMemo((): NoticeItem[] => {
     if (!event) return [];
@@ -265,12 +267,13 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
     });
 
     return Array.from(categoryMap.entries())
-      .filter(([_, data]) => data.count > 0)
+      .filter(([category, data]) => category === 'all' || data.count > 0)
       .map(([category, data]) => ({
         category,
-        count: data.count,
-        unreadCount: data.unreadCount
-      }));
+        count: Math.max(0, data.count || 0), // Ensure non-negative number
+        unreadCount: Math.max(0, data.unreadCount || 0) // Ensure non-negative number
+      }))
+      .filter(item => item.category && typeof item.category === 'string'); // Final safety check
   }, [filteredNotices]);
 
   // Group notices by category for sectioned view
@@ -418,10 +421,10 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
       }}
     >
       <SafeAreaView style={styles.container} edges={['top']}>
-        <IOSNavigationBar
-          style="large"
-          badge={unreadCount > 0 ? unreadCount.toString() : undefined}
-        />
+        {/* Header */}
+        <View style={styles.header}>
+        </View>
+
         {/* Event Selector */}
         <EventSelector
           selectedEventId={selectedEventId}
@@ -525,6 +528,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  header: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    backgroundColor: colors.background,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderLight,
   },
   loadingContainer: {
     flex: 1,

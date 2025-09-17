@@ -15,6 +15,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '../../auth/useAuth';
 import { SimpleAuthInput } from '../../components/auth/SimpleAuthInput';
 import { SimpleAuthButton } from '../../components/auth/SimpleAuthButton';
+import { SocialLoginGroup, commonProviderSets } from '../../components/auth/SocialLoginButton';
+import { AuthProviderType } from '../../auth/authTypes';
 import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
 
 interface SimpleLoginScreenProps {
@@ -22,7 +24,7 @@ interface SimpleLoginScreenProps {
 }
 
 export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
-  const { login, isLoading } = useAuth();
+  const { login, loginWithProvider, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -74,6 +76,17 @@ export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
     navigation.navigate('Register');
   };
 
+  const handleSocialLogin = async (provider: AuthProviderType) => {
+    try {
+      await loginWithProvider(provider);
+    } catch (error: any) {
+      Alert.alert(
+        'Unable to Sign In',
+        error.message || `${provider} sign-in failed. Please try again.`
+      );
+    }
+  };
+
   const handleForgotPassword = () => {
     navigation.navigate('ForgotPassword');
   };
@@ -106,9 +119,9 @@ export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
           {/* Form Section */}
           <View style={styles.formContainer}>
             <View style={styles.welcomeSection}>
-              <Text style={styles.welcomeTitle}>Welcome Back</Text>
+              <Text style={styles.welcomeTitle}>Sign In</Text>
               <Text style={styles.welcomeSubtitle}>
-                Sign in to access race information, weather data, and championship content
+                Access exclusive race information, weather data, and championship content
               </Text>
             </View>
 
@@ -146,6 +159,25 @@ export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
                 testID="login-submit"
               />
 
+              {/* OAuth Login Options - Temporarily disabled until OAuth is configured */}
+              {false && (
+                <>
+                  <View style={styles.dividerContainer}>
+                    <View style={styles.dividerLine} />
+                    <Text style={styles.dividerText}>or continue with</Text>
+                    <View style={styles.dividerLine} />
+                  </View>
+
+                  <SocialLoginGroup
+                    providers={commonProviderSets.basic}
+                    onPress={handleSocialLogin}
+                    disabled={isLoading}
+                    title=""
+                    testID="login-social-buttons"
+                  />
+                </>
+              )}
+
               <TouchableOpacity
                 onPress={handleForgotPassword}
                 style={styles.forgotPasswordContainer}
@@ -177,95 +209,118 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xl,
+    paddingVertical: spacing.sm,
   },
   header: {
     alignItems: 'center',
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.md,
   },
   logoContainer: {
-    width: 80,
-    height: 80,
-    marginBottom: spacing.md,
+    width: 48,
+    height: 48,
+    marginBottom: spacing.xs,
     alignItems: 'center',
     justifyContent: 'center',
   },
   logo: {
-    width: 64,
-    height: 64,
+    width: 36,
+    height: 36,
     tintColor: colors.background,
   },
   appName: {
-    ...typography.h1,
+    ...typography.h3,
     color: colors.background,
     textAlign: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: 2,
     fontWeight: '700',
   },
   appSubtitle: {
-    ...typography.body1,
+    ...typography.caption,
     color: colors.background + 'CC',
     textAlign: 'center',
+    fontSize: 12,
   },
   formContainer: {
     backgroundColor: colors.background,
     borderRadius: borderRadius.xl,
-    padding: spacing.xl,
+    padding: spacing.md,
     ...shadows.large,
   },
   welcomeSection: {
     alignItems: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.md,
   },
   welcomeTitle: {
-    ...typography.h2,
+    ...typography.h3,
     color: colors.text,
     textAlign: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
     fontWeight: '600',
+    fontSize: 20,
   },
   welcomeSubtitle: {
-    ...typography.body2,
+    ...typography.caption,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
-    paddingHorizontal: spacing.md,
+    lineHeight: 16,
+    paddingHorizontal: spacing.sm,
+    fontSize: 12,
   },
   formFields: {
     width: '100%',
   },
   loginButton: {
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.borderLight,
+  },
+  dividerText: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginHorizontal: spacing.md,
   },
   forgotPasswordContainer: {
     alignItems: 'center',
-    paddingVertical: spacing.sm,
-    marginBottom: spacing.lg,
+    paddingVertical: spacing.xs,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
   },
   forgotPasswordText: {
-    ...typography.body2,
+    ...typography.caption,
     color: colors.primary,
     fontWeight: '500',
+    fontSize: 14,
   },
   registerSection: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: spacing.lg,
+    paddingTop: spacing.xs,
     borderTopWidth: 1,
     borderTopColor: colors.borderLight,
   },
   registerPrompt: {
-    ...typography.body2,
+    ...typography.caption,
     color: colors.textMuted,
     marginRight: spacing.xs,
+    fontSize: 13,
   },
   registerLink: {
-    ...typography.body2,
+    ...typography.caption,
     color: colors.primary,
     fontWeight: '600',
+    fontSize: 13,
   },
 });

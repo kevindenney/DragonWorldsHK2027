@@ -24,7 +24,7 @@ export interface ChampionshipEvent {
   description?: string;
 }
 
-export type SailingLocationType = 
+export type SailingLocationType =
   | 'championship_hq'      // RHKYC Kellett Island
   | 'race_course'          // Ninepins Islands
   | 'venue'                // Championship venues
@@ -35,7 +35,8 @@ export type SailingLocationType =
   | 'hotel'                // Hotels and accommodation
   | 'support_service'      // Support services (weather, marine dept)
   | 'transport_hub'        // Ferry terminals and transport
-  | 'spectator_point';     // Viewing locations
+  | 'spectator_point'      // Viewing locations
+  | 'tourism';             // Tourism attractions and cultural sites
 
 export interface SailingLocation {
   id: string;
@@ -65,7 +66,7 @@ export interface SailingLocation {
 }
 
 export interface SailingLocationFilter {
-  type: 'all' | 'championship' | 'racing' | 'spectator';
+  type: 'all' | 'championship' | 'marinas' | 'stores' | 'accommodation' | 'spectator' | 'tourism';
   label: string;
   description: string;
 }

@@ -25,6 +25,7 @@ import {
 } from 'lucide-react-native';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
 import { MOCK_CHAMPIONSHIPS, Championship, ChampionshipCompetitor, RACING_CLASS_COLORS } from '../../data/mockChampionshipData';
+import { IOSSegmentedControl, IOSSegmentedControlOption } from '../../components/ios/IOSSegmentedControl';
 import type { ResultsScreenProps } from '../../types/navigation';
 
 const { colors, typography, spacing, shadows, borderRadius } = dragonChampionshipsLightTheme;
@@ -35,7 +36,7 @@ interface ModernResultsScreenProps extends ResultsScreenProps {
 }
 
 export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsScreenProps) {
-  const [selectedChampionship, setSelectedChampionship] = useState<string>('dragon-world-2026');
+  const [selectedChampionship, setSelectedChampionship] = useState<string>('asia-pacific-2026');
   const [refreshing, setRefreshing] = useState(false);
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
 
@@ -62,54 +63,38 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
     return RACING_CLASS_COLORS[racingClass] || colors.primary;
   };
 
-  // Championship Toggle Component
-  const ChampionshipToggle = () => (
-    <View style={styles.toggleContainer}>
-      {MOCK_CHAMPIONSHIPS.map((championship) => (
-        <TouchableOpacity
-          key={championship.id}
-          style={[
-            styles.toggleTab,
-            selectedChampionship === championship.id && styles.toggleTabActive
-          ]}
-          onPress={() => setSelectedChampionship(championship.id)}
-        >
-          <Text style={[
-            styles.toggleTabText,
-            selectedChampionship === championship.id && styles.toggleTabTextActive
-          ]}>
-            {championship.shortName}
-          </Text>
-          <Text style={[
-            styles.toggleTabDate,
-            selectedChampionship === championship.id && styles.toggleTabDateActive
-          ]}>
-            {championship.startDate}
-          </Text>
-        </TouchableOpacity>
-      ))}
+  // Championship Toggle Component - iOS Style
+  const ChampionshipToggle = () => {
+    const segmentOptions: IOSSegmentedControlOption[] = MOCK_CHAMPIONSHIPS.map(championship => ({
+      label: championship.shortName,
+      value: championship.id
+    }));
+
+    return (
+      <View style={styles.toggleContainer}>
+        <IOSSegmentedControl
+          options={segmentOptions}
+          selectedValue={selectedChampionship}
+          onValueChange={setSelectedChampionship}
+          style={styles.segmentedControl}
+        />
+      </View>
+    );
+  };
+
+  // Live Results Controls Component
+  const LiveResultsControls = () => (
+    <View style={styles.liveResultsContainer}>
+      <TouchableOpacity style={styles.liveResultsButton}>
+        <Play size={16} color={colors.textInverted} />
+        <Text style={styles.liveResultsText}>Live Results</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
+        <RefreshCw size={20} color={colors.textSecondary} />
+      </TouchableOpacity>
     </View>
   );
 
-  // Event Statistics Bar Component
-  const EventStatsBar = () => (
-    <View style={styles.statsBar}>
-      <View style={styles.statItem}>
-        <Trophy size={16} color={colors.textSecondary} />
-        <Text style={styles.statText}>
-          {currentChampionship.completedRaces}/{currentChampionship.totalRaces} races
-        </Text>
-      </View>
-      <View style={styles.statItem}>
-        <Users size={16} color={colors.textSecondary} />
-        <Text style={styles.statText}>{currentChampionship.totalBoats} boats</Text>
-      </View>
-      <View style={styles.statItem}>
-        <Calendar size={16} color={colors.textSecondary} />
-        <Text style={styles.statText}>Updated {currentChampionship.lastUpdated}</Text>
-      </View>
-    </View>
-  );
 
   // Championship Info Card Component
   const ChampionshipInfoCard = () => (
@@ -229,21 +214,8 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
+      {/* Header - simplified */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.headerTitle}>Championship Standings</Text>
-          <Text style={styles.headerSubtitle}>China Coast Regatta 2024</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.liveResultsButton}>
-            <Play size={16} color={colors.textInverted} />
-            <Text style={styles.liveResultsText}>Live Results</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
-            <RefreshCw size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
       </View>
 
       <ScrollView
@@ -254,11 +226,12 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Event Statistics */}
-        <EventStatsBar />
 
         {/* Championship Toggle */}
         <ChampionshipToggle />
+
+        {/* Live Results Controls */}
+        <LiveResultsControls />
 
         {/* Championship Info */}
         <ChampionshipInfoCard />
@@ -280,32 +253,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  headerTitle: {
-    ...typography.headlineMedium,
-    color: colors.text,
-    fontWeight: '700',
-  },
-  headerSubtitle: {
-    ...typography.bodyMedium,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
   },
   liveResultsButton: {
     flexDirection: 'row',
@@ -330,56 +282,23 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: spacing.xl,
   },
-  statsBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    backgroundColor: colors.surface,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  statText: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-  },
   toggleContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    backgroundColor: colors.background,
+  },
+  segmentedControl: {
+    // No additional styling needed - inherits from IOSSegmentedControl
+  },
+  liveResultsContainer: {
     flexDirection: 'row',
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.md,
-    backgroundColor: colors.backgroundSecondary,
-    borderRadius: borderRadius.lg,
-    padding: 4,
-  },
-  toggleTab: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
+    justifyContent: 'flex-end',
     alignItems: 'center',
-  },
-  toggleTabActive: {
-    backgroundColor: '#00C896',
-  },
-  toggleTabText: {
-    ...typography.labelMedium,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  toggleTabTextActive: {
-    color: colors.textInverted,
-  },
-  toggleTabDate: {
-    ...typography.bodySmall,
-    color: colors.textTertiary,
-    marginTop: 2,
-  },
-  toggleTabDateActive: {
-    color: colors.textInverted,
-    opacity: 0.9,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+    backgroundColor: colors.background,
+    gap: spacing.sm,
   },
   championshipCard: {
     margin: spacing.lg,

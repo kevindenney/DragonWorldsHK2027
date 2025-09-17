@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import {
   Calendar,
@@ -71,10 +71,41 @@ export const CategoryFilterChips: React.FC<CategoryFilterChipsProps> = ({
   selectedCategory,
   onCategoryChange
 }) => {
+  console.log('[CategoryFilterChips] Rendering with counts:', categoryCounts);
+  console.log('[CategoryFilterChips] Selected category:', selectedCategory);
+
   const handleCategoryPress = async (category: RegattaCategory | 'all') => {
     await haptics.selection();
     onCategoryChange(category);
   };
+
+  // Robust data validation
+  if (!categoryCounts || !Array.isArray(categoryCounts) || categoryCounts.length === 0) {
+    console.log('[CategoryFilterChips] Invalid or empty category counts, returning null');
+    return null;
+  }
+
+  // Validate each category count item
+  const validCategoryCounts = categoryCounts.filter(item => {
+    if (!item || typeof item !== 'object') {
+      console.warn('[CategoryFilterChips] Invalid category count item:', item);
+      return false;
+    }
+    if (!item.category || typeof item.category !== 'string') {
+      console.warn('[CategoryFilterChips] Invalid category:', item.category);
+      return false;
+    }
+    if (typeof item.count !== 'number' || item.count < 0) {
+      console.warn('[CategoryFilterChips] Invalid count:', item.count);
+      return false;
+    }
+    return true;
+  });
+
+  if (validCategoryCounts.length === 0) {
+    console.log('[CategoryFilterChips] No valid category counts after validation');
+    return null;
+  }
 
   return (
     <View style={styles.container}>
@@ -83,17 +114,24 @@ export const CategoryFilterChips: React.FC<CategoryFilterChipsProps> = ({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {categoryCounts.map(({ category, count, unreadCount }) => {
+        {validCategoryCounts.map(({ category, count, unreadCount }) => {
+          console.log('[CategoryFilterChips] Processing category:', category, 'count:', count);
+
           const categoryInfo = CATEGORY_INFO[category];
-          if (!categoryInfo) return null;
+          if (!categoryInfo) {
+            console.log('[CategoryFilterChips] No category info for:', category);
+            // Return empty fragment instead of null to avoid React Native text rendering issues
+            return <Fragment key={`missing-${category}`} />;
+          }
 
           const isSelected = selectedCategory === category;
-          const IconComponent = categoryInfo.icon;
+          const safeCount = typeof count === 'number' ? count : 0;
+          const safeUnreadCount = typeof unreadCount === 'number' ? unreadCount : 0;
 
           return (
             <View key={category} style={styles.chipContainer}>
               <IOSButton
-                title={`${categoryInfo.label} ${count}`}
+                title={`${categoryInfo.label} ${safeCount.toString()}`}
                 variant={isSelected ? 'filled' : 'tinted'}
                 size="small"
                 onPress={() => handleCategoryPress(category)}
@@ -104,21 +142,14 @@ export const CategoryFilterChips: React.FC<CategoryFilterChipsProps> = ({
                     borderColor: categoryInfo.color,
                   }
                 ]}
-                titleStyle={[
+                textStyle={[
                   styles.chipText,
                   isSelected ? styles.chipTextSelected : styles.chipTextUnselected
                 ]}
-                icon={
-                  <IconComponent
-                    size={16}
-                    color={isSelected ? colors.surface : categoryInfo.color}
-                    style={styles.chipIcon}
-                  />
-                }
               />
 
               {/* Unread badge */}
-              {unreadCount && unreadCount > 0 && (
+              {safeUnreadCount > 0 && (
                 <View style={[
                   styles.unreadBadge,
                   { backgroundColor: isSelected ? colors.surface : categoryInfo.color }
@@ -131,7 +162,7 @@ export const CategoryFilterChips: React.FC<CategoryFilterChipsProps> = ({
                       { color: isSelected ? categoryInfo.color : colors.surface }
                     ]}
                   >
-                    {unreadCount}
+                    {safeUnreadCount.toString()}
                   </IOSText>
                 </View>
               )}
@@ -149,7 +180,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: spacing.md,
-    gap: spacing.sm,
   },
   chipContainer: {
     position: 'relative',

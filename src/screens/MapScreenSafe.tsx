@@ -5,9 +5,8 @@
 
 import React, { useState } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
-import { Filter, Layers, MapPin } from 'lucide-react-native';
+import { Filter, MapPin } from 'lucide-react-native';
 import { IOSSegmentedControl } from '../components/ios';
 import { LocationDetailModal } from '../components/maps/LocationDetailModal';
 import {
@@ -30,10 +29,17 @@ console.log('🗺️ [MapScreenSafe] Loading safe WebView-based map implementati
 
 export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
   const [selectedFilter, setSelectedFilter] = useState<SailingLocationFilter['type']>('all');
-  const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid'>('roadmap');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<SailingLocation | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+
+  // Split filters into two logical groups
+  const primaryFilters = locationFilters.filter(filter =>
+    ['all', 'championship', 'marinas', 'stores'].includes(filter.type)
+  );
+  const secondaryFilters = locationFilters.filter(filter =>
+    ['accommodation', 'spectator', 'tourism'].includes(filter.type)
+  );
 
   // Get filtered locations based on current filter
   const filteredLocations = getLocationsByType(selectedFilter);
@@ -41,13 +47,6 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
   const handleFilterChange = (filter: SailingLocationFilter['type']) => {
     setSelectedFilter(filter);
     setShowFilters(false);
-  };
-
-  const handleMapTypeChange = () => {
-    setMapType(prev =>
-      prev === 'roadmap' ? 'satellite' :
-      prev === 'satellite' ? 'hybrid' : 'roadmap'
-    );
   };
 
   const getCurrentFilterLabel = () => {
@@ -121,7 +120,7 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
             map = new google.maps.Map(document.getElementById("map"), {
               zoom: 12,
               center: center,
-              mapTypeId: "${mapType}",
+              mapTypeId: "roadmap",
               disableDefaultUI: false,
               zoomControl: true,
               mapTypeControl: false,
@@ -155,7 +154,8 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
                 'chandlery': '#EA580C',           // Orange - Chandleries
                 'gear_store': '#D97706',          // Amber - Gear Stores
                 'hotel': '#7C3AED',               // Purple - Hotels
-                'spectator_point': '#10B981'      // Green - Spectator Points
+                'spectator_point': '#10B981',     // Green - Spectator Points
+                'tourism': '#EC4899'              // Pink - Tourism Attractions
               }[location.type] || '#6B7280';
 
               console.log('Marker ' + (index + 1) + ':', location.name);
@@ -238,12 +238,6 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
             }));
           }
 
-          // Update map type when changed
-          window.updateMapType = function(type) {
-            if (map) {
-              map.setMapTypeId(type);
-            }
-          };
         </script>
         <script async defer
           src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASvagpRFBzK0HhRGqSqeW7W4FiEoFTf1w&callback=initMap">
@@ -254,50 +248,7 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <View>
-            <Text style={styles.headerTitle}>Sailing Locations</Text>
-            <Text style={styles.headerSubtitle}>
-              {getCurrentFilterLabel()} ({filteredLocations.length})
-            </Text>
-          </View>
-
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => setShowFilters(!showFilters)}
-            >
-              <Filter size={20} color={colors.primary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={handleMapTypeChange}
-            >
-              <Layers size={20} color={colors.primary} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Filter Controls */}
-        {showFilters && (
-          <View style={styles.filterContainer}>
-            <IOSSegmentedControl
-              options={locationFilters.map(filter => ({
-                label: filter.label,
-                value: filter.type
-              }))}
-              selectedValue={selectedFilter}
-              onValueChange={handleFilterChange}
-              style={styles.segmentedControl}
-            />
-          </View>
-        )}
-      </View>
-
+    <View style={styles.container}>
       {/* Map Container */}
       <View style={styles.mapContainer}>
         <WebView
@@ -323,10 +274,6 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
           startInLoadingState={true}
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
-          injectedJavaScript={`
-            window.updateMapType('${mapType}');
-            true;
-          `}
         />
 
         {/* Legend Overlay */}
@@ -363,8 +310,55 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
               <View style={[styles.legendMarker, { backgroundColor: '#7C3AED' }]} />
               <Text style={styles.legendText}>Hotels</Text>
             </View>
+
+            <View style={styles.legendItem}>
+              <View style={[styles.legendMarker, { backgroundColor: '#EC4899' }]} />
+              <Text style={styles.legendText}>Tourism</Text>
+            </View>
           </View>
         </ScrollView>
+
+        {/* Floating Filter Button */}
+        <TouchableOpacity
+          style={styles.floatingFilterButton}
+          onPress={() => setShowFilters(!showFilters)}
+        >
+          <Filter size={20} color={colors.primary} />
+        </TouchableOpacity>
+
+        {/* Floating Filter Panel */}
+        {showFilters && (
+          <View style={styles.floatingFilterPanel}>
+            <View style={styles.filterPanelHeader}>
+              <Text style={styles.filterPanelTitle}>Filter Locations</Text>
+              <Text style={styles.filterPanelSubtitle}>
+                {getCurrentFilterLabel()} ({filteredLocations.length})
+              </Text>
+            </View>
+
+            {/* Primary Filters Row */}
+            <IOSSegmentedControl
+              options={primaryFilters.map(filter => ({
+                label: filter.label,
+                value: filter.type
+              }))}
+              selectedValue={primaryFilters.some(f => f.type === selectedFilter) ? selectedFilter : ''}
+              onValueChange={handleFilterChange}
+              style={styles.segmentedControl}
+            />
+
+            {/* Secondary Filters Row */}
+            <IOSSegmentedControl
+              options={secondaryFilters.map(filter => ({
+                label: filter.label,
+                value: filter.type
+              }))}
+              selectedValue={secondaryFilters.some(f => f.type === selectedFilter) ? selectedFilter : ''}
+              onValueChange={handleFilterChange}
+              style={[styles.segmentedControl, styles.secondaryFilterRow]}
+            />
+          </View>
+        )}
       </View>
 
       {/* Location Detail Modal */}
@@ -384,7 +378,7 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
           }}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -393,47 +387,48 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
+  floatingFilterButton: {
+    position: 'absolute',
+    top: spacing.xxl + 20,
+    right: spacing.lg,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-    ...shadows.cardMedium,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    justifyContent: 'center',
+    ...shadows.cardLarge,
+    zIndex: 1000,
   },
-  headerTitle: {
-    ...typography.headlineMedium,
+  floatingFilterPanel: {
+    position: 'absolute',
+    top: spacing.xxl + 20,
+    left: spacing.lg,
+    right: spacing.lg,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    ...shadows.cardLarge,
+    zIndex: 999,
+  },
+  filterPanelHeader: {
+    marginBottom: spacing.md,
+  },
+  filterPanelTitle: {
+    ...typography.headlineSmall,
     color: colors.text,
-    fontWeight: '700',
+    fontWeight: '600',
   },
-  headerSubtitle: {
+  filterPanelSubtitle: {
     ...typography.caption,
     color: colors.textMuted,
     marginTop: 2,
   },
-  headerActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  actionButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-  },
   segmentedControl: {
     marginTop: spacing.sm,
+  },
+  secondaryFilterRow: {
+    marginTop: spacing.xs,
   },
   mapContainer: {
     flex: 1,

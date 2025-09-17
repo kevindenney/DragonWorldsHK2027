@@ -6,12 +6,21 @@ const config = getDefaultConfig(__dirname, {
   isCSSEnabled: true,
 });
 
-// Simple and clean configuration for development builds
+// Enhanced configuration to handle Hermes property descriptor issues
 config.transformer = {
   ...config.transformer,
-  // Enable Hermes optimizations for development builds
-  enableBabelRuntime: true,
-  inlineRequires: true, // Re-enable for better performance with Hermes
+  // Hermes-specific settings to avoid property descriptor conflicts
+  enableBabelRuntime: false, // Disable to avoid property conflicts
+  inlineRequires: false, // Disable inline requires to prevent descriptor issues
+
+  // Conservative module handling for Hermes stability
+  hermesParser: false, // Use standard parser to avoid conflicts
+  unstable_allowRequireContext: true, // Enable for auth system compatibility
+
+  // Additional property descriptor safety measures
+  minifierConfig: {
+    keep_fnames: true, // Preserve function names to avoid descriptor conflicts
+  },
 };
 
 // Clean resolver configuration

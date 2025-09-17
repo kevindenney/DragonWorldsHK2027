@@ -7,10 +7,11 @@ import {
   TouchableOpacity,
   Alert,
   Image,
-  ScrollView,
-  KeyboardAvoidingView,
   Platform,
+  Dimensions,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '../../auth/useAuth';
 import { SimpleAuthInput } from '../../components/auth/SimpleAuthInput';
@@ -23,6 +24,8 @@ interface SimpleRegisterScreenProps {
 
 export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) {
   const { register, isLoading } = useAuth();
+  const insets = useSafeAreaInsets();
+  const { height: screenHeight } = Dimensions.get('window');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -97,12 +100,77 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
     }
 
     try {
+      // Debug environment variables before attempting registration
+      console.log('🔍 [Register] Environment variable check:');
+      console.log('EXPO_PUBLIC_FIREBASE_API_KEY:', process.env.EXPO_PUBLIC_FIREBASE_API_KEY ? '***set***' : 'MISSING');
+      console.log('EXPO_PUBLIC_FIREBASE_PROJECT_ID:', process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'MISSING');
+      console.log('EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN:', process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || 'MISSING');
+
+      // Check network connectivity before attempting Firebase operation
+      console.log('🔍 [Register] Checking network connectivity...');
+      const isConnected = await checkConnectivity();
+      console.log('🔍 [Register] Network connectivity:', isConnected ? 'Connected' : 'No connection');
+
+      if (!isConnected) {
+        throw {
+          code: 'network/no-connection',
+          message: 'No internet connection available. Please check your network and try again.'
+        };
+      }
+
       await register({ email, password, displayName });
     } catch (error: any) {
-      Alert.alert(
-        'Unable to Create Account',
-        error.message || 'Please check your information and try again.'
-      );
+      console.error('Registration error:', error);
+
+      // Provide more specific error messages
+      let title = 'Unable to Create Account';
+      let message = 'Please check your information and try again.';
+
+      if (error.code) {
+        switch (error.code) {
+          case 'network/no-connection':
+            title = 'No Internet Connection';
+            message = error.message;
+            break;
+          case 'auth/email-already-in-use':
+            title = 'Email Already Registered';
+            message = 'An account with this email already exists. Try signing in instead.';
+            break;
+          case 'auth/weak-password':
+            title = 'Password Too Weak';
+            message = 'Please choose a stronger password with at least 8 characters.';
+            break;
+          case 'auth/invalid-email':
+            title = 'Invalid Email';
+            message = 'Please enter a valid email address.';
+            break;
+          case 'auth/network-request-failed':
+            title = 'Connection Problem';
+            message = 'Unable to connect to the server. Please check your internet connection and try again.';
+            break;
+          case 'auth/too-many-requests':
+            title = 'Too Many Attempts';
+            message = 'Too many failed attempts. Please wait a few minutes and try again.';
+            break;
+          default:
+            if (error.message.includes('network') || error.message.includes('connection')) {
+              title = 'Network Error';
+              message = 'Please check your internet connection and try again. If the problem persists, Firebase may not be properly configured.';
+            } else {
+              message = error.message || message;
+            }
+            break;
+        }
+      } else if (error.message) {
+        if (error.message.includes('Missing required Firebase configuration')) {
+          title = 'Configuration Error';
+          message = 'The app is not properly configured. Please contact support.';
+        } else {
+          message = error.message;
+        }
+      }
+
+      Alert.alert(title, message);
     }
   };
 
@@ -110,19 +178,39 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
     navigation.navigate('Login');
   };
 
+  // Simple network connectivity check
+  const checkConnectivity = async (): Promise<boolean> => {
+    try {
+      const response = await fetch('https://www.google.com/generate_204', {
+        method: 'HEAD',
+        cache: 'no-cache',
+        headers: { 'Cache-Control': 'no-cache' },
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" backgroundColor={colors.primary} />
 
-      <KeyboardAvoidingView
-        style={styles.keyboardContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <KeyboardAwareScrollView
+        style={styles.keyboardScrollView}
+        contentContainerStyle={[
+          styles.scrollContainer,
+          {
+            paddingBottom: Math.max(insets.bottom + 60, 140), // Extra padding for keyboard
+          }
+        ]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        enableOnAndroid={true}
+        enableAutomaticScroll={true}
+        extraScrollHeight={50}
+        extraHeight={Platform.OS === 'ios' ? 50 : 100}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
           {/* Header Section */}
           <View style={styles.header}>
             <View style={styles.logoContainer}>
@@ -213,8 +301,7 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
               </View>
             </View>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }
@@ -224,13 +311,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.primary,
   },
-  keyboardContainer: {
+  keyboardScrollView: {
     flex: 1,
+    backgroundColor: colors.primary,
   },
   scrollContainer: {
     flexGrow: 1,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
+    paddingTop: spacing.lg,
+    // paddingBottom is now set dynamically in the component
   },
   header: {
     alignItems: 'center',
@@ -266,6 +355,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderRadius: borderRadius.xl,
     padding: spacing.xl,
+    marginBottom: spacing.lg, // Add bottom margin for better spacing
     ...shadows.large,
   },
   welcomeSection: {

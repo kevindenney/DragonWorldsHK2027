@@ -40,8 +40,8 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
     backgroundColor: colors.background,
+    // Removed negative margin to match Schedule layout
   },
   segmentedControl: {
     // Additional styling if needed

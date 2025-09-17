@@ -702,6 +702,259 @@ export const sailingLocations: SailingLocation[] = [
     ],
 
     operatingHours: '24 hours'
+  },
+
+  // === TOURISM ATTRACTIONS ===
+  {
+    id: 'victoria_peak',
+    name: 'Victoria Peak & Sky Terrace 428',
+    type: 'tourism',
+    coordinates: {
+      latitude: 22.2716,
+      longitude: 114.1472
+    },
+    description: 'Hong Kong\'s most iconic landmark offering 360-degree panoramic views of the harbor, skyline, and racing areas. Perfect for regatta spectating.',
+    championshipRole: 'Premier viewing location for harbor racing and city overview',
+    importance: 'primary',
+    championshipSpecific: false,
+
+    address: 'The Peak Tower, 128 Peak Road, The Peak',
+
+    facilities: [
+      'Sky Terrace 428 viewing platform',
+      'Peak Tram transportation',
+      'Restaurants and cafes',
+      'Souvenir shops',
+      'Photography services',
+      'Lookout pavilions'
+    ],
+
+    contact: {
+      phone: '+852 2849 0668',
+      website: 'www.thepeak.com.hk'
+    },
+
+    racerInfo: 'Spectacular views of Victoria Harbor and racing areas. Peak Tram provides easy access from Central. Best viewing during clear weather conditions.',
+    spectatorInfo: 'World-renowned attraction with unparalleled harbor views. Ideal for watching sailing events from above. Sunset viewing highly recommended during regatta week.',
+
+    transportation: [
+      {
+        type: 'mtr',
+        route: 'Central Station to Peak Tram Lower Terminus',
+        schedule: 'Peak Tram: 07:00-00:00 daily',
+        cost: 'HK$69 round-trip adults, HK$40 children',
+        notes: '10-minute walk from Central MTR to Peak Tram'
+      },
+      {
+        type: 'bus',
+        route: 'Bus 15 from Central to The Peak',
+        schedule: 'Every 20-30 minutes',
+        cost: 'HK$10.60',
+        notes: 'Scenic alternative to Peak Tram'
+      }
+    ],
+
+    operatingHours: 'Sky Terrace: 10:00-23:00 daily, Peak Tram: 07:00-00:00'
+  },
+
+  {
+    id: 'avenue_of_stars',
+    name: 'Avenue of Stars & Symphony of Lights',
+    type: 'tourism',
+    coordinates: {
+      latitude: 22.2938,
+      longitude: 114.1719
+    },
+    description: 'Tsim Sha Tsui waterfront promenade celebrating Hong Kong\'s film industry, featuring the world\'s largest permanent light and sound show at 8pm nightly.',
+    championshipRole: 'Prime harbor viewing location and nightly entertainment venue',
+    importance: 'primary',
+    championshipSpecific: false,
+
+    address: 'Tsim Sha Tsui Promenade, Kowloon',
+
+    facilities: [
+      'Celebrity handprints and statues',
+      'Harbor viewing areas',
+      'Photography platforms',
+      'Seating areas',
+      'Information panels',
+      'Accessibility features'
+    ],
+
+    racerInfo: 'Excellent harbor views for watching sailing action. Close to ferry terminals for easy harbor access. Perfect location for evening relaxation after racing.',
+    spectatorInfo: 'World-famous promenade with stunning harbor views. Nightly Symphony of Lights show at 8pm. Ideal for harbor photography and sailing event viewing.',
+
+    championshipEvents: [
+      {
+        date: '2027-11-21',
+        time: '20:00',
+        event: 'Symphony of Lights',
+        description: 'Nightly multimedia light show visible from promenade'
+      }
+    ],
+
+    transportation: [
+      {
+        type: 'mtr',
+        route: 'Tsim Sha Tsui Station (Exit L2)',
+        schedule: '05:00-01:00 daily',
+        cost: 'HK$10-25 from Central',
+        notes: '5-minute walk to promenade'
+      },
+      {
+        type: 'ferry',
+        route: 'Star Ferry from Central/Wan Chai',
+        schedule: 'Every 10-20 minutes',
+        cost: 'HK$3.40',
+        notes: 'Historic ferry service with harbor views'
+      }
+    ],
+
+    operatingHours: '24 hours (Symphony of Lights: 20:00 daily)'
+  },
+
+  {
+    id: 'star_ferry_terminal',
+    name: 'Star Ferry Terminal',
+    type: 'tourism',
+    coordinates: {
+      latitude: 22.2939,
+      longitude: 114.1720
+    },
+    description: 'Historic ferry service operating since 1888, offering scenic harbor crossings and charming glimpses of old Hong Kong character.',
+    championshipRole: 'Historic transportation and harbor viewing experience',
+    importance: 'secondary',
+    championshipSpecific: false,
+
+    address: 'Star Ferry Pier, Tsim Sha Tsui, Kowloon',
+
+    facilities: [
+      'Historic ferry terminals',
+      'Scenic harbor crossing',
+      'Photography opportunities',
+      'Waiting areas',
+      'Tourist information',
+      'Harbor views'
+    ],
+
+    racerInfo: 'Scenic harbor crossing with sailing venue views. Historic transportation connecting major districts. Great for harbor exploration between racing days.',
+    spectatorInfo: 'Iconic Hong Kong experience with spectacular harbor views during crossing. Perfect for photography and experiencing local maritime heritage.',
+
+    transportation: [
+      {
+        type: 'walking',
+        route: 'From Avenue of Stars',
+        cost: 'Free',
+        notes: 'Adjacent to promenade'
+      },
+      {
+        type: 'ferry',
+        route: 'To Central, Wan Chai, Hung Hom',
+        schedule: 'Every 10-20 minutes',
+        cost: 'HK$3.40',
+        notes: 'Historic harbor crossing service'
+      }
+    ],
+
+    operatingHours: 'Daily 06:30-23:30'
+  },
+
+  {
+    id: 'west_kowloon_cultural_district',
+    name: 'Hong Kong Palace Museum & M+ (West Kowloon)',
+    type: 'tourism',
+    coordinates: {
+      latitude: 22.3026,
+      longitude: 114.1627
+    },
+    description: 'World-class cultural district featuring Hong Kong Palace Museum and M+ contemporary art museum, highlighted on DragonWorld2027.com as must-visit attractions.',
+    championshipRole: 'Premier cultural attractions for regatta participants and families',
+    importance: 'primary',
+    championshipSpecific: true,
+
+    address: '8 Museum Drive, West Kowloon Cultural District',
+
+    facilities: [
+      'Hong Kong Palace Museum',
+      'M+ contemporary art museum',
+      'Freespace performance venue',
+      'Art Park outdoor space',
+      'Waterfront promenade',
+      'Dining and retail'
+    ],
+
+    contact: {
+      phone: '+852 2200 0217',
+      website: 'www.westkowloon.hk'
+    },
+
+    racerInfo: 'World-class cultural attractions for downtime between racing. Family-friendly venues with harbor proximity. Educational and entertaining for international visitors.',
+    spectatorInfo: 'Premier cultural destination with stunning architecture and exhibitions. Perfect for family activities during regatta week. Waterfront location with harbor views.',
+
+    transportation: [
+      {
+        type: 'mtr',
+        route: 'Kowloon Station (Exit C2 or D1)',
+        schedule: '05:00-01:00 daily',
+        cost: 'HK$15-30 from Central',
+        notes: '10-15 minute walk from MTR'
+      },
+      {
+        type: 'bus',
+        route: 'Multiple routes to West Kowloon',
+        schedule: 'Regular service',
+        cost: 'HK$8-15',
+        notes: 'Direct bus connections'
+      }
+    ],
+
+    operatingHours: 'Museums: 10:00-18:00 (closed Tuesdays), District: 24 hours'
+  },
+
+  {
+    id: 'temple_street_night_market',
+    name: 'Temple Street Night Market',
+    type: 'tourism',
+    coordinates: {
+      latitude: 22.3113,
+      longitude: 114.1711
+    },
+    description: 'Hong Kong\'s most famous night market offering authentic street food, shopping, and local culture experience in the heart of Yau Ma Tei.',
+    championshipRole: 'Authentic local dining and cultural experience for evening entertainment',
+    importance: 'secondary',
+    championshipSpecific: false,
+
+    address: 'Temple Street, Yau Ma Tei, Kowloon',
+
+    facilities: [
+      'Street food stalls',
+      'Shopping vendors',
+      'Fortune telling',
+      'Street performances',
+      'Local restaurants',
+      'Cultural atmosphere'
+    ],
+
+    racerInfo: 'Authentic Hong Kong street food and culture experience. Perfect for evening dining after racing. Affordable local cuisine and souvenir shopping.',
+    spectatorInfo: 'Iconic night market experience with local street food and shopping. Vibrant atmosphere ideal for evening entertainment during regatta week.',
+
+    transportation: [
+      {
+        type: 'mtr',
+        route: 'Yau Ma Tei Station (Exit C)',
+        schedule: '05:00-01:00 daily',
+        cost: 'HK$10-20 from Central',
+        notes: '5-minute walk from MTR'
+      },
+      {
+        type: 'taxi',
+        route: 'From Central Hong Kong',
+        cost: 'HK$50-80',
+        notes: '15-20 minutes depending on traffic'
+      }
+    ],
+
+    operatingHours: 'Market: 18:00-00:00 daily'
   }
 ];
 
@@ -735,6 +988,11 @@ export const locationFilters: SailingLocationFilter[] = [
     type: 'spectator',
     label: 'Spectator',
     description: 'Viewing points and public areas'
+  },
+  {
+    type: 'tourism',
+    label: 'Tourism',
+    description: 'Tourist attractions and cultural sites'
   }
 ];
 
@@ -794,6 +1052,11 @@ export const getLocationsByType = (type: SailingLocationFilter['type']) => {
       case 'spectator':
         filteredLocations = sailingLocations.filter(location =>
           location.type === 'spectator_point'
+        );
+        break;
+      case 'tourism':
+        filteredLocations = sailingLocations.filter(location =>
+          location.type === 'tourism'
         );
         break;
       default:

@@ -53,7 +53,7 @@ const socialConfigs = {
     iconColor: '#ffffff',
     accessibilityHint: 'Sign in with your GitHub account',
   },
-} as const;
+}; // Removed 'as const' to avoid Hermes property descriptor conflicts
 
 export interface SocialLoginButtonProps {
   provider: AuthProvider;
@@ -329,4 +329,4 @@ export const commonProviderSets = {
   basic: [AuthProvider.GOOGLE, AuthProvider.APPLE],
   full: [AuthProvider.GOOGLE, AuthProvider.APPLE, AuthProvider.FACEBOOK],
   developer: [AuthProvider.GOOGLE, AuthProvider.APPLE, AuthProvider.GITHUB],
-} as const;
+}; // Removed 'as const' to avoid Hermes property descriptor conflicts

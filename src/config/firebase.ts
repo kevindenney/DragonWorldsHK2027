@@ -25,12 +25,13 @@ export interface FirebaseConfig {
 
 /**
  * Firebase configuration from environment variables
+ * TEMPORARY: Using fallback config for testing when env vars are missing
  */
 const firebaseConfig: FirebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || '',
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || '',
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || 'dragonworldshk2027.firebaseapp.com',
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'dragonworldshk2027',
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || 'dragonworldshk2027.appspot.com',
   messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || '',
   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID || undefined,
@@ -40,33 +41,76 @@ const firebaseConfig: FirebaseConfig = {
 console.log('🔍 [Firebase] Debugging Firebase config object...');
 debugFirebaseConfig(firebaseConfig);
 
+// Additional debugging for environment variables
+console.log('🔍 [Firebase] Environment variable values:');
+console.log('EXPO_PUBLIC_FIREBASE_API_KEY:', process.env.EXPO_PUBLIC_FIREBASE_API_KEY ? '***set***' : 'MISSING');
+console.log('EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN:', process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || 'MISSING');
+console.log('EXPO_PUBLIC_FIREBASE_PROJECT_ID:', process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'MISSING');
+console.log('EXPO_PUBLIC_FIREBASE_APP_ID:', process.env.EXPO_PUBLIC_FIREBASE_APP_ID ? '***set***' : 'MISSING');
+
 /**
  * Validation function for Firebase configuration
  */
 function validateFirebaseConfig(config: FirebaseConfig): void {
   const requiredFields: (keyof FirebaseConfig)[] = [
     'apiKey',
-    'authDomain', 
+    'authDomain',
     'projectId',
     'storageBucket',
     'messagingSenderId',
     'appId'
   ];
 
+  console.log('🔍 [Firebase] Validating configuration...');
   const missingFields = requiredFields.filter(field => !config[field]);
-  
+
   if (missingFields.length > 0) {
+    console.error('❌ [Firebase] Missing required configuration fields:', missingFields);
+    console.error('❌ [Firebase] Current config values:');
+    requiredFields.forEach(field => {
+      const value = config[field];
+      console.error(`  ${field}: ${value ? (field === 'apiKey' ? '***set***' : value) : 'MISSING'}`);
+    });
+
     throw new Error(
       `Missing required Firebase configuration: ${missingFields.join(', ')}. ` +
-      'Please check your environment variables.'
+      'Please check your .env files and environment variables.'
     );
   }
 
-  if (__DEV__ && process.env.EXPO_PUBLIC_DEBUG_MODE === 'true') {
-    console.log('Firebase Config:', {
-      ...config,
-      apiKey: config.apiKey.substring(0, 10) + '...'
-    });
+  console.log('✅ [Firebase] Configuration validation passed');
+
+  if (__DEV__) {
+    console.log('🔍 [Firebase] Configuration summary:');
+    console.log('  Project ID:', config.projectId);
+    console.log('  Auth Domain:', config.authDomain);
+    console.log('  API Key:', config.apiKey ? '***set***' : 'MISSING');
+  }
+}
+
+/**
+ * Test Firebase connectivity
+ */
+export async function testFirebaseConnection(): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log('🔍 [Firebase] Testing connection...');
+
+    // Test if auth is available
+    if (!auth) {
+      throw new Error('Firebase Auth not initialized');
+    }
+
+    // Test if we can access auth properties
+    const currentUser = auth.currentUser;
+    console.log('✅ [Firebase] Auth service accessible, current user:', currentUser ? 'logged in' : 'anonymous');
+
+    return { success: true };
+  } catch (error) {
+    console.error('❌ [Firebase] Connection test failed:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown connection error'
+    };
   }
 }
 

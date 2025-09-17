@@ -23,21 +23,27 @@ export type { SocialLoginButtonProps, SocialLoginGroupProps } from './SocialLogi
 // export type { UserProfileProps } from './UserProfile'; // Temporarily disabled
 
 // Route Protection
-export { 
-  AuthGuard, 
-  RequireAuth, 
-  RequireRole, 
-  RequireAdmin, 
+export {
+  AuthGuard,
+  RequireAuth,
+  RequireRole,
+  RequireAdmin,
   GuestOnly,
-  useAuthGuard 
+  useAuthGuard
 } from './AuthGuard';
-export type { 
-  AuthGuardProps, 
-  RequireAuthProps, 
-  RequireRoleProps, 
-  RequireAdminProps, 
-  GuestOnlyProps 
+export type {
+  AuthGuardProps,
+  RequireAuthProps,
+  RequireRoleProps,
+  RequireAdminProps,
+  GuestOnlyProps
 } from './AuthGuard';
+
+// Progressive Authentication
+export {
+  ProgressiveAuthPrompt,
+  useProgressiveAuth
+} from './ProgressiveAuthPrompt';
 
 // Notification System
 export { 

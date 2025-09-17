@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "dragonworldshk2027.app"
-               BlueprintName = "dragonworldshk2027"
-               ReferencedContainer = "container:dragonworldshk2027.xcodeproj">
+               BuildableName = "DragonWorldsHK2027.app"
+               BlueprintName = "DragonWorldsHK2027"
+               ReferencedContainer = "container:DragonWorldsHK2027.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "dragonworldshk2027Tests.xctest"
-               BlueprintName = "dragonworldshk2027Tests"
-               ReferencedContainer = "container:dragonworldshk2027.xcodeproj">
+               BuildableName = "DragonWorldsHK2027Tests.xctest"
+               BlueprintName = "DragonWorldsHK2027Tests"
+               ReferencedContainer = "container:DragonWorldsHK2027.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "dragonworldshk2027.app"
-            BlueprintName = "dragonworldshk2027"
-            ReferencedContainer = "container:dragonworldshk2027.xcodeproj">
+            BuildableName = "DragonWorldsHK2027.app"
+            BlueprintName = "DragonWorldsHK2027"
+            ReferencedContainer = "container:DragonWorldsHK2027.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "dragonworldshk2027.app"
-            BlueprintName = "dragonworldshk2027"
-            ReferencedContainer = "container:dragonworldshk2027.xcodeproj">
+            BuildableName = "DragonWorldsHK2027.app"
+            BlueprintName = "DragonWorldsHK2027"
+            ReferencedContainer = "container:DragonWorldsHK2027.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

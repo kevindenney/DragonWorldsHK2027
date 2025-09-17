@@ -1033,7 +1033,7 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
             urlTemplate={OPENSEAMAP_CONFIG.seamark}
             zIndex={1}
             tileSize={256}
-            opacity={0.7}
+            opacity={0.9}
           />
         )}
 

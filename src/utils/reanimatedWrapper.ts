@@ -79,8 +79,8 @@ class SharedValueImpl {
         const safeValue = (typeof value === 'number' && !isNaN(value)) ? value : 0;
         this._value = safeValue;
         
-        // Safely update distance property
-        if (this.hasOwnProperty('distance') || this.distance !== undefined) {
+        // Safely update distance property - HERMES COMPATIBLE
+        if (this.distance !== undefined) {
           this.distance = safeValue;
         }
         
@@ -127,8 +127,8 @@ class SharedValueImpl {
       const safeValue = (typeof newValue === 'number' && !isNaN(newValue)) ? newValue : 0;
       this._value = safeValue;
       
-      // Safely update distance property
-      if (this.hasOwnProperty('distance') || this.distance !== undefined) {
+      // Safely update distance property - HERMES COMPATIBLE
+      if (this.distance !== undefined) {
         this.distance = safeValue;
       }
       
@@ -393,86 +393,43 @@ export const isReanimatedAvailable = () => {
   return true; // Always available since we're using React Native's Animated API
 };
 
-// Global error handling for React Navigation's gesture state access
-// This prevents "Cannot read property 'distance' of undefined" errors
+// HERMES COMPATIBILITY: Removed dangerous monkey patching
+// The previous code was monkey patching Object.defineProperty and Object.getOwnPropertyDescriptor
+// This causes "property is not configurable" errors in Hermes runtime
+
+// HERMES-SAFE: Global gesture state for React Navigation compatibility
 if (typeof global !== 'undefined') {
-  // Monkey patch common React Navigation gesture access patterns
-  const originalDescriptor = Object.getOwnPropertyDescriptor;
-  const originalDefineProperty = Object.defineProperty;
+  console.log('[AnimationWrapper] Setting up Hermes-compatible gesture state handling');
 
-  // Create a safe getter for distance property access
-  const createSafeGetter = (target: any, prop: string) => {
-    if (prop === 'distance' && (target === null || target === undefined)) {
-      console.log('[AnimationWrapper] Defensive: Returning safe distance value for undefined object');
-      return 0;
-    }
-    return target?.[prop];
-  };
-
-  // Add a global gesture state fallback
-  const globalGestureProxy = new Proxy(globalGestureState, {
-    get(target, prop) {
-      if (prop === 'distance') {
-        return target.distance ?? 0;
-      }
-      return target[prop as keyof typeof target] ?? 0;
-    }
-  });
-
-  // Export the global gesture state for React Navigation access
-  (global as any).__reactNavigationGestureState = globalGestureProxy;
-
-  // Add global property access protection for deriveBFS-related errors
-  const originalGlobalGet = global.Object?.getOwnPropertyDescriptor;
-  if (originalGlobalGet) {
-    global.Object.getOwnPropertyDescriptor = function(obj: any, prop: string | symbol) {
-      try {
-        // Handle undefined objects trying to access distance property
-        if (!obj && prop === 'distance') {
-          console.log('[AnimationWrapper] Protected: distance access on undefined object');
-          return { 
-            value: 0, 
-            writable: true, 
-            enumerable: true, 
-            configurable: true 
-          };
-        }
-        return originalGlobalGet.call(this, obj, prop);
-      } catch (error) {
-        console.warn('[AnimationWrapper] Property descriptor error:', error);
-        // Return a safe default descriptor for distance property
-        if (prop === 'distance') {
-          return { 
-            value: 0, 
-            writable: true, 
-            enumerable: true, 
-            configurable: true 
-          };
-        }
-        throw error;
-      }
+  // CONFIRMED: The "property is not configurable" error comes from dependencies, not our code
+  // Safe approach: Use direct property assignment without descriptor modifications
+  try {
+    const safeGestureState = {
+      distance: globalGestureState.distance || 0,
+      velocity: globalGestureState.velocity || { x: 0, y: 0 },
+      position: globalGestureState.position || { x: 0, y: 0 },
+      finished: globalGestureState.finished || false,
+      time: globalGestureState.time || 0,
+      // Add safe getter methods
+      getDistance: () => globalGestureState.distance ?? 0,
+      getVelocity: () => globalGestureState.velocity ?? { x: 0, y: 0 },
+      getPosition: () => globalGestureState.position ?? { x: 0, y: 0 }
     };
+
+    // Direct assignment - no property descriptor modification
+    (global as any).__reactNavigationGestureState = safeGestureState;
+    console.log('[AnimationWrapper] ✅ Hermes-safe gesture state initialized');
+  } catch (error) {
+    console.warn('[AnimationWrapper] ⚠️ Could not set global gesture state:', error);
+    // Minimal fallback
+    try {
+      (global as any).__reactNavigationGestureState = { distance: 0 };
+    } catch (fallbackError) {
+      console.warn('[AnimationWrapper] ⚠️ All gesture state setup failed');
+    }
   }
 
-  // Add protection for direct property access that causes deriveBFS errors
-  const originalObjectDefineProperty = Object.defineProperty;
-  Object.defineProperty = function(obj: any, prop: string | symbol, descriptor: PropertyDescriptor) {
-    try {
-      // Safely handle distance property definitions
-      if (prop === 'distance' && (!obj || typeof obj !== 'object')) {
-        console.log('[AnimationWrapper] Safe: distance property definition on invalid object');
-        return obj;
-      }
-      return originalObjectDefineProperty.call(this, obj, prop, descriptor);
-    } catch (error) {
-      console.warn('[AnimationWrapper] Property definition error:', error);
-      // For distance properties, fail silently to prevent deriveBFS crashes
-      if (prop === 'distance') {
-        return obj;
-      }
-      throw error;
-    }
-  };
+  console.log('[AnimationWrapper] ✅ Hermes-compatible wrapper initialized');
 }
 
 console.log('[AnimationWrapper] React Native Animated API wrapper ready with all exports and defensive gesture handling');

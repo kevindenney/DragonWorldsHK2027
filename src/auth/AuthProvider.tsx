@@ -7,7 +7,7 @@
  */
 
 import React, { createContext, useContext, useReducer, useEffect, ReactNode, useRef } from 'react';
-import { authService } from './firebase/authService';
+import { mockAuthService } from './mockAuthService';
 import { AuthContextType, AuthState, LoginCredentials, RegisterCredentials, AuthProviderType, User } from './authTypes';
 
 /**
@@ -78,29 +78,112 @@ interface AuthProviderProps {
 }
 
 /**
+ * Detect if Firebase is properly configured
+ */
+function isFirebaseConfigured(): boolean {
+  const apiKey = process.env.EXPO_PUBLIC_FIREBASE_API_KEY;
+  const appId = process.env.EXPO_PUBLIC_FIREBASE_APP_ID;
+  return !!(apiKey && appId && apiKey !== '' && appId !== '');
+}
+
+/**
+ * Lazy load Firebase auth service only when needed
+ */
+async function getFirebaseAuthService() {
+  try {
+    console.log('🔐 [AuthProvider] Lazy loading Firebase auth service...');
+    const { authService } = await import('./firebase/authService');
+    console.log('✅ [AuthProvider] Firebase auth service loaded successfully');
+    return authService;
+  } catch (error) {
+    console.error('❌ [AuthProvider] Failed to load Firebase auth service:', error);
+    throw new Error('Firebase authentication service unavailable');
+  }
+}
+
+/**
  * Clean Authentication Provider
  */
 export function AuthenticationProvider({ children }: AuthProviderProps) {
-  const [state, dispatch] = useReducer(authReducer, initialState);
-  const unsubscribeRef = useRef<(() => void) | null>(null);
+  console.log('🔐 [AuthProvider] Creating AuthenticationProvider component');
+
+  try {
+    const [state, dispatch] = useReducer(authReducer, initialState);
+    const unsubscribeRef = useRef<(() => void) | null>(null);
+    const [useFirebase, setUseFirebase] = React.useState(false);
+    const [authServiceReady, setAuthServiceReady] = React.useState(false);
+    const firebaseServiceRef = useRef<any>(null);
+
+    console.log('🔐 [AuthProvider] State and refs initialized successfully');
 
   /**
    * Initialize authentication state
    */
   useEffect(() => {
-    console.log('🔐 Initializing authentication...');
-    
-    // Set up auth state listener
-    const unsubscribe = authService.onAuthStateChanged((user) => {
-      console.log('🔐 Auth state changed:', user ? 'User signed in' : 'User signed out');
-      dispatch({ type: 'SET_USER', payload: user });
-      
-      if (!state.isInitialized) {
-        dispatch({ type: 'SET_INITIALIZED', payload: true });
-      }
-    });
+    async function initializeAuth() {
+      console.log('🔐 [AuthProvider] Initializing authentication...');
 
-    unsubscribeRef.current = unsubscribe;
+      // Check Firebase configuration
+      const firebaseConfigured = isFirebaseConfigured();
+      console.log('🔐 [AuthProvider] Firebase configured:', firebaseConfigured);
+
+      if (firebaseConfigured) {
+        try {
+          console.log('🔐 [AuthProvider] Attempting to use Firebase authentication');
+          setUseFirebase(true);
+
+          // Lazy load Firebase auth service
+          const firebaseAuthService = await getFirebaseAuthService();
+          firebaseServiceRef.current = firebaseAuthService;
+
+          // Set up Firebase auth state listener
+          const unsubscribe = firebaseAuthService.onAuthStateChanged((user) => {
+            console.log('🔐 [AuthProvider] Firebase auth state changed:', user ? 'User signed in' : 'User signed out');
+            dispatch({ type: 'SET_USER', payload: user });
+
+            if (!state.isInitialized) {
+              dispatch({ type: 'SET_INITIALIZED', payload: true });
+            }
+          });
+
+          unsubscribeRef.current = unsubscribe;
+          console.log('✅ [AuthProvider] Firebase authentication initialized successfully');
+        } catch (error) {
+          console.error('❌ [AuthProvider] Firebase initialization failed, falling back to mock auth:', error);
+          // Fall back to mock authentication if Firebase fails to load
+          setUseFirebase(false);
+          await initializeMockAuth();
+        }
+      } else {
+        console.log('🔧 [AuthProvider] Firebase not configured, using mock authentication');
+        setUseFirebase(false);
+        await initializeMockAuth();
+      }
+
+      setAuthServiceReady(true);
+    }
+
+    async function initializeMockAuth() {
+      console.log('🔧 [AuthProvider] Initializing mock authentication service');
+
+      // Initialize mock auth service
+      await mockAuthService.initialize();
+
+      // Set up mock auth state listener
+      const unsubscribe = mockAuthService.onAuthStateChanged((user) => {
+        console.log('🔧 [AuthProvider] Mock auth state changed:', user ? 'User signed in' : 'User signed out');
+        dispatch({ type: 'SET_USER', payload: user });
+
+        if (!state.isInitialized) {
+          dispatch({ type: 'SET_INITIALIZED', payload: true });
+        }
+      });
+
+      unsubscribeRef.current = unsubscribe;
+      console.log('✅ [AuthProvider] Mock authentication initialized successfully');
+    }
+
+    initializeAuth();
 
     // Cleanup on unmount
     return () => {
@@ -117,10 +200,19 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
-      
-      await authService.login(credentials);
+
+      console.log('🔐 [AuthProvider] Starting login process...');
+
+      if (useFirebase && firebaseServiceRef.current) {
+        console.log('🔐 [AuthProvider] Using Firebase for login');
+        await firebaseServiceRef.current.login(credentials);
+      } else {
+        console.log('🔧 [AuthProvider] Using mock service for login');
+        await mockAuthService.login(credentials);
+      }
       // User state will be updated via onAuthStateChanged listener
     } catch (error) {
+      console.error('❌ [AuthProvider] Login failed:', error);
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Login failed' });
       throw error;
     } finally {
@@ -135,10 +227,19 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
-      
-      await authService.register(credentials);
+
+      console.log('🔐 [AuthProvider] Starting registration process...');
+
+      if (useFirebase && firebaseServiceRef.current) {
+        console.log('🔐 [AuthProvider] Using Firebase for registration');
+        await firebaseServiceRef.current.register(credentials);
+      } else {
+        console.log('🔧 [AuthProvider] Using mock service for registration');
+        await mockAuthService.register(credentials);
+      }
       // User state will be updated via onAuthStateChanged listener
     } catch (error) {
+      console.error('❌ [AuthProvider] Registration failed:', error);
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Registration failed' });
       throw error;
     } finally {
@@ -153,10 +254,19 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
-      
-      await authService.loginWithProvider(provider);
+
+      console.log('🔐 [AuthProvider] Starting OAuth login process...');
+
+      if (useFirebase && firebaseServiceRef.current) {
+        console.log('🔐 [AuthProvider] Using Firebase for OAuth login');
+        await firebaseServiceRef.current.loginWithProvider(provider);
+      } else {
+        console.log('⚠️ [AuthProvider] OAuth not supported in mock mode');
+        throw new Error('OAuth login not available in mock mode. Please use email/password registration.');
+      }
       // User state will be updated via onAuthStateChanged listener
     } catch (error) {
+      console.error('❌ [AuthProvider] OAuth login failed:', error);
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'OAuth login failed' });
       throw error;
     } finally {
@@ -171,10 +281,19 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
-      
-      await authService.logout();
+
+      console.log('🔐 [AuthProvider] Starting logout process...');
+
+      if (useFirebase && firebaseServiceRef.current) {
+        console.log('🔐 [AuthProvider] Using Firebase for logout');
+        await firebaseServiceRef.current.logout();
+      } else {
+        console.log('🔧 [AuthProvider] Using mock service for logout');
+        await mockAuthService.logout();
+      }
       // User state will be updated via onAuthStateChanged listener
     } catch (error) {
+      console.error('❌ [AuthProvider] Logout failed:', error);
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Logout failed' });
       // Even if logout fails, reset local state
       dispatch({ type: 'RESET' });
@@ -190,9 +309,18 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
-      
-      await authService.resetPassword(email);
+
+      console.log('🔐 [AuthProvider] Starting password reset process...');
+
+      if (useFirebase && firebaseServiceRef.current) {
+        console.log('🔐 [AuthProvider] Using Firebase for password reset');
+        await firebaseServiceRef.current.resetPassword(email);
+      } else {
+        console.log('🔧 [AuthProvider] Using mock service for password reset');
+        await mockAuthService.resetPassword(email);
+      }
     } catch (error) {
+      console.error('❌ [AuthProvider] Password reset failed:', error);
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Password reset failed' });
       throw error;
     } finally {
@@ -207,10 +335,24 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
-      
-      const updatedUser = await authService.updateUserProfile(updates);
-      dispatch({ type: 'SET_USER', payload: updatedUser });
+
+      console.log('🔐 [AuthProvider] Starting profile update process...');
+
+      if (useFirebase && firebaseServiceRef.current) {
+        console.log('🔐 [AuthProvider] Using Firebase for profile update');
+        const updatedUser = await firebaseServiceRef.current.updateUserProfile(updates);
+        dispatch({ type: 'SET_USER', payload: updatedUser });
+      } else {
+        console.log('🔧 [AuthProvider] Using mock service for profile update (local only)');
+        // Mock service doesn't support profile updates yet - just update locally
+        const currentUser = state.user;
+        if (currentUser) {
+          const updatedUser = { ...currentUser, ...updates, updatedAt: new Date() };
+          dispatch({ type: 'SET_USER', payload: updatedUser });
+        }
+      }
     } catch (error) {
+      console.error('❌ [AuthProvider] Profile update failed:', error);
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Profile update failed' });
       throw error;
     } finally {
@@ -246,11 +388,25 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
     clearError,
   };
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+    console.log('🔐 [AuthProvider] About to render AuthContext.Provider');
+
+    return (
+      <AuthContext.Provider value={contextValue}>
+        {children}
+      </AuthContext.Provider>
+    );
+  } catch (error) {
+    console.error('💥 [AuthProvider] AuthenticationProvider error:', error);
+    console.error('💥 [AuthProvider] Error stack:', error.stack);
+
+    // Check if this is the Hermes property error
+    if (error.message?.includes('property is not configurable')) {
+      console.error('🎯 [AuthProvider] FOUND HERMES PROPERTY ERROR IN AUTH PROVIDER!');
+      console.error('🎯 [AuthProvider] This suggests the error occurs during auth initialization');
+    }
+
+    throw error;
+  }
 }
 
 /**

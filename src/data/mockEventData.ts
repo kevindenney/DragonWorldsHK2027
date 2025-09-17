@@ -483,4 +483,4 @@ export const generateMockEvent = (eventId: string): NoticeBoardEvent => {
 };
 
 export const AVAILABLE_EVENTS = Object.keys(EVENT_INFO);
-export const DEFAULT_EVENT_ID = 'dragon-worlds-2026';
+export const DEFAULT_EVENT_ID = 'asia-pacific-2026';

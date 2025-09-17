@@ -10,7 +10,7 @@ import { eventSchedules } from '../../data/scheduleData';
 import type { ScheduleScreenProps } from '../../types/navigation';
 
 export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
-  const [selectedEvent, setSelectedEvent] = useState<string>('world-championship');
+  const [selectedEvent, setSelectedEvent] = useState<string>('asia-pacific-championships');
   const [refreshing, setRefreshing] = useState(false);
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
 
@@ -74,9 +74,6 @@ export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <IOSText textStyle="largeTitle" weight="bold" style={styles.title}>
-          Schedule
-        </IOSText>
       </View>
 
       {/* Event Selector */}

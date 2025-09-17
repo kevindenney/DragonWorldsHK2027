@@ -22,10 +22,25 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 const { colors, spacing, shadows, borderRadius } = dragonChampionshipsLightTheme;
 
 export function TabNavigator() {
-  console.log('🚀 [TabNavigator] TabNavigator component rendering...');
+  const renderCountRef = React.useRef(0);
+  const lastRenderTime = React.useRef(Date.now());
 
-  const handleTabPress = async () => {
-    console.log('📱 [TabNavigator] Tab pressed');
+  renderCountRef.current += 1;
+  const currentTime = Date.now();
+  const timeSinceLastRender = currentTime - lastRenderTime.current;
+  lastRenderTime.current = currentTime;
+
+  console.log(`🚀 [TabNavigator] Render #${renderCountRef.current} (${timeSinceLastRender}ms since last)`);
+
+  React.useEffect(() => {
+    console.log('📱 [TabNavigator] Component mounted');
+    return () => {
+      console.log('📱 [TabNavigator] Component unmounted');
+    };
+  }, []);
+
+  const handleTabPress = async (tabName?: string) => {
+    console.log(`📱 [TabNavigator] Tab pressed: ${tabName || 'unknown'}`);
     await Haptics.selectionAsync();
   };
 
@@ -116,10 +131,10 @@ export function TabNavigator() {
         tabBarButton: (props) => {
           const { onPress, ...otherProps } = props;
           return (
-            <TouchableOpacity 
-              {...otherProps} 
+            <TouchableOpacity
+              {...otherProps}
               onPress={async () => {
-                await handleTabPress();
+                await handleTabPress(props.accessibilityLabel);
                 onPress?.();
               }}
             />
@@ -127,12 +142,16 @@ export function TabNavigator() {
         },
       })}
     >
-      <Tab.Screen 
-        name="Schedule" 
+      <Tab.Screen
+        name="Schedule"
         component={ScheduleScreen}
         options={{
           tabBarLabel: 'Schedule',
           tabBarAccessibilityLabel: 'Race schedule and timing',
+        }}
+        listeners={{
+          focus: () => console.log('📋 [Tab] Schedule screen focused'),
+          blur: () => console.log('📋 [Tab] Schedule screen blurred'),
         }}
       />
       <Tab.Screen
@@ -143,6 +162,10 @@ export function TabNavigator() {
           tabBarAccessibilityLabel: 'Official notices and documents',
         }}
         initialParams={{ eventId: 'dragon-worlds-2027' }}
+        listeners={{
+          focus: () => console.log('📋 [Tab] NoticeBoard screen focused'),
+          blur: () => console.log('📋 [Tab] NoticeBoard screen blurred'),
+        }}
       />
       <Tab.Screen
         name="Results"
@@ -150,6 +173,10 @@ export function TabNavigator() {
         options={{
           tabBarLabel: 'Results',
           tabBarAccessibilityLabel: 'Championship standings and results',
+        }}
+        listeners={{
+          focus: () => console.log('📋 [Tab] Results screen focused'),
+          blur: () => console.log('📋 [Tab] Results screen blurred'),
         }}
       />
       <Tab.Screen
@@ -159,13 +186,21 @@ export function TabNavigator() {
           tabBarLabel: 'Map',
           tabBarAccessibilityLabel: 'Interactive sailing locations and race course map',
         }}
+        listeners={{
+          focus: () => console.log('📋 [Tab] Map screen focused'),
+          blur: () => console.log('📋 [Tab] Map screen blurred'),
+        }}
       />
-      <Tab.Screen 
-        name="More" 
+      <Tab.Screen
+        name="More"
         component={MoreScreen}
         options={{
           tabBarLabel: 'More',
           tabBarAccessibilityLabel: 'Additional features and tools including Social and Weather',
+        }}
+        listeners={{
+          focus: () => console.log('📋 [Tab] More screen focused'),
+          blur: () => console.log('📋 [Tab] More screen blurred'),
         }}
       />
     </Tab.Navigator>
