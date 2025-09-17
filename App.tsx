@@ -1,8 +1,15 @@
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
 import { AppNavigationContainer } from './src/services/navigation/NavigationContainer';
 import { Text, View, StyleSheet } from 'react-native';
+
+// Keep the splash screen visible while we fetch resources
+console.log('🚀 [App.tsx] Preventing splash screen auto-hide');
+SplashScreen.preventAutoHideAsync()
+  .then(() => console.log('✅ [App.tsx] Splash screen auto-hide prevented'))
+  .catch((error) => console.warn('⚠️ [App.tsx] Error preventing splash screen auto-hide:', error));
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -69,6 +76,47 @@ const styles = StyleSheet.create({
 });
 
 export default function App() {
+  const [appIsReady, setAppIsReady] = React.useState(false);
+
+  React.useEffect(() => {
+    async function prepare() {
+      try {
+        console.log('🔄 [App.tsx] Preparing app resources...');
+        // Add any resource loading here if needed in future
+        // For now, we'll just mark as ready immediately
+        setAppIsReady(true);
+      } catch (e) {
+        console.warn('⚠️ [App.tsx] Error during app preparation:', e);
+        // Even if there's an error, we should hide the splash screen
+        setAppIsReady(true);
+      }
+    }
+
+    prepare();
+  }, []);
+
+  React.useEffect(() => {
+    async function hideSplash() {
+      if (appIsReady) {
+        console.log('🎯 [App.tsx] App is ready, hiding splash screen...');
+        try {
+          await SplashScreen.hideAsync();
+          console.log('✅ [App.tsx] Splash screen hidden successfully');
+        } catch (error) {
+          console.warn('⚠️ [App.tsx] Error hiding splash screen:', error);
+        }
+      }
+    }
+
+    hideSplash();
+  }, [appIsReady]);
+
+  if (!appIsReady) {
+    console.log('⏳ [App.tsx] App not ready yet, keeping splash screen visible');
+    return null;
+  }
+
+  console.log('🚀 [App.tsx] App is ready, rendering main content');
   return (
     <ErrorBoundary>
       <SafeAreaProvider>

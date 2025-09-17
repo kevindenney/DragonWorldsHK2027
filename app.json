@@ -26,7 +26,7 @@
     "primaryColor": "#DC2626",
     "splash": {
       "image": "./assets/dragon-logo.png",
-      "resizeMode": "cover",
+      "resizeMode": "contain",
       "backgroundColor": "#DC2626"
     },
     "assetBundlePatterns": [
@@ -43,7 +43,7 @@
       "hermes": true,
       "splash": {
         "image": "./assets/dragon-logo.png",
-        "resizeMode": "cover",
+        "resizeMode": "contain",
         "backgroundColor": "#DC2626"
       },
       "infoPlist": {
@@ -101,7 +101,7 @@
       "targetSdkVersion": 34,
       "splash": {
         "image": "./assets/dragon-logo.png",
-        "resizeMode": "cover",
+        "resizeMode": "contain",
         "backgroundColor": "#DC2626"
       },
       "adaptiveIcon": {
@@ -182,7 +182,7 @@
         "expo-splash-screen",
         {
           "image": "./assets/dragon-logo.png",
-          "resizeMode": "cover",
+          "resizeMode": "contain",
           "backgroundColor": "#DC2626"
         }
       ],

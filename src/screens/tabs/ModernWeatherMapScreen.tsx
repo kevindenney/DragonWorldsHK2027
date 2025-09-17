@@ -33,7 +33,7 @@ import {
   MapPin,
   Layers,
   ChevronUp,
-  ChevronLeft,
+  ArrowLeft,
   AlertTriangle,
   Compass,
   ArrowUp,
@@ -55,10 +55,8 @@ import type { MoreScreenProps } from '../../types/navigation';
 import type { LocationData } from '../../stores/weatherStore';
 import { RACE_AREA_REGION, NINEPINS_RACE_COURSE_CENTER, NINE_PINS_RACING_STATION } from '../../constants/raceCoordinates';
 
-// Import new modern components
-import { 
-  ModernWeatherTopBar,
-} from '../../components/weather/modern';
+// Import new modern components - Direct imports to avoid Hermes barrel export conflicts
+// ModernWeatherTopBar is not currently used (commented out in JSX)
 import { HourlyForecastChart } from '../../components/weather/HourlyForecastChart';
 import DatagramDetailModal from '../../components/weather/DatagramDetailModal';
 
@@ -74,6 +72,8 @@ import { deduplicateStations, mergeAndDeduplicateStations } from '../../utils/st
 import { locationWeatherService } from '../../services/locationWeatherService';
 // Import weather conditions overlay
 import WeatherConditionsOverlay from '../../components/weather/WeatherConditionsOverlay';
+// Import seven day forecast modal
+import { SevenDayForecastModal } from '../../components/weather/SevenDayForecastModal';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -155,6 +155,21 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
   
   // Datagram modal state
   const [datagramModalVisible, setDatagramModalVisible] = useState(false);
+
+  // Data station filtering state
+  const [showWindStations, setShowWindStations] = useState(true);
+  const [showWaveStations, setShowWaveStations] = useState(true);
+  const [showTideStations, setShowTideStations] = useState(true);
+
+  // Seven day forecast modal state
+  const [forecastModalVisible, setForecastModalVisible] = useState(false);
+  const [selectedStation, setSelectedStation] = useState<{
+    id: string;
+    name: string;
+    type: 'wind' | 'wave' | 'tide';
+    coordinate: { latitude: number; longitude: number };
+    data: WindStation | WaveStation | TideStation;
+  } | null>(null);
   const [selectedDatagramLocation, setSelectedDatagramLocation] = useState<{
     id: string;
     name: string;
@@ -185,15 +200,8 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
         type: 'race-area',
       });
 
-      // Animate map to Nine Pins immediately
-      if (mapRef.current && typeof mapRef.current.animateToRegion === 'function') {
-        mapRef.current.animateToRegion({
-          latitude: NINE_PINS_RACING_STATION.latitude,
-          longitude: NINE_PINS_RACING_STATION.longitude,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        }, 1000);
-      }
+      // No need to animate map since INITIAL_REGION already centers on Nine Pins
+      // This prevents the redundant animation that causes the double-movement effect
     }
   }, [selectedLocation]);
 
@@ -256,15 +264,8 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
 
   
 
-  // Wave data state
-  const [waveStations, setWaveStations] = useState<WaveStation[]>([]);
-  const [waveDataLoading, setWaveDataLoading] = useState(false);
-  const [waveDataError, setWaveDataError] = useState<string | null>(null);
-
-  // Tide data state
-  const [tideStations, setTideStations] = useState<TideStation[]>([]);
-  const [tideDataLoading, setTideDataLoading] = useState(false);
-  const [tideDataError, setTideDataError] = useState<string | null>(null);
+  // Legacy state declarations removed to avoid duplicates
+  // Using consolidated data station states below
 
 
   // Real wind station data from WindStationService
@@ -272,7 +273,15 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
   const [windStationsLoading, setWindStationsLoading] = useState(false);
   const [windStationsError, setWindStationsError] = useState<string | null>(null);
 
+  // Data station states
+  const [windStations, setWindStations] = useState<WindStation[]>([]);
+  const [waveStations, setWaveStations] = useState<WaveStation[]>([]);
+  const [tideStations, setTideStations] = useState<TideStation[]>([]);
+  const [stationsLoading, setStationsLoading] = useState(false);
+
   useEffect(() => {
+    // Load all data stations
+    loadAllStations();
     // Old data loading disabled - using location-based data instead
     // loadWeatherData();
     // loadWaveData();
@@ -423,8 +432,13 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
       setLocationWeatherData(weatherData);
       setSnapshot(extractSnapshot(weatherData));
       
-      // Update map center to selected location
-      if (mapRef.current && typeof mapRef.current.animateToRegion === 'function') {
+      // Update map center to selected location only if it's different from Nine Pins
+      // Prevents redundant animation when already centered on Nine Pins
+      const isNinePins = location.id === 'nine-pins-racing-area' ||
+                        (location.coordinate.latitude === NINE_PINS_RACING_STATION.latitude &&
+                         location.coordinate.longitude === NINE_PINS_RACING_STATION.longitude);
+
+      if (!isNinePins && mapRef.current && typeof mapRef.current.animateToRegion === 'function') {
         mapRef.current.animateToRegion({
           latitude: location.coordinate.latitude,
           longitude: location.coordinate.longitude,
@@ -560,7 +574,7 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
     try {
       setTideDataLoading(true);
       setTideDataError(null);
-      
+
       const stations = await tideDataService.getTideStations();
       setTideStations(stations);
     } catch (error) {
@@ -569,6 +583,48 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
     } finally {
       setTideDataLoading(false);
     }
+  };
+
+  // New comprehensive station loading functions
+  const loadAllStations = async () => {
+    try {
+      setStationsLoading(true);
+
+      const [windData, waveData, tideData] = await Promise.all([
+        windStationService.getWindStations(),
+        waveDataService.getWaveStations(),
+        tideDataService.getTideStations()
+      ]);
+
+      setWindStations(windData);
+      setWaveStations(waveData);
+      setTideStations(tideData);
+
+      console.log(`📍 Loaded ${windData.length} wind, ${waveData.length} wave, ${tideData.length} tide stations`);
+    } catch (error) {
+      console.error('Failed to load station data:', error);
+    } finally {
+      setStationsLoading(false);
+    }
+  };
+
+  // Station press handler for forecast modal
+  const handleStationPress = (station: WindStation | WaveStation | TideStation, type: 'wind' | 'wave' | 'tide') => {
+    const stationData = {
+      id: station.id,
+      name: station.name,
+      type,
+      coordinate: station.coordinate,
+      data: station,
+    };
+
+    setSelectedStation(stationData);
+    setForecastModalVisible(true);
+  };
+
+  const handleForecastModalClose = () => {
+    setForecastModalVisible(false);
+    setSelectedStation(null);
   };
 
   const onRefresh = useCallback(async () => {
@@ -991,6 +1047,52 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
     }
   };
 
+  // Combine all stations for rendering on map
+  const allStations = React.useMemo(() => {
+    const stations: Array<{
+      id: string;
+      name: string;
+      type: 'wind' | 'wave' | 'tide';
+      coordinate: { latitude: number; longitude: number };
+      data: any;
+    }> = [];
+
+    // Add wind stations
+    windStations.forEach(station => {
+      stations.push({
+        id: station.id,
+        name: station.name,
+        type: 'wind',
+        coordinate: station.coordinate,
+        data: station,
+      });
+    });
+
+    // Add wave stations
+    waveStations.forEach(station => {
+      stations.push({
+        id: station.id,
+        name: station.name,
+        type: 'wave',
+        coordinate: station.coordinate,
+        data: station,
+      });
+    });
+
+    // Add tide stations
+    tideStations.forEach(station => {
+      stations.push({
+        id: station.id,
+        name: station.name,
+        type: 'tide',
+        coordinate: station.coordinate,
+        data: station,
+      });
+    });
+
+    return stations;
+  }, [windStations, waveStations, tideStations]);
+
   return (
     <View style={styles.container}>
       {/* Floating Back Button for Full Screen Experience */}
@@ -1004,7 +1106,61 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
           }}
           activeOpacity={0.7}
         >
-          <ChevronLeft size={20} color="#007AFF" />
+          <ArrowLeft size={20} color="#007AFF" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Station Filtering Controls */}
+      <View style={styles.stationControls}>
+        <TouchableOpacity
+          style={[
+            styles.stationControlButton,
+            showWindStations && styles.stationControlButtonActive,
+          ]}
+          onPress={() => setShowWindStations(!showWindStations)}
+          activeOpacity={0.7}
+        >
+          <Wind size={18} color={showWindStations ? "#FFF" : "#007AFF"} />
+          <IOSText style={[
+            styles.stationControlText,
+            showWindStations && styles.stationControlTextActive,
+          ]}>
+            Wind
+          </IOSText>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.stationControlButton,
+            showWaveStations && styles.stationControlButtonActive,
+          ]}
+          onPress={() => setShowWaveStations(!showWaveStations)}
+          activeOpacity={0.7}
+        >
+          <Waves size={18} color={showWaveStations ? "#FFF" : "#0096FF"} />
+          <IOSText style={[
+            styles.stationControlText,
+            showWaveStations && styles.stationControlTextActive,
+          ]}>
+            Waves
+          </IOSText>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.stationControlButton,
+            showTideStations && styles.stationControlButtonActive,
+          ]}
+          onPress={() => setShowTideStations(!showTideStations)}
+          activeOpacity={0.7}
+        >
+          <Anchor size={18} color={showTideStations ? "#FFF" : "#00C864"} />
+          <IOSText style={[
+            styles.stationControlText,
+            showTideStations && styles.stationControlTextActive,
+          ]}>
+            Tides
+          </IOSText>
         </TouchableOpacity>
       </View>
 
@@ -1172,6 +1328,70 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
         {/* Keeping only Nine Pins Racing Area as requested */}
 
         {/* Center of Race Area marker removed */}
+
+        {/* Data Station Markers */}
+        {/* Wind Stations */}
+        {showWindStations && allStations.filter(s => s.type === 'wind').map(station => (
+          <Marker
+            key={`wind-${station.id}`}
+            coordinate={station.coordinate}
+            title={station.name}
+            description={`Wind Station: ${station.data.windSpeed?.toFixed(1) || 'N/A'} kts`}
+            onPress={() => handleStationPress(station)}
+            zIndex={600}
+          >
+            <View style={styles.stationMarkerContainer}>
+              <View style={[styles.stationMarkerContent, styles.windStationMarker]}>
+                <Wind size={12} color="#FFF" />
+                <IOSText style={styles.stationMarkerText}>
+                  {station.data.windSpeed?.toFixed(0) || '?'}
+                </IOSText>
+              </View>
+            </View>
+          </Marker>
+        ))}
+
+        {/* Wave Stations */}
+        {showWaveStations && allStations.filter(s => s.type === 'wave').map(station => (
+          <Marker
+            key={`wave-${station.id}`}
+            coordinate={station.coordinate}
+            title={station.name}
+            description={`Wave Station: ${station.data.waveHeight?.toFixed(1) || 'N/A'} m`}
+            onPress={() => handleStationPress(station)}
+            zIndex={500}
+          >
+            <View style={styles.stationMarkerContainer}>
+              <View style={[styles.stationMarkerContent, styles.waveStationMarker]}>
+                <Waves size={12} color="#FFF" />
+                <IOSText style={styles.stationMarkerText}>
+                  {station.data.waveHeight?.toFixed(1) || '?'}
+                </IOSText>
+              </View>
+            </View>
+          </Marker>
+        ))}
+
+        {/* Tide Stations */}
+        {showTideStations && allStations.filter(s => s.type === 'tide').map(station => (
+          <Marker
+            key={`tide-${station.id}`}
+            coordinate={station.coordinate}
+            title={station.name}
+            description={`Tide Station: ${station.data.tideHeight?.toFixed(1) || 'N/A'} m`}
+            onPress={() => handleStationPress(station)}
+            zIndex={400}
+          >
+            <View style={styles.stationMarkerContainer}>
+              <View style={[styles.stationMarkerContent, styles.tideStationMarker]}>
+                <Anchor size={12} color="#FFF" />
+                <IOSText style={styles.stationMarkerText}>
+                  {station.data.tideHeight?.toFixed(1) || '?'}
+                </IOSText>
+              </View>
+            </View>
+          </Marker>
+        ))}
       </MapView>
 
         {/* Weather Conditions Overlay */}
@@ -1225,6 +1445,13 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
           waveHeight: snapshot?.waveHeight ?? currentMarine?.waveHeight ?? 0.8,
           tideHeight: snapshot?.tideHeight ?? currentMarine?.tideHeight ?? 1.2,
         }}
+      />
+
+      {/* Seven Day Forecast Modal for Data Stations */}
+      <SevenDayForecastModal
+        visible={forecastModalVisible}
+        onClose={() => setForecastModalVisible(false)}
+        station={selectedStation}
       />
     </View>
   );
@@ -1652,5 +1879,88 @@ const styles = StyleSheet.create({
     color: '#666',
     fontStyle: 'italic',
     marginTop: 4,
+  },
+
+  // Station filtering control styles
+  stationControls: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 20,
+    right: 20,
+    flexDirection: 'row',
+    zIndex: 2000,
+    gap: 8,
+  },
+  stationControlButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  stationControlButtonActive: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  stationControlText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  stationControlTextActive: {
+    color: '#FFFFFF',
+  },
+  // Data Station Marker Styles
+  stationMarkerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stationMarkerContent: {
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 32,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  windStationMarker: {
+    backgroundColor: '#007AFF', // Blue for wind
+  },
+  waveStationMarker: {
+    backgroundColor: '#0096FF', // Lighter blue for waves
+  },
+  tideStationMarker: {
+    backgroundColor: '#00C864', // Green for tides
+  },
+  stationMarkerText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: '700',
+    marginLeft: 4,
   },
 });
