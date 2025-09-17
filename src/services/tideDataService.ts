@@ -1,5 +1,6 @@
 import { WeatherAPI } from './weatherAPI';
 import { LocationCoordinate } from '../stores/weatherStore';
+import { NINE_PINS_RACING_STATION } from '../constants/raceCoordinates';
 
 // Tide station interface
 export interface TideStation {
@@ -19,6 +20,16 @@ export interface TideStation {
 
 // Water area boundaries for Hong Kong (same as wave data service)
 const WATER_AREAS = [
+  // Nine Pins Racing Area - PRIMARY racing water area
+  {
+    name: 'Nine Pins Racing Area',
+    bounds: {
+      north: 22.280,
+      south: 22.240,
+      east: 114.340,
+      west: 114.300
+    }
+  },
   // Victoria Harbour
   {
     name: 'Victoria Harbour',
@@ -73,33 +84,36 @@ const WATER_AREAS = [
 
 // Real Hong Kong tide station locations with actual coordinates
 const TIDE_STATION_LOCATIONS: LocationCoordinate[] = [
+  // Nine Pins Racing Area - PRIMARY racing weather station
+  { latitude: NINE_PINS_RACING_STATION.latitude, longitude: NINE_PINS_RACING_STATION.longitude },
+
   // Victoria Harbour stations
   { latitude: 22.285, longitude: 114.175 }, // Central Harbour
   { latitude: 22.275, longitude: 114.165 }, // Tsim Sha Tsui
   { latitude: 22.270, longitude: 114.180 }, // Wan Chai
-  
+
   // Clearwater Bay stations
   { latitude: 22.290, longitude: 114.290 }, // Clearwater Bay Marina
   { latitude: 22.280, longitude: 114.300 }, // Sai Kung
   { latitude: 22.260, longitude: 114.285 }, // Po Toi Island
-  
+
   // Repulse Bay stations
   { latitude: 22.240, longitude: 114.195 }, // Repulse Bay
   { latitude: 22.235, longitude: 114.200 }, // Deep Water Bay
-  
+
   // Stanley Bay stations
   { latitude: 22.220, longitude: 114.210 }, // Stanley
   { latitude: 22.215, longitude: 114.205 }, // Tai Tam
-  
+
   // Aberdeen Harbour stations
   { latitude: 22.250, longitude: 114.155 }, // Aberdeen
   { latitude: 22.245, longitude: 114.150 }, // Ap Lei Chau
-  
-  // Additional racing area stations
-  { latitude: 22.350, longitude: 114.250 }, // Racing area center
-  { latitude: 22.345, longitude: 114.245 }, // Start line area
-  { latitude: 22.360, longitude: 114.250 }, // Windward mark area
-  { latitude: 22.330, longitude: 114.248 }, // Leeward gate area
+
+  // Additional racing area stations (DEPRECATED - replaced with Nine Pins station)
+  // { latitude: 22.350, longitude: 114.250 }, // Racing area center - WRONG LOCATION
+  // { latitude: 22.345, longitude: 114.245 }, // Start line area - WRONG LOCATION
+  // { latitude: 22.360, longitude: 114.250 }, // Windward mark area - WRONG LOCATION
+  // { latitude: 22.330, longitude: 114.248 }, // Leeward gate area - WRONG LOCATION
 ];
 
 class TideDataService {

@@ -966,17 +966,17 @@ export const locationFilters: SailingLocationFilter[] = [
   },
   {
     type: 'championship',
-    label: 'Championship',
+    label: 'Champ',
     description: 'Competition venues and headquarters'
   },
   {
     type: 'marinas',
-    label: 'Marinas',
+    label: 'Marina',
     description: 'Marinas and yacht clubs'
   },
   {
     type: 'stores',
-    label: 'Stores',
+    label: 'Gear',
     description: 'Chandleries and gear stores'
   },
   {
@@ -986,12 +986,12 @@ export const locationFilters: SailingLocationFilter[] = [
   },
   {
     type: 'spectator',
-    label: 'Spectator',
+    label: 'View',
     description: 'Viewing points and public areas'
   },
   {
     type: 'tourism',
-    label: 'Tourism',
+    label: 'Tour',
     description: 'Tourist attractions and cultural sites'
   }
 ];

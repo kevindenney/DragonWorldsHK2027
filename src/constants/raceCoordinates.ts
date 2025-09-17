@@ -13,6 +13,13 @@ export const NINEPINS_RACE_COURSE_CENTER = {
   longitude: 114.32704442168033,
 } as const;
 
+// Nine Pins Racing Weather Station - Exact racing area coordinates from Google Maps
+// This is the primary weather data collection point for Dragon Worlds 2027
+export const NINE_PINS_RACING_STATION = {
+  latitude: 22.26298863831654,
+  longitude: 114.32559422181536,
+} as const;
+
 // Individual coordinate exports for services that need them separately
 export const RACING_AREA_LAT = NINEPINS_RACE_COURSE_CENTER.latitude;
 export const RACING_AREA_LON = NINEPINS_RACE_COURSE_CENTER.longitude;

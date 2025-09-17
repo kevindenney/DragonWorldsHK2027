@@ -8,25 +8,19 @@ import {
   RefreshControl,
   Platform,
   Alert,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapView, { 
-  UrlTile, 
-  Marker, 
+import MapView, {
+  // UrlTile, // Temporarily disabled due to AIRMapUrlTile runtime registration issue in development builds
+  Marker,
   Polyline,
   Circle,
   PROVIDER_DEFAULT,
-  Region 
-} from '../../utils/mapComponentStubs';
-import Animated, {
-  FadeInDown,
-  FadeInUp,
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  interpolate,
-} from '../../utils/reanimatedWrapper';
+  Region
+} from 'react-native-maps';
+
+// Using React Native's built-in Animated API instead of broken reanimated wrapper
 import {
   Cloud,
   Wind,
@@ -58,7 +52,7 @@ import {
 } from '../../stores/weatherStore';
 import type { MoreScreenProps } from '../../types/navigation';
 import type { LocationData } from '../../stores/weatherStore';
-import { RACE_AREA_REGION, NINEPINS_RACE_COURSE_CENTER } from '../../constants/raceCoordinates';
+import { RACE_AREA_REGION, NINEPINS_RACE_COURSE_CENTER, NINE_PINS_RACING_STATION } from '../../constants/raceCoordinates';
 
 // Import new modern components
 import { 
@@ -143,7 +137,7 @@ interface WeatherMarker {
 
 export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
   const mapRef = useRef<MapView>(null);
-  const bottomSheetOffset = useSharedValue(SCREEN_HEIGHT * 0.4);
+  const bottomSheetOffset = useRef(new Animated.Value(0)).current; // Start collapsed (0 = fully visible, positive = move down)
   const [refreshing, setRefreshing] = useState(false);
   const [selectedOverlays, setSelectedOverlays] = useState<MapOverlay[]>(['seamark', 'wind', 'wave', 'tide', 'temperature']);
   const [selectedMarker, setSelectedMarker] = useState<WeatherMarker | null>(null);
@@ -180,15 +174,25 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
     console.log('🗺️ SELECTED OVERLAYS CHANGED:', selectedOverlays);
   }, [selectedOverlays]);
 
-  // Initialize default location if none is selected
+  // Initialize default location to Nine Pins Racing Area if none is selected
   useEffect(() => {
     if (!selectedLocation) {
       useWeatherStore.getState().setSelectedLocation({
-        id: 'clearwater-bay-race-area',
-        name: 'Clearwater Bay Race Area',
-        coordinate: RACE_AREA_CENTER,
+        id: 'nine-pins-racing-area',
+        name: 'Nine Pins Racing Area',
+        coordinate: NINE_PINS_RACING_STATION,
         type: 'race-area',
       });
+
+      // Animate map to Nine Pins immediately
+      if (mapRef.current && typeof mapRef.current.animateToRegion === 'function') {
+        mapRef.current.animateToRegion({
+          latitude: NINE_PINS_RACING_STATION.latitude,
+          longitude: NINE_PINS_RACING_STATION.longitude,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        }, 1000);
+      }
     }
   }, [selectedLocation]);
 
@@ -419,7 +423,7 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
       setSnapshot(extractSnapshot(weatherData));
       
       // Update map center to selected location
-      if (mapRef.current) {
+      if (mapRef.current && typeof mapRef.current.animateToRegion === 'function') {
         mapRef.current.animateToRegion({
           latitude: location.coordinate.latitude,
           longitude: location.coordinate.longitude,
@@ -431,10 +435,12 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
       console.log('✅ Location weather data loaded successfully');
       
     } catch (error) {
-      console.error('❌ Failed to load location weather data:', error);
+      console.error('Failed to load weather data:', error);
+
       // Provide user-friendly error message
       let errorMessage = 'Failed to load weather data';
       if (error instanceof Error) {
+
         if (error.message.includes('401') || error.message.includes('Invalid API key')) {
           errorMessage = 'Weather API key invalid. Using free data sources.';
         } else if (error.message.includes('403') || error.message.includes('plan')) {
@@ -447,6 +453,7 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
           errorMessage = error.message;
         }
       }
+      console.log('🔍 Final error message for UI:', errorMessage);
       setLocationDataError(errorMessage);
     } finally {
       setIsLoadingLocationData(false);
@@ -612,24 +619,26 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
     }
   };
 
-  const animatedBottomSheetStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          translateY: interpolate(
-            bottomSheetOffset.value,
-            [0, SCREEN_HEIGHT * 0.7],
-            [0, SCREEN_HEIGHT * 0.7]
-          ),
-        },
-      ],
-    };
-  });
+  // Create animated style using React Native's interpolation
+  const animatedBottomSheetStyle = {
+    transform: [
+      {
+        translateY: bottomSheetOffset.interpolate({
+          inputRange: [0, SCREEN_HEIGHT * 0.3],
+          outputRange: [0, SCREEN_HEIGHT * 0.3],
+          extrapolate: 'clamp',
+        }),
+      },
+    ],
+  };
 
   const handleMarkerPress = (marker: WeatherMarker) => {
     console.log('🟢 handleMarkerPress', marker);
     setSelectedMarker(marker);
-    bottomSheetOffset.value = withSpring(SCREEN_HEIGHT * 0.3);
+    Animated.spring(bottomSheetOffset, {
+      toValue: 0,
+      useNativeDriver: true,
+    }).start(); // Show sheet (0 = fully visible)
   };
 
   const handleWindStationPress = (station: {
@@ -650,7 +659,10 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
       waveHeight: currentMarine?.waveHeight || 1.2,
     };
     setSelectedMarker(marker);
-    bottomSheetOffset.value = withSpring(SCREEN_HEIGHT * 0.3);
+    Animated.spring(bottomSheetOffset, {
+      toValue: 0,
+      useNativeDriver: true,
+    }).start(); // Show sheet (0 = fully visible)
   };
 
   const handleWaveStationPress = (station: WaveStation) => {
@@ -665,7 +677,10 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
       waveHeight: station.waveHeight,
     };
     setSelectedMarker(marker);
-    bottomSheetOffset.value = withSpring(SCREEN_HEIGHT * 0.3);
+    Animated.spring(bottomSheetOffset, {
+      toValue: 0,
+      useNativeDriver: true,
+    }).start(); // Show sheet (0 = fully visible)
   };
 
   const handleTideStationPress = (station: TideStation) => {
@@ -680,7 +695,10 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
       waveHeight: station.currentHeight,
     };
     setSelectedMarker(marker);
-    bottomSheetOffset.value = withSpring(SCREEN_HEIGHT * 0.3);
+    Animated.spring(bottomSheetOffset, {
+      toValue: 0,
+      useNativeDriver: true,
+    }).start(); // Show sheet (0 = fully visible)
   };
 
   const formatWindDirection = (degrees: number): string => {
@@ -1027,15 +1045,17 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
             preloadLocationWeatherData();
           }}
         >
-        {/* OpenSeaMap Nautical Chart Overlay */}
-        {selectedOverlays.includes('seamark') && (
+        {/* OpenSeaMap Nautical Chart Overlay - Temporarily disabled due to AIRMapUrlTile runtime registration issue */}
+        {/* Note: UrlTile component has known compatibility issues in development builds */}
+        {/* Alternative: Nautical chart information will be displayed via markers and overlays */}
+        {/* {selectedOverlays.includes('seamark') && (
           <UrlTile
             urlTemplate={OPENSEAMAP_CONFIG.seamark}
             zIndex={1}
             tileSize={256}
             opacity={0.9}
           />
-        )}
+        )} */}
 
         {/* Legacy wind-only markers removed in favor of combined datagram */}
 
@@ -1046,6 +1066,68 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
         {/* Legacy wind direction indicators removed */}
 
         {/* Legacy wave height circles removed */}
+
+        {/* Nine Pins Racing Area - Special Primary Marker */}
+        <Marker
+          key="nine-pins-racing-station"
+          coordinate={NINE_PINS_RACING_STATION}
+          title="Nine Pins Racing Area"
+          description="PRIMARY Dragon Worlds 2027 Race Course Weather"
+          onPress={() => {
+            const ninePin坐标 = NINE_PINS_RACING_STATION;
+            console.log('🏁 Nine Pins Racing Area pressed', { coordinates: ninePin坐标 });
+
+            // Get weather data for Nine Pins racing area
+            const cacheKey = `nine-pins_${selectedDate.toDateString()}_${selectedTime.getHours()}`;
+            const cachedData = locationWeatherCache.get(cacheKey);
+
+            const windSpeed = cachedData?.windSpeed ?? snapshot?.windSpeed ?? currentWeather?.windSpeed ?? 12;
+            const windDirection = cachedData?.windDirection ?? snapshot?.windDirection ?? currentWeather?.windDirection ?? 45;
+            const waveHeight = cachedData?.waveHeight ?? snapshot?.waveHeight ?? currentMarine?.waveHeight ?? 1.2;
+            const tideHeight = cachedData?.tideHeight ?? snapshot?.tideHeight ?? currentMarine?.tideHeight ?? 1.5;
+
+            setSelectedDatagramLocation({
+              id: 'nine-pins-racing-station',
+              name: 'Nine Pins Racing Area',
+              coordinate: NINE_PINS_RACING_STATION,
+            });
+            setDatagramModalVisible(true);
+          }}
+          zIndex={800} // Higher than other markers
+        >
+          <View style={styles.ninePinsMarkerContainer}>
+            <View style={styles.ninePinsLabelContainer}>
+              <IOSText style={styles.ninePinsLabelText}>⚡ NINE PINS RACING AREA ⚡</IOSText>
+            </View>
+            <View style={[styles.ninePinsMarkerContent]}>
+              <View style={styles.ninePinsDataContainer}>
+                {/* Wind Data */}
+                <View style={[styles.waterMarkerContent, styles.windWaterMarker]}>
+                  <Wind size={14} color="#FFF" />
+                  <IOSText style={styles.waterMarkerText}>
+                    {Math.round(snapshot?.windSpeed ?? currentWeather?.windSpeed ?? 12)} kts
+                  </IOSText>
+                </View>
+
+                {/* Wave Data */}
+                <View style={[styles.waterMarkerContent, styles.waveWaterMarker]}>
+                  <Waves size={14} color="#FFF" />
+                  <IOSText style={styles.waterMarkerText}>
+                    {(snapshot?.waveHeight ?? currentMarine?.waveHeight ?? 1.2).toFixed(1)} m
+                  </IOSText>
+                </View>
+
+                {/* Tide Data */}
+                <View style={[styles.waterMarkerContent, styles.tideWaterMarker]}>
+                  <Anchor size={14} color="#FFF" />
+                  <IOSText style={styles.waterMarkerText}>
+                    {(snapshot?.tideHeight ?? currentMarine?.tideHeight ?? 1.5).toFixed(1)} m
+                  </IOSText>
+                </View>
+              </View>
+            </View>
+          </View>
+        </Marker>
 
         {/* Combined Datagram Markers for each station location */}
         {STATION_LOCATIONS.map((location, index) => {
@@ -1070,6 +1152,7 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
             wave: waveTrend as 'up' | 'down',
             tide: tideTrend as 'up' | 'down',
           };
+
           return (
             <Marker
               key={`datagram-${location.id}`}
@@ -1154,11 +1237,18 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
             style={[styles.bottomSheet, animatedBottomSheetStyle, styles.glassmorphism]}
           >
             <TouchableOpacity
-              style={styles.bottomSheetHandle}
+              style={[styles.bottomSheetHandle, { pointerEvents: 'auto' }]} // Enable handle interaction
               onPress={() => {
-                bottomSheetOffset.value = withSpring(
-                  bottomSheetOffset.value === 0 ? SCREEN_HEIGHT * 0.4 : 0
-                );
+                console.log('🔽 Bottom sheet handle pressed');
+                // Get current value and determine target
+                bottomSheetOffset.stopAnimation((currentValue) => {
+                  const targetValue = currentValue === 0 ? SCREEN_HEIGHT * 0.3 : 0;
+                  console.log('🔽 Animating from', currentValue, 'to:', targetValue);
+                  Animated.spring(bottomSheetOffset, {
+                    toValue: targetValue,
+                    useNativeDriver: true,
+                  }).start();
+                });
               }}
             >
               <View style={styles.handle} />
@@ -1169,6 +1259,7 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
               }
               showsVerticalScrollIndicator={false}
+              style={{ pointerEvents: 'auto' }} // Enable scrolling inside sheet content
             >
               <View style={styles.markerDetails}>
                 <IOSText style={styles.markerTitle}>
@@ -1205,7 +1296,15 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
               {/* Wave Data Status */}
               {selectedOverlays.includes('wave') && (
                 <View style={styles.waveDataStatus}>
-                  <IOSText style={styles.sectionTitle}>Wave Data Status</IOSText>
+                  <View style={styles.statusHeader}>
+                    <IOSText style={styles.sectionTitle}>Wave Data Status</IOSText>
+                    <View style={styles.dataStatusIndicator}>
+                      <View style={[styles.statusDot, { backgroundColor: waveStations.length > 0 ? '#00C864' : '#FF3B30' }]} />
+                      <IOSText style={styles.statusIndicatorText}>
+                        {waveStations.length > 0 ? 'LIVE' : 'OFFLINE'}
+                      </IOSText>
+                    </View>
+                  </View>
                   {waveDataLoading ? (
                     <IOSText style={styles.statusText}>Loading wave data...</IOSText>
                   ) : waveDataError ? (
@@ -1213,9 +1312,16 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
                       {waveDataError}
                     </IOSText>
                   ) : (
-                    <IOSText style={styles.statusText}>
-                      {waveStations.length} wave stations active
-                    </IOSText>
+                    <View>
+                      <IOSText style={styles.statusText}>
+                        {waveStations.length} wave stations active
+                      </IOSText>
+                      {waveStations.length > 0 && (
+                        <IOSText style={styles.lastUpdatedText}>
+                          Last updated: {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                        </IOSText>
+                      )}
+                    </View>
                   )}
                 </View>
               )}
@@ -1223,7 +1329,15 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
               {/* Tide Data Status */}
               {selectedOverlays.includes('tide') && (
                 <View style={styles.tideDataStatus}>
-                  <IOSText style={styles.sectionTitle}>Tide Data Status</IOSText>
+                  <View style={styles.statusHeader}>
+                    <IOSText style={styles.sectionTitle}>Tide Data Status</IOSText>
+                    <View style={styles.dataStatusIndicator}>
+                      <View style={[styles.statusDot, { backgroundColor: tideStations.length > 0 ? '#00C864' : '#FF3B30' }]} />
+                      <IOSText style={styles.statusIndicatorText}>
+                        {tideStations.length > 0 ? 'LIVE' : 'OFFLINE'}
+                      </IOSText>
+                    </View>
+                  </View>
                   {tideDataLoading ? (
                     <IOSText style={styles.statusText}>Loading tide data...</IOSText>
                   ) : tideDataError ? (
@@ -1231,9 +1345,16 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
                       {tideDataError}
                     </IOSText>
                   ) : (
-                    <IOSText style={styles.statusText}>
-                      {tideStations.length} tide stations active
-                    </IOSText>
+                    <View>
+                      <IOSText style={styles.statusText}>
+                        {tideStations.length} tide stations active
+                      </IOSText>
+                      {tideStations.length > 0 && (
+                        <IOSText style={styles.lastUpdatedText}>
+                          Last updated: {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                        </IOSText>
+                      )}
+                    </View>
                   )}
                 </View>
               )}
@@ -1468,6 +1589,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     padding: 12,
+    // Allow map interaction when sheet is collapsed
+    pointerEvents: 'box-none',
   },
   bottomSheetHandle: {
     alignItems: 'center',
@@ -1634,5 +1757,75 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 10,
     fontWeight: '700',
+  },
+  // Nine Pins Racing Area Special Marker Styles
+  ninePinsMarkerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ninePinsLabelContainer: {
+    backgroundColor: 'rgba(255, 215, 0, 0.9)', // Gold background for racing area
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 2,
+    borderColor: '#FF3B30', // Red border to highlight importance
+  },
+  ninePinsLabelText: {
+    color: '#000',
+    fontSize: 11,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  ninePinsMarkerContent: {
+    backgroundColor: 'rgba(255, 215, 0, 0.95)', // Gold background
+    borderRadius: 16,
+    padding: 6,
+    borderWidth: 3,
+    borderColor: '#FF3B30', // Red border
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  ninePinsDataContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    gap: 4,
+  },
+  // Data Status Indicator Styles
+  statusHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  dataStatusIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    borderRadius: 12,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  statusIndicatorText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#333',
+  },
+  lastUpdatedText: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 4,
   },
 });

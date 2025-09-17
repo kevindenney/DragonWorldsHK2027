@@ -1,9 +1,9 @@
 /**
  * Wind Station Service
- * 
+ *
  * Provides real wind station data for Hong Kong racing area with actual
  * coordinates from Hong Kong Observatory and marine weather stations.
- * 
+ *
  * Features:
  * - Real wind station coordinates from HKO
  * - Marine weather buoy locations
@@ -13,6 +13,7 @@
  */
 
 import { WeatherAPI } from './weatherAPI';
+import { NINE_PINS_RACING_STATION } from '../constants/raceCoordinates';
 
 export interface WindStation {
   id: string;
@@ -78,34 +79,37 @@ const HKO_WIND_STATIONS: LocationCoordinate[] = [
 
 // Marine weather stations and buoys for racing area
 const MARINE_WIND_STATIONS: LocationCoordinate[] = [
+  // Nine Pins Racing Area - PRIMARY racing weather station (Dragon Worlds 2027)
+  { latitude: NINE_PINS_RACING_STATION.latitude, longitude: NINE_PINS_RACING_STATION.longitude },
+
   // Victoria Harbour - Verified marine locations
   { latitude: 22.2850, longitude: 114.1650 }, // Central Harbor
   { latitude: 22.2750, longitude: 114.1750 }, // East Harbor
   { latitude: 22.2700, longitude: 114.1800 }, // Southeast Harbor
-  
+
   // Clearwater Bay area - Marine racing waters
   { latitude: 22.2900, longitude: 114.2900 }, // Clearwater Bay Marina
   { latitude: 22.2800, longitude: 114.3000 }, // Outer Clearwater Bay
   { latitude: 22.2600, longitude: 114.2850 }, // Inner Clearwater Bay
-  
+
   // Repulse Bay area - Marine racing waters
   { latitude: 22.2400, longitude: 114.1950 }, // Repulse Bay Beach
   { latitude: 22.2350, longitude: 114.2000 }, // Outer Repulse Bay
-  
+
   // Stanley Bay area - Marine racing waters
   { latitude: 22.2200, longitude: 114.2100 }, // Stanley Bay
   { latitude: 22.2150, longitude: 114.2050 }, // Stanley Harbor
-  
+
   // Aberdeen Harbour - Marine racing waters
   { latitude: 22.2500, longitude: 114.1550 }, // Aberdeen Harbor
   { latitude: 22.2450, longitude: 114.1500 }, // Aberdeen Typhoon Shelter
-  
-  // Racing area specific stations - Dragon Worlds 2027 course
-  { latitude: 22.3500, longitude: 114.2500 }, // Racing area center
-  { latitude: 22.3450, longitude: 114.2450 }, // Start line area
-  { latitude: 22.3600, longitude: 114.2500 }, // Windward mark area
-  { latitude: 22.3300, longitude: 114.2480 }, // Leeward gate area
-  
+
+  // DEPRECATED racing area stations (WRONG COORDINATES - replaced with Nine Pins)
+  // { latitude: 22.3500, longitude: 114.2500 }, // Racing area center - WRONG LOCATION
+  // { latitude: 22.3450, longitude: 114.2450 }, // Start line area - WRONG LOCATION
+  // { latitude: 22.3600, longitude: 114.2500 }, // Windward mark area - WRONG LOCATION
+  // { latitude: 22.3300, longitude: 114.2480 }, // Leeward gate area - WRONG LOCATION
+
   // Additional marine weather buoys
   { latitude: 22.3000, longitude: 114.2000 }, // Middle Harbor
   { latitude: 22.3200, longitude: 114.2200 }, // East Lamma Channel
@@ -114,6 +118,15 @@ const MARINE_WIND_STATIONS: LocationCoordinate[] = [
 
 // Water area boundaries for marine station validation
 const WATER_AREAS = [
+  {
+    name: 'Nine Pins Racing Area',
+    bounds: {
+      north: 22.280,
+      south: 22.240,
+      east: 114.340,
+      west: 114.300
+    }
+  },
   {
     name: 'Victoria Harbour',
     bounds: {
@@ -405,10 +418,10 @@ class WindStationService {
       // Marine station names with more specific locations
       const waterArea = this.getWaterAreaName(coordinate.latitude, coordinate.longitude);
       
-      // Check for specific racing area locations
-      if (coordinate.latitude >= 22.34 && coordinate.latitude <= 22.36 && 
-          coordinate.longitude >= 24.4 && coordinate.longitude <= 25.6) {
-        return 'Dragon Worlds Racing Area';
+      // Check for Nine Pins racing area location
+      if (Math.abs(coordinate.latitude - NINE_PINS_RACING_STATION.latitude) < 0.001 &&
+          Math.abs(coordinate.longitude - NINE_PINS_RACING_STATION.longitude) < 0.001) {
+        return 'Nine Pins Racing Area';
       }
       
       return `${waterArea} Marine Station`;

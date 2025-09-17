@@ -1,5 +1,6 @@
 import { WeatherAPI } from './weatherAPI';
 import { LocationCoordinate } from '../stores/weatherStore';
+import { NINE_PINS_RACING_STATION } from '../constants/raceCoordinates';
 
 // Wave station interface
 export interface WaveStation {
@@ -18,6 +19,16 @@ export interface WaveStation {
 
 // Water area boundaries for Hong Kong
 const WATER_AREAS = [
+  // Nine Pins Racing Area - PRIMARY racing water area
+  {
+    name: 'Nine Pins Racing Area',
+    bounds: {
+      north: 22.280,
+      south: 22.240,
+      east: 114.340,
+      west: 114.300
+    }
+  },
   // Victoria Harbour
   {
     name: 'Victoria Harbour',
@@ -72,24 +83,27 @@ const WATER_AREAS = [
 
 // Predefined wave station locations over water
 const WAVE_STATION_LOCATIONS: LocationCoordinate[] = [
+  // Nine Pins Racing Area - PRIMARY racing weather station
+  { latitude: NINE_PINS_RACING_STATION.latitude, longitude: NINE_PINS_RACING_STATION.longitude },
+
   // Victoria Harbour stations
   { latitude: 22.285, longitude: 114.175 },
   { latitude: 22.275, longitude: 114.165 },
   { latitude: 22.270, longitude: 114.180 },
-  
+
   // Clearwater Bay stations
   { latitude: 22.290, longitude: 114.290 },
   { latitude: 22.280, longitude: 114.300 },
   { latitude: 22.260, longitude: 114.285 },
-  
+
   // Repulse Bay stations
   { latitude: 22.240, longitude: 114.195 },
   { latitude: 22.235, longitude: 114.200 },
-  
+
   // Stanley Bay stations
   { latitude: 22.220, longitude: 114.210 },
   { latitude: 22.215, longitude: 114.205 },
-  
+
   // Aberdeen Harbour stations
   { latitude: 22.250, longitude: 114.155 },
   { latitude: 22.245, longitude: 114.150 }

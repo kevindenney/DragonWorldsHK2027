@@ -8,14 +8,14 @@ import type { MainTabParamList } from '../../types/navigation';
 // Add screen loading logging
 console.log('🔍 [TabNavigator] Starting to import screens...');
 
-import { MapScreen } from '../../screens/MapScreenSafe';
+import { MapScreen } from '../../screens/MapScreen';
 import { ScheduleScreen } from '../../screens/tabs/ScheduleScreen';
 import { ResultsStackNavigator } from './ResultsStackNavigator';
 import { NoticesScreen } from '../../screens/tabs/NoticesScreen';
 import { MoreScreen } from '../../screens/tabs/MoreScreen';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
 
-console.log('✅ [TabNavigator] All screens imported (using safe MapScreen)');
+console.log('✅ [TabNavigator] All screens imported (using MapScreen)');
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 

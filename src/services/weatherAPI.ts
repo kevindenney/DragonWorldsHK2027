@@ -276,11 +276,11 @@ export class WeatherAPI {
     console.log('🔑 OpenWeatherMap API key status:', { 
       keyLength: this.openWeatherMapKey.length,
       keyPreview,
-      endpoint: 'onecall (3.0)'
+      endpoint: 'onecall (2.5)'
     });
 
     try {
-      const url = `https://api.openweathermap.org/data/3.0/onecall?` +
+      const url = `https://api.openweathermap.org/data/2.5/onecall?` +
         `lat=${lat}&lon=${lon}&` +
         `appid=${this.openWeatherMapKey}&` +
         `units=metric&exclude=minutely,daily,alerts`;
@@ -406,13 +406,16 @@ export class WeatherAPI {
     const errors: WeatherAPIError[] = [];
     const results: any = {};
 
-    // Try OpenWeatherMap first (if API key available)
-    if (this.openWeatherMapKey) {
+    // Try OpenWeatherMap first (if API key available and valid)
+    if (this.openWeatherMapKey && this.openWeatherMapKey !== 'c089357aed2f67847d4a8425d3e122fa') {
       try {
         results.openweathermap = await this.getOpenWeatherMapData(location?.lat, location?.lon);
       } catch (error) {
+        console.log('⚠️ OpenWeatherMap failed, continuing with other sources:', error);
         errors.push(error as WeatherAPIError);
       }
+    } else {
+      console.log('⚠️ Skipping OpenWeatherMap due to invalid/default API key, using free alternatives');
     }
 
     // Get Open-Meteo marine data (free, no API key needed)
@@ -813,8 +816,8 @@ export class WeatherAPI {
   // Data processing methods
   private processOpenMeteoMarineData(rawData: any, lat: number, lon: number): OpenMeteoMarineResponse {
     const hourlyData = rawData.hourly || {};
-    const times = hourlyData.time || [];
-    
+    const times = Array.isArray(hourlyData.time) ? hourlyData.time : [];
+
     return {
       location: {
         lat: lat,

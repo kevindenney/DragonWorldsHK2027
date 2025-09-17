@@ -13,9 +13,19 @@ export const Heatmap = ({ children, ...props }: any) => <View {...props}>{childr
 export const Circle = ({ children, ...props }: any) => <View {...props}>{children}</View>;
 export const Polygon = ({ children, ...props }: any) => <View {...props}>{children}</View>;
 export const Polyline = ({ children, ...props }: any) => <View {...props}>{children}</View>;
+export const UrlTile = ({ children, ...props }: any) => <View {...props}>{children}</View>;
 
 // Constants
 export const PROVIDER_GOOGLE = 'google';
+export const PROVIDER_DEFAULT = 'default';
+
+// Type stubs
+export interface Region {
+  latitude: number;
+  longitude: number;
+  latitudeDelta: number;
+  longitudeDelta: number;
+}
 
 // Default export
 export default MapView;

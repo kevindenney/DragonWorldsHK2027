@@ -15,7 +15,16 @@ import { EnhancedContactsScreen } from './EnhancedContactsScreen';
 import { SponsorsScreen } from './SponsorsScreen';
 import { useAuth } from '../../auth/useAuth';
 import { ProgressiveAuthExample } from '../../components/auth/ProgressiveAuthExample';
-// TEMPORARILY DISABLED: import { ModernWeatherMapScreen } from './ModernWeatherMapScreen';
+import { ModernWeatherMapScreen } from './ModernWeatherMapScreen';
+import { DataSourcesScreen } from '../DataSourcesScreen';
+
+// Component validation logging
+console.log('🔍 [MoreScreen] Component imports validation:');
+console.log('🔍 [MoreScreen] EnhancedContactsScreen:', typeof EnhancedContactsScreen);
+console.log('🔍 [MoreScreen] SponsorsScreen:', typeof SponsorsScreen);
+console.log('🔍 [MoreScreen] ProgressiveAuthExample:', typeof ProgressiveAuthExample);
+console.log('🔍 [MoreScreen] ModernWeatherMapScreen:', typeof ModernWeatherMapScreen);
+console.log('🔍 [MoreScreen] DataSourcesScreen:', typeof DataSourcesScreen);
 
 const { colors, spacing, typography, shadows, borderRadius } = dragonChampionshipsLightTheme;
 
@@ -49,21 +58,20 @@ const getMoreOptions = (isAuthenticated: boolean, user: any): MoreOption[] => {
       component: SponsorsScreen,
       accessibilityLabel: 'Championship sponsors with exclusive offers and Hong Kong activities',
     },
-    // TEMPORARILY DISABLED: Weather screen with maps
-    // {
-    //   id: 'weather',
-    //   title: 'Weather',
-    //   description: 'Modern weather interface with OpenSeaMaps nautical charts',
-    //   icon: Cloud,
-    //   component: ModernWeatherMapScreen,
-    //   accessibilityLabel: 'Weather maps and nautical charts',
-    // },
+    {
+      id: 'weather',
+      title: 'Weather',
+      description: 'Modern weather interface with OpenSeaMaps nautical charts',
+      icon: Cloud,
+      component: ModernWeatherMapScreen,
+      accessibilityLabel: 'Weather maps and nautical charts',
+    },
     {
       id: 'data-sources',
       title: 'Data Sources',
       description: 'Live weather APIs, refresh cadence, and fallbacks',
       icon: FileText,
-      component: require('../DataSourcesScreen').DataSourcesScreen,
+      component: DataSourcesScreen,
       accessibilityLabel: 'Information about live data sources and update schedule',
     },
   ];
@@ -126,13 +134,22 @@ const getMoreOptions = (isAuthenticated: boolean, user: any): MoreOption[] => {
 export function MoreScreen() {
   const [selectedOption, setSelectedOption] = React.useState<string | null>(null);
   const navigation = useNavigation();
-  const { isAuthenticated, user, clearAuthData, logout } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
 
   // Get dynamic options based on auth state
-  const moreOptions = React.useMemo(() =>
-    getMoreOptions(isAuthenticated, user),
-    [isAuthenticated, user]
-  );
+  const moreOptions = React.useMemo(() => {
+    const options = getMoreOptions(isAuthenticated, user);
+    console.log('🔍 [MoreScreen] Generated options validation:');
+    options.forEach((option, index) => {
+      console.log(`🔍 [MoreScreen] Option ${index} [${option.id}]:`, {
+        title: option.title,
+        hasComponent: !!option.component,
+        componentType: typeof option.component,
+        component: option.component
+      });
+    });
+    return options;
+  }, [isAuthenticated, user]);
 
   const handleOptionPress = async (option: MoreOption) => {
     await Haptics.selectionAsync();
@@ -154,8 +171,6 @@ export function MoreScreen() {
       const { clearAuthStorage } = await import('../../utils/authDebug');
       const cleared = await clearAuthStorage();
       if (cleared) {
-        // Also clear the store state
-        clearAuthData();
         alert('Auth data cleared! Please reload the app.');
       }
       return;
@@ -177,22 +192,31 @@ export function MoreScreen() {
   };
 
   if (selectedOption) {
+    console.log('🔍 [MoreScreen] Attempting to render selected option:', selectedOption);
     const option = moreOptions.find(opt => opt.id === selectedOption);
-    if (option) {
+    console.log('🔍 [MoreScreen] Found option:', option ? option.title : 'NOT FOUND');
+
+    if (option && option.component) {
+      console.log('🔍 [MoreScreen] Component details:', {
+        optionId: option.id,
+        componentExists: !!option.component,
+        componentType: typeof option.component,
+        componentName: option.component.name || 'unnamed'
+      });
       const Component = option.component;
       return (
         <View style={styles.container}>
           <SafeAreaView style={styles.header}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={handleBackPress}
               style={styles.backButton}
               accessibilityRole="button"
               accessibilityLabel="Go back to more options"
             >
-              <ChevronRight 
-                size={24} 
-                color={colors.primary} 
-                style={{ transform: [{ rotate: '180deg' }] }} 
+              <ChevronRight
+                size={24}
+                color={colors.primary}
+                style={{ transform: [{ rotate: '180deg' }] }}
               />
               <Text style={styles.backText}>More</Text>
             </TouchableOpacity>

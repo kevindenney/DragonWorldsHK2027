@@ -180,7 +180,7 @@ export const ModernWeatherTopBar: React.FC<ModernWeatherTopBarProps> = ({
         onPress={() => setShowLocationModal(false)}
       >
         <Animated.View
-          entering={FadeInDown.springify()}
+          entering={FadeInDown}
           style={styles.modalContent}
         >
           <View style={styles.modalHeader}>
@@ -222,7 +222,7 @@ export const ModernWeatherTopBar: React.FC<ModernWeatherTopBarProps> = ({
         onPress={() => setShowTimeModal(false)}
       >
         <Animated.View
-          entering={FadeInDown.springify()}
+          entering={FadeInDown}
           style={styles.modalContent}
         >
           <View style={styles.modalHeader}>

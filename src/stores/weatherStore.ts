@@ -371,6 +371,30 @@ export const useWeatherStore = create<WeatherState>()(
           lastUpdate: new Date().toISOString(),
           error: null
         });
+
+        // Cache critical weather data for offline use
+        try {
+          const { offlineManager } = require('../services/offlineManager');
+          const criticalData = {
+            temperature: conditions.temperature,
+            windSpeed: conditions.windSpeed,
+            windDirection: conditions.windDirection,
+            humidity: conditions.humidity,
+            conditions: conditions.conditions,
+            marine: {
+              waveHeight: marine.waveHeight,
+              tideHeight: marine.tideHeight,
+              current: marine.current
+            },
+            timestamp: new Date().toISOString()
+          };
+          offlineManager.cacheData('critical_weather', criticalData, {
+            priority: 'critical',
+            expiresIn: 180 // 3 hours for weather data
+          });
+        } catch (error) {
+          console.warn('Failed to cache weather data for offline use:', error);
+        }
       },
 
       updateForecasts: (forecasts: WeatherForecast[]) => {
