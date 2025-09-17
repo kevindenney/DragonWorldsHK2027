@@ -26,7 +26,7 @@ export const IOSSegmentedControl: React.FC<IOSSegmentedControlProps> = ({
         const isSelected = option.value === selectedValue;
         const isFirst = index === 0;
         const isLast = index === options.length - 1;
-        
+
         return (
           <TouchableOpacity
             key={option.value}

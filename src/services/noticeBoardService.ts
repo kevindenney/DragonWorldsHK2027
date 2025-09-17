@@ -53,17 +53,20 @@ export class NoticeBoardService {
    * Get event data by event ID
    */
   async getEvent(eventId: string): Promise<NoticeBoardEvent | null> {
+    console.log('[NoticeBoardService] getEvent called for:', eventId);
     try {
       const cacheKey = `event_${eventId}`;
-      
+
       // Check cache first
       if (this.isCacheValid(cacheKey)) {
+        console.log('[NoticeBoardService] Returning cached data for:', eventId);
         return this.cache.get(cacheKey);
       }
 
       let event: NoticeBoardEvent;
-      
+
       if (this.useDemoData) {
+        console.log('[NoticeBoardService] Generating demo data for:', eventId);
         // Return demo data for development/testing
         event = this.generateDemoEvent(eventId);
       } else {

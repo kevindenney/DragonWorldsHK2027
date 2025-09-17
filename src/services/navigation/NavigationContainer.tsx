@@ -11,8 +11,124 @@ import { EntryList } from '../../components/noticeBoard/EntryListCard';
 import { AuthProvider } from '../../auth/AuthProvider';
 import { useAuth } from '../../auth/useAuth';
 import { TabNavigator } from './TabNavigator';
+import { WelcomeScreen, FeatureTourScreen, GuestModeScreen, OnboardingScreen } from '../../screens/onboarding';
+import { useUserStore } from '../../stores/userStore';
 
 const Stack = createStackNavigator();
+
+// Onboarding Navigator for first-time users
+const OnboardingNavigator = () => {
+  const [currentStep, setCurrentStep] = React.useState<'welcome' | 'tour' | 'choice' | 'userType'>('welcome');
+  const { completeOnboarding, setUserType } = useUserStore();
+
+  console.log('📋 [OnboardingNavigator] Current step:', currentStep);
+
+  const handleWelcomeContinue = () => {
+    console.log('📋 [OnboardingNavigator] Welcome continue -> tour');
+    setCurrentStep('tour');
+  };
+
+  const handleWelcomeSkip = () => {
+    console.log('📋 [OnboardingNavigator] Welcome skip -> main app as guest');
+    completeOnboarding('spectator', {
+      onboardingType: 'spectator',
+      needsVerification: false,
+      joinedAt: new Date().toISOString(),
+    });
+  };
+
+  const handleTourContinue = () => {
+    console.log('📋 [OnboardingNavigator] Tour continue -> choice');
+    setCurrentStep('choice');
+  };
+
+  const handleTourBack = () => {
+    console.log('📋 [OnboardingNavigator] Tour back -> welcome');
+    setCurrentStep('welcome');
+  };
+
+  const handleTourSkip = () => {
+    console.log('📋 [OnboardingNavigator] Tour skip -> main app as guest');
+    completeOnboarding('spectator', {
+      onboardingType: 'spectator',
+      needsVerification: false,
+      joinedAt: new Date().toISOString(),
+    });
+  };
+
+  const handleCreateAccount = () => {
+    console.log('📋 [OnboardingNavigator] Create account -> user type selection');
+    setCurrentStep('userType');
+  };
+
+  const handleSignIn = () => {
+    console.log('📋 [OnboardingNavigator] Sign in -> login screen');
+    // This will be handled by auth system
+  };
+
+  const handleContinueAsGuest = () => {
+    console.log('📋 [OnboardingNavigator] Continue as guest -> main app');
+    completeOnboarding('spectator', {
+      onboardingType: 'spectator',
+      needsVerification: false,
+      joinedAt: new Date().toISOString(),
+    });
+  };
+
+  const handleChoiceBack = () => {
+    console.log('📋 [OnboardingNavigator] Choice back -> tour');
+    setCurrentStep('tour');
+  };
+
+  const handleUserTypeComplete = (userType: any, profile: any) => {
+    console.log('📋 [OnboardingNavigator] User type complete:', userType, profile);
+    completeOnboarding(userType, profile);
+  };
+
+  switch (currentStep) {
+    case 'welcome':
+      return (
+        <WelcomeScreen
+          onContinue={handleWelcomeContinue}
+          onSkip={handleWelcomeSkip}
+        />
+      );
+
+    case 'tour':
+      return (
+        <FeatureTourScreen
+          onContinue={handleTourContinue}
+          onBack={handleTourBack}
+          onSkip={handleTourSkip}
+        />
+      );
+
+    case 'choice':
+      return (
+        <GuestModeScreen
+          onCreateAccount={handleCreateAccount}
+          onSignIn={handleSignIn}
+          onContinueAsGuest={handleContinueAsGuest}
+          onBack={handleChoiceBack}
+        />
+      );
+
+    case 'userType':
+      return (
+        <OnboardingScreen
+          onComplete={handleUserTypeComplete}
+        />
+      );
+
+    default:
+      return (
+        <WelcomeScreen
+          onContinue={handleWelcomeContinue}
+          onSkip={handleWelcomeSkip}
+        />
+      );
+  }
+};
 
 // Main authenticated app with stack navigation for Notice Board screens
 const MainApp = () => {
@@ -90,11 +206,12 @@ const AuthStack = () => (
   </Stack.Navigator>
 );
 
-// App content with minimal auth friction for racing app
+// App content with minimal auth friction for racing app + onboarding flow
 const AppContent = () => {
   const renderCountRef = React.useRef(0);
   const lastRenderTime = React.useRef(Date.now());
   const authStateRef = React.useRef({ isAuthenticated: false, isInitialized: false });
+  const onboardingStateRef = React.useRef({ needsOnboarding: true });
 
   renderCountRef.current += 1;
   const currentTime = Date.now();
@@ -112,10 +229,15 @@ const AppContent = () => {
 
   try {
     const { isAuthenticated, isInitialized } = useAuth();
+    const { needsOnboarding } = useUserStore();
 
     // Check if auth state actually changed
     const prevAuth = authStateRef.current;
     const authChanged = prevAuth.isAuthenticated !== isAuthenticated || prevAuth.isInitialized !== isInitialized;
+
+    // Check if onboarding state changed
+    const prevOnboarding = onboardingStateRef.current;
+    const onboardingChanged = prevOnboarding.needsOnboarding !== needsOnboarding;
 
     if (authChanged) {
       console.log(`🔄 [AppContent] Auth state CHANGED:`, {
@@ -128,10 +250,27 @@ const AppContent = () => {
       console.log(`📊 [AppContent] Auth state unchanged: ${JSON.stringify({ isAuthenticated, isInitialized })}`);
     }
 
+    if (onboardingChanged) {
+      console.log(`🔄 [AppContent] Onboarding state CHANGED:`, {
+        from: prevOnboarding.needsOnboarding,
+        to: needsOnboarding,
+        renderCount: renderCountRef.current
+      });
+      onboardingStateRef.current = { needsOnboarding };
+    } else {
+      console.log(`📊 [AppContent] Onboarding state unchanged: needsOnboarding=${needsOnboarding}`);
+    }
+
     // Wait for auth initialization
     if (!isInitialized) {
       console.log('🚀 [NavigationContainer] Auth not yet initialized, showing loading state');
       return null; // Let native splash screen handle the loading state
+    }
+
+    // Check if user needs onboarding first
+    if (needsOnboarding) {
+      console.log('🚀 [NavigationContainer] User needs onboarding, showing OnboardingNavigator');
+      return <OnboardingNavigator />;
     }
 
     // Racing app strategy: Optional authentication
@@ -139,8 +278,8 @@ const AppContent = () => {
     // - Provide authentication for personalized features when needed
     // - Users can sign in/out from More tab at any time
 
-    // Always show main app - authentication is optional and accessible via More tab
-    console.log('🚀 [NavigationContainer] Auth initialized, rendering MainApp');
+    // Show main app - authentication is optional and accessible via More tab
+    console.log('🚀 [NavigationContainer] Auth initialized and onboarding complete, rendering MainApp');
     return <MainApp />;
   } catch (error) {
     console.error('💥 [NavigationContainer] AppContent error:', error);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 
 console.log('[NoticesScreen] Module loading...');
@@ -37,6 +37,7 @@ import { CollapsibleCategorySection } from '../../components/notices/Collapsible
 import NoticeBoardService from '../../services/noticeBoardService';
 import { useUserStore } from '../../stores/userStore';
 import { useAuth } from '../../hooks/useAuth';
+import { useSelectedEventId, useNoticesStore, useNoticesPreferences, useNoticesStoreHydrated } from '../../stores/noticesStore';
 
 import type {
   NoticeBoardEvent,
@@ -66,18 +67,61 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
   navigation,
   route
 }) => {
-  console.log('[NoticesScreen] Component initializing...');
+  console.log('[NoticesScreen] Component initializing...', { routeParams: route.params });
   const userStore = useUserStore();
   const { user } = useAuth();
   const [noticeBoardService] = useState(() => new NoticeBoardService(userStore));
 
-  // Get default event from service
-  const defaultEventId = noticeBoardService.getDefaultEventId();
-  const [selectedEventId, setSelectedEventId] = useState(
-    route.params?.eventId || defaultEventId
+  // Use persistent store for selected event ID
+  const persistentSelectedEventId = useSelectedEventId();
+  const { setSelectedEventId } = useNoticesStore();
+  const noticesPreferences = useNoticesPreferences();
+  const storeHydrated = useNoticesStoreHydrated();
+
+  console.log('[NoticesScreen] Store state:', {
+    persistentSelectedEventId,
+    storeHydrated,
+    noticesPreferences
+  });
+
+  // Use local state that syncs with persistent store
+  const [selectedEventId, setLocalSelectedEventId] = useState(
+    persistentSelectedEventId || 'asia-pacific-2026'
   );
 
-  console.log('[NoticesScreen] Selected Event ID:', selectedEventId);
+  console.log('[NoticesScreen] Initial selectedEventId:', selectedEventId);
+
+  // Sync local state with persistent store and provide fallback
+  useEffect(() => {
+    console.log('[NoticesScreen] Sync effect triggered:', {
+      storeHydrated,
+      persistentSelectedEventId,
+      currentSelectedEventId: selectedEventId
+    });
+
+    if (storeHydrated) {
+      // Ensure we have a valid event ID
+      const validEventIds = ['asia-pacific-2026', 'dragon-worlds-2026'];
+      const eventIdToUse = validEventIds.includes(persistentSelectedEventId)
+        ? persistentSelectedEventId
+        : 'asia-pacific-2026';
+
+      console.log('[NoticesScreen] Computed eventIdToUse:', eventIdToUse);
+
+      if (eventIdToUse !== selectedEventId) {
+        console.log('[NoticesScreen] Updating local selectedEventId from', selectedEventId, 'to', eventIdToUse);
+        setLocalSelectedEventId(eventIdToUse);
+      }
+    }
+  }, [persistentSelectedEventId, storeHydrated]);
+
+  // If route has eventId parameter, use it and update both states
+  useEffect(() => {
+    if (route.params?.eventId && route.params.eventId !== selectedEventId) {
+      setLocalSelectedEventId(route.params.eventId);
+      setSelectedEventId(route.params.eventId);
+    }
+  }, [route.params?.eventId]);
 
   const [event, setEvent] = useState<NoticeBoardEvent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -111,13 +155,44 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
     return unsubscribe;
   }, []);
 
+  // Track if we're currently loading to prevent multiple simultaneous loads
+  const loadingRef = useRef(false);
+
   // Load event data
   const loadEventData = useCallback(async (showLoader: boolean = true) => {
+    console.log('[NoticesScreen] loadEventData called:', {
+      selectedEventId,
+      isAlreadyLoading: loadingRef.current,
+      showLoader
+    });
+
+    // Prevent multiple simultaneous loads
+    if (loadingRef.current) {
+      console.log('[NoticesScreen] Already loading, skipping duplicate call');
+      return;
+    }
+
+    loadingRef.current = true;
+
     try {
       if (showLoader) setIsLoading(true);
       setError(null);
 
-      const eventData = await noticeBoardService.getEvent(selectedEventId);
+      console.log('[NoticesScreen] Starting to load event:', selectedEventId);
+
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => {
+          console.log('[NoticesScreen] Loading timeout triggered after 5 seconds');
+          reject(new Error('Loading timeout'));
+        }, 5000)
+      );
+
+      const eventDataPromise = noticeBoardService.getEvent(selectedEventId);
+
+      const eventData = await Promise.race([eventDataPromise, timeoutPromise]) as NoticeBoardEvent;
+
+      console.log('[NoticesScreen] Event data loaded:', { eventId: eventData?.id, hasData: !!eventData });
 
       if (eventData) {
         setEvent(eventData);
@@ -128,35 +203,69 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
           expiresIn: 1440 // 24 hours
         });
       } else {
-        setError('Event not found');
+        // If no data, fallback to Asia Pacific
+        if (selectedEventId === 'dragon-worlds-2026') {
+          console.log('World Championships data not available, falling back to Asia Pacific');
+          setLocalSelectedEventId('asia-pacific-2026');
+          setSelectedEventId('asia-pacific-2026');
+        } else {
+          setError('Event not found');
+        }
       }
     } catch (err) {
-      console.error('Failed to load event data:', err);
+      console.error('[NoticesScreen] Failed to load event data:', err);
+
+      // If World Championships fails, fallback to Asia Pacific
+      if (selectedEventId === 'dragon-worlds-2026') {
+        console.log('[NoticesScreen] Failed to load World Championships, falling back to Asia Pacific');
+        setLocalSelectedEventId('asia-pacific-2026');
+        setSelectedEventId('asia-pacific-2026');
+        loadingRef.current = false;
+        return; // Will trigger re-load with Asia Pacific
+      }
+
       setError('Failed to load event data');
       await haptics.errorAction();
 
       // Try to load from cache if offline
       if (isOffline) {
         try {
+          console.log('[NoticesScreen] Attempting to load from cache...');
           const cachedData = await offlineManager.getCriticalScheduleData();
           if (cachedData) {
             setEvent(cachedData as NoticeBoardEvent);
             setError(null);
+            console.log('[NoticesScreen] Loaded from cache successfully');
           }
         } catch (cacheError) {
-          console.error('Failed to load from cache:', cacheError);
+          console.error('[NoticesScreen] Failed to load from cache:', cacheError);
         }
       }
     } finally {
+      console.log('[NoticesScreen] loadEventData completed');
       setIsLoading(false);
       setRefreshing(false);
+      loadingRef.current = false;
     }
-  }, [selectedEventId, isOffline, noticeBoardService]);
+  }, [selectedEventId, isOffline, noticeBoardService, setSelectedEventId]);
 
-  // Initial load
+  // Load event data when selectedEventId changes
   useEffect(() => {
-    loadEventData();
-  }, [loadEventData]);
+    console.log('[NoticesScreen] Load effect triggered:', {
+      selectedEventId,
+      storeHydrated,
+      hasSelectedEventId: !!selectedEventId
+    });
+
+    if (selectedEventId && storeHydrated) {
+      console.log('[NoticesScreen] Calling loadEventData from useEffect');
+      loadEventData();
+    } else {
+      console.log('[NoticesScreen] Skipping loadEventData:', {
+        reason: !selectedEventId ? 'No selectedEventId' : 'Store not hydrated'
+      });
+    }
+  }, [selectedEventId, storeHydrated]); // Remove loadEventData from dependencies to prevent loops
 
 
   // Combine and process notices
@@ -311,8 +420,9 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
   // Handle event change
   const handleEventChange = useCallback(async (eventId: string) => {
     await haptics.selection();
-    setSelectedEventId(eventId);
-  }, []);
+    setLocalSelectedEventId(eventId);  // Update local state immediately
+    setSelectedEventId(eventId);  // Update persistent store
+  }, [setSelectedEventId]);
 
   // Handle notice press
   const handleNoticePress = useCallback(async (notice: NoticeItem) => {

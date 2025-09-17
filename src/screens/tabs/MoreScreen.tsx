@@ -300,8 +300,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   backText: {
-    ...typography.bodyMedium,
-    color: colors.primary,
+    ...typography.bodyLarge,
+    color: colors.text,
     marginLeft: spacing.xs,
     fontWeight: '600',
   },

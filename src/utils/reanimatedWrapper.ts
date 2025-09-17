@@ -25,6 +25,21 @@ const AnimatedDefault = {
   ScrollView: Animated.ScrollView,
   Image: Animated.Image,
   createAnimatedComponent: Animated.createAnimatedComponent,
+  Value: Animated.Value,
+  timing: Animated.timing,
+  sequence: Animated.sequence,
+  parallel: Animated.parallel,
+  spring: Animated.spring,
+  decay: Animated.decay,
+  delay: Animated.delay,
+  stagger: Animated.stagger,
+  loop: Animated.loop,
+  add: Animated.add,
+  subtract: Animated.subtract,
+  multiply: Animated.multiply,
+  divide: Animated.divide,
+  modulo: Animated.modulo,
+  diffClamp: Animated.diffClamp,
 };
 
 // Animation functions that return style objects for entering animations

@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
+import {
   Anchor,
   Users,
   Award,
   Eye,
   ArrowRight,
+  ArrowLeft,
   CheckCircle,
   Wind,
   Calendar,
@@ -14,6 +15,7 @@ import {
   MapPin,
   Bell
 } from 'lucide-react-native';
+import Animated from '../utils/reanimatedWrapper';
 import { IOSCard, IOSText, IOSButton, IOSSection } from '../components/ios';
 import { colors } from '../constants/theme';
 import { useUserStore } from '../stores/userStore';
@@ -95,12 +97,41 @@ const userTypeOptions: UserTypeOption[] = [
 
 interface OnboardingScreenProps {
   onComplete: (userType: UserType, profile: Partial<UserProfile>) => void;
+  onBack?: () => void;
 }
 
-export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
+export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, onBack }) => {
   const [selectedUserType, setSelectedUserType] = useState<OnboardingUserType | null>(null);
   const [showBenefits, setShowBenefits] = useState(false);
   const { setUserType, setProfile } = useUserStore();
+
+  // Animation values
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const contentOpacity = useRef(new Animated.Value(0)).current;
+  const contentTranslateY = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    // Entrance animation
+    Animated.sequence([
+      Animated.timing(headerOpacity, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.parallel([
+        Animated.timing(contentOpacity, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(contentTranslateY, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+  }, []);
 
   const handleUserTypeSelect = (userType: OnboardingUserType) => {
     setSelectedUserType(userType);
@@ -205,7 +236,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
             <IOSText style={styles.userTypeTitle}>{option.title}</IOSText>
             <IOSText style={styles.userTypeSubtitle}>{option.subtitle}</IOSText>
           </View>
-          <ArrowRight size={20} color={colors.gray[400]} />
+          <ArrowRight size={20} color={colors.textMuted} />
         </View>
         {option.requiresVerification && (
           <IOSText style={styles.verificationNote}>
@@ -260,10 +291,36 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <IOSText style={styles.title}>Welcome to Dragon World Championships</IOSText>
-        </View>
+      {/* Header */}
+      <Animated.View style={[styles.header, { opacity: headerOpacity }]}>
+        {onBack && (
+          <TouchableOpacity onPress={onBack} style={styles.backButton}>
+            <ArrowLeft size={24} color={colors.primary} />
+          </TouchableOpacity>
+        )}
+        <IOSText style={styles.headerTitle} textStyle="headline" weight="semibold">
+          Complete Setup
+        </IOSText>
+        <View style={styles.headerSpacer} />
+      </Animated.View>
+
+      {/* Main Content */}
+      <Animated.View
+        style={[
+          styles.animatedContent,
+          {
+            opacity: contentOpacity,
+            transform: [{ translateY: contentTranslateY }],
+          },
+        ]}
+      >
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          <View style={styles.welcomeSection}>
+            <IOSText style={styles.title}>Almost There!</IOSText>
+            <IOSText style={styles.subtitle}>
+              Help us personalize your Dragon Worlds experience
+            </IOSText>
+          </View>
 
         <IOSSection title="GET STARTED" style={styles.userTypeSection}>
           <IOSText style={styles.sectionSubtitle}>Are you a registered participant?</IOSText>
@@ -298,32 +355,33 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
             {renderSpectatorFeatures()}
           </>
         )}
-      </ScrollView>
+        </ScrollView>
 
-      <View style={styles.actions}>
-        {selectedUserType ? (
-          <IOSButton
-            title="Continue"
-            onPress={handleContinue}
-            style={styles.continueButton}
-          />
-        ) : (
-          <View style={styles.actionButtons}>
+        <View style={styles.actions}>
+          {selectedUserType ? (
             <IOSButton
-              title="Learn More"
-              onPress={handleLearnMore}
-              variant="secondary"
-              style={styles.secondaryButton}
+              title="Continue"
+              onPress={handleContinue}
+              style={styles.continueButton}
             />
-            <IOSButton
-              title="Skip"
-              onPress={handleSkip}
-              variant="ghost"
-              style={styles.skipButton}
-            />
-          </View>
-        )}
-      </View>
+          ) : (
+            <View style={styles.actionButtons}>
+              <IOSButton
+                title="Learn More"
+                onPress={handleLearnMore}
+                variant="secondary"
+                style={styles.secondaryButton}
+              />
+              <IOSButton
+                title="Skip"
+                onPress={handleSkip}
+                variant="ghost"
+                style={styles.skipButton}
+              />
+            </View>
+          )}
+        </View>
+      </Animated.View>
     </SafeAreaView>
   );
 };
@@ -337,9 +395,42 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: colors.background,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderLight,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    color: colors.text,
+  },
+  headerSpacer: {
+    width: 44,
+  },
+  animatedContent: {
+    flex: 1,
+  },
+  welcomeSection: {
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
+    paddingVertical: 24,
+    alignItems: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 8,
   },
   title: {
     fontSize: 24,
@@ -352,7 +443,7 @@ const styles = StyleSheet.create({
   },
   sectionSubtitle: {
     fontSize: 16,
-    color: colors.gray[600],
+    color: colors.textSecondary,
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -386,7 +477,7 @@ const styles = StyleSheet.create({
   },
   userTypeSubtitle: {
     fontSize: 14,
-    color: colors.gray[600],
+    color: colors.textSecondary,
   },
   verificationNote: {
     fontSize: 12,
