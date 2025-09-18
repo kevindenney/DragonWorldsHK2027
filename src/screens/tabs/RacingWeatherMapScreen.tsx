@@ -70,7 +70,6 @@ import { WindPatternHeatmap } from '../../components/weather/WindPatternHeatmap'
 import { TideCurrentOverlay } from '../../components/weather/TideCurrentOverlay';
 import { WaveHeightVisualization } from '../../components/weather/WaveHeightVisualization';
 import { PressureGradientOverlay } from '../../components/weather/PressureGradientOverlay';
-import WeatherConditionsOverlay from '../../components/weather/WeatherConditionsOverlay';
 
 // Geographic Constants - Hong Kong Racing Waters
 const RACING_AREA_CENTER = NINEPINS_RACE_COURSE_CENTER;
@@ -465,21 +464,6 @@ Temperature: ${point.temperature.toFixed(1)}°C
           ))}
         </MapView>
 
-        {/* Overlay Mode Controls - Living Document: Weather data selectors */}
-        <View style={styles.overlayControls}>
-          <IOSSegmentedControl
-            options={[
-              { label: 'Wind', value: 'wind' },
-              { label: 'Waves', value: 'waves' },
-              { label: 'Tides', value: 'tides' },
-              { label: 'Currents', value: 'currents' },
-              { label: 'Temp', value: 'temperature' }
-            ]}
-            selectedValue={overlayMode}
-            onValueChange={(value) => setOverlayMode(value as OverlayMode)}
-            style={styles.overlaySegmented}
-          />
-        </View>
 
         {/* Advanced Overlay Controls - Phase 3 enhancements */}
         {canAccessFeature('detailedAnalysis') && (
@@ -561,8 +545,6 @@ Temperature: ${point.temperature.toFixed(1)}°C
           </View>
         )}
 
-        {/* Weather Conditions Overlay */}
-        <WeatherConditionsOverlay />
       </View>
 
       {/* Status Bar - Living Document: Current conditions summary */}
@@ -710,23 +692,11 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   
-  // Overlay Controls
-  overlayControls: {
-    position: 'absolute',
-    top: spacing.lg,
-    left: spacing.lg,
-    right: spacing.lg,
-  },
-  
-  overlaySegmented: {
-    height: 28,
-    backgroundColor: `${colors.surface}F0`,
-  },
 
   // Advanced Controls - Phase 3 enhancements
   advancedControls: {
     position: 'absolute',
-    top: spacing.lg + 40, // Below overlay controls
+    top: spacing.lg,
     left: spacing.lg,
     right: spacing.lg,
     backgroundColor: `${colors.surface}F0`,

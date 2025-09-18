@@ -984,14 +984,252 @@ export class WeatherAPI {
 
   public getCacheStatus(): { size: number; keys: string[]; oldestEntry: number } {
     const keys = Object.keys(this.cache);
-    const oldest = keys.length > 0 
+    const oldest = keys.length > 0
       ? Math.min(...keys.map(key => this.cache[key].timestamp))
       : Date.now();
-    
+
     return {
       size: keys.length,
       keys,
       oldestEntry: oldest
+    };
+  }
+
+  /**
+   * Get weather radar imagery data
+   * Integrates with WeatherImageryService for radar visualization
+   */
+  async getWeatherRadarData(options?: {
+    frames?: number;
+    animated?: boolean;
+    lat?: number;
+    lon?: number;
+  }) {
+    const { frames = 6, animated = false, lat = this.RACING_AREA_LAT, lon = this.RACING_AREA_LON } = options || {};
+
+    const cacheKey = `weather_radar_${lat}_${lon}_${frames}_${animated}`;
+
+    // Check cache first
+    const cached = this.getFromCache(cacheKey);
+    if (cached) {
+      console.log('📡 Using cached radar data');
+      return cached;
+    }
+
+    try {
+      console.log('📡 Fetching weather radar data...');
+
+      // Use RainViewer API for radar data
+      const response = await fetch('https://api.rainviewer.com/public/weather-maps.json', {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'DragonWorlds2027/1.0'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`RainViewer API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const radarData = this.processRadarData(data, { frames, animated, lat, lon });
+
+      this.setCache(cacheKey, radarData, 5 * 60 * 1000); // 5-minute cache
+      return radarData;
+
+    } catch (error) {
+      console.error('❌ Failed to fetch radar data:', error);
+      throw {
+        source: 'rainviewer',
+        error: error instanceof Error ? error.message : 'Radar data unavailable'
+      } as WeatherAPIError;
+    }
+  }
+
+  /**
+   * Get weather satellite imagery data
+   */
+  async getWeatherSatelliteData(options?: {
+    type?: 'visible' | 'infrared' | 'water_vapor';
+    lat?: number;
+    lon?: number;
+  }) {
+    const { type = 'visible', lat = this.RACING_AREA_LAT, lon = this.RACING_AREA_LON } = options || {};
+
+    const cacheKey = `weather_satellite_${type}_${lat}_${lon}`;
+
+    // Check cache first
+    const cached = this.getFromCache(cacheKey);
+    if (cached) {
+      console.log('🛰️ Using cached satellite data');
+      return cached;
+    }
+
+    try {
+      console.log(`🛰️ Fetching ${type} satellite data...`);
+
+      // Note: This would integrate with OpenWeatherMap satellite layers
+      // For now, return structured data for the imagery service
+      const satelliteData = {
+        type,
+        timestamp: new Date().toISOString(),
+        coverage: Math.random() * 100, // Placeholder
+        tiles: [
+          {
+            url: `https://tile.openweathermap.org/map/clouds_new/6/${Math.floor((lon + 180) / 360 * 64)}/${Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * 64)}.png`,
+            bounds: {
+              north: lat + 0.5,
+              south: lat - 0.5,
+              east: lon + 0.5,
+              west: lon - 0.5
+            },
+            opacity: 0.6,
+            zIndex: 800
+          }
+        ],
+        metadata: {
+          source: 'openweathermap',
+          updated: new Date().toISOString(),
+          resolution: '1km'
+        }
+      };
+
+      this.setCache(cacheKey, satelliteData, 30 * 60 * 1000); // 30-minute cache
+      return satelliteData;
+
+    } catch (error) {
+      console.error('❌ Failed to fetch satellite data:', error);
+      throw {
+        source: 'satellite',
+        error: error instanceof Error ? error.message : 'Satellite data unavailable'
+      } as WeatherAPIError;
+    }
+  }
+
+  /**
+   * Get weather tiles for map overlay
+   */
+  async getWeatherTiles(layer: 'precipitation' | 'clouds' | 'temperature' | 'wind' | 'pressure', zoom: number = 6) {
+    const cacheKey = `weather_tiles_${layer}_z${zoom}`;
+
+    // Check cache first
+    const cached = this.getFromCache(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    try {
+      // Map layer names to OpenWeatherMap layer IDs
+      const layerMap = {
+        'precipitation': 'precipitation_new',
+        'clouds': 'clouds_new',
+        'temperature': 'temp_new',
+        'wind': 'wind_new',
+        'pressure': 'pressure_new'
+      };
+
+      const layerId = layerMap[layer];
+      const apiKey = this.openWeatherMapKey;
+
+      if (!apiKey) {
+        throw new Error('OpenWeatherMap API key required for weather tiles');
+      }
+
+      // Generate tile URLs for Hong Kong region
+      const tiles = [];
+      const bounds = {
+        north: 22.6,
+        south: 22.0,
+        east: 114.6,
+        west: 113.8
+      };
+
+      // Calculate tile coordinates for the bounds
+      const n = Math.pow(2, zoom);
+      const tileXMin = Math.floor((bounds.west + 180) / 360 * n);
+      const tileXMax = Math.floor((bounds.east + 180) / 360 * n);
+      const tileYMin = Math.floor((1 - Math.log(Math.tan(bounds.north * Math.PI / 180) + 1 / Math.cos(bounds.north * Math.PI / 180)) / Math.PI) / 2 * n);
+      const tileYMax = Math.floor((1 - Math.log(Math.tan(bounds.south * Math.PI / 180) + 1 / Math.cos(bounds.south * Math.PI / 180)) / Math.PI) / 2 * n);
+
+      for (let x = tileXMin; x <= tileXMax; x++) {
+        for (let y = tileYMin; y <= tileYMax; y++) {
+          tiles.push({
+            url: `https://tile.openweathermap.org/map/${layerId}/${zoom}/${x}/${y}.png?appid=${apiKey}`,
+            x,
+            y,
+            zoom,
+            bounds: {
+              north: Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))) * 180 / Math.PI,
+              south: Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 1) / n))) * 180 / Math.PI,
+              west: x / n * 360 - 180,
+              east: (x + 1) / n * 360 - 180
+            }
+          });
+        }
+      }
+
+      const tilesData = {
+        layer,
+        zoom,
+        tiles,
+        timestamp: new Date().toISOString(),
+        coverage: bounds
+      };
+
+      this.setCache(cacheKey, tilesData, 10 * 60 * 1000); // 10-minute cache
+      return tilesData;
+
+    } catch (error) {
+      console.error(`❌ Failed to fetch ${layer} tiles:`, error);
+      throw {
+        source: 'weather_tiles',
+        error: error instanceof Error ? error.message : 'Weather tiles unavailable'
+      } as WeatherAPIError;
+    }
+  }
+
+  /**
+   * Process radar data from RainViewer API
+   */
+  private processRadarData(data: any, options: { frames: number; animated: boolean; lat: number; lon: number }) {
+    const { frames, animated, lat, lon } = options;
+    const radarData = data.radar || {};
+    const past = radarData.past || [];
+    const nowcast = radarData.nowcast || [];
+
+    // Combine historical and forecast frames
+    const allFrames = [...past, ...nowcast];
+    const framesToProcess = frames ? allFrames.slice(-frames) : allFrames.slice(-6);
+
+    const processedFrames = framesToProcess.map((frameData: any) => ({
+      timestamp: new Date(frameData.time * 1000).toISOString(),
+      path: frameData.path,
+      tiles: [
+        {
+          url: `https://tilecache.rainviewer.com${frameData.path}/256/6/${Math.floor((lon + 180) / 360 * 64)}/${Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * 64)}/4/1_1.png`,
+          bounds: {
+            north: lat + 0.5,
+            south: lat - 0.5,
+            east: lon + 0.5,
+            west: lon - 0.5
+          },
+          opacity: 0.7,
+          zIndex: 1000
+        }
+      ],
+      intensity: 'moderate' as const,
+      coverage: Math.random() * 100 // Would calculate from actual data
+    }));
+
+    return {
+      frames: processedFrames,
+      animated,
+      duration: animated ? processedFrames.length * 1000 : 0,
+      metadata: {
+        source: 'rainviewer',
+        updated: new Date().toISOString(),
+        frameCount: processedFrames.length
+      }
     };
   }
 }

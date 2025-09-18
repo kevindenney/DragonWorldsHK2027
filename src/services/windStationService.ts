@@ -79,41 +79,39 @@ const HKO_WIND_STATIONS: LocationCoordinate[] = [
 
 // Marine weather stations and buoys for racing area
 const MARINE_WIND_STATIONS: LocationCoordinate[] = [
-  // Nine Pins Racing Area - PRIMARY racing weather station (Dragon Worlds 2027)
-  { latitude: NINE_PINS_RACING_STATION.latitude, longitude: NINE_PINS_RACING_STATION.longitude },
-
-  // Victoria Harbour - Verified marine locations
-  { latitude: 22.2850, longitude: 114.1650 }, // Central Harbor
+  // Victoria Harbour - PRIMARY marine wind monitoring area (central location)
+  { latitude: 22.2850, longitude: 114.1650 }, // Central Harbor (PRIMARY - central to all sailing areas)
   { latitude: 22.2750, longitude: 114.1750 }, // East Harbor
   { latitude: 22.2700, longitude: 114.1800 }, // Southeast Harbor
 
-  // Clearwater Bay area - Marine racing waters
+  // Clearwater Bay area - Eastern wind monitoring
   { latitude: 22.2900, longitude: 114.2900 }, // Clearwater Bay Marina
   { latitude: 22.2800, longitude: 114.3000 }, // Outer Clearwater Bay
   { latitude: 22.2600, longitude: 114.2850 }, // Inner Clearwater Bay
 
-  // Repulse Bay area - Marine racing waters
+  // Nine Pins Racing Area - Important for racing but not primary wind station
+  { latitude: NINE_PINS_RACING_STATION.latitude, longitude: NINE_PINS_RACING_STATION.longitude },
+
+  // Outer Hong Kong waters - Better wind exposure
+  { latitude: 22.2000, longitude: 114.1800 }, // South Hong Kong waters
+  { latitude: 22.3200, longitude: 114.2200 }, // East Lamma Channel
+  { latitude: 22.2800, longitude: 114.1400 }, // West Lamma Channel
+
+  // Repulse Bay area - Southern wind monitoring
   { latitude: 22.2400, longitude: 114.1950 }, // Repulse Bay Beach
   { latitude: 22.2350, longitude: 114.2000 }, // Outer Repulse Bay
 
-  // Stanley Bay area - Marine racing waters
+  // Stanley Bay area - Eastern marine winds
   { latitude: 22.2200, longitude: 114.2100 }, // Stanley Bay
   { latitude: 22.2150, longitude: 114.2050 }, // Stanley Harbor
 
-  // Aberdeen Harbour - Marine racing waters
+  // Aberdeen Harbour - Western marine winds
   { latitude: 22.2500, longitude: 114.1550 }, // Aberdeen Harbor
   { latitude: 22.2450, longitude: 114.1500 }, // Aberdeen Typhoon Shelter
 
-  // DEPRECATED racing area stations (WRONG COORDINATES - replaced with Nine Pins)
-  // { latitude: 22.3500, longitude: 114.2500 }, // Racing area center - WRONG LOCATION
-  // { latitude: 22.3450, longitude: 114.2450 }, // Start line area - WRONG LOCATION
-  // { latitude: 22.3600, longitude: 114.2500 }, // Windward mark area - WRONG LOCATION
-  // { latitude: 22.3300, longitude: 114.2480 }, // Leeward gate area - WRONG LOCATION
-
-  // Additional marine weather buoys
+  // Additional strategic marine weather buoys
   { latitude: 22.3000, longitude: 114.2000 }, // Middle Harbor
-  { latitude: 22.3200, longitude: 114.2200 }, // East Lamma Channel
-  { latitude: 22.2800, longitude: 114.1400 }, // West Lamma Channel
+  { latitude: 22.1800, longitude: 114.2000 }, // Southern waters
 ];
 
 // Water area boundaries for marine station validation

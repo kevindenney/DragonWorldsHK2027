@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, {
-  // UrlTile, // Temporarily disabled due to AIRMapUrlTile runtime registration issue in development builds
+  UrlTile,
   Marker,
   Polyline,
   Circle,
@@ -39,6 +39,9 @@ import {
   ArrowUp,
   ArrowDown,
   Minus,
+  Radar,
+  Satellite,
+  Map,
 } from 'lucide-react-native';
 
 import { IOSText, IOSCard, IOSModal } from '../../components/ios';
@@ -74,6 +77,9 @@ import { locationWeatherService } from '../../services/locationWeatherService';
 import WeatherConditionsOverlay from '../../components/weather/WeatherConditionsOverlay';
 // Import seven day forecast modal
 import { SevenDayForecastModal } from '../../components/weather/SevenDayForecastModal';
+// Import weather overlay components
+import RadarOverlay from '../../components/weather/RadarOverlay';
+import SatelliteOverlay from '../../components/weather/SatelliteOverlay';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -249,7 +255,87 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
   const [isLoadingLocationData, setIsLoadingLocationData] = useState(false);
   const [locationDataError, setLocationDataError] = useState<string | null>(null);
   
-  // Location-specific weather cache
+  // DEBUGGING: Map constructor validation for Hermes compatibility
+  console.log('🔧 [DEBUG] ModernWeatherMapScreen - Map constructor validation:', {
+    mapExists: typeof Map !== 'undefined',
+    mapType: typeof Map,
+    mapConstructor: Map?.constructor?.name,
+    mapCallable: typeof Map === 'function',
+    globalMapRef: global?.Map === Map,
+    runtime: 'hermes'
+  });
+
+  // Safe Map initialization function to handle Hermes/React Native issues
+  const createSafeMap = <K, V>(): Map<K, V> => {
+    try {
+      if (typeof Map === 'function') {
+        const mapInstance = new Map<K, V>();
+        console.log('🔧 [DEBUG] Successfully created Map instance:', typeof mapInstance);
+        return mapInstance;
+      } else {
+        console.error('❌ [ERROR] Map constructor is not a function:', typeof Map);
+        throw new Error('Map constructor not available');
+      }
+    } catch (error) {
+      console.error('❌ [ERROR] Failed to create Map:', error);
+      // Fallback to empty object with Map-like interface
+      const fallbackMap = {
+        _data: new Array<[K, V]>(),
+        set(key: K, value: V) {
+          const index = this._data.findIndex(([k]) => k === key);
+          if (index >= 0) {
+            this._data[index] = [key, value];
+          } else {
+            this._data.push([key, value]);
+          }
+          return this;
+        },
+        get(key: K) {
+          const entry = this._data.find(([k]) => k === key);
+          return entry ? entry[1] : undefined;
+        },
+        has(key: K) {
+          return this._data.some(([k]) => k === key);
+        },
+        delete(key: K) {
+          const index = this._data.findIndex(([k]) => k === key);
+          if (index >= 0) {
+            this._data.splice(index, 1);
+            return true;
+          }
+          return false;
+        },
+        clear() {
+          this._data = [];
+        },
+        get size() {
+          return this._data.length;
+        },
+        forEach(callback: (value: V, key: K, map: Map<K, V>) => void, thisArg?: any) {
+          console.log('🔄 [FALLBACK] forEach called on Map fallback with', this._data.length, 'entries');
+          this._data.forEach(([key, value]) => {
+            callback.call(thisArg, value, key, this as any);
+          });
+        },
+        keys() {
+          return this._data.map(([key]) => key)[Symbol.iterator]();
+        },
+        values() {
+          return this._data.map(([, value]) => value)[Symbol.iterator]();
+        },
+        entries() {
+          return this._data[Symbol.iterator]();
+        },
+        [Symbol.iterator]() {
+          return this._data[Symbol.iterator]();
+        }
+      } as any;
+      console.log('🔄 [FALLBACK] Using Map-like fallback object');
+      return fallbackMap;
+    }
+  };
+
+  // Location-specific weather cache with safe initialization
   const [locationWeatherCache, setLocationWeatherCache] = useState<Map<string, {
     windSpeed: number;
     windDirection: number;
@@ -257,10 +343,16 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
     tideHeight: number;
     temperature: number;
     timestamp: number;
-  }>>(new Map());
-  
-  // State to track loading status for each location
-  const [locationLoadingStates, setLocationLoadingStates] = useState<Map<string, boolean>>(new Map());
+  }>>(() => {
+    console.log('🔧 [DEBUG] Initializing locationWeatherCache Map...');
+    return createSafeMap();
+  });
+
+  // State to track loading status for each location with safe initialization
+  const [locationLoadingStates, setLocationLoadingStates] = useState<Map<string, boolean>>(() => {
+    console.log('🔧 [DEBUG] Initializing locationLoadingStates Map...');
+    return createSafeMap();
+  });
 
   
 
@@ -279,6 +371,17 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
   const [tideStations, setTideStations] = useState<TideStation[]>([]);
   const [stationsLoading, setStationsLoading] = useState(false);
 
+  // Weather overlay states
+  const [radarVisible, setRadarVisible] = useState(false);
+  const [satelliteVisible, setSatelliteVisible] = useState(false);
+  const [satelliteType, setSatelliteType] = useState<'visible' | 'infrared' | 'water_vapor'>('visible');
+  const [radarAnimated, setRadarAnimated] = useState(false);
+  const [radarOpacity, setRadarOpacity] = useState(0.7);
+  const [satelliteOpacity, setSatelliteOpacity] = useState(0.6);
+
+  // Map type state
+  const [isNauticalMap, setIsNauticalMap] = useState(false);
+
   useEffect(() => {
     // Load all data stations
     loadAllStations();
@@ -294,13 +397,31 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
     const preloadLocationWeatherData = async () => {
       const loadingPromises = STATION_LOCATIONS.map(async (location) => {
         // Set loading state
-        setLocationLoadingStates(prev => new Map(prev).set(location.id, true));
+        setLocationLoadingStates(prev => {
+          console.log('🔧 [STATE] Setting loading state for', location.id, 'prev type:', typeof prev, 'has forEach:', prev && typeof prev.forEach === 'function');
+          const safeMap = createSafeMap<string, boolean>();
+          if (prev && typeof prev.forEach === 'function') {
+            prev.forEach((value, key) => safeMap.set(key, value));
+          } else {
+            console.warn('⚠️ [STATE] prev is undefined or missing forEach, creating fresh Map');
+          }
+          return safeMap.set(location.id, true);
+        });
         
         try {
           await fetchLocationWeatherData(location);
         } finally {
           // Clear loading state
-          setLocationLoadingStates(prev => new Map(prev).set(location.id, false));
+          setLocationLoadingStates(prev => {
+            console.log('🔧 [STATE] Clearing loading state for', location.id, 'prev type:', typeof prev, 'has forEach:', prev && typeof prev.forEach === 'function');
+            const safeMap = createSafeMap<string, boolean>();
+            if (prev && typeof prev.forEach === 'function') {
+              prev.forEach((value, key) => safeMap.set(key, value));
+            } else {
+              console.warn('⚠️ [STATE] prev is undefined or missing forEach, creating fresh Map');
+            }
+            return safeMap.set(location.id, false);
+          });
         }
       });
       
@@ -385,7 +506,15 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
       };
       
       // Cache the data
-      const newCache = new Map(locationWeatherCache);
+      const newCache = createSafeMap<string, {
+        windSpeed: number;
+        windDirection: number;
+        waveHeight: number;
+        tideHeight: number;
+        temperature: number;
+        timestamp: number;
+      }>();
+      locationWeatherCache.forEach((value, key) => newCache.set(key, value));
       newCache.set(cacheKey, locationData);
       setLocationWeatherCache(newCache);
       
@@ -1110,59 +1239,7 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
         </TouchableOpacity>
       </View>
 
-      {/* Station Filtering Controls */}
-      <View style={styles.stationControls}>
-        <TouchableOpacity
-          style={[
-            styles.stationControlButton,
-            showWindStations && styles.stationControlButtonActive,
-          ]}
-          onPress={() => setShowWindStations(!showWindStations)}
-          activeOpacity={0.7}
-        >
-          <Wind size={18} color={showWindStations ? "#FFF" : "#007AFF"} />
-          <IOSText style={[
-            styles.stationControlText,
-            showWindStations && styles.stationControlTextActive,
-          ]}>
-            Wind
-          </IOSText>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.stationControlButton,
-            showWaveStations && styles.stationControlButtonActive,
-          ]}
-          onPress={() => setShowWaveStations(!showWaveStations)}
-          activeOpacity={0.7}
-        >
-          <Waves size={18} color={showWaveStations ? "#FFF" : "#0096FF"} />
-          <IOSText style={[
-            styles.stationControlText,
-            showWaveStations && styles.stationControlTextActive,
-          ]}>
-            Waves
-          </IOSText>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.stationControlButton,
-            showTideStations && styles.stationControlButtonActive,
-          ]}
-          onPress={() => setShowTideStations(!showTideStations)}
-          activeOpacity={0.7}
-        >
-          <Anchor size={18} color={showTideStations ? "#FFF" : "#00C864"} />
-          <IOSText style={[
-            styles.stationControlText,
-            showTideStations && styles.stationControlTextActive,
-          ]}>
-            Tides
-          </IOSText>
-        </TouchableOpacity>
-      </View>
+      {/* Station Filtering Controls - REMOVED per user request */}
 
       {/* Modern Weather Top Bar - HIDDEN FOR FULL SCREEN MAP EXPERIENCE */}
       {/* <View style={styles.topBarContainer}>
@@ -1214,11 +1291,29 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
             // Trigger a refresh of location weather data
             const preloadLocationWeatherData = async () => {
               const loadingPromises = STATION_LOCATIONS.map(async (location) => {
-                setLocationLoadingStates(prev => new Map(prev).set(location.id, true));
+                setLocationLoadingStates(prev => {
+                  console.log('🔧 [STATE] Setting loading state (map refresh) for', location.id, 'prev type:', typeof prev, 'has forEach:', prev && typeof prev.forEach === 'function');
+                  const safeMap = createSafeMap<string, boolean>();
+                  if (prev && typeof prev.forEach === 'function') {
+                    prev.forEach((value, key) => safeMap.set(key, value));
+                  } else {
+                    console.warn('⚠️ [STATE] prev is undefined or missing forEach, creating fresh Map');
+                  }
+                  return safeMap.set(location.id, true);
+                });
                 try {
                   await fetchLocationWeatherData(location);
                 } finally {
-                  setLocationLoadingStates(prev => new Map(prev).set(location.id, false));
+                  setLocationLoadingStates(prev => {
+                    console.log('🔧 [STATE] Clearing loading state (map refresh) for', location.id, 'prev type:', typeof prev, 'has forEach:', prev && typeof prev.forEach === 'function');
+                    const safeMap = createSafeMap<string, boolean>();
+                    if (prev && typeof prev.forEach === 'function') {
+                      prev.forEach((value, key) => safeMap.set(key, value));
+                    } else {
+                      console.warn('⚠️ [STATE] prev is undefined or missing forEach, creating fresh Map');
+                    }
+                    return safeMap.set(location.id, false);
+                  });
                 }
               });
               await Promise.all(loadingPromises);
@@ -1226,17 +1321,17 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
             preloadLocationWeatherData();
           }}
         >
-        {/* OpenSeaMap Nautical Chart Overlay - Temporarily disabled due to AIRMapUrlTile runtime registration issue */}
-        {/* Note: UrlTile component has known compatibility issues in development builds */}
-        {/* Alternative: Nautical chart information will be displayed via markers and overlays */}
-        {/* {selectedOverlays.includes('seamark') && (
+        {/* OpenSeaMap Nautical Chart Overlay - Now Enabled */}
+        {isNauticalMap && (
           <UrlTile
             urlTemplate={OPENSEAMAP_CONFIG.seamark}
             zIndex={1}
             tileSize={256}
             opacity={0.9}
+            maximumZ={18}
+            minimumZ={3}
           />
-        )} */}
+        )}
 
         {/* Legacy wind-only markers removed in favor of combined datagram */}
 
@@ -1378,7 +1473,7 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
             key={`tide-${station.id}`}
             coordinate={station.coordinate}
             title={station.name}
-            description={`Tide Station: ${station.data.tideHeight?.toFixed(1) || 'N/A'} m`}
+            description={`Tide Station: ${station.data.currentHeight?.toFixed(1) || 'N/A'} m`}
             onPress={() => handleStationPress(station)}
             zIndex={400}
           >
@@ -1386,7 +1481,7 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
               <View style={[styles.stationMarkerContent, styles.tideStationMarker]}>
                 <Anchor size={12} color="#FFF" />
                 <IOSText style={styles.stationMarkerText}>
-                  {station.data.tideHeight?.toFixed(1) || '?'}
+                  {station.data.currentHeight?.toFixed(1) || '?'}
                 </IOSText>
               </View>
             </View>
@@ -1394,8 +1489,75 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
         ))}
       </MapView>
 
+        {/* Weather Radar and Satellite Overlays - UrlTile Enabled */}
+        <RadarOverlay
+          mapRef={mapRef}
+          visible={radarVisible}
+          animated={radarAnimated}
+          opacity={radarOpacity}
+          zIndex={1000}
+          onLoadingChange={(loading) => console.log('Radar loading:', loading)}
+          onError={(error) => console.error('Radar error:', error)}
+        />
+
+        <SatelliteOverlay
+          mapRef={mapRef}
+          visible={satelliteVisible}
+          type={satelliteType}
+          opacity={satelliteOpacity}
+          zIndex={800}
+          onLoadingChange={(loading) => console.log('Satellite loading:', loading)}
+          onError={(error) => console.error('Satellite error:', error)}
+        />
+
         {/* Weather Conditions Overlay */}
         <WeatherConditionsOverlay />
+
+        {/* Persistent Overlay Control Buttons - Wind, Waves, Tides buttons REMOVED per user request
+             Keeping only Nautical Map, Radar, and Satellite toggles */}
+        <View style={styles.topOverlayControls}>
+          {/* Nautical Map Toggle */}
+          <TouchableOpacity
+            style={[
+              styles.overlayButton,
+              isNauticalMap && styles.overlayButtonActive
+            ]}
+            onPress={() => setIsNauticalMap(!isNauticalMap)}
+          >
+            <Map
+              size={20}
+              color={isNauticalMap ? '#007AFF' : '#8E8E93'}
+            />
+          </TouchableOpacity>
+
+          {/* Radar Toggle */}
+          <TouchableOpacity
+            style={[
+              styles.overlayButton,
+              radarVisible && styles.overlayButtonActive
+            ]}
+            onPress={() => setRadarVisible(!radarVisible)}
+          >
+            <Radar
+              size={20}
+              color={radarVisible ? '#007AFF' : '#8E8E93'}
+            />
+          </TouchableOpacity>
+
+          {/* Satellite Toggle */}
+          <TouchableOpacity
+            style={[
+              styles.overlayButton,
+              satelliteVisible && styles.overlayButtonActive
+            ]}
+            onPress={() => setSatelliteVisible(!satelliteVisible)}
+          >
+            <Satellite
+              size={20}
+              color={satelliteVisible ? '#007AFF' : '#8E8E93'}
+            />
+          </TouchableOpacity>
+        </View>
 
           {/* Map Layer Controls - Removed - All overlays always on */}
 
@@ -1962,5 +2124,39 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     marginLeft: 4,
+  },
+
+  // Top Overlay Controls Styles
+  topOverlayControls: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 60 : 30,
+    right: 16,
+    flexDirection: 'row',
+    zIndex: 2000,
+    gap: 8,
+  },
+  overlayButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  overlayButtonActive: {
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    borderWidth: 2,
+    borderColor: '#007AFF',
   },
 });
