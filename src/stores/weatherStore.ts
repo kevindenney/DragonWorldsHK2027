@@ -166,6 +166,12 @@ interface WeatherState {
   units: WeatherUnits;
   selectedDayId: string | null;
 
+  // Station visibility state
+  nauticalMapVisible: boolean;
+  windStationsVisible: boolean;
+  waveStationsVisible: boolean;
+  tideStationsVisible: boolean;
+
   // Actions
   updateWeather: (conditions: WeatherCondition, marine: MarineCondition) => void;
   updateForecasts: (forecasts: WeatherForecast[]) => void;
@@ -203,6 +209,12 @@ interface WeatherState {
   
   // Day selection actions
   setSelectedDayId: (dayId: string | null) => void;
+
+  // Station visibility actions
+  toggleNauticalMap: () => void;
+  toggleWindStations: () => void;
+  toggleWaveStations: () => void;
+  toggleTideStations: () => void;
 }
 
 export type WeatherFeature = 
@@ -362,6 +374,12 @@ export const useWeatherStore = create<WeatherState>()(
         pressure: 'hPa'
       },
       selectedDayId: null,
+
+      // Station visibility state
+      nauticalMapVisible: false,
+      windStationsVisible: false,
+      waveStationsVisible: false,
+      tideStationsVisible: false,
 
       // Actions
       updateWeather: (conditions: WeatherCondition, marine: MarineCondition) => {
@@ -844,6 +862,23 @@ export const useWeatherStore = create<WeatherState>()(
       // Day selection actions
       setSelectedDayId: (dayId: string | null) => {
         set({ selectedDayId: dayId });
+      },
+
+      // Station visibility actions
+      toggleNauticalMap: () => {
+        set(state => ({ nauticalMapVisible: !state.nauticalMapVisible }));
+      },
+
+      toggleWindStations: () => {
+        set(state => ({ windStationsVisible: !state.windStationsVisible }));
+      },
+
+      toggleWaveStations: () => {
+        set(state => ({ waveStationsVisible: !state.waveStationsVisible }));
+      },
+
+      toggleTideStations: () => {
+        set(state => ({ tideStationsVisible: !state.tideStationsVisible }));
       }
     }),
     {
@@ -868,7 +903,12 @@ export const useWeatherStore = create<WeatherState>()(
         dailyForecast: state.dailyForecast,
         // Unit preferences state
         units: state.units,
-        selectedDayId: state.selectedDayId
+        selectedDayId: state.selectedDayId,
+        // Station visibility state
+        nauticalMapVisible: state.nauticalMapVisible,
+        windStationsVisible: state.windStationsVisible,
+        waveStationsVisible: state.waveStationsVisible,
+        tideStationsVisible: state.tideStationsVisible
       })
     }
   )
@@ -913,3 +953,9 @@ export const usePressureUnit = () => useWeatherStore(state => state.units.pressu
 
 // Day selection selectors
 export const useSelectedDayId = () => useWeatherStore(state => state.selectedDayId);
+
+// Station visibility selectors
+export const useNauticalMapVisible = () => useWeatherStore(state => state.nauticalMapVisible);
+export const useWindStationsVisible = () => useWeatherStore(state => state.windStationsVisible);
+export const useWaveStationsVisible = () => useWeatherStore(state => state.waveStationsVisible);
+export const useTideStationsVisible = () => useWeatherStore(state => state.tideStationsVisible);

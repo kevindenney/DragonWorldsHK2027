@@ -3,6 +3,19 @@ import { View, StyleSheet } from 'react-native';
 import { Marker } from '../../utils/mapComponentStubs';
 import { TrendingUp, Navigation } from 'lucide-react-native';
 import { colors } from '../../constants/theme';
+import {
+  StationMarker,
+  TideStationMarker,
+  WaveStationMarker,
+  WindStationMarker,
+  clusterStations,
+  convertStationsToMarkerData,
+  type StationMarkerData
+} from './StationMarkers';
+import { StationDetailModal } from './StationDetailModal';
+import type { TideStation } from '../../constants/hkTideStations';
+import type { WaveStation } from '../../constants/hkWaveStations';
+import type { WindStation } from '../../services/windStationService';
 
 export interface WeatherDataPoint {
   coordinate: {
@@ -27,6 +40,16 @@ interface WeatherMapLayerProps {
   onPointSelect?: (point: WeatherDataPoint) => void;
   showLabels?: boolean;
   opacity?: number;
+  // Station visibility props
+  windStationsVisible?: boolean;
+  waveStationsVisible?: boolean;
+  tideStationsVisible?: boolean;
+  // Station data props
+  windStations?: WindStation[];
+  waveStations?: WaveStation[];
+  tideStations?: TideStation[];
+  // Map zoom level for clustering
+  zoomLevel?: number;
 }
 
 export const WeatherMapLayer: React.FC<WeatherMapLayerProps> = ({
@@ -34,7 +57,14 @@ export const WeatherMapLayer: React.FC<WeatherMapLayerProps> = ({
   overlayMode,
   onPointSelect,
   showLabels = false,
-  opacity = 0.7
+  opacity = 0.7,
+  windStationsVisible = false,
+  waveStationsVisible = false,
+  tideStationsVisible = false,
+  windStations = [],
+  waveStations = [],
+  tideStations = [],
+  zoomLevel = 10
 }) => {
   // Filter and sample data points for performance
   const sampledData = useMemo(() => {
@@ -42,6 +72,35 @@ export const WeatherMapLayer: React.FC<WeatherMapLayerProps> = ({
     const sampleRate = weatherData.length > 200 ? 3 : weatherData.length > 100 ? 2 : 1;
     return weatherData.filter((_, index) => index % sampleRate === 0);
   }, [weatherData]);
+
+  // Station modal state
+  const [selectedStation, setSelectedStation] = React.useState<StationMarkerData | null>(null);
+  const [modalVisible, setModalVisible] = React.useState(false);
+
+  // Convert and cluster stations
+  const clusteredStations = useMemo(() => {
+    const allStations = convertStationsToMarkerData(
+      tideStationsVisible ? tideStations : [],
+      waveStationsVisible ? waveStations : [],
+      windStationsVisible ? windStations : []
+    );
+    return clusterStations(allStations, zoomLevel);
+  }, [tideStations, waveStations, windStations, tideStationsVisible, waveStationsVisible, windStationsVisible, zoomLevel]);
+
+  // Handle station press
+  const handleStationPress = (station: StationMarkerData) => {
+    setSelectedStation(station);
+    setModalVisible(true);
+  };
+
+  // Handle cluster press - could expand to show cluster detail or zoom in
+  const handleClusterPress = (cluster: { isCluster: true; stations: StationMarkerData[]; lat: number; lon: number; id: string }) => {
+    // For now, just show the first station in the cluster
+    if (cluster.stations.length > 0) {
+      setSelectedStation(cluster.stations[0]);
+      setModalVisible(true);
+    }
+  };
 
 
   // Get wind arrow rotation
@@ -106,6 +165,56 @@ export const WeatherMapLayer: React.FC<WeatherMapLayerProps> = ({
           </React.Fragment>
         );
       })}
+
+      {/* Render station markers with clustering */}
+      {clusteredStations.map((item) => {
+        if ('isCluster' in item) {
+          // Render cluster marker
+          const cluster = item;
+          return (
+            <Marker
+              key={cluster.id}
+              coordinate={{ latitude: cluster.lat, longitude: cluster.lon }}
+              onPress={() => handleClusterPress(cluster)}
+              anchor={{ x: 0.5, y: 0.5 }}
+            >
+              <StationMarker
+                station={{
+                  id: cluster.id,
+                  name: `${cluster.stations.length} stations`,
+                  lat: cluster.lat,
+                  lon: cluster.lon,
+                  type: cluster.stations[0]?.type || 'wind',
+                  verified: true
+                }}
+                onPress={() => handleClusterPress(cluster)}
+                isCluster={true}
+                clusterCount={cluster.stations.length}
+              />
+            </Marker>
+          );
+        } else {
+          // Render individual station marker
+          const station = item;
+          return (
+            <StationMarker
+              key={station.id}
+              station={station}
+              onPress={handleStationPress}
+            />
+          );
+        }
+      })}
+
+      {/* Station Detail Modal */}
+      <StationDetailModal
+        visible={modalVisible}
+        station={selectedStation}
+        onClose={() => {
+          setModalVisible(false);
+          setSelectedStation(null);
+        }}
+      />
     </>
   );
 };

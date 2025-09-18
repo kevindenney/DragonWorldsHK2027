@@ -60,10 +60,21 @@ import type { WeatherScreenProps } from '../../types/navigation';
 import { NINEPINS_RACE_COURSE_CENTER, CLEARWATER_BAY_MARINA as CLEARWATER_BAY_COORDS } from '../../constants/raceCoordinates';
 
 // Import weather infrastructure
-import { useWeatherStore } from '../../stores/weatherStore';
+import {
+  useWeatherStore,
+  useWindStationsVisible,
+  useWaveStationsVisible,
+  useTideStationsVisible
+} from '../../stores/weatherStore';
 import { WeatherMapLayer, type WeatherDataPoint } from '../../components/weather/WeatherMapLayer';
 import type { OverlayMode } from '../../components/weather/WeatherMapLayer';
+import { WeatherLayerControls } from '../../components/weather/WeatherLayerControls';
 import { racingWeatherSimulation } from '../../services/racingWeatherSimulation';
+
+// Import station data
+import { HK_TIDE_STATIONS } from '../../constants/hkTideStations';
+import { HK_WAVE_STATIONS } from '../../constants/hkWaveStations';
+import { windStationService } from '../../services/windStationService';
 
 // Import advanced weather overlay components - Phase 3 enhancements
 import { WindPatternHeatmap } from '../../components/weather/WindPatternHeatmap';
@@ -129,15 +140,26 @@ type ViewMode = 'overview' | 'tactical' | 'analysis';
  */
 export function RacingWeatherMapScreen({ navigation }: WeatherScreenProps) {
   // Weather Store Integration
-  const { 
-    currentConditions, 
-    currentMarine, 
-    refreshWeather, 
-    loading, 
+  const {
+    currentConditions,
+    currentMarine,
+    refreshWeather,
+    loading,
     error,
     getAccessLevel,
-    canAccessFeature 
+    canAccessFeature,
+    toggleWindStations,
+    toggleWaveStations,
+    toggleTideStations,
+    toggleNauticalMapVisible,
+    toggleRadarVisible,
+    toggleSatelliteVisible
   } = useWeatherStore();
+
+  // Station visibility hooks
+  const windStationsVisible = useWindStationsVisible();
+  const waveStationsVisible = useWaveStationsVisible();
+  const tideStationsVisible = useTideStationsVisible();
 
   // State Management
   const [viewMode, setViewMode] = useState<ViewMode>('overview');
@@ -152,6 +174,25 @@ export function RacingWeatherMapScreen({ navigation }: WeatherScreenProps) {
   const [showWaveVisualization, setShowWaveVisualization] = useState(false);
   const [showPressureGradient, setShowPressureGradient] = useState(false);
   const [advancedMode, setAdvancedMode] = useState(false);
+
+  // Station data and map zoom tracking
+  const [mapZoomLevel, setMapZoomLevel] = useState(10);
+  const [windStations, setWindStations] = useState<any[]>([]);
+
+  // Load wind station data
+  useEffect(() => {
+    const loadWindStations = async () => {
+      try {
+        const stations = await windStationService.getStations();
+        setWindStations(stations);
+      } catch (error) {
+        console.error('Failed to load wind stations:', error);
+        setWindStations([]);
+      }
+    };
+
+    loadWindStations();
+  }, []);
   
   // Animation values
   const headerOpacity = useSharedValue(1);
@@ -343,6 +384,21 @@ Temperature: ${point.temperature.toFixed(1)}°C
         />
       </View>
 
+      {/* Weather Layer Controls - Integrated station toggles */}
+      <View style={styles.layerControlsContainer}>
+        <WeatherLayerControls
+          onNauticalToggle={toggleNauticalMapVisible}
+          onRadarToggle={toggleRadarVisible}
+          onSatelliteToggle={toggleSatelliteVisible}
+          onWindStationsToggle={toggleWindStations}
+          onWaveStationsToggle={toggleWaveStations}
+          onTideStationsToggle={toggleTideStations}
+          windStationsVisible={windStationsVisible}
+          waveStationsVisible={waveStationsVisible}
+          tideStationsVisible={tideStationsVisible}
+        />
+      </View>
+
       {/* Interactive Map - Living Document: Core visualization component */}
       <View style={styles.mapContainer}>
         <MapView
@@ -357,6 +413,10 @@ Temperature: ${point.temperature.toFixed(1)}°C
           rotateEnabled={true}
           zoomEnabled={true}
           scrollEnabled={true}
+          onRegionChangeComplete={(region) => {
+            const zoomLevel = Math.round(Math.log(360 / region.latitudeDelta) / Math.LN2);
+            setMapZoomLevel(zoomLevel);
+          }}
         >
           {/* Racing Area Boundary */}
           <Polygon
@@ -385,6 +445,13 @@ Temperature: ${point.temperature.toFixed(1)}°C
               onPointSelect={handleWeatherPointSelect}
               showLabels={viewMode === 'tactical'}
               opacity={0.7}
+              windStationsVisible={windStationsVisible}
+              waveStationsVisible={waveStationsVisible}
+              tideStationsVisible={tideStationsVisible}
+              windStations={windStations}
+              waveStations={HK_WAVE_STATIONS}
+              tideStations={HK_TIDE_STATIONS}
+              zoomLevel={mapZoomLevel}
             />
           )}
 
@@ -660,6 +727,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     backgroundColor: colors.surface,
+  },
+
+  layerControlsContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
   
   segmentedControl: {

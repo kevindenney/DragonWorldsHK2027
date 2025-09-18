@@ -45,7 +45,7 @@ import {
 } from 'lucide-react-native';
 
 import { IOSText, IOSCard, IOSModal } from '../../components/ios';
-import { 
+import {
   useWeatherStore,
   useCurrentWeather,
   useCurrentMarine,
@@ -53,6 +53,9 @@ import {
   useHourlyForecast,
   useDailyForecast,
   useSelectedLocation,
+  useWindStationsVisible,
+  useWaveStationsVisible,
+  useTideStationsVisible,
 } from '../../stores/weatherStore';
 import type { MoreScreenProps } from '../../types/navigation';
 import type { LocationData } from '../../stores/weatherStore';
@@ -80,6 +83,8 @@ import { SevenDayForecastModal } from '../../components/weather/SevenDayForecast
 // Import weather overlay components
 import RadarOverlay from '../../components/weather/RadarOverlay';
 import SatelliteOverlay from '../../components/weather/SatelliteOverlay';
+// Import integrated weather layer controls - Direct import to avoid Hermes barrel export conflicts
+import { WeatherLayerControls } from '../../components/weather/WeatherLayerControls';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -1281,7 +1286,7 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
           style={styles.map}
           provider={PROVIDER_DEFAULT}
           initialRegion={INITIAL_REGION}
-          showsUserLocation
+          showsUserLocation={false}
           showsCompass={false}
           showsScale
           mapType="standard"
@@ -1432,7 +1437,7 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
             coordinate={station.coordinate}
             title={station.name}
             description={`Wind Station: ${station.data.windSpeed?.toFixed(1) || 'N/A'} kts`}
-            onPress={() => handleStationPress(station)}
+            onPress={() => handleStationPress(station, 'wind')}
             zIndex={600}
           >
             <View style={styles.stationMarkerContainer}>
@@ -1453,7 +1458,7 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
             coordinate={station.coordinate}
             title={station.name}
             description={`Wave Station: ${station.data.waveHeight?.toFixed(1) || 'N/A'} m`}
-            onPress={() => handleStationPress(station)}
+            onPress={() => handleStationPress(station, 'wave')}
             zIndex={500}
           >
             <View style={styles.stationMarkerContainer}>
@@ -1474,7 +1479,7 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
             coordinate={station.coordinate}
             title={station.name}
             description={`Tide Station: ${station.data.currentHeight?.toFixed(1) || 'N/A'} m`}
-            onPress={() => handleStationPress(station)}
+            onPress={() => handleStationPress(station, 'tide')}
             zIndex={400}
           >
             <View style={styles.stationMarkerContainer}>
@@ -1513,50 +1518,22 @@ export function ModernWeatherMapScreen({ navigation }: MoreScreenProps) {
         {/* Weather Conditions Overlay */}
         <WeatherConditionsOverlay />
 
-        {/* Persistent Overlay Control Buttons - Wind, Waves, Tides buttons REMOVED per user request
-             Keeping only Nautical Map, Radar, and Satellite toggles */}
+        {/* Transparent Floating Weather Layer Controls */}
         <View style={styles.topOverlayControls}>
-          {/* Nautical Map Toggle */}
-          <TouchableOpacity
-            style={[
-              styles.overlayButton,
-              isNauticalMap && styles.overlayButtonActive
-            ]}
-            onPress={() => setIsNauticalMap(!isNauticalMap)}
-          >
-            <Map
-              size={20}
-              color={isNauticalMap ? '#007AFF' : '#8E8E93'}
-            />
-          </TouchableOpacity>
-
-          {/* Radar Toggle */}
-          <TouchableOpacity
-            style={[
-              styles.overlayButton,
-              radarVisible && styles.overlayButtonActive
-            ]}
-            onPress={() => setRadarVisible(!radarVisible)}
-          >
-            <Radar
-              size={20}
-              color={radarVisible ? '#007AFF' : '#8E8E93'}
-            />
-          </TouchableOpacity>
-
-          {/* Satellite Toggle */}
-          <TouchableOpacity
-            style={[
-              styles.overlayButton,
-              satelliteVisible && styles.overlayButtonActive
-            ]}
-            onPress={() => setSatelliteVisible(!satelliteVisible)}
-          >
-            <Satellite
-              size={20}
-              color={satelliteVisible ? '#007AFF' : '#8E8E93'}
-            />
-          </TouchableOpacity>
+          <WeatherLayerControls
+            nauticalMapVisible={isNauticalMap}
+            radarVisible={radarVisible}
+            satelliteVisible={satelliteVisible}
+            windStationsVisible={showWindStations}
+            waveStationsVisible={showWaveStations}
+            tideStationsVisible={showTideStations}
+            onNauticalMapToggle={() => setIsNauticalMap(!isNauticalMap)}
+            onRadarToggle={() => setRadarVisible(!radarVisible)}
+            onSatelliteToggle={() => setSatelliteVisible(!satelliteVisible)}
+            onWindStationsToggle={() => setShowWindStations(!showWindStations)}
+            onWaveStationsToggle={() => setShowWaveStations(!showWaveStations)}
+            onTideStationsToggle={() => setShowTideStations(!showTideStations)}
+          />
         </View>
 
           {/* Map Layer Controls - Removed - All overlays always on */}

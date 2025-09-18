@@ -205,7 +205,7 @@ export const SevenDayForecastModal: React.FC<SevenDayForecastModalProps> = ({
                 <View style={styles.headerTextContainer}>
                   <IOSText style={styles.stationName}>{station.name}</IOSText>
                   <IOSText style={styles.stationType}>
-                    {station.type.charAt(0).toUpperCase() + station.type.slice(1)} Station
+                    {station.type ? `${station.type.charAt(0).toUpperCase()}${station.type.slice(1)} Station` : 'Weather Station'}
                   </IOSText>
                 </View>
               </View>
