@@ -47,7 +47,9 @@
  */
 
 import { WeatherAPI } from './weatherAPI';
+import { handleWeatherAPIError } from './errorHandler';
 import { NINE_PINS_RACING_STATION } from '../constants/raceCoordinates';
+import { stationCatalogService } from './stationCatalogService';
 
 export interface WindStation {
   id: string;
@@ -111,41 +113,23 @@ const HKO_WIND_STATIONS: LocationCoordinate[] = [
   { latitude: 22.4000, longitude: 114.1167 },
 ];
 
-// Marine weather stations and buoys for racing area
+// Optimized marine wind stations - reduced from 16+ to 3 unique Open-Meteo grid cells
+// Each station represents a unique wind data grid cell in Open-Meteo weather model
 const MARINE_WIND_STATIONS: LocationCoordinate[] = [
-  // Victoria Harbour - PRIMARY marine wind monitoring area (central location)
-  { latitude: 22.2850, longitude: 114.1650 }, // Central Harbor (PRIMARY - central to all sailing areas)
-  { latitude: 22.2750, longitude: 114.1750 }, // East Harbor
-  { latitude: 22.2700, longitude: 114.1800 }, // Southeast Harbor
+  // Western Marine Area - Victoria Harbour & western waters
+  // Covers: Victoria Harbour, Aberdeen, western approaches
+  // API Grid: 22.25°N, 114.125°E
+  { latitude: 22.2850, longitude: 114.1650 }, // Central Harbor (PRIMARY for western sailing areas)
 
-  // Clearwater Bay area - Eastern wind monitoring
-  { latitude: 22.2900, longitude: 114.2900 }, // Clearwater Bay Marina
-  { latitude: 22.2800, longitude: 114.3000 }, // Outer Clearwater Bay
-  { latitude: 22.2600, longitude: 114.2850 }, // Inner Clearwater Bay
+  // Eastern Marine Area - Clearwater Bay & Nine Pins racing waters
+  // Covers: Clearwater Bay, Nine Pins Racing Area, Repulse Bay, Stanley Bay
+  // API Grid: 22.25°N, 114.25°E
+  { latitude: 22.2900, longitude: 114.2900 }, // Eastern waters (PRIMARY for Dragon Worlds racing)
 
-  // Nine Pins Racing Area - Important for racing but not primary wind station
-  { latitude: NINE_PINS_RACING_STATION.latitude, longitude: NINE_PINS_RACING_STATION.longitude },
-
-  // Outer Hong Kong waters - Better wind exposure
-  { latitude: 22.2000, longitude: 114.1800 }, // South Hong Kong waters
-  { latitude: 22.3200, longitude: 114.2200 }, // East Lamma Channel
-  { latitude: 22.2800, longitude: 114.1400 }, // West Lamma Channel
-
-  // Repulse Bay area - Southern wind monitoring
-  { latitude: 22.2400, longitude: 114.1950 }, // Repulse Bay Beach
-  { latitude: 22.2350, longitude: 114.2000 }, // Outer Repulse Bay
-
-  // Stanley Bay area - Eastern marine winds
-  { latitude: 22.2200, longitude: 114.2100 }, // Stanley Bay
-  { latitude: 22.2150, longitude: 114.2050 }, // Stanley Harbor
-
-  // Aberdeen Harbour - Western marine winds
-  { latitude: 22.2500, longitude: 114.1550 }, // Aberdeen Harbor
-  { latitude: 22.2450, longitude: 114.1500 }, // Aberdeen Typhoon Shelter
-
-  // Additional strategic marine weather buoys
-  { latitude: 22.3000, longitude: 114.2000 }, // Middle Harbor
-  { latitude: 22.1800, longitude: 114.2000 }, // Southern waters
+  // Northern Marine Area - Lei Yue Mun & northern channels
+  // Covers: Northern approaches, Lei Yue Mun channel, northern racing areas
+  // API Grid: 22.375°N, 114.25°E
+  { latitude: 22.3200, longitude: 114.2200 } // Northern waters (covers northern approaches)
 ];
 
 // Water area boundaries for marine station validation
@@ -263,6 +247,94 @@ class WindStationService {
   }
 
   /**
+   * Get wind stations using the comprehensive station catalog
+   * Integrates verified HKO coordinates with existing functionality
+   */
+  async getWindStationsFromCatalog(): Promise<WindStation[]> {
+    const stations: WindStation[] = [];
+
+    // Get weather stations from catalog (automatic weather stations + weather buoys)
+    const catalogWeatherStations = stationCatalogService.getWeatherStations();
+    const catalogWeatherBuoys = stationCatalogService.getWeatherBuoys();
+    const allCatalogStations = [...catalogWeatherStations, ...catalogWeatherBuoys];
+
+    console.log(`🌬️ [WIND CATALOG] Processing ${allCatalogStations.length} stations from catalog`);
+
+    for (const catalogStation of allCatalogStations) {
+      try {
+        const coordinate: LocationCoordinate = {
+          latitude: catalogStation.lat,
+          longitude: catalogStation.lon
+        };
+
+        const stationType = catalogStation.type === 'automatic_weather_station' ? 'hko' : 'marine';
+        const station = await this.getWindStationData(coordinate, stationType);
+
+        if (station && this.validateWindStation(station)) {
+          // Enhance station with catalog metadata
+          station.id = catalogStation.id;
+          station.name = catalogStation.name;
+          station.description = catalogStation.notes || station.description;
+          stations.push(station);
+
+          console.log(`🌬️ [WIND CATALOG] ✓ ${catalogStation.name} (${catalogStation.priority} priority)`);
+        } else {
+          console.warn(`🌬️ [WIND CATALOG] ✗ Failed to get valid data for ${catalogStation.name}`);
+        }
+      } catch (error) {
+        console.warn(`🌬️ [WIND CATALOG] ✗ Error processing ${catalogStation.name}:`, error);
+      }
+    }
+
+    console.log(`🌬️ [WIND CATALOG] Successfully loaded ${stations.length} wind stations from catalog`);
+    return stations;
+  }
+
+  /**
+   * Get Nine Pins racing area wind stations with enhanced priority
+   */
+  async getNinePinsRacingWindStations(): Promise<WindStation[]> {
+    const racingStations = stationCatalogService.getNinePinsRacingStations();
+    const stations: WindStation[] = [];
+
+    console.log(`🌬️ [RACING] Processing ${racingStations.length} stations for Nine Pins racing area`);
+
+    for (const catalogStation of racingStations) {
+      try {
+        const coordinate: LocationCoordinate = {
+          latitude: catalogStation.lat,
+          longitude: catalogStation.lon
+        };
+
+        const stationType = catalogStation.type === 'automatic_weather_station' ? 'hko' : 'marine';
+        const station = await this.getWindStationData(coordinate, stationType);
+
+        if (station && this.validateWindStation(station)) {
+          // Enhance station with catalog metadata and racing context
+          station.id = catalogStation.id;
+          station.name = catalogStation.name;
+          station.description = `${catalogStation.notes || station.description} (${catalogStation.distanceKm.toFixed(1)}km from racing area)`;
+          stations.push(station);
+
+          console.log(`🌬️ [RACING] ✓ ${catalogStation.name} - ${catalogStation.distanceKm.toFixed(1)}km (${catalogStation.priority})`);
+        }
+      } catch (error) {
+        console.warn(`🌬️ [RACING] ✗ Error processing ${catalogStation.name}:`, error);
+      }
+    }
+
+    // Sort by distance from racing area (closest first)
+    stations.sort((a, b) => {
+      const stationA = racingStations.find(s => s.id === a.id);
+      const stationB = racingStations.find(s => s.id === b.id);
+      return (stationA?.distanceKm || 999) - (stationB?.distanceKm || 999);
+    });
+
+    console.log(`🌬️ [RACING] Successfully loaded ${stations.length} racing area wind stations`);
+    return stations;
+  }
+
+  /**
    * Get wind data for a specific station
    */
   private async getWindStationData(
@@ -283,16 +355,30 @@ class WindStationService {
         lat: coordinate.latitude,
         lon: coordinate.longitude
       });
-      
-      // Process wind data based on source
+
+      // Process wind data based on source - prioritize Open-Meteo Weather API
       let windData;
-      if (weatherData.data.openweathermap) {
-        windData = weatherData.data.openweathermap.current;
-      } else if (weatherData.data.openmeteo) {
-        // Open-Meteo doesn't provide wind data directly, use fallback
-        windData = this.generateFallbackWindData(coordinate);
+      let dataQuality: 'high' | 'medium' | 'low' = 'low';
+
+      if (weatherData.data.openmeteo_weather && weatherData.data.openmeteo_weather.data.wind.length > 0) {
+        // Use Open-Meteo Weather API data (primary source)
+        const currentWind = weatherData.data.openmeteo_weather.data.wind[0];
+        windData = {
+          wind_speed: currentWind.windSpeed, // Already converted to knots
+          wind_deg: currentWind.windDirection,
+          wind_gust: currentWind.windGust,
+          temp: currentWind.temperature,
+          pressure: currentWind.pressure,
+          humidity: currentWind.humidity,
+          visibility: currentWind.visibility
+        };
+        dataQuality = 'high';
+        console.log(`🌬️ [WIND] Using Open-Meteo Weather data for ${coordinate.latitude.toFixed(3)}, ${coordinate.longitude.toFixed(3)}`);
       } else {
+        // Use fallback data
         windData = this.generateFallbackWindData(coordinate);
+        dataQuality = 'low';
+        console.log(`🌬️ [WIND] Using fallback data for ${coordinate.latitude.toFixed(3)}, ${coordinate.longitude.toFixed(3)}`);
       }
 
       const windSpeed = windData.wind_speed || windData.windSpeed || 0;
@@ -313,7 +399,7 @@ class WindStationService {
         humidity: windData.humidity,
         visibility: windData.visibility,
         lastUpdated: new Date().toISOString(),
-        dataQuality: this.determineDataQuality(weatherData),
+        dataQuality: dataQuality,
         isActive: true,
         description: this.getStationDescription(coordinate, type)
       };
@@ -323,7 +409,11 @@ class WindStationService {
       return station;
 
     } catch (error) {
-      console.error(`Failed to fetch wind data for ${coordinate.latitude}, ${coordinate.longitude}:`, error);
+      // Handle weather API errors with silent flag support
+      const errorMessage = handleWeatherAPIError(error, 'windStationService.getWindStationAtCoordinate');
+      if (!(error && typeof error === 'object' && error.silent === true)) {
+        console.error(`Failed to fetch wind data for ${coordinate.latitude}, ${coordinate.longitude}:`, errorMessage);
+      }
       
       // Return fallback data
       return {
@@ -476,7 +566,7 @@ class WindStationService {
    * Determine data quality based on API response
    */
   private determineDataQuality(weatherData: any): 'high' | 'medium' | 'low' {
-    if (weatherData.data.openweathermap) return 'high';
+    if (weatherData.data.openmeteo_weather) return 'high';
     if (weatherData.data.openmeteo) return 'medium';
     return 'low';
   }

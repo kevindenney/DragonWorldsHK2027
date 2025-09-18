@@ -1,0 +1,211 @@
+{
+  "metadata": {
+    "title": "Hong Kong Weather Station API Fetch Plan",
+    "description": "Comprehensive API endpoint mapping for wind, wave, and tide data per station",
+    "focus_area": "Nine Pins Racing Area - Dragon Worlds HK 2027",
+    "api_priorities": {
+      "primary": "Open-Meteo APIs (free, no rate limits for non-commercial)",
+      "secondary": "HKO Open Data APIs (official but may have rate limits)",
+      "fallback": "Existing app simulation data"
+    },
+    "update_intervals": {
+      "wind_weather": "10 minutes",
+      "marine_wave": "30 minutes",
+      "tide": "5 minutes (real-time)"
+    },
+    "created": "2024-12-19"
+  },
+  "api_endpoints": {
+    "open_meteo_weather": {
+      "base_url": "https://api.open-meteo.com/v1/forecast",
+      "description": "Primary weather API for wind, temperature, pressure, humidity",
+      "parameters": {
+        "hourly": "windspeed_10m,winddirection_10m,windgusts_10m,temperature_2m,pressure_msl,humidity,visibility",
+        "forecast_days": 7,
+        "timezone": "Asia/Hong_Kong"
+      },
+      "rate_limit": "No limits for non-commercial use",
+      "data_quality": "high"
+    },
+    "open_meteo_marine": {
+      "base_url": "https://marine-api.open-meteo.com/v1/marine",
+      "description": "Primary marine API for wave data",
+      "parameters": {
+        "hourly": "significant_wave_height,wave_direction,wave_period,swell_wave_height,swell_wave_direction,swell_wave_period",
+        "forecast_days": 7,
+        "timezone": "Asia/Hong_Kong"
+      },
+      "rate_limit": "No limits for non-commercial use",
+      "data_quality": "high"
+    },
+    "hko_open_data": {
+      "base_url": "https://data.weather.gov.hk/weatherAPI/opendata",
+      "description": "Hong Kong Observatory official APIs",
+      "endpoints": {
+        "current_weather": "/weather.php?dataType=rhrread&lang=en",
+        "hourly_rainfall": "/weather.php?dataType=HHOT&station={station_code}&year={year}&rformat=csv",
+        "tide_data": "/weather.php?dataType=tide&lang=en"
+      },
+      "rate_limit": "Unknown, use carefully",
+      "data_quality": "high"
+    }
+  },
+  "station_fetch_plans": {
+    "automatic_weather_stations": {
+      "stations": [
+        "HKO-CLK", "HKO-HQ", "HKO-TSY", "HKO-KT", "HKO-TKL",
+        "HKO-WP", "HKO-KP", "HKO-TST", "HKO-CEN", "HKO-WAG",
+        "HKO-SC", "HKO-TMS"
+      ],
+      "fetch_strategy": [
+        {
+          "api": "open_meteo_weather",
+          "url_template": "https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&hourly=windspeed_10m,winddirection_10m,windgusts_10m,temperature_2m,pressure_msl,humidity,visibility&forecast_days=7&timezone=Asia/Hong_Kong",
+          "variables": ["windspeed_10m", "winddirection_10m", "windgusts_10m", "temperature_2m", "pressure_msl", "humidity", "visibility"],
+          "priority": 1
+        },
+        {
+          "api": "hko_open_data",
+          "url_template": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en&station={code}",
+          "variables": ["hourly_rainfall", "wind_data"],
+          "priority": 2
+        }
+      ],
+      "example": {
+        "station_id": "HKO-CLK",
+        "coordinates": {"lat": 22.3081, "lon": 113.9186},
+        "api_calls": [
+          "https://api.open-meteo.com/v1/forecast?latitude=22.3081&longitude=113.9186&hourly=windspeed_10m,winddirection_10m,windgusts_10m,temperature_2m,pressure_msl,humidity,visibility&forecast_days=7&timezone=Asia/Hong_Kong",
+          "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en&station=VHHH"
+        ]
+      }
+    },
+    "weather_buoys": {
+      "stations": [
+        "MARINE-VH-C", "MARINE-EW", "MARINE-NW", "RACING-NP",
+        "WAVE-VH01", "WAVE-CB01", "WAVE-NP01", "WAVE-RB01",
+        "WAVE-SB01", "WAVE-AB01"
+      ],
+      "fetch_strategy": [
+        {
+          "api": "open_meteo_weather",
+          "url_template": "https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&hourly=windspeed_10m,winddirection_10m,windgusts_10m,temperature_2m,pressure_msl,humidity&forecast_days=7&timezone=Asia/Hong_Kong",
+          "variables": ["windspeed_10m", "winddirection_10m", "windgusts_10m", "temperature_2m", "pressure_msl", "humidity"],
+          "priority": 1
+        },
+        {
+          "api": "open_meteo_marine",
+          "url_template": "https://marine-api.open-meteo.com/v1/marine?latitude={lat}&longitude={lon}&hourly=significant_wave_height,wave_direction,wave_period,swell_wave_height,swell_wave_direction,swell_wave_period&forecast_days=7&timezone=Asia/Hong_Kong",
+          "variables": ["significant_wave_height", "wave_direction", "wave_period", "swell_wave_height", "swell_wave_direction", "swell_wave_period"],
+          "priority": 1
+        }
+      ],
+      "example": {
+        "station_id": "RACING-NP",
+        "coordinates": {"lat": 22.26299, "lon": 114.32559},
+        "api_calls": [
+          "https://api.open-meteo.com/v1/forecast?latitude=22.26299&longitude=114.32559&hourly=windspeed_10m,winddirection_10m,windgusts_10m,temperature_2m,pressure_msl,humidity&forecast_days=7&timezone=Asia/Hong_Kong",
+          "https://marine-api.open-meteo.com/v1/marine?latitude=22.26299&longitude=114.32559&hourly=significant_wave_height,wave_direction,wave_period,swell_wave_height,swell_wave_direction,swell_wave_period&forecast_days=7&timezone=Asia/Hong_Kong"
+        ]
+      }
+    },
+    "tide_gauges": {
+      "stations": [
+        "TIDE-VH-C", "TIDE-VH-E", "TIDE-QB", "TIDE-TPK",
+        "TIDE-CB-1", "TIDE-CB-2"
+      ],
+      "fetch_strategy": [
+        {
+          "api": "hko_open_data",
+          "url_template": "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=tide&lang=en&station={code}",
+          "variables": ["current_height", "tide_prediction", "next_high_low"],
+          "priority": 1,
+          "notes": "Real-time tide data from HKO official network"
+        },
+        {
+          "api": "open_meteo_marine",
+          "url_template": "https://marine-api.open-meteo.com/v1/marine?latitude={lat}&longitude={lon}&hourly=sea_surface_height&forecast_days=7&timezone=Asia/Hong_Kong",
+          "variables": ["sea_surface_height"],
+          "priority": 2,
+          "notes": "Fallback marine surface height data"
+        }
+      ],
+      "example": {
+        "station_id": "TIDE-QB",
+        "coordinates": {"lat": 22.282721, "lon": 114.212303},
+        "api_calls": [
+          "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=tide&lang=en&station=QB",
+          "https://marine-api.open-meteo.com/v1/marine?latitude=22.282721&longitude=114.212303&hourly=sea_surface_height&forecast_days=7&timezone=Asia/Hong_Kong"
+        ]
+      }
+    }
+  },
+  "nine_pins_racing_focus": {
+    "primary_station": {
+      "station_id": "RACING-NP",
+      "name": "Nine Pins Racing Area",
+      "coordinates": {"lat": 22.26299, "lon": 114.32559},
+      "critical_apis": [
+        "https://api.open-meteo.com/v1/forecast?latitude=22.26299&longitude=114.32559&hourly=windspeed_10m,winddirection_10m,windgusts_10m,temperature_2m,pressure_msl,humidity,visibility&forecast_days=7&timezone=Asia/Hong_Kong",
+        "https://marine-api.open-meteo.com/v1/marine?latitude=22.26299&longitude=114.32559&hourly=significant_wave_height,wave_direction,wave_period,swell_wave_height,swell_wave_direction,swell_wave_period&forecast_days=7&timezone=Asia/Hong_Kong"
+      ],
+      "update_frequency": "5 minutes during races, 10 minutes normal"
+    },
+    "supporting_network": {
+      "wind_stations": [
+        {"id": "HKO-WAG", "name": "Waglan Island", "distance_km": 8.5},
+        {"id": "MARINE-EW", "name": "Eastern Waters", "distance_km": 3.2}
+      ],
+      "wave_stations": [
+        {"id": "WAVE-CB01", "name": "Clearwater Bay Marina", "distance_km": 4.1},
+        {"id": "WAVE-NP01", "name": "Nine Pins Racing Area", "distance_km": 0.0}
+      ],
+      "tide_stations": [
+        {"id": "TIDE-CB-1", "name": "Clearwater Bay North", "distance_km": 5.8},
+        {"id": "TIDE-CB-2", "name": "Clearwater Bay South", "distance_km": 2.9}
+      ]
+    }
+  },
+  "data_validation_rules": {
+    "wind": {
+      "speed_range_knots": [0, 100],
+      "direction_range_degrees": [0, 360],
+      "gust_factor_max": 2.5
+    },
+    "wave": {
+      "height_range_meters": [0, 15],
+      "period_range_seconds": [2, 30],
+      "direction_range_degrees": [0, 360]
+    },
+    "tide": {
+      "height_range_meters": [-2, 5],
+      "rate_change_max_m_per_hour": 1.0
+    },
+    "coordinates": {
+      "lat_bounds": [21.9, 22.6],
+      "lon_bounds": [113.8, 114.4]
+    }
+  },
+  "error_handling": {
+    "api_timeout_ms": 10000,
+    "retry_attempts": 3,
+    "fallback_strategy": "Use existing simulation data from services",
+    "cache_duration_minutes": {
+      "weather": 10,
+      "marine": 30,
+      "tide": 5
+    }
+  },
+  "implementation_notes": {
+    "existing_services": [
+      "windStationService.ts - Already implements Open-Meteo Weather API",
+      "waveDataService.ts - Ready for Open-Meteo Marine API integration",
+      "tideDataService.ts - Has HKO API framework, needs endpoint mapping"
+    ],
+    "api_keys_required": false,
+    "rate_limiting": "Open-Meteo APIs have no rate limits for non-commercial use",
+    "data_format": "JSON responses, hourly arrays with timestamps",
+    "coordinate_system": "WGS84 decimal degrees",
+    "timezone": "Asia/Hong_Kong (+08:00)"
+  }
+}
