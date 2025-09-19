@@ -164,9 +164,9 @@ export function SocialLoginButton({
         ) : (
           showIcon && (
             <View style={styles.iconContainer}>
-              <config.iconComponent 
-                name={config.iconName} 
-                size={20} 
+              <config.iconComponent
+                name={config.iconName}
+                size={18}
                 color={config.iconColor}
               />
             </View>
@@ -250,23 +250,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderRadius: borderRadius.lg,
-    marginBottom: spacing.md,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
   },
   buttonSmall: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    minHeight: 40,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    minHeight: 36,
   },
   buttonMedium: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    minHeight: 42,
+  },
+  buttonLarge: {
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     minHeight: 48,
-  },
-  buttonLarge: {
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xl,
-    minHeight: 56,
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -277,14 +277,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconContainer: {
-    marginRight: spacing.sm,
-    width: 24,
-    height: 24,
+    marginRight: spacing.xs,
+    width: 20,
+    height: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   spinner: {
-    marginRight: spacing.sm,
+    marginRight: spacing.xs,
   },
   text: {
     ...typography.button,

@@ -141,6 +141,7 @@ let isEmulatorMode = false;
 
 if (!configValidation.isValid) {
   console.error('[firebase.ts] ❌ Firebase config validation failed:', configValidation.errors);
+  console.log('[firebase.ts] ⚠️ App will fall back to mock authentication');
   console.log('[firebase.ts] Env snapshot', {
     NODE_ENV: process.env.EXPO_PUBLIC_NODE_ENV,
     hasApiKey: Boolean(process.env.EXPO_PUBLIC_FIREBASE_API_KEY),
@@ -151,13 +152,8 @@ if (!configValidation.isValid) {
     hasAppId: Boolean(process.env.EXPO_PUBLIC_FIREBASE_APP_ID)
   });
 
-  // In development with emulator mode, continue with warnings instead of throwing
-  if (__DEV__ && configValidation.isEmulator) {
-    console.warn('[firebase.ts] ⚠️ Continuing in emulator mode with incomplete config');
-    isEmulatorMode = true;
-  } else {
-    throw new Error(`Firebase configuration invalid: ${configValidation.errors.join(', ')}`);
-  }
+  // Don't throw - let AuthProvider handle fallback to mock auth
+  console.warn('[firebase.ts] ⚠️ Firebase services will be unavailable, using mock auth');
 } else {
   if (__DEV__) {
     console.log('[firebase.ts] ✅ Config validated. projectId=', firebaseConfig.projectId);
@@ -171,45 +167,67 @@ if (!configValidation.isValid) {
 /**
  * Initialize Firebase app
  */
-let app: FirebaseApp;
+let app: FirebaseApp | null = null;
 
-if (getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApp();
+try {
+  if (configValidation.isValid && getApps().length === 0) {
+    app = initializeApp(firebaseConfig);
+    console.log('[firebase.ts] ✅ Firebase app initialized');
+  } else if (configValidation.isValid) {
+    app = getApp();
+    console.log('[firebase.ts] ✅ Firebase app already initialized');
+  } else {
+    console.warn('[firebase.ts] ⚠️ Skipping Firebase app initialization due to invalid config');
+  }
+} catch (error) {
+  console.error('[firebase.ts] ❌ Firebase app initialization failed:', error);
+  console.log('[firebase.ts] ⚠️ Will use mock authentication instead');
+  app = null;
 }
 
 /**
  * Initialize Firebase services with proper persistence for React Native
  */
-let auth: Auth;
+let auth: Auth | null = null;
 let firestore: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
 
-// Initialize Auth with persistence for React Native
-if (Platform.OS !== 'web') {
+// Only initialize Firebase services if app was successfully created
+if (app) {
   try {
-    auth = initializeAuth(app, {
-      persistence: getReactNativePersistence(AsyncStorage)
-    });
-    console.log('✅ Firebase Auth initialized with AsyncStorage persistence');
+    // Initialize Auth with persistence for React Native
+    if (Platform.OS !== 'web') {
+      try {
+        auth = initializeAuth(app, {
+          persistence: getReactNativePersistence(AsyncStorage)
+        });
+        console.log('✅ Firebase Auth initialized with AsyncStorage persistence');
+      } catch (error) {
+        // Auth might already be initialized
+        auth = getAuth(app);
+        console.log('✅ Firebase Auth retrieved (already initialized)');
+      }
+    } else {
+      auth = getAuth(app);
+      console.log('✅ Firebase Auth initialized for web');
+    }
+
+    // Initialize Firestore and Storage only if Firebase is properly configured
+    try {
+      if (__DEV__) console.log('[firebase.ts] Attempting to initialize Firestore/Storage...');
+      firestore = getFirestore(app);
+      storage = getStorage(app);
+      console.log('✅ Firebase Firestore and Storage initialized');
+    } catch (error) {
+      console.warn('⚠️ Firebase Firestore/Storage initialization skipped:', error);
+      // Services will remain null if not available
+    }
   } catch (error) {
-    // Auth might already be initialized
-    auth = getAuth(app);
+    console.error('❌ Firebase services initialization failed:', error);
+    console.log('⚠️ Firebase services unavailable, will use mock auth');
   }
 } else {
-  auth = getAuth(app);
-}
-
-// Initialize Firestore and Storage only if Firebase is properly configured
-try {
-  if (__DEV__) console.log('[firebase.ts] Attempting to initialize Firestore/Storage...');
-  firestore = getFirestore(app);
-  storage = getStorage(app);
-  console.log('✅ Firebase Firestore and Storage initialized');
-} catch (error) {
-  console.warn('⚠️ Firebase Firestore/Storage initialization skipped:', error);
-  // Services will remain null if not available
+  console.log('⚠️ Firebase app not available, Firebase services will be null');
 }
 
 export { auth, firestore, storage };
@@ -221,7 +239,7 @@ export let analytics: any = null;
 /**
  * Connect to Firebase emulators in development with enhanced debugging
  */
-if (__DEV__ && (process.env.EXPO_PUBLIC_NODE_ENV === 'development' || isEmulatorMode)) {
+if (__DEV__ && (process.env.EXPO_PUBLIC_NODE_ENV === 'development' || isEmulatorMode) && app && auth) {
   const EMULATOR_HOST = process.env.EXPO_PUBLIC_EMULATOR_HOST || 'localhost';
 
   console.log('🔥 [Firebase] Attempting to connect to emulators...');

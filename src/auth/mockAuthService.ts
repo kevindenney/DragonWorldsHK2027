@@ -4,7 +4,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User, LoginCredentials, RegisterCredentials } from './authTypes';
+import { User, LoginCredentials, RegisterCredentials, UserStatus } from './authTypes';
 
 const MOCK_USERS_KEY = 'mock_users';
 const CURRENT_USER_KEY = 'current_user';
@@ -87,6 +87,7 @@ export class MockAuthService {
       displayName: mockUser.displayName,
       emailVerified: mockUser.emailVerified,
       role: 'participant',
+      status: UserStatus.ACTIVE,
       providers: ['email'],
       createdAt: mockUser.createdAt,
       updatedAt: new Date(),
@@ -130,6 +131,7 @@ export class MockAuthService {
       displayName: mockUser.displayName,
       emailVerified: mockUser.emailVerified,
       role: 'participant',
+      status: UserStatus.ACTIVE,
       providers: ['email'],
       createdAt: mockUser.createdAt,
       updatedAt: new Date(),

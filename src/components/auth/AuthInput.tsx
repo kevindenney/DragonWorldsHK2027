@@ -170,7 +170,8 @@ export const AuthInput = forwardRef<AuthInputRef, AuthInputProps>(
 
     const labelStyle = {
       position: 'absolute' as const,
-      left: leftIcon ? 48 : 16,
+      left: leftIcon ? 40 : 12,
+      zIndex: 10,
       color: shouldShowError
         ? colors.error
         : isFocused
@@ -178,15 +179,20 @@ export const AuthInput = forwardRef<AuthInputRef, AuthInputProps>(
         : colors.textMuted,
       fontSize: focusAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [16, 12],
+        outputRange: [14, 12],
       }),
       top: focusAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [18, 8],
+        outputRange: [12, -8],
       }),
       fontWeight: focusAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: ['400' as const, '500' as const],
+        outputRange: ['400' as const, '600' as const],
+      }),
+      backgroundColor: colors.surface,
+      paddingHorizontal: focusAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 4],
       }),
     };
 
@@ -319,63 +325,66 @@ export const AuthInput = forwardRef<AuthInputRef, AuthInputProps>(
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xs,
   },
   labelContainer: {
     position: 'relative',
-    height: 24,
+    height: 28,
+    justifyContent: 'center',
   },
   inputContainer: {
     position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 2,
-    borderRadius: borderRadius.lg,
-    minHeight: 56,
-    paddingHorizontal: spacing.md,
+    borderWidth: 1.5,
+    borderRadius: borderRadius.md,
+    minHeight: 40,
+    paddingHorizontal: spacing.sm,
     backgroundColor: colors.background,
   },
   leftIcon: {
-    marginRight: spacing.sm,
+    marginRight: spacing.xs,
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     color: colors.text,
-    paddingVertical: spacing.sm,
-    paddingTop: 20,
+    paddingVertical: spacing.xs,
+    paddingTop: 12,
   },
   inputWithLeftIcon: {
     paddingLeft: 0,
   },
   inputWithRightIcon: {
-    paddingRight: spacing.sm,
+    paddingRight: spacing.xs,
   },
   rightIcons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   passwordToggle: {
-    padding: spacing.xs,
+    padding: spacing.xs / 2,
   },
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.xs,
-    paddingHorizontal: spacing.sm,
+    marginTop: spacing.xs / 2,
+    paddingHorizontal: spacing.xs,
   },
   errorText: {
-    ...typography.body2,
+    ...typography.caption,
     color: colors.error,
-    marginLeft: spacing.xs,
+    marginLeft: spacing.xs / 2,
     flex: 1,
+    fontSize: 11,
   },
   helpText: {
     ...typography.caption,
     color: colors.textMuted,
-    marginTop: spacing.xs,
-    paddingHorizontal: spacing.sm,
+    marginTop: spacing.xs / 2,
+    paddingHorizontal: spacing.xs,
+    fontSize: 11,
   },
   required: {
     color: colors.error,

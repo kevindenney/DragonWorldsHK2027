@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Linking } from 'react-native';
 import { useAuth } from '../../auth/useAuth';
 import { LoadingScreen } from '../shared/LoadingSpinner';
 // import { LoginForm } from './AuthForm'; // Temporarily disabled
-import { UserRole, UserStatus } from '../../types/auth';
-import { colors } from '../../constants/theme';
+import { UserRole } from '../../types/auth';
+import { UserStatus } from '../../auth/authTypes';
+import { colors, spacing, typography, borderRadius, shadows } from '../../constants/theme';
+import { AlertTriangle, Mail, RefreshCw, ArrowLeft, HelpCircle } from 'lucide-react-native';
 
 export interface AuthGuardProps {
   children: React.ReactNode;
@@ -220,69 +222,182 @@ interface AccountStatusGuardProps {
 }
 
 function AccountStatusGuard({ user, testID, onBackToApp }: AccountStatusGuardProps) {
-  const { logout } = useAuth();
+  const { logout, resendEmailVerification } = useAuth();
+  const [isResending, setIsResending] = useState(false);
 
-  const getStatusMessage = () => {
+  const handleContactSupport = async () => {
+    const supportEmail = 'support@regattaflow.com';
+    const subject = `Account Support - ${user.status}`;
+    const body = `Hello RegattaFlow Support,\n\nI need assistance with my account.\n\nAccount Email: ${user.email}\nAccount Status: ${user.status}\nUser ID: ${user.uid}\n\nIssue Description:\n[Please describe your issue here]\n\nThank you for your assistance.`;
+
+    const mailtoUrl = `mailto:${supportEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    try {
+      const supported = await Linking.canOpenURL(mailtoUrl);
+      if (supported) {
+        await Linking.openURL(mailtoUrl);
+      } else {
+        // Fallback - show alert with support email
+        Alert.alert(
+          'Contact Support',
+          `Please email us at: ${supportEmail}\n\nInclude your account email (${user.email}) and describe the issue you're experiencing.`,
+          [
+            { text: 'Copy Email', onPress: () => /* Copy to clipboard if available */ {} },
+            { text: 'OK', style: 'default' }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Error opening mail client:', error);
+      Alert.alert('Error', 'Unable to open email client. Please contact support@regattaflow.com directly.');
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!resendEmailVerification) {
+      Alert.alert('Error', 'Email verification not available. Please contact support.');
+      return;
+    }
+
+    setIsResending(true);
+    try {
+      await resendEmailVerification();
+      Alert.alert(
+        'Verification Email Sent',
+        'Please check your email and click the verification link. You may need to check your spam folder.',
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      console.error('Error resending verification:', error);
+      Alert.alert(
+        'Error',
+        'Failed to send verification email. Please try again or contact support.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const getStatusInfo = () => {
     switch (user.status) {
       case UserStatus.PENDING_VERIFICATION:
         return {
-          title: 'Account Verification Required',
-          message: 'Please verify your email address to continue using the app.',
-          action: 'Resend Verification Email',
+          title: 'Verify Your Email',
+          message: 'We sent a verification link to your email address. Please click the link to activate your account and access all features.',
+          icon: <Mail size={48} color={colors.warning} />,
+          primaryAction: {
+            label: isResending ? 'Sending...' : 'Resend Email',
+            handler: handleResendVerification,
+            disabled: isResending,
+            icon: <RefreshCw size={16} color={colors.background} />
+          },
+          helpText: 'Check your spam folder if you don\'t see the email.'
         };
       case UserStatus.SUSPENDED:
         return {
-          title: 'Account Suspended',
-          message: 'Your account has been suspended. Please contact support for assistance.',
-          action: 'Contact Support',
+          title: 'Account Temporarily Suspended',
+          message: 'Your account access has been temporarily restricted. This may be due to a violation of our terms of service or suspicious activity.',
+          icon: <AlertTriangle size={48} color={colors.error} />,
+          primaryAction: {
+            label: 'Contact Support',
+            handler: handleContactSupport,
+            disabled: false,
+            icon: <HelpCircle size={16} color={colors.background} />
+          },
+          helpText: 'Our support team will review your case and respond within 24 hours.'
         };
       case UserStatus.INACTIVE:
         return {
           title: 'Account Inactive',
-          message: 'Your account is inactive. Please contact support to reactivate.',
-          action: 'Contact Support',
+          message: 'Your account has been deactivated due to prolonged inactivity. Contact support to reactivate your account and restore access.',
+          icon: <AlertTriangle size={48} color={colors.warning} />,
+          primaryAction: {
+            label: 'Reactivate Account',
+            handler: handleContactSupport,
+            disabled: false,
+            icon: <RefreshCw size={16} color={colors.background} />
+          },
+          helpText: 'Reactivation typically takes 1-2 business days.'
         };
       default:
         return {
-          title: 'Account Issue',
-          message: 'There is an issue with your account. Please contact support.',
-          action: 'Contact Support',
+          title: 'Account Access Issue',
+          message: 'There appears to be an issue with your account that requires attention. Please contact our support team for assistance.',
+          icon: <AlertTriangle size={48} color={colors.error} />,
+          primaryAction: {
+            label: 'Get Help',
+            handler: handleContactSupport,
+            disabled: false,
+            icon: <HelpCircle size={16} color={colors.background} />
+          },
+          helpText: 'Include your account details when contacting support.'
         };
     }
   };
 
-  const status = getStatusMessage();
+  const statusInfo = getStatusInfo();
 
   return (
     <View style={styles.statusContainer} testID={testID}>
       <View style={styles.statusCard}>
-        <Text style={styles.statusTitle}>{status.title}</Text>
-        <Text style={styles.statusMessage}>{status.message}</Text>
-        
+        <View style={styles.statusIcon}>
+          {statusInfo.icon}
+        </View>
+
+        <Text style={styles.statusTitle}>{statusInfo.title}</Text>
+        <Text style={styles.statusMessage}>{statusInfo.message}</Text>
+
+        {statusInfo.helpText && (
+          <Text style={styles.helpText}>{statusInfo.helpText}</Text>
+        )}
+
         <View style={styles.statusActions}>
-          <TouchableOpacity 
-            style={styles.primaryButton}
-            onPress={() => {
-              // Handle primary action based on status
-            }}
+          <TouchableOpacity
+            style={[
+              styles.primaryButton,
+              statusInfo.primaryAction.disabled && styles.primaryButtonDisabled
+            ]}
+            onPress={statusInfo.primaryAction.handler}
+            disabled={statusInfo.primaryAction.disabled}
           >
-            <Text style={styles.primaryButtonText}>{status.action}</Text>
+            <View style={styles.buttonContent}>
+              {statusInfo.primaryAction.icon}
+              <Text style={[
+                styles.primaryButtonText,
+                statusInfo.primaryAction.disabled && styles.primaryButtonTextDisabled
+              ]}>
+                {statusInfo.primaryAction.label}
+              </Text>
+            </View>
           </TouchableOpacity>
-          
+
           {onBackToApp && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.secondaryButton}
               onPress={onBackToApp}
             >
-              <Text style={styles.secondaryButtonText}>Back to App</Text>
+              <View style={styles.buttonContent}>
+                <ArrowLeft size={16} color={colors.textSecondary} />
+                <Text style={styles.secondaryButtonText}>Back to App</Text>
+              </View>
             </TouchableOpacity>
           )}
-          
-          <TouchableOpacity 
-            style={styles.secondaryButton}
-            onPress={logout}
+
+          <TouchableOpacity
+            style={styles.tertiaryButton}
+            onPress={() => {
+              Alert.alert(
+                'Sign Out',
+                'Are you sure you want to sign out?',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Sign Out', style: 'destructive', onPress: logout }
+                ]
+              );
+            }}
           >
-            <Text style={styles.secondaryButtonText}>Sign Out</Text>
+            <Text style={styles.tertiaryButtonText}>Sign Out</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -384,54 +499,91 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: spacing.xl,
   },
   statusCard: {
     backgroundColor: colors.surface,
-    padding: 24,
-    borderRadius: 12,
+    padding: spacing.xl,
+    borderRadius: borderRadius.xl,
     alignItems: 'center',
     maxWidth: 400,
     width: '100%',
+    ...shadows.card,
+  },
+  statusIcon: {
+    marginBottom: spacing.lg,
   },
   statusTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    ...typography.h3,
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   statusMessage: {
-    fontSize: 16,
+    ...typography.body1,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
+    lineHeight: 24,
+    marginBottom: spacing.lg,
+  },
+  helpText: {
+    ...typography.caption,
+    color: colors.textMuted,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginBottom: spacing.lg,
   },
   statusActions: {
     width: '100%',
+    gap: spacing.md,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
   },
   primaryButton: {
     backgroundColor: colors.primary,
-    padding: 16,
-    borderRadius: 8,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.lg,
     alignItems: 'center',
-    marginBottom: 12,
+    ...shadows.button,
+  },
+  primaryButtonDisabled: {
+    backgroundColor: colors.border,
   },
   primaryButtonText: {
+    ...typography.button,
     color: colors.background,
-    fontSize: 16,
-    fontWeight: '600',
+  },
+  primaryButtonTextDisabled: {
+    color: colors.textMuted,
   },
   secondaryButton: {
-    padding: 16,
-    borderRadius: 8,
+    backgroundColor: colors.background,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.lg,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
   },
   secondaryButtonText: {
+    ...typography.button,
     color: colors.textSecondary,
-    fontSize: 16,
+  },
+  tertiaryButton: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+  },
+  tertiaryButtonText: {
+    ...typography.caption,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });

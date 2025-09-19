@@ -34,10 +34,18 @@
       </dict>
       <dict>
         <key>CFBundleURLName</key>
-        <string>dragonworlds-deep-linking</string>
+        <string>google-oauth</string>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>dragonworlds</string>
+          <string>com.googleusercontent.apps.839737857128-qvdva2jrauf49erhratq7ri72d9hfjbb</string>
+        </array>
+      </dict>
+      <dict>
+        <key>CFBundleURLName</key>
+        <string>google-signin-url-scheme</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>com.googleusercontent.apps.839737857128-qvdva2jrauf49erhratq7ri72d9hfjbb</string>
         </array>
       </dict>
       <dict>

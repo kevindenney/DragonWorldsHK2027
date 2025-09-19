@@ -16,10 +16,13 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
   UserCredential,
+  GoogleAuthProvider,
+  signInWithCredential,
 } from 'firebase/auth';
 import { auth, firestore } from '../../config/firebase';
-import { LoginCredentials, RegisterCredentials, User, AuthProviderType } from '../authTypes';
+import { LoginCredentials, RegisterCredentials, User, AuthProviderType, UserStatus } from '../authTypes';
 import { setDoc, getDoc, doc } from 'firebase/firestore';
+import { googleSignInService } from '../googleSignInService';
 
 /**
  * Convert Firebase User to our User type
@@ -33,6 +36,7 @@ function convertFirebaseUser(firebaseUser: FirebaseUser, additionalData?: any): 
     phoneNumber: additionalData?.phoneNumber || firebaseUser.phoneNumber || undefined,
     emailVerified: firebaseUser.emailVerified,
     role: additionalData?.role || 'participant',
+    status: additionalData?.status || UserStatus.ACTIVE, // Default to ACTIVE for authenticated users
     providers: additionalData?.providers || ['email'],
     createdAt: additionalData?.createdAt?.toDate?.() || new Date(),
     updatedAt: additionalData?.updatedAt?.toDate?.() || new Date(),
@@ -240,10 +244,120 @@ export class FirebaseAuthService {
   }
 
   /**
-   * Login with OAuth provider (placeholder for future implementation)
+   * Login with OAuth provider
    */
   async loginWithProvider(provider: AuthProviderType): Promise<User> {
-    throw new Error(`${provider} login not yet configured. Please use email/password authentication.`);
+    try {
+      console.log(`🔐 [FirebaseAuth] Starting ${provider} login...`);
+
+      if (provider === 'google') {
+        return await this.loginWithGoogle();
+      } else {
+        throw new Error(`${provider} login not yet configured. Please use email/password authentication.`);
+      }
+    } catch (error: any) {
+      console.error(`❌ [FirebaseAuth] ${provider} login failed:`, error);
+      throw this.handleAuthError(error);
+    }
+  }
+
+  /**
+   * Login with Google
+   */
+  private async loginWithGoogle(): Promise<User> {
+    try {
+      console.log('🔐 [FirebaseAuth] Initiating Google Sign-In...');
+      console.log('🔍 [FirebaseAuth] DEBUG - Firebase project context:');
+      console.log('  Firebase app name:', auth?.app?.name || 'unknown');
+      console.log('  Firebase project ID:', auth?.app?.options?.projectId || 'unknown');
+      console.log('  Firebase auth domain:', auth?.app?.options?.authDomain || 'unknown');
+
+      // Use Google Sign-In service to get credentials
+      console.log('🔍 [FirebaseAuth] Calling Google Sign-In service...');
+      const googleResult = await googleSignInService.signIn();
+
+      console.log('✅ [FirebaseAuth] Google Sign-In successful, authenticating with Firebase...');
+      console.log('🔍 [FirebaseAuth] DEBUG - Google Sign-In result:');
+
+      // Validate googleResult structure
+      if (!googleResult || !googleResult.user) {
+        console.error('❌ [FirebaseAuth] Invalid Google Sign-In result structure:', googleResult);
+        throw new Error('Google Sign-In returned invalid user data');
+      }
+
+      console.log('  User ID:', googleResult.user.id || 'undefined');
+      console.log('  User email:', googleResult.user.email || 'undefined');
+      console.log('  User name:', googleResult.user.name || 'undefined');
+      console.log('  Has ID token:', !!googleResult.idToken);
+      console.log('  Has access token:', !!googleResult.accessToken);
+      console.log('  ID token preview:', googleResult.idToken ? `${googleResult.idToken.substring(0, 20)}...` : 'none');
+
+      if (!googleResult.idToken) {
+        throw new Error('Google Sign-In did not return an ID token');
+      }
+
+      // Create Firebase credential from Google ID token
+      console.log('🔍 [FirebaseAuth] Creating Firebase credential...');
+      const credential = GoogleAuthProvider.credential(googleResult.idToken, googleResult.accessToken);
+      console.log('✅ [FirebaseAuth] Firebase credential created');
+
+      // Sign in to Firebase with the credential
+      console.log('🔍 [FirebaseAuth] Signing in to Firebase with credential...');
+      const userCredential = await signInWithCredential(auth, credential);
+      const firebaseUser = userCredential.user;
+
+      console.log('✅ [FirebaseAuth] Firebase authentication successful:', {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        displayName: firebaseUser.displayName,
+        emailVerified: firebaseUser.emailVerified
+      });
+
+      console.log('🔍 [FirebaseAuth] DEBUG - Firebase user details:');
+      console.log('  Provider data:', firebaseUser.providerData?.map(p => ({
+        providerId: p.providerId,
+        uid: p.uid,
+        email: p.email
+      })) || []);
+      console.log('  Metadata - creation time:', firebaseUser.metadata?.creationTime);
+      console.log('  Metadata - last sign in time:', firebaseUser.metadata?.lastSignInTime);
+
+      // Save/update user data in Firestore
+      if (firestore) {
+        try {
+          const userData = {
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName || googleResult.user.name,
+            photoURL: firebaseUser.photoURL || googleResult.user.photo,
+            providers: ['google'],
+            role: 'participant',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            preferences: {
+              notifications: true,
+              newsletter: false,
+              language: 'en',
+            },
+          };
+
+          await setDoc(doc(firestore, 'users', firebaseUser.uid), userData, { merge: true });
+          console.log('✅ [FirebaseAuth] User data saved to Firestore');
+        } catch (error) {
+          console.warn('⚠️ [FirebaseAuth] Could not save user data to Firestore:', error);
+        }
+      }
+
+      // Return converted user
+      return convertFirebaseUser(firebaseUser, {
+        displayName: firebaseUser.displayName || googleResult.user.name,
+        photoURL: firebaseUser.photoURL || googleResult.user.photo,
+        providers: ['google'],
+        role: 'participant',
+      });
+    } catch (error: any) {
+      console.error('❌ [FirebaseAuth] Google login failed:', error);
+      throw error;
+    }
   }
 
   /**

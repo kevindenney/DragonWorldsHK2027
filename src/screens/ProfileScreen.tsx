@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Settings } from 'lucide-react-native';
 import { IOSNavigationBar } from '../components/ios';
 import { UserProfile } from '../components/auth/UserProfile';
 import { RequireAuth } from '../components/auth/AuthGuard';
+import { EditProfileModal } from '../components/profile/EditProfileModal';
 import { useAuth } from '../auth/useAuth';
 import { colors } from '../constants/theme';
 
@@ -14,10 +15,10 @@ interface ProfileScreenProps {
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const { logout, user } = useAuth();
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const handleEditProfile = () => {
-    // Navigate to edit profile screen (to be implemented)
-    Alert.alert('Edit Profile', 'Profile editing will be implemented in a future update.');
+    setShowEditModal(true);
   };
 
   const handleChangePassword = () => {
@@ -60,7 +61,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       <SafeAreaView style={styles.container} edges={['top']}>
         <IOSNavigationBar
           title="Profile"
-          style="large"
+          style="default"
           leftAction={{
             icon: <ChevronLeft size={20} color={colors.primary} />,
             onPress: () => navigation.goBack()
@@ -80,6 +81,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           onChangePassword={handleChangePassword}
           onDeleteAccount={handleDeleteAccount}
           testID="profile-screen"
+        />
+
+        <EditProfileModal
+          visible={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          testID="edit-profile-modal"
         />
       </SafeAreaView>
     </RequireAuth>

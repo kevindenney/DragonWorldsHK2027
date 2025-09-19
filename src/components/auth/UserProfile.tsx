@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,23 +8,35 @@ import {
   Image,
   Alert,
   Switch,
+  ActivityIndicator,
 } from 'react-native';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Calendar, 
-  Settings, 
-  Shield, 
-  Bell, 
+import * as ImagePicker from 'expo-image-picker';
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Settings,
+  Shield,
+  Bell,
   LogOut,
   Edit3,
   Camera,
   Link,
   Trash2,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  Smartphone,
+  Globe,
+  Database,
+  Eye,
+  Moon,
+  Sun,
+  HelpCircle,
+  MessageCircle,
+  FileText,
+  Star
 } from 'lucide-react-native';
 import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
 import { useAuth } from '../../auth/useAuth';
@@ -45,15 +57,105 @@ export function UserProfile({
   testID,
 }: UserProfileProps) {
   const { user, logout, updateProfile } = useAuth();
-  
+
   const [notificationsEnabled, setNotificationsEnabled] = useState(
     user?.preferences?.notifications?.push || false
   );
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Auto-hide success messages
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  const showSuccessMessage = (message: string) => {
+    setSuccessMessage(message);
+  };
+
+  const handlePhotoUpload = async () => {
+    try {
+      // Request permission
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert('Permission Required', 'Please allow access to your photo library to update your profile picture.');
+        return;
+      }
+
+      // Show action sheet for photo selection
+      Alert.alert(
+        'Update Profile Photo',
+        'Choose an option to update your profile picture',
+        [
+          { text: 'Camera', onPress: () => handleImageSelection('camera') },
+          { text: 'Photo Library', onPress: () => handleImageSelection('library') },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
+    } catch (error) {
+      console.error('Error requesting photo permissions:', error);
+      Alert.alert('Error', 'Unable to access photo library. Please try again.');
+    }
+  };
+
+  const handleImageSelection = async (source: 'camera' | 'library') => {
+    try {
+      setIsUploadingPhoto(true);
+
+      let result: ImagePicker.ImagePickerResult;
+
+      if (source === 'camera') {
+        const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+        if (!cameraPermission.granted) {
+          Alert.alert('Permission Required', 'Please allow camera access to take a photo.');
+          return;
+        }
+
+        result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ['images'] as ImagePicker.MediaType[],
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.7,
+        });
+      } else {
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'] as ImagePicker.MediaType[],
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.7,
+        });
+      }
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+
+        // Update the profile with the new photo URI
+        // In a real app, you would upload this to a storage service first
+        await updateProfile({
+          photoURL: imageUri,
+        });
+
+        showSuccessMessage('Profile photo updated successfully!');
+      }
+    } catch (error) {
+      console.error('Error selecting/uploading image:', error);
+      Alert.alert('Error', 'Failed to update profile photo. Please try again.');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
 
   const handleNotificationToggle = async (value: boolean) => {
     try {
+      setIsUpdatingProfile(true);
       setNotificationsEnabled(value);
-      
+
       // Update user preferences
       await updateProfile({
         preferences: {
@@ -64,11 +166,17 @@ export function UserProfile({
           },
         },
       });
+
+      showSuccessMessage(
+        `Push notifications ${value ? 'enabled' : 'disabled'} successfully!`
+      );
     } catch (error) {
       console.error('Failed to update notification preferences:', error);
       // Revert the toggle on error
       setNotificationsEnabled(!value);
       Alert.alert('Error', 'Failed to update notification preferences. Please try again.');
+    } finally {
+      setIsUpdatingProfile(false);
     }
   };
 
@@ -132,7 +240,19 @@ export function UserProfile({
       showsVerticalScrollIndicator={false}
       testID={testID}
     >
-      <ProfileHeader user={user} onEditProfile={onEditProfile} />
+      {successMessage && (
+        <View style={styles.successMessage}>
+          <CheckCircle size={16} color={colors.success} />
+          <Text style={styles.successMessageText}>{successMessage}</Text>
+        </View>
+      )}
+
+      <ProfileHeader
+        user={user}
+        onEditProfile={onEditProfile}
+        onPhotoUpload={handlePhotoUpload}
+        isUploadingPhoto={isUploadingPhoto}
+      />
       
       <ProfileSection title="Account Information">
         <ProfileField
@@ -161,7 +281,7 @@ export function UserProfile({
         <ProfileField
           icon={<Calendar size={20} color={colors.textMuted} />}
           label="Member since"
-          value={formatDate(user.metadata.createdAt)}
+          value={formatDate(user.createdAt)}
         />
       </ProfileSection>
 
@@ -174,7 +294,7 @@ export function UserProfile({
           showArrow
         />
         
-        <ConnectedAccounts providers={user.linkedProviders} />
+        <ConnectedAccounts providers={user.linkedProviders || []} />
       </ProfileSection>
 
       <ProfileSection title="Preferences">
@@ -188,13 +308,175 @@ export function UserProfile({
               </Text>
             </View>
           </View>
-          <Switch
-            value={notificationsEnabled}
-            onValueChange={handleNotificationToggle}
-            trackColor={{ false: colors.border, true: colors.primary }}
-            thumbColor={colors.background}
-          />
+          {isUpdatingProfile ? (
+            <ActivityIndicator size={20} color={colors.primary} />
+          ) : (
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={handleNotificationToggle}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={colors.background}
+              disabled={isUpdatingProfile}
+            />
+          )}
         </View>
+      </ProfileSection>
+
+      <ProfileSection title="App Settings">
+        <SettingsItem
+          icon={<Smartphone size={20} color={colors.textMuted} />}
+          title="Display & Interface"
+          subtitle="App theme, font size, and display preferences"
+          onPress={() => {
+            // TODO: Navigate to display settings
+            Alert.alert('Display Settings', 'Display and interface settings will be available in a future update.');
+          }}
+          showArrow
+        />
+
+        <SettingsItem
+          icon={<Globe size={20} color={colors.textMuted} />}
+          title="Language & Region"
+          subtitle="App language, date format, and units"
+          onPress={() => {
+            // TODO: Navigate to language settings
+            Alert.alert('Language Settings', 'Language and region settings will be available in a future update.');
+          }}
+          showArrow
+        />
+
+        <SettingsItem
+          icon={<Database size={20} color={colors.textMuted} />}
+          title="Data & Storage"
+          subtitle="Manage app data, cache, and offline content"
+          onPress={() => {
+            // TODO: Navigate to data settings
+            Alert.alert('Data Settings', 'Data and storage settings will be available in a future update.');
+          }}
+          showArrow
+        />
+
+        <SettingsItem
+          icon={<Eye size={20} color={colors.textMuted} />}
+          title="Privacy & Permissions"
+          subtitle="App permissions and privacy controls"
+          onPress={() => {
+            // TODO: Navigate to privacy settings
+            Alert.alert('Privacy Settings', 'Privacy and permissions settings will be available in a future update.');
+          }}
+          showArrow
+        />
+      </ProfileSection>
+
+      <ProfileSection title="Support & Help">
+        <SettingsItem
+          icon={<HelpCircle size={20} color={colors.textMuted} />}
+          title="Help Center"
+          subtitle="Browse FAQ and get answers to common questions"
+          onPress={() => {
+            // TODO: Navigate to help center or open help URL
+            Alert.alert('Help Center', 'The help center will be available in a future update. For immediate assistance, please contact support.');
+          }}
+          showArrow
+        />
+
+        <SettingsItem
+          icon={<MessageCircle size={20} color={colors.textMuted} />}
+          title="Contact Support"
+          subtitle="Get in touch with our support team"
+          onPress={() => {
+            Alert.alert(
+              'Contact Support',
+              'Choose how you\'d like to contact support:',
+              [
+                {
+                  text: 'Email',
+                  onPress: () => {
+                    const supportEmail = 'support@regattaflow.com';
+                    const subject = 'DragonWorlds HK 2027 - Support Request';
+                    const body = `Hello RegattaFlow Support,
+
+I need assistance with the DragonWorlds HK 2027 app.
+
+User Information:
+- Email: ${user?.email}
+- User ID: ${user?.uid}
+
+Issue Description:
+[Please describe your issue here]
+
+Thank you for your assistance.`;
+
+                    const mailtoUrl = `mailto:${supportEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                    Alert.alert('Opening Email', `We'll open your email app to contact support at ${supportEmail}`);
+                    // In a real implementation, you would use Linking.openURL(mailtoUrl)
+                  }
+                },
+                {
+                  text: 'In-App',
+                  onPress: () => {
+                    Alert.alert('In-App Support', 'In-app support chat will be available in a future update.');
+                  }
+                },
+                { text: 'Cancel', style: 'cancel' }
+              ]
+            );
+          }}
+          showArrow
+        />
+
+        <SettingsItem
+          icon={<FileText size={20} color={colors.textMuted} />}
+          title="Terms & Privacy"
+          subtitle="Read our terms of service and privacy policy"
+          onPress={() => {
+            Alert.alert(
+              'Terms & Privacy',
+              'Choose what you\'d like to read:',
+              [
+                {
+                  text: 'Terms of Service',
+                  onPress: () => {
+                    Alert.alert('Terms of Service', 'Terms of Service will be available in a future update.');
+                  }
+                },
+                {
+                  text: 'Privacy Policy',
+                  onPress: () => {
+                    Alert.alert('Privacy Policy', 'Privacy Policy will be available in a future update.');
+                  }
+                },
+                { text: 'Cancel', style: 'cancel' }
+              ]
+            );
+          }}
+          showArrow
+        />
+
+        <SettingsItem
+          icon={<Star size={20} color={colors.textMuted} />}
+          title="Rate the App"
+          subtitle="Share your feedback on the App Store"
+          onPress={() => {
+            Alert.alert(
+              'Rate the App',
+              'We\'d love to hear your feedback! Your rating helps us improve the app.',
+              [
+                {
+                  text: 'Rate Now',
+                  onPress: () => {
+                    Alert.alert('App Store', 'App Store rating will be available when the app is published.');
+                  }
+                },
+                {
+                  text: 'Maybe Later',
+                  style: 'cancel'
+                }
+              ]
+            );
+          }}
+          showArrow
+        />
       </ProfileSection>
 
       <ProfileSection title="Account Actions">
@@ -226,9 +508,16 @@ export function UserProfile({
 interface ProfileHeaderProps {
   user: UserType;
   onEditProfile?: () => void;
+  onPhotoUpload?: () => void;
+  isUploadingPhoto?: boolean;
 }
 
-function ProfileHeader({ user, onEditProfile }: ProfileHeaderProps) {
+function ProfileHeader({
+  user,
+  onEditProfile,
+  onPhotoUpload,
+  isUploadingPhoto,
+}: ProfileHeaderProps) {
   return (
     <View style={styles.header}>
       <View style={styles.avatarContainer}>
@@ -239,9 +528,18 @@ function ProfileHeader({ user, onEditProfile }: ProfileHeaderProps) {
             <User size={40} color={colors.textMuted} />
           </View>
         )}
-        
-        <TouchableOpacity style={styles.cameraButton} activeOpacity={0.7}>
-          <Camera size={16} color={colors.background} />
+
+        <TouchableOpacity
+          style={[styles.cameraButton, isUploadingPhoto && styles.cameraButtonLoading]}
+          activeOpacity={0.7}
+          onPress={onPhotoUpload}
+          disabled={isUploadingPhoto}
+        >
+          {isUploadingPhoto ? (
+            <ActivityIndicator size={14} color={colors.background} />
+          ) : (
+            <Camera size={16} color={colors.background} />
+          )}
         </TouchableOpacity>
       </View>
       
@@ -251,7 +549,7 @@ function ProfileHeader({ user, onEditProfile }: ProfileHeaderProps) {
         
         <View style={styles.userStats}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{user.metadata.loginCount}</Text>
+            <Text style={styles.statValue}>{user.metadata?.loginCount || 0}</Text>
             <Text style={styles.statLabel}>Logins</Text>
           </View>
           
@@ -381,7 +679,7 @@ function ConnectedAccounts({ providers }: ConnectedAccountsProps) {
         <Text style={styles.accountsTitle}>Connected Accounts</Text>
       </View>
       
-      {providers.length > 0 ? (
+      {providers && providers.length > 0 ? (
         providers.map((provider) => (
           <View key={provider.providerId} style={styles.connectedAccount}>
             <Text style={styles.providerIcon}>
@@ -416,7 +714,25 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   scrollContent: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+  },
+  successMessage: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.success + '15',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.success + '30',
+    gap: spacing.sm,
+  },
+  successMessageText: {
+    ...typography.body2,
+    color: colors.success,
+    flex: 1,
   },
   errorText: {
     ...typography.body1,
@@ -462,6 +778,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: colors.background,
+    ...shadows.button,
+  },
+  cameraButtonLoading: {
+    backgroundColor: colors.textMuted,
   },
   userInfo: {
     flex: 1,

@@ -46,8 +46,7 @@ const userTypeOptions: UserTypeOption[] = [
       'HSBC banking services',
       'Sino Group VIP experiences'
     ],
-    color: colors.primary,
-    requiresVerification: true
+    color: colors.primary
   },
   {
     id: 'spectator',
@@ -75,8 +74,7 @@ const userTypeOptions: UserTypeOption[] = [
       'Emergency communications',
       'Results management'
     ],
-    color: colors.success,
-    requiresVerification: true
+    color: colors.success
   },
   {
     id: 'media',
@@ -90,20 +88,18 @@ const userTypeOptions: UserTypeOption[] = [
       'Photo and video access',
       'Media kit downloads'
     ],
-    color: colors.warning,
-    requiresVerification: true
+    color: colors.warning
   }
 ];
 
 interface OnboardingScreenProps {
-  onComplete: (userType: UserType, profile: Partial<UserProfile>) => void;
+  onComplete: (onboardingType: OnboardingUserType) => void;
   onBack?: () => void;
 }
 
 export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, onBack }) => {
   const [selectedUserType, setSelectedUserType] = useState<OnboardingUserType | null>(null);
   const [showBenefits, setShowBenefits] = useState(false);
-  const { setUserType, setProfile } = useUserStore();
 
   // Animation values
   const headerOpacity = useRef(new Animated.Value(0)).current;
@@ -134,6 +130,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, 
   }, []);
 
   const handleUserTypeSelect = (userType: OnboardingUserType) => {
+    console.log('🎯 [OnboardingScreen] User type selected:', userType);
     setSelectedUserType(userType);
     setShowBenefits(true);
   };
@@ -141,60 +138,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, 
   const handleContinue = () => {
     if (!selectedUserType) return;
 
-    const option = userTypeOptions.find(opt => opt.id === selectedUserType);
-    
-    if (option?.requiresVerification) {
-      Alert.alert(
-        'Verification Required',
-        `To access ${option.title.toLowerCase()} features, you'll need to verify your credentials in the next step.`,
-        [
-          {
-            text: 'Continue',
-            onPress: () => proceedWithUserType()
-          },
-          {
-            text: 'Back',
-            style: 'cancel'
-          }
-        ]
-      );
-    } else {
-      proceedWithUserType();
-    }
-  };
-
-  const proceedWithUserType = () => {
-    if (!selectedUserType) return;
-
-    // Map onboarding type to app user type
-    const userTypeMapping: Record<OnboardingUserType, UserType> = {
-      participant: 'participant',
-      spectator: 'spectator', 
-      official: 'participant', // Officials get participant-level access
-      media: 'spectator' // Media gets spectator-level access initially
-    };
-
-    const mappedUserType = userTypeMapping[selectedUserType];
-    const option = userTypeOptions.find(opt => opt.id === selectedUserType);
-
-    const profile: Partial<UserProfile> = {
-      onboardingType: selectedUserType,
-      needsVerification: option?.requiresVerification || false,
-      joinedAt: new Date().toISOString(),
-      preferences: {
-        weatherAlerts: selectedUserType === 'participant',
-        raceNotifications: true,
-        socialUpdates: selectedUserType !== 'official',
-        marketingEmails: false
-      }
-    };
-
-    // Update stores
-    setUserType(mappedUserType);
-    setProfile(profile);
-
-    // Complete onboarding
-    onComplete(mappedUserType, profile);
+    console.log('📋 [OnboardingScreen] Proceeding to account creation with type:', selectedUserType);
+    onComplete(selectedUserType);
   };
 
   const handleLearnMore = () => {
@@ -207,12 +152,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, 
 
   const handleSkip = () => {
     // Default to spectator type
-    setUserType('spectator');
-    onComplete('spectator', { 
-      onboardingType: 'spectator',
-      needsVerification: false,
-      joinedAt: new Date().toISOString()
-    });
+    console.log('📋 [OnboardingScreen] Skipping to spectator account creation');
+    onComplete('spectator');
   };
 
   const renderUserTypeOption = (option: UserTypeOption) => {

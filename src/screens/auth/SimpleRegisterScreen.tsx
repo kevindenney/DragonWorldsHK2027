@@ -23,7 +23,7 @@ interface SimpleRegisterScreenProps {
 }
 
 export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) {
-  const { register, isLoading } = useAuth();
+  const { register, loginWithProvider, isLoading } = useAuth();
   const insets = useSafeAreaInsets();
   const { height: screenHeight } = Dimensions.get('window');
   const [email, setEmail] = useState('');
@@ -34,6 +34,7 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [displayNameError, setDisplayNameError] = useState('');
+
 
   const validateDisplayName = (name: string) => {
     if (!name.trim()) {
@@ -209,6 +210,37 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
     }
   };
 
+  const handleCancel = () => {
+    console.log('🔗 [SimpleRegisterScreen] handleCancel called');
+    try {
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.navigate('Login');
+      }
+    } catch (error) {
+      console.error('❌ [SimpleRegisterScreen] Cancel navigation failed:', error);
+    }
+  };
+
+  const handleSocialSignUp = async (provider: 'google' | 'apple') => {
+    try {
+      console.log(`🔗 [SimpleRegisterScreen] Attempting ${provider} sign up`);
+      if (loginWithProvider) {
+        await loginWithProvider(provider);
+        console.log(`✅ [SimpleRegisterScreen] ${provider} sign up successful`);
+      } else {
+        throw new Error(`${provider} sign up not available`);
+      }
+    } catch (error: any) {
+      console.error(`❌ [SimpleRegisterScreen] ${provider} sign up failed:`, error);
+      Alert.alert(
+        'Sign Up Failed',
+        error.message || `Unable to sign up with ${provider}. Please try again.`
+      );
+    }
+  };
+
   // Simple network connectivity check
   const checkConnectivity = async (): Promise<boolean> => {
     try {
@@ -244,6 +276,13 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
       >
           {/* Header Section */}
           <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={handleCancel}
+              testID="register-cancel"
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
             <View style={styles.logoContainer}>
               <Image
                 source={require('../../../assets/dragon-logo.png')}
@@ -324,6 +363,34 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
                 testID="register-submit"
               />
 
+              {/* Social Sign Up Options */}
+              <View style={styles.socialSection}>
+                <View style={styles.dividerContainer}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>or continue with</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                <View style={styles.socialButtons}>
+                  <TouchableOpacity
+                    style={[styles.socialButton, isLoading && styles.socialButtonDisabled]}
+                    onPress={() => handleSocialSignUp('google')}
+                    disabled={isLoading}
+                    testID="google-signup"
+                  >
+                    <Text style={styles.socialButtonText}>Google</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.socialButton, isLoading && styles.socialButtonDisabled]}
+                    onPress={() => handleSocialSignUp('apple')}
+                    disabled={isLoading}
+                    testID="apple-signup"
+                  >
+                    <Text style={styles.socialButtonText}>Apple</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
               <View style={styles.loginSection}>
                 <Text style={styles.loginPrompt}>Already part of the crew?</Text>
                 <TouchableOpacity onPress={handleSwitchToLogin}>
@@ -349,23 +416,37 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.sm, // Reduced from lg to sm
     // paddingBottom is now set dynamically in the component
   },
   header: {
     alignItems: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.md, // Reduced from xl to md
+    position: 'relative',
+  },
+  cancelButton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    zIndex: 1,
+  },
+  cancelButtonText: {
+    color: colors.background,
+    fontSize: 16,
+    fontWeight: '500',
   },
   logoContainer: {
-    width: 70,
-    height: 70,
-    marginBottom: spacing.md,
+    width: 50, // Reduced from 70
+    height: 50, // Reduced from 70
+    marginBottom: spacing.sm, // Reduced from md to sm
     alignItems: 'center',
     justifyContent: 'center',
   },
   logo: {
-    width: 56,
-    height: 56,
+    width: 40, // Reduced from 56
+    height: 40, // Reduced from 56
     tintColor: colors.background,
   },
   appName: {
@@ -385,13 +466,13 @@ const styles = StyleSheet.create({
   formContainer: {
     backgroundColor: colors.background,
     borderRadius: borderRadius.xl,
-    padding: spacing.xl,
-    marginBottom: spacing.lg, // Add bottom margin for better spacing
+    padding: spacing.lg, // Reduced from xl to lg
+    marginBottom: spacing.sm, // Reduced from lg to sm
     ...shadows.large,
   },
   welcomeSection: {
     alignItems: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md, // Reduced from lg to md
   },
   welcomeTitle: {
     ...typography.h2,
@@ -411,14 +492,55 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   registerButton: {
-    marginTop: spacing.lg,
-    marginBottom: spacing.lg,
+    marginTop: spacing.md, // Reduced from lg to md
+    marginBottom: spacing.sm, // Reduced from lg to sm
+  },
+  socialSection: {
+    marginBottom: spacing.sm,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.borderLight,
+  },
+  dividerText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    marginHorizontal: spacing.sm,
+  },
+  socialButtons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  socialButton: {
+    flex: 1,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 1,
+  },
+  socialButtonDisabled: {
+    opacity: 0.6,
+  },
+  socialButtonText: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '500',
   },
   loginSection: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: spacing.lg,
+    paddingTop: spacing.md, // Reduced from lg to md
     borderTopWidth: 1,
     borderTopColor: colors.borderLight,
   },

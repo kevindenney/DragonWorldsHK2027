@@ -7,13 +7,14 @@ import {
   SafeAreaView,
   ScrollView
 } from 'react-native';
-import { Users, Cloud, ChevronRight, FileText, User, LogIn, LogOut, Trophy, Info } from 'lucide-react-native';
+import { Users, Cloud, ChevronRight, FileText, User, LogIn, LogOut, Trophy, Info, RefreshCw } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
 import { EnhancedContactsScreen } from './EnhancedContactsScreen';
 import { SponsorsScreen } from './SponsorsScreen';
 import { useAuth } from '../../auth/useAuth';
+import { useUserStore } from '../../stores/userStore';
 import { ModernWeatherMapScreen } from './ModernWeatherMapScreen';
 import { DataSourcesScreen } from '../DataSourcesScreen';
 import { AboutRegattaFlowScreen } from '../AboutRegattaFlowScreen';
@@ -84,6 +85,18 @@ const getMoreOptions = (isAuthenticated: boolean, user: any): MoreOption[] => {
     },
   ];
 
+  // Add development option for resetting onboarding (only in dev mode)
+  if (__DEV__) {
+    baseOptions.push({
+      id: 'reset-onboarding',
+      title: 'Reset Onboarding',
+      description: 'Show onboarding flow again (Development only)',
+      icon: RefreshCw,
+      action: 'reset-onboarding' as any,
+      accessibilityLabel: 'Reset onboarding flow for testing',
+    });
+  }
+
   // Add authentication options
   if (isAuthenticated && user) {
     baseOptions.push({
@@ -110,7 +123,7 @@ const getMoreOptions = (isAuthenticated: boolean, user: any): MoreOption[] => {
       description: 'Access personalized features and save preferences',
       icon: LogIn,
       action: 'navigation',
-      navigationTarget: 'Login',
+      navigationTarget: 'UnifiedAuth',
       accessibilityLabel: 'Sign in to access personalized features',
     });
   }
@@ -123,6 +136,7 @@ export function MoreScreen() {
   const [selectedOption, setSelectedOption] = React.useState<string | null>(null);
   const navigation = useNavigation();
   const { isAuthenticated, user, logout } = useAuth();
+  const { setUserType, completeOnboarding, resetOnboarding } = useUserStore();
 
   // Get dynamic options based on auth state
   const moreOptions = React.useMemo(() => {
@@ -162,6 +176,23 @@ export function MoreScreen() {
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (error) {
         console.error('Sign out error:', error);
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+      return;
+    }
+
+    // Handle reset onboarding
+    if (option.id === 'reset-onboarding') {
+      try {
+        // First logout the user, then reset onboarding
+        if (isAuthenticated) {
+          logout();
+        }
+        resetOnboarding();
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        console.log('🔄 [MoreScreen] User logged out and onboarding reset - app will show onboarding immediately');
+      } catch (error) {
+        console.error('Reset onboarding error:', error);
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
       return;
@@ -317,6 +348,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
+    paddingTop: spacing.xl,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
     ...shadows.cardMedium,

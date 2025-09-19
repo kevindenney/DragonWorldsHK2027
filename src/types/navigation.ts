@@ -6,8 +6,9 @@ export type RootStackParamList = {
   MainTabs: undefined;
   Login: undefined;
   Register: undefined;
+  UnifiedAuth: { mode?: 'signin' | 'signup' } | undefined;
   ForgotPassword: undefined;
-  CompetitorDetail: { 
+  CompetitorDetail: {
     sailNumber: string;
     competitorData: any;
     standings: any;

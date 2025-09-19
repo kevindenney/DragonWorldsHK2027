@@ -138,6 +138,14 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
         if (firebaseConfigured) {
           try {
             console.log('🔐 [AuthProvider] Attempting to use Firebase authentication');
+            console.log('🔐 [AuthProvider] DEBUGGING: Environment variables:', {
+              hasApiKey: !!process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+              hasAppId: !!process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+              hasProjectId: !!process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+              apiKeyFirst4: process.env.EXPO_PUBLIC_FIREBASE_API_KEY?.substring(0, 4),
+              projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID
+            });
+
             setUseFirebase(true);
 
             // Add timeout for Firebase service loading
@@ -146,8 +154,15 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
               setTimeout(() => reject(new Error('Firebase service loading timed out')), 10000);
             });
 
+            console.log('🔐 [AuthProvider] Loading Firebase auth service...');
             const firebaseAuthService = await Promise.race([firebaseLoadPromise, timeoutPromise]);
             firebaseServiceRef.current = firebaseAuthService;
+
+            console.log('🔐 [AuthProvider] DEBUGGING: Firebase service methods:', {
+              hasRegister: typeof firebaseAuthService.register === 'function',
+              hasLogin: typeof firebaseAuthService.login === 'function',
+              hasOnAuthStateChanged: typeof firebaseAuthService.onAuthStateChanged === 'function'
+            });
 
             console.log('🔐 [AuthProvider] Firebase auth service loaded, setting up listener...');
 
@@ -171,14 +186,6 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
 
             const initDuration = Date.now() - initStartTime;
             console.log(`✅ [AuthProvider] Firebase authentication initialized successfully in ${initDuration}ms`);
-
-            // Test Firebase connection
-            try {
-              const connectionTest = await testFirebaseConnection();
-              console.log('🔐 [AuthProvider] Firebase connection test:', connectionTest);
-            } catch (connError) {
-              console.warn('⚠️ [AuthProvider] Firebase connection test failed:', connError);
-            }
 
           } catch (error) {
             const initDuration = Date.now() - initStartTime;
@@ -221,16 +228,6 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       }
     }
 
-    // Helper function to test Firebase connection
-    async function testFirebaseConnection() {
-      try {
-        const { testFirebaseConnection } = await import('../config/firebase');
-        return await testFirebaseConnection();
-      } catch (error) {
-        console.warn('⚠️ [AuthProvider] Could not load Firebase connection test:', error);
-        return { success: false, error: 'Connection test unavailable' };
-      }
-    }
 
     async function initializeMockAuth() {
       console.log('🔧 [AuthProvider] Initializing mock authentication service');
@@ -266,8 +263,6 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
    * Login with email and password
    */
   const login = async (credentials: LoginCredentials): Promise<void> => {
-    // TEMPORARY: Add alert for debugging auth provider access
-    alert('🔐 AUTH PROVIDER LOGIN CALLED - Provider is accessible');
 
     const loginStartTime = Date.now();
 
@@ -295,8 +290,6 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
         console.log('🔐 [AuthProvider] Using Firebase for login');
         console.log('🔐 [AuthProvider] Firebase service type:', typeof firebaseServiceRef.current.login);
 
-        // TEMPORARY: Add alert for debugging which service is used
-        alert(`🔍 USING FIREBASE AUTH SERVICE\nCredentials: ${credentials.email}`);
 
         authPromise = firebaseServiceRef.current.login(credentials);
       } else {
@@ -306,8 +299,6 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
           hasLoginMethod: typeof mockAuthService.login === 'function'
         });
 
-        // TEMPORARY: Add alert for debugging which service is used
-        alert(`🔍 USING MOCK AUTH SERVICE\nCredentials: ${credentials.email}`);
 
         authPromise = mockAuthService.login(credentials);
       }
@@ -340,22 +331,55 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
    * Register new user
    */
   const register = async (credentials: RegisterCredentials): Promise<void> => {
+    const regStartTime = Date.now();
+
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
 
       console.log('🔐 [AuthProvider] Starting registration process...');
+      console.log('🔐 [AuthProvider] DEBUGGING: Registration credentials:', {
+        email: credentials.email,
+        displayName: credentials.displayName,
+        hasPassword: !!credentials.password,
+        passwordLength: credentials.password?.length || 0
+      });
+      console.log('🔐 [AuthProvider] DEBUGGING: Auth service status:', {
+        useFirebase,
+        authServiceReady,
+        firebaseServiceReady: !!firebaseServiceRef.current,
+        mockServiceReady: !!mockAuthService
+      });
 
       if (useFirebase && firebaseServiceRef.current) {
         console.log('🔐 [AuthProvider] Using Firebase for registration');
+        console.log('🔐 [AuthProvider] DEBUGGING: Firebase service type:', typeof firebaseServiceRef.current.register);
+
         await firebaseServiceRef.current.register(credentials);
       } else {
         console.log('🔧 [AuthProvider] Using mock service for registration');
+        console.log('🔧 [AuthProvider] DEBUGGING: Mock service status:', {
+          initialized: !!mockAuthService,
+          hasRegisterMethod: typeof mockAuthService.register === 'function'
+        });
+
         await mockAuthService.register(credentials);
       }
+
+      const regDuration = Date.now() - regStartTime;
+      console.log(`✅ [AuthProvider] Registration completed successfully in ${regDuration}ms`);
+
       // User state will be updated via onAuthStateChanged listener
     } catch (error) {
-      console.error('❌ [AuthProvider] Registration failed:', error);
+      const regDuration = Date.now() - regStartTime;
+      console.error(`❌ [AuthProvider] Registration failed after ${regDuration}ms:`, error);
+      console.error('❌ [AuthProvider] Error details:', {
+        message: error?.message,
+        code: error?.code,
+        name: error?.name,
+        stack: error?.stack?.substring(0, 300)
+      });
+
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Registration failed' });
       throw error;
     } finally {
@@ -477,6 +501,32 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
   };
 
   /**
+   * Resend email verification
+   */
+  const resendEmailVerification = async (): Promise<void> => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'CLEAR_ERROR' });
+
+      console.log('🔐 [AuthProvider] Starting email verification resend...');
+
+      if (useFirebase && firebaseServiceRef.current) {
+        console.log('🔐 [AuthProvider] Using Firebase for email verification');
+        await firebaseServiceRef.current.resendEmailVerification();
+      } else {
+        console.log('⚠️ [AuthProvider] Email verification not supported in mock mode');
+        throw new Error('Email verification not available in mock mode.');
+      }
+    } catch (error) {
+      console.error('❌ [AuthProvider] Email verification resend failed:', error);
+      dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to send verification email' });
+      throw error;
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  /**
    * Clear error state
    */
   const clearError = (): void => {
@@ -501,6 +551,7 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
     logout,
     resetPassword,
     updateProfile,
+    resendEmailVerification,
     clearError,
   };
 

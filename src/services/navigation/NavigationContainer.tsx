@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { SimpleLoginScreen } from '../../screens/auth/SimpleLoginScreen';
 import { SimpleRegisterScreen } from '../../screens/auth/SimpleRegisterScreen';
 import { SimplePasswordResetScreen } from '../../screens/auth/SimplePasswordResetScreen';
+import { UnifiedAuthScreen } from '../../screens/auth/UnifiedAuthScreen';
 import { ProfileScreen } from '../../screens/ProfileScreen';
 // CompetitorDetail is now nested under the Results stack so we do not import it here
 import { DocumentViewer } from '../../components/noticeBoard/DocumentViewer';
@@ -11,21 +12,37 @@ import { EntryList } from '../../components/noticeBoard/EntryListCard';
 import { AuthProvider } from '../../auth/AuthProvider';
 import { useAuth } from '../../auth/useAuth';
 import { TabNavigator } from './TabNavigator';
-import { WelcomeScreen, FeatureTourScreen, GuestModeScreen, OnboardingScreen } from '../../screens/onboarding';
+import { WelcomeScreen, FeatureTourScreen, GuestModeScreen, OnboardingScreen, AccountCreationScreen } from '../../screens/onboarding';
 import { useUserStore } from '../../stores/userStore';
 
 const Stack = createStackNavigator();
 
 // Onboarding Navigator for first-time users
 const OnboardingNavigator = () => {
-  const [currentStep, setCurrentStep] = React.useState<'welcome' | 'tour' | 'choice' | 'userType'>('welcome');
-  const { completeOnboarding, setUserType } = useUserStore();
+  const [currentStep, setCurrentStep] = React.useState<'welcome' | 'signup'>('welcome');
+  const { completeOnboarding, setUserType, setSelectedOnboardingType } = useUserStore();
+  const { isAuthenticated, user } = useAuth();
 
   console.log('📋 [OnboardingNavigator] Current step:', currentStep);
 
+  // Monitor authentication state and complete onboarding when user authenticates
+  React.useEffect(() => {
+    if (isAuthenticated && user) {
+      console.log('✅ [OnboardingNavigator] User authenticated during onboarding, completing onboarding');
+      // Complete onboarding with spectator type for social sign-ups
+      completeOnboarding('spectator', {
+        onboardingType: 'spectator',
+        needsVerification: false,
+        joinedAt: new Date().toISOString(),
+        displayName: user.displayName || user.email || 'User',
+        email: user.email || '',
+      });
+    }
+  }, [isAuthenticated, user, completeOnboarding]);
+
   const handleWelcomeContinue = () => {
-    console.log('📋 [OnboardingNavigator] Welcome continue -> tour');
-    setCurrentStep('tour');
+    console.log('📋 [OnboardingNavigator] Welcome continue -> signup');
+    setCurrentStep('signup');
   };
 
   const handleWelcomeSkip = () => {
@@ -37,52 +54,9 @@ const OnboardingNavigator = () => {
     });
   };
 
-  const handleTourContinue = () => {
-    console.log('📋 [OnboardingNavigator] Tour continue -> choice');
-    setCurrentStep('choice');
-  };
-
-  const handleTourBack = () => {
-    console.log('📋 [OnboardingNavigator] Tour back -> welcome');
+  const handleSignupBack = () => {
+    console.log('📋 [OnboardingNavigator] Signup back -> welcome');
     setCurrentStep('welcome');
-  };
-
-  const handleTourSkip = () => {
-    console.log('📋 [OnboardingNavigator] Tour skip -> main app as guest');
-    completeOnboarding('spectator', {
-      onboardingType: 'spectator',
-      needsVerification: false,
-      joinedAt: new Date().toISOString(),
-    });
-  };
-
-  const handleCreateAccount = () => {
-    console.log('📋 [OnboardingNavigator] Create account -> user type selection');
-    setCurrentStep('userType');
-  };
-
-  const handleSignIn = () => {
-    console.log('📋 [OnboardingNavigator] Sign in -> login screen');
-    // This will be handled by auth system
-  };
-
-  const handleContinueAsGuest = () => {
-    console.log('📋 [OnboardingNavigator] Continue as guest -> main app');
-    completeOnboarding('spectator', {
-      onboardingType: 'spectator',
-      needsVerification: false,
-      joinedAt: new Date().toISOString(),
-    });
-  };
-
-  const handleChoiceBack = () => {
-    console.log('📋 [OnboardingNavigator] Choice back -> tour');
-    setCurrentStep('tour');
-  };
-
-  const handleUserTypeComplete = (userType: any, profile: any) => {
-    console.log('📋 [OnboardingNavigator] User type complete:', userType, profile);
-    completeOnboarding(userType, profile);
   };
 
   switch (currentStep) {
@@ -94,29 +68,15 @@ const OnboardingNavigator = () => {
         />
       );
 
-    case 'tour':
+    case 'signup':
       return (
-        <FeatureTourScreen
-          onContinue={handleTourContinue}
-          onBack={handleTourBack}
-          onSkip={handleTourSkip}
-        />
-      );
-
-    case 'choice':
-      return (
-        <GuestModeScreen
-          onCreateAccount={handleCreateAccount}
-          onSignIn={handleSignIn}
-          onContinueAsGuest={handleContinueAsGuest}
-          onBack={handleChoiceBack}
-        />
-      );
-
-    case 'userType':
-      return (
-        <OnboardingScreen
-          onComplete={handleUserTypeComplete}
+        <SimpleRegisterScreen
+          navigation={{
+            goBack: handleSignupBack,
+            navigate: () => {},
+            canGoBack: () => true,
+            reset: () => {}
+          }}
         />
       );
 
@@ -153,6 +113,14 @@ const MainApp = () => {
         component={ProfileScreen}
       />
       {/* Auth screens - accessible from More tab and within app flow */}
+      <Stack.Screen
+        name="UnifiedAuth"
+        component={UnifiedAuthScreen}
+        options={{
+          headerShown: false,
+          presentation: 'modal'
+        }}
+      />
       <Stack.Screen
         name="Login"
         component={SimpleLoginScreen}

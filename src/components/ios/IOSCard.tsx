@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle, Platform } from 'react-native';
+import { View, StyleSheet, ViewStyle, Platform, TouchableOpacity } from 'react-native';
 import { colors } from '../../constants/theme';
 
 export type IOSCardVariant = 'elevated' | 'filled' | 'outlined';
@@ -10,6 +10,7 @@ export interface IOSCardProps {
   padding?: number;
   style?: ViewStyle;
   testID?: string;
+  onPress?: () => void;
 }
 
 export const IOSCard: React.FC<IOSCardProps> = ({
@@ -18,6 +19,7 @@ export const IOSCard: React.FC<IOSCardProps> = ({
   padding = 16, // Apple HIG 16pt standard padding
   style,
   testID,
+  onPress,
 }) => {
   const cardStyle = [
     styles.base,
@@ -26,9 +28,23 @@ export const IOSCard: React.FC<IOSCardProps> = ({
     style,
   ];
 
+  if (onPress) {
+    return (
+      <TouchableOpacity
+        style={cardStyle}
+        testID={testID}
+        onPress={onPress}
+        accessibilityRole="button"
+        activeOpacity={0.7}
+      >
+        {children}
+      </TouchableOpacity>
+    );
+  }
+
   return (
-    <View 
-      style={cardStyle} 
+    <View
+      style={cardStyle}
       testID={testID}
       accessibilityRole="region"
     >

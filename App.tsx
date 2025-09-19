@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { AppNavigationContainer } from './src/services/navigation/NavigationContainer';
 import { Text, View, StyleSheet } from 'react-native';
+import { validateRuntimeConfiguration, logEnvironmentVariables } from './src/utils/configValidator';
 
 // Keep the splash screen visible while we fetch resources
 console.log('🚀 [App.tsx] Preventing splash screen auto-hide');
@@ -82,6 +83,21 @@ export default function App() {
     async function prepare() {
       try {
         console.log('🔄 [App.tsx] Preparing app resources...');
+
+        // Run comprehensive configuration validation
+        console.log('🔍 [App.tsx] Running configuration validation...');
+        if (__DEV__) {
+          logEnvironmentVariables();
+          const configResult = validateRuntimeConfiguration();
+
+          if (!configResult.isValid) {
+            console.error('❌ [App.tsx] Configuration validation failed!');
+            console.error('Errors:', configResult.errors);
+          } else {
+            console.log('✅ [App.tsx] Configuration validation passed');
+          }
+        }
+
         // Add any resource loading here if needed in future
         // For now, we'll just mark as ready immediately
         setAppIsReady(true);

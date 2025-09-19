@@ -50,22 +50,18 @@ export const REGATTA_FLOW_BRANDING = {
   pricing: {
     starter: {
       name: 'Starter Package',
-      range: '$20,000',
       description: 'Basic regatta app with essential features',
     },
     professional: {
       name: 'Professional Package',
-      range: '$35,000',
       description: 'Custom design with advanced features',
     },
     championship: {
       name: 'Championship Package',
-      range: '$60,000',
       description: 'Full feature suite for major events',
     },
     enterprise: {
       name: 'Enterprise Partnership',
-      range: '$75,000+',
       description: 'Ongoing development partnership',
     },
   },

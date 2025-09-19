@@ -3,6 +3,14 @@
  * No external dependencies to prevent circular imports
  */
 
+// Import UserStatus enum to avoid circular dependencies
+export enum UserStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  SUSPENDED = 'suspended',
+  PENDING_VERIFICATION = 'pending_verification',
+}
+
 export interface User {
   uid: string;
   email: string;
@@ -11,6 +19,7 @@ export interface User {
   emailVerified: boolean;
   phoneNumber?: string;
   role: 'participant' | 'official' | 'admin';
+  status: UserStatus;
   providers: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -76,5 +85,6 @@ export interface AuthContextType {
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
+  resendEmailVerification?: () => Promise<void>;
   clearError: () => void;
 }

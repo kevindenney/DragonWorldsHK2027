@@ -61,9 +61,15 @@
             ]
           },
           {
-            "CFBundleURLName": "dragonworlds-deep-linking",
+            "CFBundleURLName": "google-oauth",
             "CFBundleURLSchemes": [
-              "dragonworlds"
+              "com.googleusercontent.apps.839737857128-qvdva2jrauf49erhratq7ri72d9hfjbb"
+            ]
+          },
+          {
+            "CFBundleURLName": "google-signin-url-scheme",
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.839737857128-qvdva2jrauf49erhratq7ri72d9hfjbb"
             ]
           }
         ],
@@ -194,7 +200,13 @@
           "defaultChannel": "default"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.839737857128-qvdva2jrauf49erhratq7ri72d9hfjbb"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false
@@ -209,7 +221,7 @@
       "sentryDsn": "https://your-sentry-dsn@sentry.io/project-id",
       "enableDeveloperMenu": false
     },
-    "owner": "regattaflow",
+    "owner": "denneyke",
     "privacy": "public",
     "githubUrl": "https://github.com/regattaflow/dragonworlds-hk2027",
     "updates": {

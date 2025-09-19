@@ -12,7 +12,7 @@ const open = async (url: string) => {
   } catch {}
 };
 
-type SourceKey = 'openweathermap' | 'openmeteo' | 'noaa' | 'hko';
+type SourceKey = 'openweathermap' | 'hko' | 'racingrulesofsailing';
 
 interface SourceHealth {
   status: 'ok' | 'degraded' | 'down';
@@ -27,15 +27,13 @@ export function DataSourcesScreen() {
   const [fetchedAt, setFetchedAt] = useState<string | null>(null);
   const [availableSources, setAvailableSources] = useState<Record<SourceKey, boolean>>({
     openweathermap: false,
-    openmeteo: false,
-    noaa: false,
     hko: false,
+    racingrulesofsailing: false,
   });
   const [health, setHealth] = useState<Record<SourceKey, SourceHealth>>({
     openweathermap: { status: 'down' },
-    openmeteo: { status: 'down' },
-    noaa: { status: 'down' },
     hko: { status: 'down' },
+    racingrulesofsailing: { status: 'down' },
   });
   const [recentErrors, setRecentErrors] = useState<string[]>([]);
   type Metric = 'temperature' | 'wind' | 'waves' | 'tide' | 'all';
@@ -48,12 +46,12 @@ export function DataSourcesScreen() {
       const res = await weatherAPI.getWeatherData();
       const keys = Object.keys(res.data || {}) as SourceKey[];
 
-      const nextAvailable: Record<SourceKey, boolean> = { openweathermap: false, openmeteo: false, noaa: false, hko: false };
+      const nextAvailable: Record<SourceKey, boolean> = { openweathermap: false, hko: false, racingrulesofsailing: false };
       keys.forEach(k => { if (k in nextAvailable) nextAvailable[k] = true; });
       setAvailableSources(nextAvailable);
 
-      const nextHealth: Record<SourceKey, SourceHealth> = { openweathermap: { status: 'down' }, openmeteo: { status: 'down' }, noaa: { status: 'down' }, hko: { status: 'down' } };
-      (['openweathermap','openmeteo','noaa','hko'] as SourceKey[]).forEach(k => {
+      const nextHealth: Record<SourceKey, SourceHealth> = { openweathermap: { status: 'down' }, hko: { status: 'down' }, racingrulesofsailing: { status: 'down' } };
+      (['openweathermap','hko','racingrulesofsailing'] as SourceKey[]).forEach(k => {
         nextHealth[k] = nextAvailable[k] ? { status: 'ok' } : { status: 'down' };
       });
 
@@ -83,9 +81,9 @@ export function DataSourcesScreen() {
   const activeSourceByMetric = useMemo(() => {
     return {
       temperature: availableSources.openweathermap ? 'OpenWeatherMap' : (availableSources.hko ? 'Hong Kong Observatory' : 'Simulated/Fallback'),
-      wind: availableSources.openweathermap ? 'OpenWeatherMap' : (availableSources.hko ? 'Hong Kong Observatory' : 'Simulated/Fallback'),
-      waves: availableSources.openmeteo ? 'Open‑Meteo Marine' : 'Simulated/Fallback',
-      tide: availableSources.noaa ? 'NOAA Tides' : 'Simulated/Fallback',
+      wind: availableSources.openweathermap ? 'OpenWeatherMap' : (availableSources.hko ? 'HKO Weather Buoys' : 'Simulated/Fallback'),
+      waves: availableSources.openweathermap ? 'OpenWeatherMap' : 'Simulated/Fallback',
+      tide: availableSources.hko ? 'HKO Tide Stations' : 'Simulated/Fallback',
     };
   }, [availableSources]);
 
@@ -101,7 +99,7 @@ export function DataSourcesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}> 
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <IOSText style={styles.title}>Live Data Sources</IOSText>
 
@@ -144,64 +142,113 @@ export function DataSourcesScreen() {
         {/* Primary Sources */}
         <View style={styles.card}>
           <IOSText style={styles.cardTitle}>Primary Live Sources</IOSText>
-          {/* Open‑Meteo - Waves */}
-          {(filter === 'all' || filter === 'waves') && (
+
+          {/* OpenWeatherMap - Primary weather data */}
+          {(filter === 'all' || filter === 'temperature' || filter === 'wind' || filter === 'waves') && (
             <View style={styles.sourceRow}>
-              <Waves size={16} color="#007AFF" />
+              <View style={styles.multiIcon}>
+                <Thermometer size={16} color="#FF6B6B" />
+                <Wind size={16} color="#007AFF" style={{ marginLeft: 6 }} />
+                <Waves size={16} color="#007AFF" style={{ marginLeft: 6 }} />
+              </View>
               <View style={styles.sourceTextWrap}>
-                <TouchableOpacity onPress={() => open('https://open-meteo.com/')}>
-                  <IOSText style={styles.link}>Open‑Meteo Marine API</IOSText>
+                <TouchableOpacity onPress={() => open('https://openweathermap.org/api/one-call-3')}>
+                  <IOSText style={styles.link}>OpenWeatherMap One Call API</IOSText>
                 </TouchableOpacity>
-                <IOSText style={styles.cardBody}>Wave heights, periods, directions</IOSText>
+                <IOSText style={styles.cardBody}>Temperature, wind, waves, pressure, humidity, and hourly forecasts for Hong Kong waters</IOSText>
               </View>
             </View>
           )}
 
-          {/* NOAA - Tide */}
+          {/* Hong Kong Observatory - Local conditions */}
+          {(filter === 'all' || filter === 'temperature' || filter === 'wind' || filter === 'tide') && (
+            <View style={styles.sourceRow}>
+              <View style={styles.multiIcon}>
+                <Thermometer size={16} color="#FF6B6B" />
+                <Wind size={16} color="#007AFF" style={{ marginLeft: 6 }} />
+                <Anchor size={16} color="#007AFF" style={{ marginLeft: 6 }} />
+              </View>
+              <View style={styles.sourceTextWrap}>
+                <TouchableOpacity onPress={() => open('https://data.weather.gov.hk/weatherAPI/doc/files/HKO_Open_Data_API_Documentation.pdf')}>
+                  <IOSText style={styles.link}>Hong Kong Observatory Open Data</IOSText>
+                </TouchableOpacity>
+                <IOSText style={styles.cardBody}>Real-time local conditions, weather warnings, marine forecasts, and tide data</IOSText>
+              </View>
+            </View>
+          )}
+
+          {/* Racing Rules of Sailing - Results and Notices */}
+          <View style={styles.sourceRow}>
+            <View style={styles.multiIcon}>
+              <ExternalLink size={16} color="#007AFF" />
+            </View>
+            <View style={styles.sourceTextWrap}>
+              <TouchableOpacity onPress={() => open('https://www.racingrulesofsailing.org/')}>
+                <IOSText style={styles.link}>Racing Rules of Sailing</IOSText>
+              </TouchableOpacity>
+              <IOSText style={styles.cardBody}>Live race results, official notices, sailing instructions, and regatta documentation</IOSText>
+            </View>
+          </View>
+        </View>
+
+        {/* HKO Professional Infrastructure */}
+        <View style={styles.card}>
+          <IOSText style={styles.cardTitle}>HKO Professional Marine Network</IOSText>
+
+          {/* Weather Buoys */}
+          {(filter === 'all' || filter === 'wind' || filter === 'waves') && (
+            <View style={styles.sourceRow}>
+              <View style={styles.multiIcon}>
+                <Wind size={16} color="#007AFF" />
+                <Waves size={16} color="#007AFF" style={{ marginLeft: 6 }} />
+              </View>
+              <View style={styles.sourceTextWrap}>
+                <IOSText style={styles.link}>5 Weather Buoys (HKIA Area)</IOSText>
+                <IOSText style={styles.cardBody}>10-second real-time updates: Chek Lap Kok, Sha Chau, Lung Fu Shan, Tate's Cairn, Waglan Island</IOSText>
+              </View>
+            </View>
+          )}
+
+          {/* Tide Stations */}
           {(filter === 'all' || filter === 'tide') && (
             <View style={styles.sourceRow}>
               <Anchor size={16} color="#007AFF" />
               <View style={styles.sourceTextWrap}>
-                <TouchableOpacity onPress={() => open('https://api.tidesandcurrents.noaa.gov/')}>
-                  <IOSText style={styles.link}>NOAA Tides API</IOSText>
-                </TouchableOpacity>
-                <IOSText style={styles.cardBody}>Tide predictions for Hong Kong waters</IOSText>
+                <IOSText style={styles.link}>14 Real-time Tide Stations</IOSText>
+                <IOSText style={styles.cardBody}>Victoria Harbour, Cheung Chau, Quarry Bay, Tai O, Waglan Island, and 9 more</IOSText>
               </View>
             </View>
           )}
 
-          {/* OpenWeatherMap - Temp & Wind */}
-          {(filter === 'all' || filter === 'temperature' || filter === 'wind') && (
+          {/* Wind Stations */}
+          {(filter === 'all' || filter === 'wind' || filter === 'temperature') && (
             <View style={styles.sourceRow}>
               <View style={styles.multiIcon}>
-                <Thermometer size={16} color="#FF6B6B" />
-                <Wind size={16} color="#007AFF" style={{ marginLeft: 6 }} />
+                <Wind size={16} color="#007AFF" />
+                <Thermometer size={16} color="#FF6B6B" style={{ marginLeft: 6 }} />
               </View>
               <View style={styles.sourceTextWrap}>
-                <TouchableOpacity onPress={() => open('https://openweathermap.org/api/one-call-3')}>
-                  <IOSText style={styles.link}>OpenWeatherMap (One Call)</IOSText>
-                </TouchableOpacity>
-                <IOSText style={styles.cardBody}>Temperature, wind, and hourly forecasts</IOSText>
+                <IOSText style={styles.link}>30+ Drifting Buoys</IOSText>
+                <IOSText style={styles.cardBody}>South China Sea & Western North Pacific coverage with sea level pressure and temperature</IOSText>
               </View>
             </View>
           )}
 
-          {/* HKO - Local conditions (temp/wind fallback) */}
-          {(filter === 'all' || filter === 'temperature' || filter === 'wind') && (
+          {/* Forecast Areas */}
+          {(filter === 'all' || filter === 'wind' || filter === 'waves') && (
             <View style={styles.sourceRow}>
               <View style={styles.multiIcon}>
-                <Thermometer size={16} color="#FF6B6B" />
-                <Wind size={16} color="#007AFF" style={{ marginLeft: 6 }} />
+                <Wind size={16} color="#007AFF" />
+                <Waves size={16} color="#007AFF" style={{ marginLeft: 6 }} />
               </View>
               <View style={styles.sourceTextWrap}>
-                <TouchableOpacity onPress={() => open('https://www.hko.gov.hk/en/wxinfo/ts/index.htm')}>
-                  <IOSText style={styles.link}>Hong Kong Observatory</IOSText>
-                </TouchableOpacity>
-                <IOSText style={styles.cardBody}>Local conditions and weather warnings</IOSText>
+                <IOSText style={styles.link}>10 Marine Forecast Areas</IOSText>
+                <IOSText style={styles.cardBody}>Professional forecasting for Victoria Harbour, Eastern/Western Waters, and Open Sea areas</IOSText>
               </View>
             </View>
           )}
         </View>
+
 
         {/* Snapshot */}
         <View style={styles.card}>
@@ -230,19 +277,19 @@ export function DataSourcesScreen() {
         {/* Update Frequency */}
         <View style={styles.card}>
           <IOSText style={styles.cardTitle}>Update Frequency</IOSText>
-          <IOSText style={styles.cardBody}>• Weather Manager: updates every 15 minutes by default</IOSText>
-          <IOSText style={styles.cardBody}>• Racing Weather Simulation: refreshes every 5 minutes during racing</IOSText>
-          <IOSText style={styles.cardBody}>• Cache Duration: 10–30 minutes depending on subscription tier</IOSText>
-          <IOSText style={styles.cardBody}>• During active racing: 2–5 minute real‑time refreshes</IOSText>
+          <IOSText style={styles.cardBody}>• OpenWeatherMap: 10-minute cache, updates every 15 minutes</IOSText>
+          <IOSText style={styles.cardBody}>• HKO Weather Data: 10-second real-time polling when available</IOSText>
+          <IOSText style={styles.cardBody}>• Racing Rules of Sailing: Real-time updates during events</IOSText>
+          <IOSText style={styles.cardBody}>• Race Results: Live updates during active racing</IOSText>
+          <IOSText style={styles.cardBody}>• Notices: Automatic refresh every 5 minutes</IOSText>
         </View>
 
         {/* API Health */}
         <View style={styles.card}>
-          <IOSText style={styles.cardTitle}>API Health</IOSText>
-          <View style={styles.healthItem}><IOSText style={styles.healthLabel}>OpenWeatherMap</IOSText>{renderHealth(health.openweathermap)}</View>
-          <View style={styles.healthItem}><IOSText style={styles.healthLabel}>Open‑Meteo Marine</IOSText>{renderHealth(health.openmeteo)}</View>
-          <View style={styles.healthItem}><IOSText style={styles.healthLabel}>NOAA Tides</IOSText>{renderHealth(health.noaa)}</View>
+          <IOSText style={styles.cardTitle}>API Health Status</IOSText>
+          <View style={styles.healthItem}><IOSText style={styles.healthLabel}>OpenWeatherMap One Call API</IOSText>{renderHealth(health.openweathermap)}</View>
           <View style={styles.healthItem}><IOSText style={styles.healthLabel}>Hong Kong Observatory</IOSText>{renderHealth(health.hko)}</View>
+          <View style={styles.healthItem}><IOSText style={styles.healthLabel}>Racing Rules of Sailing</IOSText>{renderHealth(health.racingrulesofsailing)}</View>
           {recentErrors.length > 0 && (
             <View style={{ marginTop: 8 }}>
               <IOSText style={styles.smallTitle}>Recent Fetch Errors</IOSText>
@@ -255,23 +302,25 @@ export function DataSourcesScreen() {
           )}
         </View>
 
-        {/* Data Quality & Fallbacks */}
+        {/* Data Quality & Sources */}
         <View style={styles.card}>
-          <IOSText style={styles.cardTitle}>Data Quality & Fallbacks</IOSText>
-          <IOSText style={styles.cardBody}>• High quality: NOAA, OpenWeatherMap, HKO (when available)</IOSText>
-          <IOSText style={styles.cardBody}>• Medium quality: Open‑Meteo marine (waves/swell)</IOSText>
-          <IOSText style={styles.cardBody}>• Low quality: Simulated data when external APIs are unavailable</IOSText>
+          <IOSText style={styles.cardTitle}>Data Quality & Reliability</IOSText>
+          <IOSText style={styles.cardBody}>• High Quality: OpenWeatherMap professional weather data, HKO official conditions</IOSText>
+          <IOSText style={styles.cardBody}>• Live Racing Data: Real-time results and notices from Racing Rules of Sailing</IOSText>
+          <IOSText style={styles.cardBody}>• Medium Quality: Cached API responses during peak usage</IOSText>
+          <IOSText style={styles.cardBody}>• Fallback: Simulated data when APIs are temporarily unavailable</IOSText>
+          <IOSText style={styles.cardBody}>• Geographic Coverage: Hong Kong waters and Dragon Worlds racing area</IOSText>
         </View>
 
-        {/* Live Status */}
+        {/* Live Data Verification */}
         <View style={styles.card}>
-          <IOSText style={styles.cardTitle}>Is it live?</IOSText>
-          <IOSText style={styles.cardBody}>✓ Real‑time fetching from multiple APIs</IOSText>
-          <IOSText style={styles.cardBody}>✓ Automatic refresh every 5–15 minutes</IOSText>
-          <IOSText style={styles.cardBody}>✓ Live tide predictions from NOAA</IOSText>
-          <IOSText style={styles.cardBody}>✓ Current wind and waves from marine sources</IOSText>
-          <IOSText style={styles.cardBody}>✓ HKO local conditions and warnings</IOSText>
-          <IOSText style={styles.cardBody}>✓ Smart caching to balance freshness and limits</IOSText>
+          <IOSText style={styles.cardTitle}>Is It Live?</IOSText>
+          <IOSText style={styles.cardBody}>✓ OpenWeatherMap: Professional weather API with hourly forecasts</IOSText>
+          <IOSText style={styles.cardBody}>✓ HKO: Real-time Hong Kong weather conditions and marine forecasts</IOSText>
+          <IOSText style={styles.cardBody}>✓ Racing Rules of Sailing: Live race results and official notices during events</IOSText>
+          <IOSText style={styles.cardBody}>✓ Automatic refresh: Weather every 15 minutes, race data every 5 minutes</IOSText>
+          <IOSText style={styles.cardBody}>✓ Smart caching: Balance between real-time updates and API rate limits</IOSText>
+          <IOSText style={styles.cardBody}>✓ Fallback systems: Continue functioning even when some sources are unavailable</IOSText>
         </View>
 
         {/* Links note */}
@@ -412,6 +461,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
   },
+  smallTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    marginBottom: 6,
+  },
+  refreshBtn: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  refreshText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  healthItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  healthLabel: {
+    fontSize: 14,
+    color: '#2C3E50',
+    flex: 1,
+  },
+  healthRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  healthOk: {
+    fontSize: 13,
+    color: '#34C759',
+    fontWeight: '600',
+  },
+  healthWarn: {
+    fontSize: 13,
+    color: '#FFCC00',
+    fontWeight: '600',
+  },
+  healthDown: {
+    fontSize: 13,
+    color: '#FF3B30',
+    fontWeight: '600',
+  },
 });
-
-

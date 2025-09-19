@@ -174,6 +174,7 @@ interface UserState {
   // Enhanced state for onboarding
   userType: UserType | null;
   needsOnboarding: boolean;
+  selectedOnboardingType: OnboardingUserType | null; // Temporary storage for user type selection
 
   // Authentication
   signIn: (email: string, password: string) => Promise<void>;
@@ -184,6 +185,7 @@ interface UserState {
   // Enhanced onboarding methods
   setUserType: (userType: UserType) => void;
   setProfile: (profile: Partial<UserProfile>) => void;
+  setSelectedOnboardingType: (onboardingType: OnboardingUserType) => void;
   completeOnboarding: (userType: UserType, profile: Partial<UserProfile>) => void;
   
   // Profile management
@@ -231,6 +233,7 @@ interface UserState {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   clearUserData: () => void;
+  resetOnboarding: () => void;
 }
 
 // Default preferences
@@ -350,6 +353,7 @@ export const useUserStore = create<UserState>()(
       // Enhanced onboarding state
       userType: null,
       needsOnboarding: true,
+      selectedOnboardingType: null,
 
       // Authentication
       signIn: async (email: string, password: string) => {
@@ -475,7 +479,7 @@ export const useUserStore = create<UserState>()(
 
       setProfile: (profileUpdates: Partial<UserProfile>) => {
         set(state => ({
-          profile: state.profile 
+          profile: state.profile
             ? { ...state.profile, ...profileUpdates }
             : {
                 id: `temp_${Date.now()}`,
@@ -500,6 +504,10 @@ export const useUserStore = create<UserState>()(
                 ...profileUpdates
               }
         }));
+      },
+
+      setSelectedOnboardingType: (onboardingType: OnboardingUserType) => {
+        set({ selectedOnboardingType: onboardingType });
       },
 
       completeOnboarding: (userType: UserType, profileData: Partial<UserProfile>) => {
@@ -1008,7 +1016,19 @@ export const useUserStore = create<UserState>()(
           achievements: [],
           isAuthenticated: false,
           error: null,
-          lastSync: null
+          lastSync: null,
+          userType: null,
+          needsOnboarding: true,
+          selectedOnboardingType: null
+        });
+      },
+
+      // Debug method to reset onboarding
+      resetOnboarding: () => {
+        set({
+          userType: null,
+          needsOnboarding: true,
+          selectedOnboardingType: null
         });
       }
     }),
@@ -1024,7 +1044,8 @@ export const useUserStore = create<UserState>()(
         isAuthenticated: state.isAuthenticated,
         lastSync: state.lastSync,
         userType: state.userType,
-        needsOnboarding: state.needsOnboarding
+        needsOnboarding: state.needsOnboarding,
+        selectedOnboardingType: state.selectedOnboardingType
       })
     }
   )
@@ -1058,5 +1079,6 @@ export const useParticipantStatus = () =>
 // Enhanced selectors for onboarding
 export const useUserType = () => useUserStore(state => state.userType);
 export const useNeedsOnboarding = () => useUserStore(state => state.needsOnboarding);
+export const useSelectedOnboardingType = () => useUserStore(state => state.selectedOnboardingType);
 export const useOnboardingType = () => useUserStore(state => state.profile?.onboardingType);
 export const useNeedsVerification = () => useUserStore(state => state.profile?.needsVerification);
