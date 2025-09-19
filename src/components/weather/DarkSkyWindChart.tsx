@@ -11,6 +11,7 @@ import Animated, {
 import { ArrowUp, TrendingUp, TrendingDown } from 'lucide-react-native';
 import { colors, typography, spacing } from '../../constants/theme';
 import { darkSkyColors, darkSkyTypography, darkSkySpacing } from '../../constants/darkSkyTheme';
+import { formatChartTime, getHongKongTime } from '../../utils/timeUtils';
 
 const { width } = Dimensions.get('window');
 
@@ -102,20 +103,27 @@ export const DarkSkyWindChart: React.FC<DarkSkyWindChartProps> = ({
     return windData.slice(0, 12).map((wind, index) => {
       const barHeight = (wind.speed / maxWindSpeed) * 60;
       const barColor = getWindStrengthColor(wind.speed);
-      
+
+      // Format time with local timezone context
+      const localTime = formatChartTime(wind.time, {
+        showTimezone: false,
+        use24Hour: false,
+        shortFormat: true
+      });
+
       return (
         <View key={wind.time} style={styles.windBar}>
-          <Animated.View 
+          <Animated.View
             style={[
               styles.windBarFill,
-              { 
+              {
                 height: barHeight,
                 backgroundColor: barColor,
               }
             ]}
           />
           <Text style={styles.windBarTime}>
-            {new Date(wind.time).getHours()}:00
+            {localTime}
           </Text>
           <Text style={styles.windBarSpeed}>{wind.speed}</Text>
         </View>
@@ -176,6 +184,12 @@ export const DarkSkyWindChart: React.FC<DarkSkyWindChartProps> = ({
         <View style={styles.chartLabels}>
           <Text style={styles.chartLabel}>0 kts</Text>
           <Text style={styles.chartLabel}>{Math.round(maxWindSpeed)} kts</Text>
+        </View>
+        {/* Local time indicator */}
+        <View style={styles.timezoneIndicator}>
+          <Text style={styles.timezoneText}>
+            Times in Hong Kong Time (HKT)
+          </Text>
         </View>
       </View>
 
@@ -373,5 +387,17 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
     marginTop: 2,
+  },
+
+  // Timezone indicator
+  timezoneIndicator: {
+    marginTop: spacing.sm,
+    alignItems: 'center',
+  },
+
+  timezoneText: {
+    fontSize: 10,
+    color: colors.textMuted,
+    fontStyle: 'italic',
   },
 });

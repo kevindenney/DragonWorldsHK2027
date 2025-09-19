@@ -85,7 +85,7 @@ export const CategoryFilterChips: React.FC<CategoryFilterChipsProps> = ({
     return null;
   }
 
-  // Validate each category count item
+  // Validate each category count item - keep all categories including those with 0 count
   const validCategoryCounts = categoryCounts.filter(item => {
     if (!item || typeof item !== 'object') {
       console.warn('[CategoryFilterChips] Invalid category count item:', item);
@@ -99,7 +99,7 @@ export const CategoryFilterChips: React.FC<CategoryFilterChipsProps> = ({
       console.warn('[CategoryFilterChips] Invalid count:', item.count);
       return false;
     }
-    return true;
+    return true; // Keep all valid categories, even with count 0
   });
 
   if (validCategoryCounts.length === 0) {

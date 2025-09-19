@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { IOSText } from '../ios/IOSText';
 import { TrendingUp } from 'lucide-react-native';
+import { formatChartTime, getHongKongTime, createTimeLabels } from '../../utils/timeUtils';
 
 const { width } = Dimensions.get('window');
 
@@ -21,7 +22,11 @@ export const SimpleTideChart: React.FC<SimpleTideChartProps> = ({
 }) => {
   const chartWidth = width - 64; // Account for padding
   const chartHeight = 80; // Reduced height for cleaner look
-  
+
+  // Generate local time labels for 12-hour span
+  const now = getHongKongTime();
+  const timeLabels = createTimeLabels(now, 18, 6); // 18 hours span, 6-hour intervals
+
   // Simpler tide pattern for cleaner visualization
   const simpleTidePoints = [
     { x: 0, y: 40 },
@@ -69,13 +74,13 @@ export const SimpleTideChart: React.FC<SimpleTideChartProps> = ({
             );
           })}
           
-          {/* Time labels positioned at bottom */}
+          {/* Time labels positioned at bottom with local time */}
           <View style={styles.timeLabels}>
-            {['03:00', '09:00', '15:00', '21:00'].map((time) => (
-              <IOSText 
-                key={time} 
-                textStyle="caption1" 
-                color="secondaryLabel" 
+            {timeLabels.slice(0, 4).map((time, index) => (
+              <IOSText
+                key={`${time}-${index}`}
+                textStyle="caption1"
+                color="secondaryLabel"
                 style={styles.timeLabel}
               >
                 {time}
@@ -83,6 +88,13 @@ export const SimpleTideChart: React.FC<SimpleTideChartProps> = ({
             ))}
           </View>
         </View>
+      </View>
+
+      {/* Local time indicator */}
+      <View style={styles.timezoneIndicator}>
+        <IOSText textStyle="caption2" color="tertiaryLabel" style={styles.timezoneText}>
+          Times in Hong Kong Time (HKT)
+        </IOSText>
       </View>
     </View>
   );
@@ -136,5 +148,16 @@ const styles = StyleSheet.create({
   timeLabel: {
     color: '#8E8E93',
     fontSize: 11,
+  },
+
+  // Timezone indicator
+  timezoneIndicator: {
+    marginTop: 8,
+    alignItems: 'center',
+  },
+
+  timezoneText: {
+    fontSize: 10,
+    fontStyle: 'italic',
   },
 });

@@ -2,7 +2,8 @@
 // Export all modal components for easy importing
 
 export { EventDetailModal } from './EventDetailModal';
-export { WeatherDetailModal } from './WeatherDetailModal';
+export { WeatherDetailModal, createExampleDataSources } from './WeatherDetailModal';
+export type { DataSource } from './WeatherDetailModal';
 export { LocationDetailModal } from './LocationDetailModal';
 export { SubscriptionModal } from './SubscriptionModal';
 

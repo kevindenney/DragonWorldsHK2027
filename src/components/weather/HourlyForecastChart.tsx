@@ -39,6 +39,7 @@ import { IOSText } from '../ios';
 import { colors, typography, spacing } from '../../constants/theme';
 import { useWeatherUnits } from '../../stores/weatherStore';
 import { convertTemperature, convertWindSpeed } from './UnitConverter';
+import { formatChartTime, getHongKongTime } from '../../utils/timeUtils';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - (spacing.lg * 2);
@@ -72,18 +73,25 @@ interface HourlyForecastChartProps {
 const generateSampleData = (): HourlyForecastData[] => {
   const data: HourlyForecastData[] = [];
   const baseTemp = 25;
-  const now = new Date();
-  
+  const now = getHongKongTime(); // Use Hong Kong time as base
+
   for (let i = 0; i < 24; i++) {
-    const hour = (now.getHours() + i) % 24;
-    const timeStr = hour === 0 ? '12 AM' : 
-                   hour === 12 ? '12 PM' : 
-                   hour < 12 ? `${hour} AM` : `${hour - 12} PM`;
-    
+    const futureTime = new Date(now);
+    futureTime.setHours(now.getHours() + i);
+
+    // Format time with local timezone context
+    const timeStr = formatChartTime(futureTime, {
+      showTimezone: false,
+      use24Hour: false,
+      shortFormat: true
+    });
+
+    const hour = futureTime.getHours();
+
     // Simulate realistic daily temperature curve
     const tempVariation = Math.sin((hour - 6) * Math.PI / 12) * 8;
     const randomVariation = (Math.random() - 0.5) * 3;
-    
+
     data.push({
       time: timeStr,
       hour: hour,
@@ -97,7 +105,7 @@ const generateSampleData = (): HourlyForecastData[] => {
       humidity: 60 + Math.random() * 25
     });
   }
-  
+
   return data;
 };
 
@@ -386,21 +394,21 @@ export const HourlyForecastChart: React.FC<HourlyForecastChartProps> = ({
                 {Math.round(convertTemperature(displayData[selectedHourIndex].temperature, 'C', useWeatherUnits().temperature))}°{useWeatherUnits().temperature}
               </IOSText>
             </View>
-            
+
             <View style={styles.hourMetric}>
               <IOSText style={styles.metricLabel}>Wind</IOSText>
               <IOSText style={styles.metricValue}>
                 {Math.round(convertWindSpeed(displayData[selectedHourIndex].windSpeed, 'kts', useWeatherUnits().windSpeed))} {useWeatherUnits().windSpeed}
               </IOSText>
             </View>
-            
+
             <View style={styles.hourMetric}>
               <IOSText style={styles.metricLabel}>Waves</IOSText>
               <IOSText style={styles.metricValue}>
                 {displayData[selectedHourIndex].waveHeight.toFixed(1)}m
               </IOSText>
             </View>
-            
+
             <View style={styles.hourMetric}>
               <IOSText style={styles.metricLabel}>Tide</IOSText>
               <IOSText style={styles.metricValue}>
@@ -408,6 +416,13 @@ export const HourlyForecastChart: React.FC<HourlyForecastChartProps> = ({
                 {displayData[selectedHourIndex].tideHeight.toFixed(1)}m
               </IOSText>
             </View>
+          </View>
+
+          {/* Local time indicator */}
+          <View style={styles.timezoneIndicator}>
+            <IOSText style={styles.timezoneText}>
+              Times shown in Hong Kong Time (HKT)
+            </IOSText>
           </View>
         </View>
       )}
@@ -499,6 +514,22 @@ const styles = StyleSheet.create({
     ...typography.body2,
     color: colors.text,
     fontWeight: '600',
+  },
+
+  // Timezone indicator
+  timezoneIndicator: {
+    marginTop: spacing.md,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+    alignItems: 'center',
+  },
+
+  timezoneText: {
+    ...typography.caption,
+    color: colors.textMuted,
+    fontSize: 11,
+    fontStyle: 'italic',
   },
 });
 

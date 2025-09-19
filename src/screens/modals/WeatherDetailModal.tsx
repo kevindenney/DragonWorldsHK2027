@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, Image } from 'react-native';
-import { 
+import { View, StyleSheet, ScrollView, Image, Linking } from 'react-native';
+import {
   Wind,
   Waves,
   Compass,
@@ -9,7 +9,8 @@ import {
   ArrowUp,
   ArrowDown,
   ExternalLink,
-  ChevronLeft
+  ChevronLeft,
+  Globe
 } from 'lucide-react-native';
 import { colors, spacing } from '../../constants/theme';
 import {
@@ -44,9 +45,18 @@ interface MarineCondition {
   };
 }
 
+export interface DataSource {
+  name: string;
+  url: string;
+  lastUpdated: string;
+  quality: 'high' | 'medium' | 'low';
+  description: string;
+}
+
 interface RacingForecast {
   provider: string;
   sponsorLogo?: string;
+  dataSource?: DataSource;
   conditions: {
     time: string;
     windSpeed: number;
@@ -60,6 +70,11 @@ interface WeatherDetailModalProps {
   currentConditions: WeatherCondition;
   marineConditions: MarineCondition;
   racingForecast: RacingForecast;
+  dataSources: {
+    weather?: DataSource;
+    marine?: DataSource;
+    tide?: DataSource;
+  };
   visible: boolean;
   onClose: () => void;
 }
@@ -108,10 +123,119 @@ const WindDirectionIndicator: React.FC<{ direction: number }> = ({ direction }) 
   </View>
 );
 
+// Helper function to open external URLs
+const openURL = async (url: string) => {
+  try {
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      console.warn('Cannot open URL:', url);
+    }
+  } catch (error) {
+    console.error('Error opening URL:', error);
+  }
+};
+
+// Data Source Component
+const DataSourceCard: React.FC<{
+  title: string;
+  source?: DataSource;
+  icon: React.ReactNode;
+}> = ({ title, source, icon }) => {
+  if (!source) return null;
+
+  const getQualityColor = (quality: DataSource['quality']) => {
+    switch (quality) {
+      case 'high': return 'systemGreen';
+      case 'medium': return 'systemOrange';
+      case 'low': return 'systemRed';
+      default: return 'systemGray';
+    }
+  };
+
+  const getQualityText = (quality: DataSource['quality']) => {
+    switch (quality) {
+      case 'high': return 'High Quality';
+      case 'medium': return 'Medium Quality';
+      case 'low': return 'Low Quality';
+      default: return 'Unknown';
+    }
+  };
+
+  return (
+    <View style={styles.dataSourceCard}>
+      <View style={styles.dataSourceHeader}>
+        <View style={styles.dataSourceIcon}>
+          {icon}
+        </View>
+        <View style={styles.dataSourceContent}>
+          <IOSText textStyle="caption1" color="secondaryLabel">
+            {title}
+          </IOSText>
+          <IOSText textStyle="callout" weight="semibold" color="label">
+            {source.name}
+          </IOSText>
+          <IOSText textStyle="caption2" color="secondaryLabel">
+            {source.description}
+          </IOSText>
+        </View>
+        <View style={styles.dataSourceActions}>
+          <IOSBadge
+            color={getQualityColor(source.quality)}
+            variant="tinted"
+            size="small"
+          >
+            {getQualityText(source.quality)}
+          </IOSBadge>
+        </View>
+      </View>
+      <View style={styles.dataSourceFooter}>
+        <IOSText textStyle="caption2" color="tertiaryLabel">
+          Updated: {new Date(source.lastUpdated).toLocaleString()}
+        </IOSText>
+        <IOSButton
+          title="View Source"
+          variant="plain"
+          size="small"
+          onPress={() => openURL(source.url)}
+          style={styles.sourceButton}
+        />
+      </View>
+    </View>
+  );
+};
+
+// Helper function to create example data sources for testing/demo
+export const createExampleDataSources = () => ({
+  weather: {
+    name: 'OpenWeatherMap',
+    url: 'https://openweathermap.org/api/one-call-3',
+    lastUpdated: new Date().toISOString(),
+    quality: 'high' as const,
+    description: 'Current weather conditions, temperature, and wind data'
+  },
+  marine: {
+    name: 'Open-Meteo Marine',
+    url: 'https://open-meteo.com/',
+    lastUpdated: new Date().toISOString(),
+    quality: 'medium' as const,
+    description: 'Wave heights, swell periods, and marine forecasts'
+  },
+  tide: {
+    name: 'NOAA Tides',
+    url: 'https://api.tidesandcurrents.noaa.gov/',
+    lastUpdated: new Date().toISOString(),
+    quality: 'high' as const,
+    description: 'Official tide predictions for Hong Kong waters'
+  }
+});
+
 export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
   currentConditions,
   marineConditions,
   racingForecast,
+  dataSources,
   visible,
   onClose
 }) => {
@@ -123,7 +247,9 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
   };
 
   const handleExternalLink = () => {
-    // Open external weather provider
+    if (racingForecast.dataSource?.url) {
+      openURL(racingForecast.dataSource.url);
+    }
   };
 
   const windCondition = getWindCondition(currentConditions.windSpeed);
@@ -133,7 +259,6 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
       visible={visible}
       onClose={onClose}
       presentationStyle="pageSheet"
-      showsHandleIndicator={true}
     >
       <View style={styles.container}>
         {/* Header */}
@@ -317,6 +442,31 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
             </View>
           </IOSCard>
 
+          {/* Data Sources */}
+          <IOSCard variant="elevated" style={styles.dataSourcesCard}>
+            <IOSText textStyle="title3" weight="semibold" style={styles.sectionTitle}>
+              Data Sources
+            </IOSText>
+
+            <DataSourceCard
+              title="Weather Conditions"
+              source={dataSources.weather}
+              icon={<Thermometer size={16} color={colors.error} />}
+            />
+
+            <DataSourceCard
+              title="Marine Conditions"
+              source={dataSources.marine}
+              icon={<Waves size={16} color={colors.primary} />}
+            />
+
+            <DataSourceCard
+              title="Tide Information"
+              source={dataSources.tide}
+              icon={<Globe size={16} color={colors.accent} />}
+            />
+          </IOSCard>
+
           {/* External Link */}
           <View style={styles.externalSection}>
             <IOSButton
@@ -332,8 +482,37 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
         {/* Footer */}
         <View style={styles.footer}>
           <IOSText textStyle="caption1" color="tertiaryLabel" style={styles.attribution}>
-            Weather data provided by {racingForecast.provider}
+            Data provided by multiple sources
           </IOSText>
+          <View style={styles.footerLinks}>
+            {dataSources.weather && (
+              <IOSButton
+                title={dataSources.weather.name}
+                variant="plain"
+                size="small"
+                onPress={() => openURL(dataSources.weather!.url)}
+                style={styles.footerLinkButton}
+              />
+            )}
+            {dataSources.marine && (
+              <IOSButton
+                title={dataSources.marine.name}
+                variant="plain"
+                size="small"
+                onPress={() => openURL(dataSources.marine!.url)}
+                style={styles.footerLinkButton}
+              />
+            )}
+            {dataSources.tide && (
+              <IOSButton
+                title={dataSources.tide.name}
+                variant="plain"
+                size="small"
+                onPress={() => openURL(dataSources.tide!.url)}
+                style={styles.footerLinkButton}
+              />
+            )}
+          </View>
         </View>
       </View>
     </IOSModal>
@@ -392,6 +571,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   forecastCard: {
+    marginBottom: 16,
+  },
+  dataSourcesCard: {
     marginBottom: 16,
   },
   sectionTitle: {
@@ -504,5 +686,58 @@ const styles = StyleSheet.create({
   },
   attribution: {
     textAlign: 'center',
+  },
+
+  // Data Source Cards
+  dataSourceCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  dataSourceHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  dataSourceIcon: {
+    width: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  dataSourceContent: {
+    flex: 1,
+  },
+  dataSourceActions: {
+    marginLeft: 8,
+  },
+  dataSourceFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+  },
+  sourceButton: {
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+  },
+
+  // Footer Links
+  footerLinks: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 8,
+    gap: 8,
+  },
+  footerLinkButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
 });

@@ -5,6 +5,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { subscriptionService } from '../services/subscriptionService';
 import { errorHandler, handleWeatherAPIError } from '../services/errorHandler';
 import { WeatherUnits, TemperatureUnit, WindSpeedUnit, PressureUnit } from '../components/weather/UnitConverter';
+import type {
+  HKOWeatherBuoy,
+  HKOTideStation,
+  HKODriftingBuoy,
+  HKOMarineForecastArea,
+  HKOMarineWarning
+} from '../services/hkoAPI';
 
 // TypeScript interfaces
 export interface WeatherCondition {
@@ -137,7 +144,7 @@ interface WeatherState {
   lastUpdate: string | null;
   loading: boolean;
   error: string | null;
-  
+
   // Location-based forecasting state
   selectedLocation: LocationData | null;
   locationForecasts: Map<string, LocationBasedForecast>;
@@ -147,6 +154,15 @@ interface WeatherState {
   dailyForecast: DailyForecastData[];
   isLocationLoading: boolean;
 
+  // HKO Real-time Data State
+  hkoWeatherBuoys: HKOWeatherBuoy[];
+  hkoTideStations: HKOTideStation[];
+  hkoDriftingBuoys: HKODriftingBuoy[];
+  hkoMarineAreas: HKOMarineForecastArea[];
+  hkoMarineWarnings: HKOMarineWarning[];
+  hkoDataUpdateTime: string | null;
+  hkoPollingActive: boolean;
+
   // Active sources per metric
   activeSources: {
     temperature?: { source: string; at: string };
@@ -154,14 +170,14 @@ interface WeatherState {
     waves?: { source: string; at: string };
     tide?: { source: string; at: string };
   };
-  
+
   // Freemium model state
   dailyQueries: number;
   maxDailyQueries: number;
   premiumUnlocked: boolean;
   trialActive: boolean;
   trialExpiresAt: string | null;
-  
+
   // Unit preferences state
   units: WeatherUnits;
   selectedDayId: string | null;
@@ -215,6 +231,16 @@ interface WeatherState {
   toggleWindStations: () => void;
   toggleWaveStations: () => void;
   toggleTideStations: () => void;
+
+  // HKO Real-time Data Actions
+  updateHKOWeatherBuoys: (buoys: HKOWeatherBuoy[]) => void;
+  updateHKOTideStations: (stations: HKOTideStation[]) => void;
+  updateHKODriftingBuoys: (buoys: HKODriftingBuoy[]) => void;
+  updateHKOMarineAreas: (areas: HKOMarineForecastArea[]) => void;
+  updateHKOWarnings: (warnings: HKOMarineWarning[]) => void;
+  startHKOPolling: () => void;
+  stopHKOPolling: () => void;
+  fetchHKOData: () => Promise<void>;
 }
 
 export type WeatherFeature = 
@@ -259,18 +285,75 @@ const generateSampleHourlyData = (): HourlyForecastData[] => {
   return data;
 };
 
-const generateSampleDailyData = (): DailyForecastData[] => {
+const generateSampleDailyData = async (coordinate?: LocationCoordinate): Promise<DailyForecastData[]> => {
+  console.log('🌊 [WEATHER STORE] Generating daily data with unified tide service');
+
   const days = ['Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu'];
   const conditions = ['Partly cloudy', 'Sunny', 'Mostly sunny', 'Cloudy', 'Rain', 'Partly cloudy', 'Sunny', 'Thunderstorms'];
   const sailingConditions = ['good', 'excellent', 'good', 'moderate', 'poor', 'good', 'excellent', 'dangerous'] as const;
-  
+
+  // Default coordinate for Hong Kong waters if none provided
+  const defaultCoordinate = coordinate || { latitude: 22.225, longitude: 114.125 };
+
+  // Import unified tide service dynamically to avoid circular dependency
+  let unifiedTideService;
+  try {
+    const module = await import('../services/unifiedTideService');
+    unifiedTideService = module.unifiedTideService;
+  } catch (error) {
+    console.warn('🌊 [WEATHER STORE] Unified tide service not available, using fallback');
+    unifiedTideService = null;
+  }
+
   return days.map((day, index) => {
     const baseTemp = 87 - index * 1;
     const tempVariation = Math.random() * 4 - 2;
-    
+    const dayDate = new Date(Date.now() + index * 24 * 60 * 60 * 1000);
+
+    // Get unified tide data for this day
+    let highTideTime = `${Math.floor(6 + index * 0.8) % 12 || 12}:${30 + index * 10}${index % 2 ? 'AM' : 'PM'}`;
+    let lowTideTime = `${Math.floor(12 + index * 0.8) % 12 || 12}:${15 + index * 5}${index % 2 ? 'PM' : 'AM'}`;
+    let tideRange = 1.8 + Math.random() * 0.8;
+
+    if (unifiedTideService) {
+      try {
+        // Get high tide time (typically around 6 AM and 6 PM)
+        const morningHighTide = new Date(dayDate);
+        morningHighTide.setHours(6, 30 + index * 10, 0);
+
+        const eveningHighTide = new Date(dayDate);
+        eveningHighTide.setHours(18, 15 + index * 15, 0);
+
+        // Get low tide time (typically around 12 PM and 12 AM)
+        const noonLowTide = new Date(dayDate);
+        noonLowTide.setHours(12, 45 + index * 5, 0);
+
+        // Use the morning high tide and noon low tide for display
+        highTideTime = morningHighTide.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+        });
+
+        lowTideTime = noonLowTide.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+        });
+
+        // Calculate tide range from unified service
+        const highTideHeight = unifiedTideService.getCurrentTideHeight(defaultCoordinate, morningHighTide);
+        const lowTideHeight = unifiedTideService.getCurrentTideHeight(defaultCoordinate, noonLowTide);
+        tideRange = Math.abs(highTideHeight - lowTideHeight);
+
+        console.log(`🌊 [WEATHER STORE] Day ${index}: High ${highTideHeight.toFixed(1)}m at ${highTideTime}, Low ${lowTideHeight.toFixed(1)}m at ${lowTideTime}, Range ${tideRange.toFixed(1)}m`);
+
+      } catch (error) {
+        console.warn(`🌊 [WEATHER STORE] Failed to get unified tide data for day ${index}:`, error);
+      }
+    }
+
     return {
       id: `day-${index}`,
-      date: new Date(Date.now() + index * 24 * 60 * 60 * 1000).toISOString(),
+      date: dayDate.toISOString(),
       dayName: day === 'Thu' ? 'Today' : day,
       dayShort: day,
       high: Math.round(baseTemp + tempVariation),
@@ -280,9 +363,9 @@ const generateSampleDailyData = (): DailyForecastData[] => {
       windSpeed: Math.round(7 + Math.random() * 15),
       windDirection: 180 + (Math.random() - 0.5) * 60,
       waveHeight: 1.2 + Math.random() * 1.3,
-      highTideTime: `${Math.floor(6 + index * 0.8) % 12 || 12}:${30 + index * 10}${index % 2 ? 'AM' : 'PM'}`,
-      lowTideTime: `${Math.floor(12 + index * 0.8) % 12 || 12}:${15 + index * 5}${index % 2 ? 'PM' : 'AM'}`,
-      tideRange: 1.8 + Math.random() * 0.8,
+      highTideTime,
+      lowTideTime,
+      tideRange: Math.round(tideRange * 100) / 100,
       sailingConditions: sailingConditions[index],
       uvIndex: Math.round(5 + Math.random() * 5),
       humidity: Math.round(65 + Math.random() * 20)
@@ -380,6 +463,15 @@ export const useWeatherStore = create<WeatherState>()(
       windStationsVisible: false,
       waveStationsVisible: false,
       tideStationsVisible: false,
+
+      // HKO Real-time Data Initial State
+      hkoWeatherBuoys: [],
+      hkoTideStations: [],
+      hkoDriftingBuoys: [],
+      hkoMarineAreas: [],
+      hkoMarineWarnings: [],
+      hkoDataUpdateTime: null,
+      hkoPollingActive: false,
 
       // Actions
       updateWeather: (conditions: WeatherCondition, marine: MarineCondition) => {
@@ -705,29 +797,56 @@ export const useWeatherStore = create<WeatherState>()(
           const nowIso = new Date().toISOString();
           const nextActive: WeatherState['activeSources'] = { ...get().activeSources };
           const present = (k: string) => apiResult?.data && k in apiResult.data;
-          if (present('openweathermap')) {
-            nextActive.temperature = { source: 'OpenWeatherMap', at: nowIso };
-            nextActive.wind = { source: 'OpenWeatherMap', at: nowIso };
+
+          // Prioritize Open-Meteo Weather API for temperature and wind
+          if (present('openmeteo_weather')) {
+            nextActive.temperature = { source: 'Open‑Meteo Weather', at: nowIso };
+            nextActive.wind = { source: 'Open‑Meteo Weather', at: nowIso };
+          } else if (present('hko')) {
+            nextActive.temperature = { source: 'Hong Kong Observatory', at: nowIso };
+            nextActive.wind = { source: 'Hong Kong Observatory', at: nowIso };
           }
+
+          // Open-Meteo Marine for waves
           if (present('openmeteo')) {
             nextActive.waves = { source: 'Open‑Meteo Marine', at: nowIso };
           }
+
+          // NOAA for tides
           if (present('noaa')) {
             nextActive.tide = { source: 'NOAA Tides', at: nowIso };
           }
-          if (!present('openweathermap') && present('hko')) {
-            nextActive.temperature = nextActive.temperature ?? { source: 'Hong Kong Observatory', at: nowIso };
-            nextActive.wind = nextActive.wind ?? { source: 'Hong Kong Observatory', at: nowIso };
-          }
 
-          // Build hourly forecast from available sources
+          // Build hourly forecast from available sources - prioritize Open-Meteo Weather
           const hourlyData: HourlyForecastData[] = [];
-          const openMeteo = apiResult?.data?.openmeteo;
-          const ow = apiResult?.data?.openweathermap;
-          const owHourly = ow?.hourly || ow?.data?.hourly;
-          if (Array.isArray(owHourly) && owHourly.length) {
-            const slice = owHourly.slice(0, 24);
-            slice.forEach((h: any) => {
+          const openMeteoWeather = apiResult?.data?.openmeteo_weather;
+          const openMeteoMarine = apiResult?.data?.openmeteo;
+
+          // Use Open-Meteo Weather data if available (primary source)
+          if (openMeteoWeather?.data?.weather?.length) {
+            const weatherSlice = openMeteoWeather.data.weather.slice(0, 24);
+            const windSlice = openMeteoWeather.data.wind.slice(0, 24);
+
+            weatherSlice.forEach((w: any, index: number) => {
+              const wind = windSlice[index] || {};
+              const ts = new Date(w.time).getTime();
+              hourlyData.push({
+                time: new Date(ts).toISOString(),
+                hour: new Date(ts).getHours(),
+                temperature: w.temperature ?? 28,
+                windSpeed: wind.windSpeed ?? 8,
+                windDirection: wind.windDirection ?? 180,
+                waveHeight: openMeteoMarine?.data?.wave?.[index]?.waveHeight ?? 1.2,
+                tideHeight: 0,
+                precipitation: w.precipitation ?? 0,
+                conditions: w.conditions ?? 'Clear',
+                humidity: w.humidity ?? 70,
+              });
+            });
+          } else if (Array.isArray(ow?.hourly) && ow.hourly.length) {
+            // Fall back to OpenWeatherMap if Open-Meteo Weather unavailable
+            const owHourly = ow.hourly.slice(0, 24);
+            owHourly.forEach((h: any) => {
               const ts = (h.dt || h.time || Math.floor(Date.now() / 1000)) * 1000;
               hourlyData.push({
                 time: new Date(ts).toISOString(),
@@ -735,15 +854,15 @@ export const useWeatherStore = create<WeatherState>()(
                 temperature: typeof h.temp === 'number' ? h.temp : (h.temperature ?? 28),
                 windSpeed: typeof h.wind_speed === 'number' ? h.wind_speed : (h.windSpeed ?? 8),
                 windDirection: typeof h.wind_deg === 'number' ? h.wind_deg : (h.windDirection ?? 180),
-                waveHeight: openMeteo?.data?.wave?.length ? (openMeteo.data.wave[hourlyData.length]?.waveHeight ?? 1.2) : 1.2,
+                waveHeight: openMeteoMarine?.data?.wave?.length ? (openMeteoMarine.data.wave[hourlyData.length]?.waveHeight ?? 1.2) : 1.2,
                 tideHeight: 0,
                 precipitation: h.pop ?? h.precipitation ?? 0,
                 conditions: h.weather?.[0]?.main ?? 'Clear',
                 humidity: h.humidity ?? 70,
               });
             });
-          } else if (openMeteo?.data?.wave?.length) {
-            const waveHours = openMeteo.data.wave.slice(0, 24);
+          } else if (openMeteoMarine?.data?.wave?.length) {
+            const waveHours = openMeteoMarine.data.wave.slice(0, 24);
             waveHours.forEach((w: any) => {
               const ts = new Date(w.time).getTime();
               hourlyData.push({
@@ -762,8 +881,8 @@ export const useWeatherStore = create<WeatherState>()(
           }
 
           const ensureHourly = hourlyData.length ? hourlyData : generateSampleHourlyData();
-          const dailyData = generateSampleDailyData();
-          
+          const dailyData = await generateSampleDailyData(coordinate);
+
           set({
             hourlyForecast: ensureHourly,
             dailyForecast: dailyData,
@@ -772,7 +891,7 @@ export const useWeatherStore = create<WeatherState>()(
             activeSources: nextActive,
           });
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to fetch weather data';
+          const errorMessage = handleWeatherAPIError(error, 'weatherStore.fetchWeatherData');
           set({
             isLocationLoading: false,
             error: errorMessage
@@ -879,6 +998,100 @@ export const useWeatherStore = create<WeatherState>()(
 
       toggleTideStations: () => {
         set(state => ({ tideStationsVisible: !state.tideStationsVisible }));
+      },
+
+      // HKO Real-time Data Action Implementations
+      updateHKOWeatherBuoys: (buoys: HKOWeatherBuoy[]) => {
+        set({
+          hkoWeatherBuoys: buoys,
+          hkoDataUpdateTime: new Date().toISOString()
+        });
+      },
+
+      updateHKOTideStations: (stations: HKOTideStation[]) => {
+        set({
+          hkoTideStations: stations,
+          hkoDataUpdateTime: new Date().toISOString()
+        });
+      },
+
+      updateHKODriftingBuoys: (buoys: HKODriftingBuoy[]) => {
+        set({
+          hkoDriftingBuoys: buoys,
+          hkoDataUpdateTime: new Date().toISOString()
+        });
+      },
+
+      updateHKOMarineAreas: (areas: HKOMarineForecastArea[]) => {
+        set({
+          hkoMarineAreas: areas,
+          hkoDataUpdateTime: new Date().toISOString()
+        });
+      },
+
+      updateHKOWarnings: (warnings: HKOMarineWarning[]) => {
+        set({
+          hkoMarineWarnings: warnings,
+          hkoDataUpdateTime: new Date().toISOString()
+        });
+      },
+
+      startHKOPolling: () => {
+        const { hkoAPI } = require('../services/hkoAPI');
+
+        set({ hkoPollingActive: true });
+
+        // Start polling for different data types
+        hkoAPI.startPolling('buoys', (buoys: HKOWeatherBuoy[]) => {
+          get().updateHKOWeatherBuoys(buoys);
+        }, 10000); // 10 seconds
+
+        hkoAPI.startPolling('tides', (stations: HKOTideStation[]) => {
+          get().updateHKOTideStations(stations);
+        }, 30000); // 30 seconds for tide data
+
+        hkoAPI.startPolling('warnings', (warnings: HKOMarineWarning[]) => {
+          get().updateHKOWarnings(warnings);
+        }, 60000); // 1 minute for warnings
+      },
+
+      stopHKOPolling: () => {
+        const { hkoAPI } = require('../services/hkoAPI');
+
+        hkoAPI.stopAllPolling();
+        set({ hkoPollingActive: false });
+      },
+
+      fetchHKOData: async () => {
+        const { hkoAPI } = require('../services/hkoAPI');
+
+        set({ loading: true, error: null });
+
+        try {
+          const [buoys, stations, driftingBuoys, areas, warnings] = await Promise.all([
+            hkoAPI.getWeatherBuoys(),
+            hkoAPI.getTideStations(),
+            hkoAPI.getDriftingBuoys(),
+            hkoAPI.getMarineForecastAreas(),
+            hkoAPI.getWeatherWarnings()
+          ]);
+
+          set({
+            hkoWeatherBuoys: buoys,
+            hkoTideStations: stations,
+            hkoDriftingBuoys: driftingBuoys,
+            hkoMarineAreas: areas,
+            hkoMarineWarnings: warnings,
+            hkoDataUpdateTime: new Date().toISOString(),
+            loading: false
+          });
+        } catch (error) {
+          console.error('Failed to fetch HKO data:', error);
+          set({
+            error: error instanceof Error ? error.message : 'Failed to fetch HKO data',
+            loading: false
+          });
+        }
       }
     }),
     {
@@ -908,7 +1121,13 @@ export const useWeatherStore = create<WeatherState>()(
         nauticalMapVisible: state.nauticalMapVisible,
         windStationsVisible: state.windStationsVisible,
         waveStationsVisible: state.waveStationsVisible,
-        tideStationsVisible: state.tideStationsVisible
+        tideStationsVisible: state.tideStationsVisible,
+        // HKO Real-time data (cache for offline use)
+        hkoWeatherBuoys: state.hkoWeatherBuoys,
+        hkoTideStations: state.hkoTideStations,
+        hkoMarineAreas: state.hkoMarineAreas,
+        hkoMarineWarnings: state.hkoMarineWarnings,
+        hkoDataUpdateTime: state.hkoDataUpdateTime
       })
     }
   )
@@ -959,3 +1178,34 @@ export const useNauticalMapVisible = () => useWeatherStore(state => state.nautic
 export const useWindStationsVisible = () => useWeatherStore(state => state.windStationsVisible);
 export const useWaveStationsVisible = () => useWeatherStore(state => state.waveStationsVisible);
 export const useTideStationsVisible = () => useWeatherStore(state => state.tideStationsVisible);
+
+// HKO Real-time Data Selectors
+export const useHKOWeatherBuoys = () => useWeatherStore(state => state.hkoWeatherBuoys);
+export const useHKOTideStations = () => useWeatherStore(state => state.hkoTideStations);
+export const useHKODriftingBuoys = () => useWeatherStore(state => state.hkoDriftingBuoys);
+export const useHKOMarineAreas = () => useWeatherStore(state => state.hkoMarineAreas);
+export const useHKOMarineWarnings = () => useWeatherStore(state => state.hkoMarineWarnings);
+export const useHKODataUpdateTime = () => useWeatherStore(state => state.hkoDataUpdateTime);
+export const useHKOPollingActive = () => useWeatherStore(state => state.hkoPollingActive);
+
+// HKO Computed Selectors
+export const useHKOActiveWarnings = () => useWeatherStore(state =>
+  state.hkoMarineWarnings.filter(warning => {
+    const now = new Date();
+    const validFrom = new Date(warning.validFrom);
+    const validTo = new Date(warning.validTo);
+    return now >= validFrom && now <= validTo;
+  })
+);
+
+export const useHKOStationCounts = () => useWeatherStore(state => ({
+  buoys: state.hkoWeatherBuoys.length,
+  tideStations: state.hkoTideStations.length,
+  driftingBuoys: state.hkoDriftingBuoys.length,
+  marineAreas: state.hkoMarineAreas.length,
+  warnings: state.hkoMarineWarnings.length,
+  activeWarnings: state.hkoMarineWarnings.filter(w => {
+    const now = new Date();
+    return now >= new Date(w.validFrom) && now <= new Date(w.validTo);
+  }).length
+}));

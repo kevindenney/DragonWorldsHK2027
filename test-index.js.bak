@@ -1,0 +1,203 @@
+/**
+ * Minimal test entry point for isolating property descriptor conflicts
+ * This helps identify exactly which module is causing the "property is not configurable" error
+ */
+
+// PHASE 0: Load global polyfills FIRST before any other imports
+require('./global-polyfills.js');
+
+console.log("🔬 [test-index.js] Starting minimal app with property debugging...");
+
+// Phase 2: Object.defineProperty interceptor for debugging
+const originalDefineProperty = Object.defineProperty;
+const originalGetOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+const problematicProperties = new Set();
+
+Object.defineProperty = function(obj, prop, descriptor) {
+  try {
+    // Log all property definitions for debugging
+    if (typeof prop === 'string' && prop.length < 50) { // Avoid logging huge property names
+      console.log(`🔧 [PropertyDebug] Defining property: "${prop}"`, {
+        configurable: descriptor?.configurable,
+        enumerable: descriptor?.enumerable,
+        writable: descriptor?.writable,
+        hasValue: descriptor?.hasOwnProperty?.('value'),
+        hasGetter: descriptor?.hasOwnProperty?.('get'),
+        hasSetter: descriptor?.hasOwnProperty?.('set'),
+      });
+    }
+
+    // Check if property already exists and is non-configurable
+    const existing = originalGetOwnPropertyDescriptor.call(this, obj, prop);
+    if (existing && existing.configurable === false && descriptor?.configurable !== false) {
+      console.error(`💥 [PropertyDebug] CONFLICT: Attempting to redefine non-configurable property "${prop}"`);
+      console.error(`💥 [PropertyDebug] Existing descriptor:`, existing);
+      console.error(`💥 [PropertyDebug] New descriptor:`, descriptor);
+      problematicProperties.add(prop);
+    }
+
+    return originalDefineProperty.call(this, obj, prop, descriptor);
+  } catch (error) {
+    console.error(`💥 [PropertyDebug] Error defining property "${prop}":`, error.message);
+    console.error(`💥 [PropertyDebug] Descriptor:`, descriptor);
+    throw error;
+  }
+};
+
+// Also intercept getOwnPropertyDescriptor for debugging
+Object.getOwnPropertyDescriptor = function(obj, prop) {
+  const result = originalGetOwnPropertyDescriptor.call(this, obj, prop);
+  if (result && result.configurable === false && typeof prop === 'string' && prop.length < 50) {
+    console.log(`🔍 [PropertyDebug] Found non-configurable property: "${prop}"`, result);
+  }
+  return result;
+};
+
+// Phase 3: Enhanced getter/setter modification debugging
+const originalGetOwnPropertyDescriptors = Object.getOwnPropertyDescriptors;
+const propertyModificationAttempts = new Map();
+
+// Track descriptor access patterns that might lead to getter modification
+Object.getOwnPropertyDescriptors = function(obj) {
+  const result = originalGetOwnPropertyDescriptors.call(this, obj);
+
+  // Look for properties with getters that might be modified
+  Object.keys(result).forEach(key => {
+    const descriptor = result[key];
+    if (descriptor.get && descriptor.configurable === false) {
+      console.log(`🔍 [GetterDebug] Non-configurable getter found for "${key}"`, {
+        configurable: descriptor.configurable,
+        enumerable: descriptor.enumerable,
+        hasGetter: !!descriptor.get,
+        hasSetter: !!descriptor.set
+      });
+      propertyModificationAttempts.set(key, descriptor);
+    }
+  });
+
+  return result;
+};
+
+// Intercept attempts to access property descriptors for modification
+const originalGetPropertyDescriptor = Object.getPropertyDescriptor || function(obj, prop) {
+  let current = obj;
+  while (current) {
+    const descriptor = originalGetOwnPropertyDescriptor.call(this, current, prop);
+    if (descriptor) return descriptor;
+    current = Object.getPrototypeOf(current);
+  }
+  return undefined;
+};
+
+// Enhanced property descriptor interception
+if (typeof Object.getPropertyDescriptor === 'function') {
+  Object.getPropertyDescriptor = function(obj, prop) {
+    const result = originalGetPropertyDescriptor.call(this, obj, prop);
+    if (result && result.get && result.configurable === false) {
+      console.log(`⚠️ [GetterDebug] Accessing non-configurable getter for "${prop}" - potential modification attempt!`);
+      console.log(`⚠️ [GetterDebug] Object type:`, obj.constructor.name);
+      console.log(`⚠️ [GetterDebug] Descriptor:`, result);
+
+      // Log stack trace to see what's trying to access this
+      console.log(`⚠️ [GetterDebug] Stack trace:`, new Error().stack);
+    }
+    return result;
+  };
+}
+
+// Phase 4: Native property modification interception
+// This is the most critical part - intercept attempts to modify getters on native objects
+
+// Safe access to global objects that might not exist in React Native
+function safeGlobalAccess(varName) {
+  // Use global object lookups instead of eval to avoid ReferenceErrors
+  if (typeof global !== 'undefined' && global[varName]) {
+    return global[varName];
+  }
+  return null;
+}
+
+const nativeObjects = [
+  safeGlobalAccess('window') || global,
+  safeGlobalAccess('navigator'),
+  safeGlobalAccess('document'),
+  Object.prototype,
+  Function.prototype,
+  Array.prototype
+].filter(Boolean);
+
+nativeObjects.forEach((obj, index) => {
+  if (!obj) return;
+
+  const objName = obj === (safeGlobalAccess('window') || global) ? 'global' :
+                  obj === safeGlobalAccess('navigator') ? 'navigator' :
+                  obj === safeGlobalAccess('document') ? 'document' :
+                  obj === Object.prototype ? 'Object.prototype' :
+                  obj === Function.prototype ? 'Function.prototype' :
+                  obj === Array.prototype ? 'Array.prototype' : `unknown-${index}`;
+
+  console.log(`🔍 [GetterDebug] Scanning ${objName} for non-configurable getters...`);
+
+  try {
+    const descriptors = originalGetOwnPropertyDescriptors.call(Object, obj);
+    Object.keys(descriptors).forEach(key => {
+      const descriptor = descriptors[key];
+      if (descriptor.get && descriptor.configurable === false) {
+        console.log(`⚠️ [GetterDebug] Found non-configurable getter on ${objName}.${key}`);
+
+        // Create a wrapper to detect modification attempts
+        const originalGetter = descriptor.get;
+        let getterAccessCount = 0;
+
+        // Note: We can't actually replace the getter if it's non-configurable,
+        // but we can log when it's being accessed during error conditions
+        console.log(`🔍 [GetterDebug] Monitoring ${objName}.${key} for modification attempts`);
+      }
+    });
+  } catch (error) {
+    console.log(`⚠️ [GetterDebug] Could not scan ${objName}:`, error.message);
+  }
+});
+
+// Enhanced error catching for getter modifications
+const originalToString = Error.prototype.toString;
+Error.prototype.toString = function() {
+  const result = originalToString.call(this);
+  if (this.message && this.message.includes('getter of an unconfigurable property')) {
+    console.error(`💥 [GetterDebug] DETAILED ERROR ANALYSIS:`);
+    console.error(`💥 [GetterDebug] Error message:`, this.message);
+    console.error(`💥 [GetterDebug] Stack trace:`, this.stack);
+    console.error(`💥 [GetterDebug] Property modification attempts logged:`, Array.from(propertyModificationAttempts.keys()));
+
+    // Try to identify the specific property and object
+    if (this.stack) {
+      const stackLines = this.stack.split('\n');
+      console.error(`💥 [GetterDebug] Stack analysis:`, stackLines.slice(0, 5));
+    }
+  }
+  return result;
+};
+
+console.log("✅ [test-index.js] Enhanced getter debugging interceptors installed");
+console.log("✅ [test-index.js] Property debugging interceptors installed");
+
+// Phase 5: Progressive module loading test (polyfills already added at top)
+
+// Progressive module loading test
+try {
+  console.log("🔄 [test-index.js] Loading main App component...");
+  require('./App');
+  console.log("✅ [test-index.js] App loaded successfully!");
+} catch (error) {
+  console.error("💥 [test-index.js] App load failed:", error);
+  console.error("💥 [test-index.js] Stack trace:", error.stack);
+
+  if (problematicProperties.size > 0) {
+    console.error("💥 [test-index.js] Problematic properties found:", Array.from(problematicProperties));
+  }
+
+  // Try to provide more specific error information
+  if (error.message && error.message.includes('property is not configurable')) {
+    console.error("💥 [test-index.js] This is the property configurability error we're debugging!");
+  }
+}

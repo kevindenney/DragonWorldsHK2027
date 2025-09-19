@@ -1,0 +1,1158 @@
+// Dragon Worlds HK 2027 - React Native Entry Point
+console.log('🏁 [index.ts] Initializing Dragon Worlds HK 2027 app');
+
+// CONSOLIDATED POLYFILLS - Installed early to prevent property descriptor conflicts
+console.log('🌐 [index.ts] Installing consolidated React Native polyfills...');
+console.log('🛡️ [index.ts] Guard prelude status:', (globalThis as any).__definePropertyGuardLoaded);
+if ((globalThis as any).__definePropertyGuardEvents?.length) {
+  console.log('🛡️ [index.ts] Guard prelude captured events:', (globalThis as any).__definePropertyGuardEvents);
+}
+
+// Firebase v11 known problematic properties and patterns
+const FIREBASE_V11_PROBLEMATIC_PROPS = [
+  'XMLHttpRequest', 'fetch', 'Request', 'Response', 'Headers',
+  'AbortController', 'AbortSignal', 'ReadableStream', 'WritableStream',
+  'TransformStream', 'CompressionStream', 'DecompressionStream',
+  'crypto', 'SubtleCrypto', 'TextEncoder', 'TextDecoder',
+  'FormData', 'URLSearchParams', 'URL', 'Blob', 'File', 'FileReader',
+  'navigator', 'location', 'history', 'document', 'window'
+];
+
+type DescriptorSnapshot = {
+  configurable?: boolean;
+  enumerable?: boolean;
+  writable?: boolean;
+  hasGetter?: boolean;
+  hasSetter?: boolean;
+  hasValue?: boolean;
+};
+
+const snapshotDescriptor = (descriptor?: PropertyDescriptor | null): DescriptorSnapshot | 'undefined' => {
+  if (!descriptor) {
+    return 'undefined';
+  }
+
+  return {
+    configurable: descriptor.configurable,
+    enumerable: descriptor.enumerable,
+    writable: 'value' in descriptor ? descriptor.writable : undefined,
+    hasGetter: typeof descriptor.get === 'function',
+    hasSetter: typeof descriptor.set === 'function',
+    hasValue: 'value' in descriptor
+  };
+};
+
+const logDescriptorInspection = (label: string, target: any, prop: string | symbol) => {
+  try {
+    const descriptor = Object.getOwnPropertyDescriptor(target, prop);
+    console.log(`🔎 [DescriptorInspection] ${label}.${String(prop)} before definition:`, snapshotDescriptor(descriptor));
+    return descriptor;
+  } catch (error) {
+    console.warn(`⚠️ [DescriptorInspection] Failed to inspect ${label}.${String(prop)}:`, error);
+    return undefined;
+  }
+};
+
+const descriptorLocked = (descriptor?: PropertyDescriptor | null) => {
+  if (!descriptor) {
+    return false;
+  }
+  return descriptor.configurable === false || typeof descriptor.get === 'function' || typeof descriptor.set === 'function';
+};
+
+const originalDefineProperty = Object.defineProperty;
+const originalGetOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+const originalReflectDefineProperty = Reflect.defineProperty;
+const isHermesRuntime = typeof (global as any)?.HermesInternal === 'object';
+
+const safeDefineProperty = (
+  target: any,
+  prop: string | symbol,
+  descriptor: PropertyDescriptor,
+  context: string
+) => {
+  const existingDescriptor = logDescriptorInspection(context, target, prop);
+
+  if (descriptorLocked(existingDescriptor)) {
+    console.log(`🚫 [SafeDefineProperty] ${context}.${String(prop)} is locked - skipping definition`);
+    return false;
+  }
+
+  try {
+    originalDefineProperty.call(Object, target, prop, descriptor);
+    console.log(`✅ [SafeDefineProperty] ${context}.${String(prop)} defined`);
+    return true;
+  } catch (error) {
+    console.warn(`💥 [SafeDefineProperty] Failed to define ${context}.${String(prop)}:`, error);
+    return false;
+  }
+};
+
+// Guard against external libraries trying to redefine locked getters (Firebase v11 on Expo Go)
+if (isHermesRuntime) {
+  console.log('🛡️ [DefinePropertyGuard] Hermes runtime detected - skipping defineProperty overrides');
+  (global as any).__definePropertyGuardInstalled = 'skipped-hermes';
+} else if (!(global as any).__definePropertyGuardInstalled) {
+  (global as any).__definePropertyGuardInstalled = true;
+
+  const objectDefinePropertyDescriptor = originalGetOwnPropertyDescriptor?.(Object, 'defineProperty');
+  const reflectDefinePropertyDescriptor = originalGetOwnPropertyDescriptor?.(Reflect, 'defineProperty');
+
+  const canOverrideObjectDefineProperty = objectDefinePropertyDescriptor?.writable !== false;
+  const canOverrideReflectDefineProperty = reflectDefinePropertyDescriptor?.writable !== false;
+
+  const definePropertyGuard = (
+    obj: any,
+    prop: string | symbol,
+    descriptor: PropertyDescriptor
+  ) => {
+    const propStr = String(prop);
+    const targetLabel = obj === global ? 'global' : obj === globalThis ? 'globalThis' : obj?.constructor?.name || typeof obj;
+
+    try {
+      const existingDescriptor = originalGetOwnPropertyDescriptor?.(obj, prop);
+
+      if (
+        existingDescriptor &&
+        descriptor &&
+        (existingDescriptor.get || existingDescriptor.set) &&
+        existingDescriptor.configurable === false
+      ) {
+        // Any attempt to swap getter/setter or assign a value should be ignored.
+        const tryingToReplaceAccessor = Boolean(descriptor.get || descriptor.set || 'value' in descriptor);
+        if (tryingToReplaceAccessor) {
+          console.warn(`🛡️ [DefinePropertyGuard] Prevented redefining locked accessor on ${targetLabel}.${propStr}`);
+          return obj;
+        }
+      }
+
+      return originalDefineProperty.call(Object, obj, prop, descriptor);
+    } catch (error: any) {
+      if (error?.message?.includes('unconfigurable') || error?.message?.includes('Attempting to change the getter')) {
+        console.error(`🛡️ [DefinePropertyGuard] Intercepted error defining ${targetLabel}.${propStr}: ${error.message}`);
+        return obj;
+      }
+
+      throw error;
+    }
+  };
+
+  const reflectDefinePropertyGuard = (
+    obj: object,
+    prop: string | symbol,
+    descriptor: PropertyDescriptor
+  ) => {
+    const propStr = String(prop);
+    const targetLabel = obj === global ? 'global' : obj === globalThis ? 'globalThis' : obj?.constructor?.name || typeof obj;
+
+    try {
+      const existingDescriptor = originalGetOwnPropertyDescriptor?.(obj, prop);
+
+      if (
+        existingDescriptor &&
+        descriptor &&
+        (existingDescriptor.get || existingDescriptor.set) &&
+        existingDescriptor.configurable === false
+      ) {
+        const tryingToReplaceAccessor = Boolean(descriptor.get || descriptor.set || 'value' in descriptor);
+        if (tryingToReplaceAccessor) {
+          console.warn(`🛡️ [ReflectDefinePropertyGuard] Prevented redefining locked accessor on ${targetLabel}.${propStr}`);
+          return true;
+        }
+      }
+
+      return originalReflectDefineProperty.call(Reflect, obj, prop, descriptor);
+    } catch (error: any) {
+      if (error?.message?.includes('unconfigurable') || error?.message?.includes('Attempting to change the getter')) {
+        console.error(`🛡️ [ReflectDefinePropertyGuard] Intercepted error defining ${targetLabel}.${propStr}: ${error.message}`);
+        return true;
+      }
+
+      throw error;
+    }
+  };
+
+  let installed = false;
+
+  if (canOverrideObjectDefineProperty) {
+    try {
+      Object.defineProperty = definePropertyGuard as typeof Object.defineProperty;
+      installed = true;
+    } catch (error) {
+      console.warn('🛡️ [DefinePropertyGuard] Failed to override Object.defineProperty:', error);
+    }
+  }
+
+  if (canOverrideReflectDefineProperty) {
+    try {
+      Reflect.defineProperty = reflectDefinePropertyGuard as typeof Reflect.defineProperty;
+      installed = true;
+    } catch (error) {
+      console.warn('🛡️ [DefinePropertyGuard] Failed to override Reflect.defineProperty:', error);
+    }
+  }
+
+  if (installed) {
+    console.log('🛡️ [DefinePropertyGuard] Lightweight guard installed to bypass locked descriptor redefinitions');
+  } else {
+    console.log('🛡️ [DefinePropertyGuard] Unable to override defineProperty - relying on safeDefineProperty fallbacks');
+  }
+
+  // Ensure defaults if overrides failed
+  if (!installed) {
+    try {
+      Object.defineProperty = definePropertyGuard as typeof Object.defineProperty;
+      installed = true;
+    } catch (error) {
+      console.warn('🛡️ [DefinePropertyGuard] Direct override of Object.defineProperty failed:', error);
+    }
+
+    try {
+      Reflect.defineProperty = reflectDefinePropertyGuard as typeof Reflect.defineProperty;
+      installed = true;
+    } catch (error) {
+      console.warn('🛡️ [DefinePropertyGuard] Direct override of Reflect.defineProperty failed:', error);
+    }
+  }
+}
+
+if (typeof global !== 'undefined') {
+  try {
+    // COMPATIBILITY FIX: Use configurable polyfills to prevent React Native conflicts
+    console.log('🔧 [index.ts] Installing React Native compatible polyfills...');
+
+    // Global distance fallback for deriveBFS protection (React Native compatible)
+    if (!global.hasOwnProperty('distance')) {
+      safeDefineProperty(global, 'distance', {
+        value: 0,
+        writable: true,
+        enumerable: false,
+        configurable: true // FIXED: Allow React Native to reconfigure if needed
+      }, 'global');
+    }
+    if (typeof globalThis !== 'undefined' && !globalThis.hasOwnProperty('distance')) {
+      safeDefineProperty(globalThis, 'distance', {
+        value: 0,
+        writable: true,
+        enumerable: false,
+        configurable: true // FIXED: Allow reconfiguration
+      }, 'globalThis');
+    }
+
+    // CONSOLIDATED: Enhanced DOM polyfills (integrated with Firebase compatibility layer)
+    {
+      const documentDescriptor = logDescriptorInspection('global', global, 'document');
+      if (descriptorLocked(documentDescriptor)) {
+        console.log('🔧 [index.ts] Detected locked document descriptor - skipping polyfill installation');
+      } else if (documentDescriptor === undefined && typeof global.document === 'undefined') {
+        console.log('🔧 [index.ts] Installing enhanced document polyfill (Firebase + React Native compatible)');
+        safeDefineProperty(global, 'document', {
+          value: {
+          createElement: function(tag) {
+            return {
+              tagName: tag.toUpperCase(),
+              style: {},
+              setAttribute: function(name, value) { this[name] = value; },
+              getAttribute: function(name) { return this[name]; },
+              appendChild: function(child) { return child; },
+              removeChild: function(child) { return child; },
+              addEventListener: function(event, handler) {},
+              removeEventListener: function(event, handler) {},
+              ownerDocument: this,
+              parentNode: null,
+              childNodes: [],
+              innerHTML: '',
+              textContent: ''
+            };
+          },
+          getElementById: function(id) { return null; },
+          querySelector: function(selector) { return null; },
+          querySelectorAll: function(selector) { return []; },
+          addEventListener: function(event, handler) {},
+          removeEventListener: function(event, handler) {},
+          createEvent: function(type) {
+            return {
+              type,
+              initEvent: function() {},
+              preventDefault: function() {},
+              stopPropagation: function() {}
+            };
+          },
+          body: {
+            appendChild: function(child) { return child; },
+            removeChild: function(child) { return child; },
+            style: {},
+            addEventListener: function(event, handler) {},
+            removeEventListener: function(event, handler) {}
+          },
+          head: {
+            appendChild: function(child) { return child; },
+            removeChild: function(child) { return child; },
+            style: {}
+          },
+          documentElement: {
+            style: {},
+            addEventListener: function(event, handler) {},
+            removeEventListener: function(event, handler) {}
+          },
+          readyState: 'complete',
+          location: {
+            href: 'react-native://localhost',
+            protocol: 'react-native:',
+            host: 'localhost',
+            hostname: 'localhost',
+            port: '',
+            pathname: '/',
+            search: '',
+            hash: '',
+            origin: 'react-native://localhost',
+            assign: function() {},
+            reload: function() {},
+            replace: function() {}
+          },
+          defaultView: null, // Firebase might check for this
+          cookie: '', // Firebase might access cookies
+          title: 'React Native App',
+          hidden: false,
+          visibilityState: 'visible'
+          },
+          writable: true,
+          enumerable: false,
+          configurable: true
+        }, 'global');
+      } else {
+        console.log('🔧 [index.ts] Document already provided by runtime, leaving untouched');
+      }
+    }
+
+    // Enhanced window polyfill - consolidate with existing global
+    {
+      const windowDescriptor = logDescriptorInspection('global', global, 'window');
+      if (descriptorLocked(windowDescriptor)) {
+        console.log('🔧 [index.ts] Detected locked window descriptor - skipping polyfill installation');
+      } else if (windowDescriptor === undefined && typeof global.window === 'undefined') {
+        console.log('🔧 [index.ts] Installing enhanced window polyfill (Firebase + React Native compatible)');
+        const windowObject = global;
+        // Add window-specific properties that Firebase might expect
+        windowObject.location = global.document?.location || {
+          href: 'react-native://localhost',
+          protocol: 'react-native:',
+          host: 'localhost',
+          pathname: '/'
+        };
+        windowObject.navigator = windowObject.navigator || {
+          userAgent: 'React Native',
+          platform: 'react-native',
+          language: 'en-US',
+          languages: ['en-US'],
+          onLine: true,
+          cookieEnabled: false
+        };
+        windowObject.history = {
+          length: 1,
+          state: null,
+          back: function() {},
+          forward: function() {},
+          go: function() {},
+          pushState: function() {},
+          replaceState: function() {}
+        };
+        windowObject.localStorage = {
+          getItem: function() { return null; },
+          setItem: function() {},
+          removeItem: function() {},
+          clear: function() {},
+          key: function() { return null; },
+          length: 0
+        };
+        windowObject.sessionStorage = windowObject.localStorage;
+
+        safeDefineProperty(global, 'window', {
+          value: windowObject,
+          writable: true,
+          enumerable: false,
+          configurable: true
+        }, 'global');
+      } else {
+        console.log('🔧 [index.ts] Window already provided by runtime, leaving untouched');
+      }
+    }
+
+    // Enhanced navigator - avoid redundancy with window.navigator
+    {
+      const navigatorDescriptor = logDescriptorInspection('global', global, 'navigator');
+      if (descriptorLocked(navigatorDescriptor)) {
+        console.log('🔧 [index.ts] Detected locked navigator descriptor - skipping polyfill installation');
+      } else if (navigatorDescriptor === undefined && !global.window?.navigator && typeof global.navigator === 'undefined') {
+        console.log('🔧 [index.ts] Installing enhanced navigator polyfill (Firebase + React Native compatible)');
+        safeDefineProperty(global, 'navigator', {
+          value: {
+            userAgent: 'React Native',
+            platform: 'react-native',
+            language: 'en-US',
+            languages: ['en-US'],
+            onLine: true,
+            cookieEnabled: false,
+            doNotTrack: null,
+            maxTouchPoints: 1,
+            hardwareConcurrency: 4
+          },
+          writable: true,
+          enumerable: false,
+          configurable: true
+        }, 'global');
+      } else {
+        console.log('🔧 [index.ts] Navigator already provided by runtime, leaving untouched');
+      }
+    }
+
+    // CRITICAL FIX: Don't lock down ErrorUtils - let React Native error-guard.js handle it
+    console.log('🔧 [index.ts] Skipping ErrorUtils polyfill - deferring to React Native error-guard.js');
+
+    // ENHANCED FIREBASE V11 COMPATIBILITY: Comprehensive pre-emptive property definitions
+    console.log('🔥 [index.ts] Installing comprehensive Firebase v11 compatibility layer...');
+
+    // Define all Firebase v11 problematic properties BEFORE Firebase loads
+    const firebaseCompatibilityLayer = {
+      // Web API classes that Firebase v11 tries to polyfill
+      XMLHttpRequest: class MockXMLHttpRequest {
+        constructor() {
+          console.log('🔧 [Firebase-Compat] MockXMLHttpRequest instantiated - Firebase will use React Native networking');
+        }
+        open() {}
+        send() {}
+        setRequestHeader() {}
+        addEventListener() {}
+        removeEventListener() {}
+        abort() {}
+        getAllResponseHeaders() { return ''; }
+        getResponseHeader() { return null; }
+        overrideMimeType() {}
+        readyState = 0;
+        response = null;
+        responseText = '';
+        responseType = '';
+        responseURL = '';
+        responseXML = null;
+        status = 0;
+        statusText = '';
+        timeout = 0;
+        upload = null;
+        withCredentials = false;
+        onreadystatechange = null;
+        onerror = null;
+        onload = null;
+        onloadend = null;
+        onloadstart = null;
+        onprogress = null;
+        ontimeout = null;
+        onabort = null;
+      },
+
+      fetch: function mockFetch() {
+        console.log('🔧 [Firebase-Compat] Mock fetch called - Firebase will use React Native networking');
+        return Promise.reject(new Error('Use React Native networking instead'));
+      },
+
+      Request: class MockRequest {
+        constructor() {
+          console.log('🔧 [Firebase-Compat] MockRequest instantiated');
+        }
+      },
+
+      Response: class MockResponse {
+        constructor() {
+          console.log('🔧 [Firebase-Compat] MockResponse instantiated');
+        }
+      },
+
+      Headers: class MockHeaders {
+        constructor() {
+          console.log('🔧 [Firebase-Compat] MockHeaders instantiated');
+        }
+        append() {}
+        delete() {}
+        get() { return null; }
+        has() { return false; }
+        set() {}
+        entries() { return []; }
+        keys() { return []; }
+        values() { return []; }
+      },
+
+      AbortController: class MockAbortController {
+        constructor() {
+          this.signal = { aborted: false, addEventListener: () => {}, removeEventListener: () => {} };
+        }
+        abort() {
+          this.signal.aborted = true;
+        }
+      },
+
+      AbortSignal: class MockAbortSignal {
+        constructor() {
+          this.aborted = false;
+        }
+        addEventListener() {}
+        removeEventListener() {}
+      },
+
+      FileReader: class MockFileReader {
+        constructor() {
+          console.log('🔧 [Firebase-Compat] MockFileReader instantiated');
+        }
+        readAsText() {}
+        readAsDataURL() {}
+        readAsArrayBuffer() {}
+        readAsBinaryString() {}
+        addEventListener() {}
+        removeEventListener() {}
+        abort() {}
+        result = null;
+        error = null;
+        readyState = 0;
+        onload = null;
+        onerror = null;
+        onabort = null;
+        onloadstart = null;
+        onloadend = null;
+        onprogress = null;
+      },
+
+      // Crypto API that Firebase might access
+      crypto: {
+        getRandomValues: function(array) {
+          console.log('🔧 [Firebase-Compat] Mock crypto.getRandomValues called');
+          for (let i = 0; i < array.length; i++) {
+            array[i] = Math.floor(Math.random() * 256);
+          }
+          return array;
+        },
+        subtle: {
+          digest: function() {
+            console.log('🔧 [Firebase-Compat] Mock crypto.subtle.digest called');
+            return Promise.resolve(new ArrayBuffer(32));
+          }
+        }
+      },
+
+      // Text encoding APIs
+      TextEncoder: class MockTextEncoder {
+        constructor() {
+          console.log('🔧 [Firebase-Compat] MockTextEncoder instantiated');
+        }
+        encode(str) {
+          return new Uint8Array(Array.from(str).map(char => char.charCodeAt(0)));
+        }
+      },
+
+      TextDecoder: class MockTextDecoder {
+        constructor() {
+          console.log('🔧 [Firebase-Compat] MockTextDecoder instantiated');
+        }
+        decode(buffer) {
+          return String.fromCharCode.apply(null, new Uint8Array(buffer));
+        }
+      },
+
+      // Form data
+      FormData: class MockFormData {
+        constructor() {
+          console.log('🔧 [Firebase-Compat] MockFormData instantiated');
+          this._data = new Map();
+        }
+        append(name, value) { this._data.set(name, value); }
+        delete(name) { this._data.delete(name); }
+        get(name) { return this._data.get(name) || null; }
+        has(name) { return this._data.has(name); }
+        set(name, value) { this._data.set(name, value); }
+      },
+
+      // URL APIs
+      URL: class MockURL {
+        constructor(url, base) {
+          console.log('🔧 [Firebase-Compat] MockURL instantiated');
+          this.href = url;
+          this.protocol = 'https:';
+          this.host = 'localhost';
+          this.hostname = 'localhost';
+          this.port = '';
+          this.pathname = '/';
+          this.search = '';
+          this.hash = '';
+        }
+      },
+
+      URLSearchParams: class MockURLSearchParams {
+        constructor() {
+          console.log('🔧 [Firebase-Compat] MockURLSearchParams instantiated');
+          this._params = new Map();
+        }
+        append(name, value) { this._params.set(name, value); }
+        delete(name) { this._params.delete(name); }
+        get(name) { return this._params.get(name) || null; }
+        has(name) { return this._params.has(name); }
+        set(name, value) { this._params.set(name, value); }
+      },
+
+      // Blob API
+      Blob: class MockBlob {
+        constructor(parts, options) {
+          console.log('🔧 [Firebase-Compat] MockBlob instantiated');
+          this.size = 0;
+          this.type = options?.type || '';
+        }
+        slice() { return new this.constructor([], {}); }
+        stream() { return null; }
+        text() { return Promise.resolve(''); }
+        arrayBuffer() { return Promise.resolve(new ArrayBuffer(0)); }
+      },
+
+      File: class MockFile {
+        constructor(parts, filename, options) {
+          console.log('🔧 [Firebase-Compat] MockFile instantiated');
+          this.name = filename;
+          this.size = 0;
+          this.type = options?.type || '';
+          this.lastModified = Date.now();
+        }
+      }
+    };
+
+    // Install all compatibility APIs with configurable property descriptors
+    Object.entries(firebaseCompatibilityLayer).forEach(([key, value]) => {
+      const existingDescriptor = logDescriptorInspection('global', global, key);
+
+      if (!existingDescriptor) {
+        const defined = safeDefineProperty(global, key, {
+          value,
+          writable: true,
+          enumerable: false,
+          configurable: true // CRITICAL: Allow Firebase to modify if needed
+        }, 'global');
+        if (defined) {
+          console.log(`🔧 [Firebase-Compat] Pre-installed ${key} with configurable descriptor`);
+        }
+        return;
+      }
+
+      if (existingDescriptor.get || existingDescriptor.set) {
+        console.log(`🔧 [Firebase-Compat] ${key} uses getter/setter - leaving existing descriptor intact`);
+        return;
+      }
+
+      if (existingDescriptor.configurable === false) {
+        console.log(`🔧 [Firebase-Compat] ${key} is locked (non-configurable) - skipping pre-installation`);
+        return;
+      }
+
+      if (existingDescriptor.value === undefined) {
+        const normalised = safeDefineProperty(global, key, {
+          value,
+          writable: true,
+          enumerable: false,
+          configurable: true
+        }, 'global');
+        if (normalised) {
+          console.log(`🔧 [Firebase-Compat] Normalised ${key} descriptor with safe default`);
+        }
+        return;
+      }
+
+      console.log(`🔧 [Firebase-Compat] ${key} already exists, skipping pre-installation`);
+    });
+
+    // Special handling for global this properties
+    if (typeof globalThis !== 'undefined') {
+      Object.entries(firebaseCompatibilityLayer).forEach(([key, value]) => {
+        const descriptor = logDescriptorInspection('globalThis', globalThis, key);
+
+        if (!descriptor) {
+          safeDefineProperty(globalThis, key, {
+            value,
+            writable: true,
+            enumerable: false,
+            configurable: true
+          }, 'globalThis');
+          return;
+        }
+
+        if (descriptor.get || descriptor.set || descriptor.configurable === false) {
+          // Respect existing locked descriptors to avoid Hermes errors
+          return;
+        }
+
+        if (descriptor.value === undefined) {
+          safeDefineProperty(globalThis, key, {
+            value,
+            writable: true,
+            enumerable: false,
+            configurable: true
+          }, 'globalThis');
+        }
+      });
+    }
+
+    // DEFENSIVE PROPERTY CHECKING: Verify Firebase compatibility layer integrity
+    console.log('🛡️ [index.ts] Running defensive property checks for Firebase compatibility...');
+
+    const firebasePropertyHealthCheck = () => {
+      const results = {
+        passed: 0,
+        failed: 0,
+        issues: [] as string[]
+      };
+
+      // Check each Firebase-critical property
+      FIREBASE_V11_PROBLEMATIC_PROPS.forEach(prop => {
+        try {
+          const descriptor = Object.getOwnPropertyDescriptor(global, prop);
+          if (descriptor) {
+            // Check if property is configurable (critical for Firebase)
+            if (!descriptor.configurable) {
+              results.failed++;
+              results.issues.push(`❌ ${prop}: NOT CONFIGURABLE (Firebase will fail)`);
+            } else {
+              results.passed++;
+              console.log(`✅ ${prop}: configurable=${descriptor.configurable}, writable=${descriptor.writable}`);
+            }
+
+            // Check if getter/setter exists (potential conflict point)
+            if (descriptor.get || descriptor.set) {
+              console.warn(`⚠️ ${prop}: has getter/setter - potential conflict zone`);
+            }
+          } else {
+            // Property doesn't exist - Firebase can define it freely
+            results.passed++;
+            console.log(`✅ ${prop}: undefined (Firebase can define freely)`);
+          }
+        } catch (error) {
+          results.failed++;
+          results.issues.push(`💥 ${prop}: descriptor check failed - ${error}`);
+        }
+      });
+
+      // Check global object integrity
+      try {
+        const globalDescriptor = Object.getOwnPropertyDescriptor(global, 'global');
+        if (globalDescriptor && !globalDescriptor.configurable) {
+          results.issues.push('❌ global object itself is not configurable');
+          results.failed++;
+        }
+      } catch (error) {
+        results.issues.push(`💥 global descriptor check failed: ${error}`);
+        results.failed++;
+      }
+
+      return results;
+    };
+
+    const healthCheck = firebasePropertyHealthCheck();
+    console.group('🛡️ [PropertyHealthCheck] Firebase Compatibility Status');
+    console.log(`✅ Passed: ${healthCheck.passed}`);
+    console.log(`❌ Failed: ${healthCheck.failed}`);
+
+    if (healthCheck.issues.length > 0) {
+      console.warn('🚨 CRITICAL ISSUES DETECTED:');
+      healthCheck.issues.forEach(issue => console.warn(`   ${issue}`));
+
+      // Attempt to fix critical issues
+      console.log('🔧 [PropertyHealthCheck] Attempting automatic fixes...');
+      let fixesApplied = 0;
+
+      healthCheck.issues.forEach(issue => {
+        if (issue.includes('NOT CONFIGURABLE')) {
+          const propMatch = issue.match(/❌ (\w+):/);
+          if (propMatch) {
+            const prop = propMatch[1];
+            // Avoid redefining locked properties to keep Hermes happy
+            console.log(`🔧 [PropertyFix] Skipping ${prop} – descriptor is locked by the runtime`);
+          }
+        }
+      });
+
+      console.log(`🔧 [PropertyHealthCheck] Applied ${fixesApplied} automatic fixes`);
+
+      // Re-run health check to verify fixes
+      if (fixesApplied > 0) {
+        const recheck = firebasePropertyHealthCheck();
+        console.log(`🔍 [PropertyHealthCheck] Post-fix status: ✅${recheck.passed} ❌${recheck.failed}`);
+      }
+    } else {
+      console.log('🎉 All Firebase compatibility checks passed!');
+    }
+    console.groupEnd();
+
+    // Make health check function globally available for debugging
+    (global as any).__firebasePropertyHealthCheck = firebasePropertyHealthCheck;
+
+    console.log('✅ [index.ts] Firebase v11 compatibility layer installed');
+    console.log('✅ [index.ts] React Native compatible polyfills installed successfully');
+
+  } catch (error) {
+    console.warn('⚠️ [index.ts] Polyfill installation encountered non-fatal error:', error);
+    // Continue app initialization even if polyfills fail
+  }
+}
+
+// Enhanced error handler for runtime property configurability issues
+const originalErrorHandler = global.ErrorUtils?.getGlobalHandler?.();
+global.ErrorUtils?.setGlobalHandler?.((error: Error, isFatal?: boolean) => {
+  // Handle deriveBFS distance property errors
+  if (error.message?.includes('Cannot read property') && error.message?.includes('distance')) {
+    console.error('🚨 DERIVEBFS ERROR INTERCEPTED - Converting to non-fatal');
+    originalErrorHandler?.(error, false);
+    return;
+  }
+
+  // CRITICAL: Handle the specific runtime error format we're seeing
+  if (error.message?.includes('[runtime not ready]: TypeError: property is not configurable')) {
+    console.group('🔍 RUNTIME PROPERTY ERROR INTERCEPTED');
+    console.warn('⚠️ RUNTIME PROPERTY CONFIGURABILITY ERROR DETECTED');
+    console.log('📄 Full Error Message:', error.message);
+    console.log('📍 Error Type:', typeof error);
+    console.log('⏰ Timestamp:', new Date().toISOString());
+    console.log('🎯 Root Cause: Runtime property descriptor conflict in Expo Go + New Architecture');
+    console.log('✅ Action: Suppressing error - app functionality preserved');
+    console.log('💡 This error occurs during module evaluation but does not affect app operation');
+    console.groupEnd();
+
+    // Record this specific runtime error
+    if (typeof global !== 'undefined') {
+      if (!(global as any).__runtimePropertyErrors) {
+        (global as any).__runtimePropertyErrors = [];
+      }
+      (global as any).__runtimePropertyErrors.push({
+        message: error.message,
+        timestamp: Date.now(),
+        type: 'runtime_property_config_error',
+        source: 'expo_go_new_arch_conflict'
+      });
+    }
+
+    // Do not propagate this runtime error
+    return;
+  }
+
+  // Enhanced property configurability error analysis with module detection
+  // FIREBASE V11 SPECIFIC: Catch the exact getter redefinition error from Firebase Auth
+  if (error.message?.includes('Attempting to change the getter of an unconfigurable property') ||
+      error.message?.includes('Attempting to change the setter of an unconfigurable property')) {
+
+    console.group('🔥 FIREBASE V11 GETTER REDEFINITION ERROR INTERCEPTED');
+    console.warn('⚠️ EXACT MATCH: Firebase v11 Auth trying to redefine getter on locked property');
+    console.log('📄 Error Message:', error.message);
+    console.log('🎯 Root Cause: Firebase v11 includes polyfills that conflict with Expo Go locked properties');
+    console.log('🔧 Action: This error is being suppressed while preserving auth functionality');
+    console.log('💡 Background: Firebase tries to polyfill XMLHttpRequest, fetch, etc. but Expo Go has locked these');
+    console.groupEnd();
+
+    // Store this Firebase-specific error
+    if (typeof global !== 'undefined') {
+      if (!(global as any).__firebaseGetterErrors) {
+        (global as any).__firebaseGetterErrors = [];
+      }
+      (global as any).__firebaseGetterErrors.push({
+        message: error.message,
+        timestamp: Date.now(),
+        type: 'firebase_v11_getter_redefinition',
+        source: 'firebase_auth_polyfill_conflict'
+      });
+    }
+
+    // Do not propagate this specific Firebase v11 error
+    return;
+  }
+
+  // Generic property configurability errors (broader pattern)
+  if (error.message?.includes('property is not configurable') ||
+      error.message?.includes('Cannot define property') ||
+      error.message?.includes('Cannot redefine property') ||
+      error.message?.includes('defineProperty') && error.message?.includes('unconfigurable')) {
+
+    // Extract detailed error information for debugging
+    const stackLines = error.stack?.split('\n') || [];
+    const bundleLines = stackLines.filter(line => line.includes('&platform=ios') || line.includes('://'));
+
+    console.group('🔍 ENHANCED PROPERTY ERROR ANALYSIS');
+    console.warn('⚠️ PROPERTY CONFIGURABILITY ERROR DETECTED:');
+    console.log('📄 Error Message:', error.message);
+    console.log('📍 Error Name:', error.name);
+    console.log('⏰ Timestamp:', new Date().toISOString());
+
+    // Analyze bundle lines for specific error locations
+    if (bundleLines.length > 0) {
+      console.log('📦 Bundle Stack Trace Analysis:');
+      bundleLines.forEach((line, index) => {
+        // Extract line numbers from bundle stack trace
+        const lineMatch = line.match(/:(\d+):(\d+)/);
+        if (lineMatch) {
+          const bundleLine = lineMatch[1];
+          const column = lineMatch[2];
+          const lineNum = parseInt(bundleLine);
+
+          // More specific line number analysis
+          let moduleGuess = 'Unknown Module';
+          if (lineNum > 320000) {
+            moduleGuess = 'Firebase/Auth Module (Late loading)';
+          } else if (lineNum > 300000) {
+            moduleGuess = 'Large Dependency (React Navigation/Firebase)';
+          } else if (lineNum > 200000) {
+            moduleGuess = 'Core React Native Module';
+          } else if (lineNum > 100000) {
+            moduleGuess = 'Application Module';
+          }
+
+          console.log(`   ${index + 1}. Line ${bundleLine}:${column} - ${moduleGuess}`);
+
+          // Special handling for known problematic line ranges
+          if (lineNum === 320164 || lineNum === 320161 || lineNum === 318174) {
+            console.log(`   🎯 CONFIRMED CULPRIT: Line ${bundleLine} - Firebase v11 property descriptor conflict`);
+          } else if (lineNum === 108059 || lineNum === 107380) {
+            console.log(`   🎯 POTENTIAL CULPRIT: Line ${bundleLine} - React Native core or navigation`);
+          } else if (lineNum === 4072) {
+            console.log(`   🎯 EARLY LOADER: Line ${bundleLine} - Polyfill or core module setup`);
+          }
+        }
+      });
+    }
+
+    // Enhanced module tracking with context
+    const tracker = (global as any).__moduleLoadTracker;
+    if (tracker) {
+      const recentModules = tracker.getRecentModules(15);
+      const allModules = tracker.loadingOrder;
+      console.log('📚 Recent Module Loading History:');
+      recentModules.forEach((module, idx) => {
+        const isRecent = idx >= recentModules.length - 5;
+        console.log(`   ${isRecent ? '🔥' : '📦'} ${module} (${allModules.indexOf(module) + 1}/${allModules.length})`);
+      });
+
+      // Look for Firebase modules specifically
+      const firebaseModules = allModules.filter(m => m.toLowerCase().includes('firebase'));
+      if (firebaseModules.length > 0) {
+        console.log('🔥 Firebase Modules Loaded:', firebaseModules);
+      }
+    }
+
+    // Look for specific property names that are causing issues
+    const propertyMatches = error.message.match(/property ['"`]([^'"`]+)['"`]/);
+    if (propertyMatches) {
+      console.log(`🏷️ Problematic Property: "${propertyMatches[1]}"`);
+
+      // Check if it's a known problematic property
+      const knownBadProps = ['distance', 'length', 'name', 'constructor', 'prototype'];
+      if (knownBadProps.includes(propertyMatches[1])) {
+        console.log(`⚠️ KNOWN ISSUE: Property "${propertyMatches[1]}" is commonly problematic in Expo Go`);
+      }
+    }
+
+    console.log('🔧 Analysis Result: Firebase/Auth module attempting to modify protected property descriptor');
+    console.log('✅ Action: Suppressing error - app functionality remains intact');
+    console.log('💡 Solution: Enhanced module resolution and polyfill consolidation in progress');
+    console.groupEnd();
+
+    // Record this error for analysis but don't crash the app
+    if (typeof global !== 'undefined') {
+      if (!(global as any).__propertyErrors) {
+        (global as any).__propertyErrors = [];
+      }
+      (global as any).__propertyErrors.push({
+        message: error.message,
+        timestamp: Date.now(),
+        stack: error.stack,
+        recentModules: tracker?.getRecentModules(5) || []
+      });
+    }
+
+    // Do not propagate this error - it's from a dependency and doesn't break app functionality
+    return;
+  }
+
+  // Pass all other errors to original handler
+  originalErrorHandler?.(error, isFatal);
+});
+
+console.log('📦 [index.ts] Starting imports...');
+
+// Enhanced module loading tracking with Firebase v11 specific timing analysis
+const moduleLoadTracker = {
+  loadedModules: new Set<string>(),
+  loadingOrder: [] as string[],
+  loadingTimes: new Map<string, {start: number, end?: number, duration?: number}>(),
+  firebaseModules: [] as string[],
+  preFirebaseModules: [] as string[],
+  postFirebaseModules: [] as string[],
+  firebaseStartTime: null as number | null,
+
+  trackModule: (name: string) => {
+    const startTime = Date.now();
+
+    if (!moduleLoadTracker.loadedModules.has(name)) {
+      moduleLoadTracker.loadedModules.add(name);
+      moduleLoadTracker.loadingOrder.push(name);
+      moduleLoadTracker.loadingTimes.set(name, { start: startTime });
+
+      // Detect Firebase-related modules
+      const isFirebaseModule = name.toLowerCase().includes('firebase') ||
+                               name.toLowerCase().includes('auth') ||
+                               name.toLowerCase().includes('firestore') ||
+                               name.includes('firebase');
+
+      if (isFirebaseModule) {
+        moduleLoadTracker.firebaseModules.push(name);
+        if (!moduleLoadTracker.firebaseStartTime) {
+          moduleLoadTracker.firebaseStartTime = startTime;
+          console.log(`🔥 [ModuleTracker] Firebase module loading started: ${name} at ${startTime}`);
+        }
+        console.log(`🔥 [ModuleTracker] Firebase module: ${name} (${moduleLoadTracker.loadingOrder.length})`);
+      } else {
+        if (moduleLoadTracker.firebaseStartTime) {
+          moduleLoadTracker.postFirebaseModules.push(name);
+        } else {
+          moduleLoadTracker.preFirebaseModules.push(name);
+        }
+        console.log(`📦 [ModuleTracker] Loading: ${name} (${moduleLoadTracker.loadingOrder.length})`);
+      }
+    }
+  },
+
+  completeModule: (name: string) => {
+    const endTime = Date.now();
+    const timing = moduleLoadTracker.loadingTimes.get(name);
+    if (timing) {
+      timing.end = endTime;
+      timing.duration = endTime - timing.start;
+
+      const isFirebaseModule = moduleLoadTracker.firebaseModules.includes(name);
+      if (isFirebaseModule) {
+        console.log(`🔥 [ModuleTracker] Firebase module completed: ${name} (${timing.duration}ms)`);
+      }
+    }
+  },
+
+  getRecentModules: (count = 5) => {
+    return moduleLoadTracker.loadingOrder.slice(-count);
+  },
+
+  getFirebaseLoadingStats: () => {
+    return {
+      preFirebaseCount: moduleLoadTracker.preFirebaseModules.length,
+      firebaseCount: moduleLoadTracker.firebaseModules.length,
+      postFirebaseCount: moduleLoadTracker.postFirebaseModules.length,
+      firebaseStartTime: moduleLoadTracker.firebaseStartTime,
+      firebaseModules: moduleLoadTracker.firebaseModules,
+      totalLoadTime: moduleLoadTracker.firebaseStartTime ? Date.now() - moduleLoadTracker.firebaseStartTime : 0
+    };
+  },
+
+  logFirebaseTimingReport: () => {
+    const stats = moduleLoadTracker.getFirebaseLoadingStats();
+    console.group('🔥 [ModuleTracker] Firebase Loading Timing Report');
+    console.log(`📊 Pre-Firebase modules: ${stats.preFirebaseCount}`);
+    console.log(`🔥 Firebase modules: ${stats.firebaseCount}`);
+    console.log(`📦 Post-Firebase modules: ${stats.postFirebaseCount}`);
+    console.log(`⏱️ Firebase start time: ${stats.firebaseStartTime || 'Not started'}`);
+    console.log(`⏱️ Total Firebase load time: ${stats.totalLoadTime}ms`);
+
+    if (stats.firebaseModules.length > 0) {
+      console.log('🔥 Firebase modules loaded:');
+      stats.firebaseModules.forEach((mod, idx) => {
+        const timing = moduleLoadTracker.loadingTimes.get(mod);
+        console.log(`   ${idx + 1}. ${mod} ${timing?.duration ? `(${timing.duration}ms)` : '(loading...)'}`);
+      });
+    }
+    console.groupEnd();
+  }
+};
+
+// Make tracker globally available for error analysis
+(global as any).__moduleLoadTracker = moduleLoadTracker;
+
+moduleLoadTracker.trackModule('react-native-gesture-handler');
+import 'react-native-gesture-handler';
+
+moduleLoadTracker.trackModule('expo');
+import { registerRootComponent } from 'expo';
+
+// Track Firebase modules that might be loaded by App
+moduleLoadTracker.trackModule('App (pre-Firebase check)');
+
+// Pre-check: Log Firebase timing before App import (where Firebase might be imported)
+console.log('📊 [index.ts] Pre-App Firebase timing check...');
+moduleLoadTracker.logFirebaseTimingReport();
+
+moduleLoadTracker.trackModule('App');
+import App from './App';
+
+console.log('✅ [index.ts] All imports completed');
+
+// Complete module tracking and log Firebase timing report
+moduleLoadTracker.completeModule('react-native-gesture-handler');
+moduleLoadTracker.completeModule('expo');
+moduleLoadTracker.completeModule('App');
+moduleLoadTracker.logFirebaseTimingReport();
+
+console.log('📱 [index.ts] Registering root component...');
+
+// FINAL SYSTEM CHECK: Firebase compatibility and property status before app start
+console.log('🔍 [index.ts] Running final system check before app registration...');
+try {
+  // Final Firebase timing report
+  moduleLoadTracker.logFirebaseTimingReport();
+
+  // Final property health check
+  const finalHealthCheck = (global as any).__firebasePropertyHealthCheck?.();
+  if (finalHealthCheck) {
+    console.log(`🛡️ [FinalCheck] Firebase compatibility: ✅${finalHealthCheck.passed} ❌${finalHealthCheck.failed}`);
+    if (finalHealthCheck.issues.length > 0) {
+      console.warn('🚨 [FinalCheck] Remaining issues:', finalHealthCheck.issues);
+    }
+  }
+
+  console.log('✅ [FinalCheck] System check completed');
+} catch (error) {
+  console.warn('⚠️ [FinalCheck] System check failed:', error);
+}
+
+// SIMPLIFIED: Minimal post-module-load protection (React Native compatible)
+console.log('🛡️ [index.ts] Setting up minimal post-load protection...');
+try {
+  // Only add distance property if it's still missing (avoid conflicts with React Native)
+  if (typeof global !== 'undefined' && !global.hasOwnProperty('distance')) {
+    try {
+      safeDefineProperty(global, 'distance', {
+        value: 0,
+        writable: true,
+        enumerable: false,
+        configurable: true // FIXED: Allow React Native to reconfigure
+      }, 'global');
+      console.log(`🔧 [index.ts] Added distance fallback property`);
+    } catch (e) {
+      // Property conflicts are now handled gracefully
+      console.log(`🔧 [index.ts] Distance property already exists or protected`);
+    }
+  }
+
+  // Keep only essential error suppression for the specific Hermes runtime error
+  const originalConsoleError = console.error;
+  console.error = function(...args) {
+    const message = args.join(' ');
+    if (message.includes('property is not configurable') && message.includes('runtime not ready')) {
+      console.warn('🛡️ [PropertyGuard] Runtime property error intercepted and suppressed');
+      return; // Don't log the actual error
+    }
+    originalConsoleError.apply(console, args);
+  };
+
+  console.log('✅ [index.ts] Minimal post-load protection enabled');
+} catch (error) {
+  console.warn('⚠️ [index.ts] Property protection setup encountered non-fatal error:', error);
+}
+
+// registerRootComponent calls AppRegistry.registerComponent('main', () => App);
+// It also ensures that whether you load the app in Expo Go or in a native build,
+// the environment is set up appropriately
+registerRootComponent(App);
+
+console.log('✅ [index.ts] App registered successfully with enhanced property protection');

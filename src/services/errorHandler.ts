@@ -532,6 +532,11 @@ export const handleAPIError = (error: any, source: string, retryable: boolean = 
 };
 
 export const handleWeatherAPIError = (error: any, source: string): string => {
+  // Handle silent errors (like 401 API key errors) without logging
+  if (error && typeof error === 'object' && error.silent === true) {
+    return error.error || 'Silent API error - using fallback data source';
+  }
+
   return errorHandler.logError({
     type: 'weather',
     severity: 'medium',

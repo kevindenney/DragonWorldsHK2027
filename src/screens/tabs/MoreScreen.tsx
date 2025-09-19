@@ -14,7 +14,6 @@ import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshi
 import { EnhancedContactsScreen } from './EnhancedContactsScreen';
 import { SponsorsScreen } from './SponsorsScreen';
 import { useAuth } from '../../auth/useAuth';
-import { ProgressiveAuthExample } from '../../components/auth/ProgressiveAuthExample';
 import { ModernWeatherMapScreen } from './ModernWeatherMapScreen';
 import { DataSourcesScreen } from '../DataSourcesScreen';
 import { AboutRegattaFlowScreen } from '../AboutRegattaFlowScreen';
@@ -23,7 +22,6 @@ import { AboutRegattaFlowScreen } from '../AboutRegattaFlowScreen';
 console.log('🔍 [MoreScreen] Component imports validation:');
 console.log('🔍 [MoreScreen] EnhancedContactsScreen:', typeof EnhancedContactsScreen);
 console.log('🔍 [MoreScreen] SponsorsScreen:', typeof SponsorsScreen);
-console.log('🔍 [MoreScreen] ProgressiveAuthExample:', typeof ProgressiveAuthExample);
 console.log('🔍 [MoreScreen] ModernWeatherMapScreen:', typeof ModernWeatherMapScreen);
 console.log('🔍 [MoreScreen] DataSourcesScreen:', typeof DataSourcesScreen);
 console.log('🔍 [MoreScreen] AboutRegattaFlowScreen:', typeof AboutRegattaFlowScreen);
@@ -117,26 +115,6 @@ const getMoreOptions = (isAuthenticated: boolean, user: any): MoreOption[] => {
     });
   }
 
-  // Add debug options in development
-  if (__DEV__) {
-    baseOptions.push({
-      id: 'progressive-auth-demo',
-      title: 'Progressive Auth Demo',
-      description: 'Test the progressive authentication prompts',
-      icon: User,
-      component: ProgressiveAuthExample,
-      accessibilityLabel: 'Test progressive authentication prompts',
-    });
-    baseOptions.push({
-      id: 'debug-clear-auth',
-      title: 'Debug: Clear Auth',
-      description: 'Clear authentication data (Development only)',
-      icon: LogOut,
-      action: 'navigation',
-      navigationTarget: 'ClearAuth',
-      accessibilityLabel: 'Clear authentication data for testing',
-    });
-  }
 
   return baseOptions;
 };
@@ -189,15 +167,6 @@ export function MoreScreen() {
       return;
     }
 
-    // Handle debug clear auth
-    if (option.id === 'debug-clear-auth') {
-      const { clearAuthStorage } = await import('../../utils/authDebug');
-      const cleared = await clearAuthStorage();
-      if (cleared) {
-        alert('Auth data cleared! Please reload the app.');
-      }
-      return;
-    }
 
     // Handle different option types
     if (option.action === 'navigation' && option.navigationTarget) {

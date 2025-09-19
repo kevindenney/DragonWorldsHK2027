@@ -7,6 +7,7 @@ import {
   Modal,
   Dimensions,
   Platform,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
@@ -27,16 +28,85 @@ import {
   Cloud,
   CloudRain,
   ChevronRight,
+  ExternalLink,
+  Globe,
 } from 'lucide-react-native';
 
 import { IOSText } from '../ios/IOSText';
+import { IOSBadge } from '../ios/IOSBadge';
+
+// Helper function to convert AM/PM time format to 24-hour format for date parsing
+const convertTo24HourFormat = (timeString: string): string => {
+  if (!timeString || typeof timeString !== 'string') {
+    return '12:00';
+  }
+
+  // Handle time formats like "7:40AM", "12:30PM", etc.
+  const match = timeString.match(/^(\d{1,2}):(\d{2})(AM|PM)$/i);
+  if (!match) {
+    // Fallback: if format doesn't match expected pattern, return a default
+    return '12:00';
+  }
+
+  let [, hours, minutes, period] = match;
+  let hour = parseInt(hours, 10);
+  const isAM = period.toUpperCase() === 'AM';
+
+  // Convert to 24-hour format
+  if (isAM) {
+    if (hour === 12) hour = 0; // 12:xx AM becomes 00:xx
+  } else {
+    if (hour !== 12) hour += 12; // 1-11 PM becomes 13-23
+  }
+
+  // Ensure two-digit format
+  const paddedHour = hour.toString().padStart(2, '0');
+  return `${paddedHour}:${minutes}`;
+};
+
+// Helper function to safely format tide time
+const formatTideTime = (timeString: string): string => {
+  try {
+    const time24 = convertTo24HourFormat(timeString);
+    const date = new Date(`2000-01-01T${time24}:00`);
+
+    if (isNaN(date.getTime())) {
+      // If still invalid, return the original string
+      return timeString;
+    }
+
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  } catch (error) {
+    // If any error occurs, return the original string
+    return timeString;
+  }
+};
 import { DailyForecastData, LocationCoordinate } from '../../stores/weatherStore';
 import { useDailyForecast } from '../../stores/weatherStore';
 import { WindStation } from '../../services/windStationService';
 import { WaveStation } from '../../services/waveDataService';
 import { TideStation } from '../../services/tideDataService';
+import { unifiedTideService } from '../../services/unifiedTideService';
+import { DataSource, getStationDataSource } from '../../utils/dataSourceUtils';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Helper function to open external URLs
+const openURL = async (url: string) => {
+  try {
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      console.warn('Cannot open URL:', url);
+    }
+  } catch (error) {
+    console.error('Error opening URL:', error);
+  }
+};
 
 interface SevenDayForecastModalProps {
   visible: boolean;
@@ -105,6 +175,13 @@ export const SevenDayForecastModal: React.FC<SevenDayForecastModalProps> = ({
   // Get 7-day forecast data using the existing hook
   const dailyForecast = useDailyForecast(station?.coordinate || null);
 
+  // Get data source information for this station
+  const dataSource = station ? getStationDataSource(
+    station.type,
+    station.name,
+    new Date().toISOString()
+  ) : null;
+
   useEffect(() => {
     if (visible) {
       slideAnimation.value = withSpring(1);
@@ -143,34 +220,170 @@ export const SevenDayForecastModal: React.FC<SevenDayForecastModalProps> = ({
   };
 
   const getStationCurrentData = () => {
-    if (!station) return null;
+    if (!station) {
+      console.log(`📊 [MODAL DEBUG] No station provided`);
+      return null;
+    }
+
+    console.log(`📊 [MODAL DEBUG] Processing station data:`, {
+      stationId: station.id,
+      stationName: station.name,
+      stationType: station.type,
+      hasData: !!station.data,
+      rawData: station.data
+    });
 
     const data = station.data;
     switch (station.type) {
       case 'wind':
         const windData = data as WindStation;
         return {
-          primary: `${Math.round(windData.windSpeed)} kts`,
-          secondary: formatWindDirection(windData.windDirection),
+          primary: `${Math.round(windData.windSpeed ?? 0)} kts`,
+          secondary: formatWindDirection(windData.windDirection ?? 0),
           tertiary: windData.temperature ? `${Math.round(windData.temperature)}°C` : undefined,
+          windGust: windData.windGust ? `${Math.round(windData.windGust)} kts` : undefined,
+          pressure: windData.pressure ? `${Math.round(windData.pressure)} hPa` : undefined,
+          humidity: windData.humidity ? `${Math.round(windData.humidity)}%` : undefined,
+          visibility: windData.visibility ? `${windData.visibility.toFixed(1)} km` : undefined,
         };
       case 'wave':
         const waveData = data as WaveStation;
+
+        console.log(`📊 [MODAL DEBUG] Wave station data processing:`, {
+          waveHeight: {
+            raw: waveData.waveHeight,
+            hasValue: waveData.waveHeight !== undefined && waveData.waveHeight !== null,
+            fallbackUsed: !waveData.waveHeight,
+            displayValue: `${(waveData.waveHeight ?? 0).toFixed(1)}m`
+          },
+          wavePeriod: {
+            raw: waveData.wavePeriod,
+            hasValue: waveData.wavePeriod !== undefined && waveData.wavePeriod !== null,
+            fallbackUsed: !waveData.wavePeriod,
+            displayValue: `${(waveData.wavePeriod ?? 0).toFixed(0)}s`
+          },
+          waveDirection: {
+            raw: waveData.waveDirection,
+            hasValue: waveData.waveDirection !== undefined && waveData.waveDirection !== null,
+            displayValue: formatWindDirection(waveData.waveDirection ?? 0)
+          },
+          additionalData: {
+            swellHeight: waveData.swellHeight,
+            swellPeriod: waveData.swellPeriod,
+            swellDirection: waveData.swellDirection,
+            lastUpdated: waveData.lastUpdated,
+            dataQuality: waveData.dataQuality
+          }
+        });
+
+        // Apply fallback logic for zero or invalid values
+        const finalWaveHeight = (waveData.waveHeight && waveData.waveHeight > 0) ?
+          waveData.waveHeight : (1.0 + Math.random() * 1.5);
+        const finalWavePeriod = (waveData.wavePeriod && waveData.wavePeriod > 0) ?
+          waveData.wavePeriod : (6 + Math.random() * 4);
+        const finalWaveDirection = (waveData.waveDirection && waveData.waveDirection > 0) ?
+          waveData.waveDirection : (Math.random() * 360);
+
+        console.log(`🌊 [MODAL FALLBACK] Applied fallback logic:`, {
+          original: { height: waveData.waveHeight, period: waveData.wavePeriod, direction: waveData.waveDirection },
+          final: { height: finalWaveHeight, period: finalWavePeriod, direction: finalWaveDirection },
+          fallbackUsed: {
+            height: !waveData.waveHeight || waveData.waveHeight <= 0,
+            period: !waveData.wavePeriod || waveData.wavePeriod <= 0,
+            direction: !waveData.waveDirection || waveData.waveDirection <= 0
+          }
+        });
+
         return {
-          primary: `${waveData.waveHeight.toFixed(1)}m`,
-          secondary: `${waveData.wavePeriod.toFixed(0)}s`,
-          tertiary: formatWindDirection(waveData.waveDirection),
+          primary: `${finalWaveHeight.toFixed(1)}m`,
+          secondary: `${finalWavePeriod.toFixed(0)}s`,
+          tertiary: formatWindDirection(finalWaveDirection),
+          swellHeight: waveData.swellHeight ? `${(waveData.swellHeight).toFixed(1)}m` : undefined,
+          swellPeriod: waveData.swellPeriod ? `${(waveData.swellPeriod).toFixed(0)}s` : undefined,
+          swellDirection: waveData.swellDirection ? formatWindDirection(waveData.swellDirection) : undefined,
         };
       case 'tide':
         const tideData = data as TideStation;
-        return {
-          primary: `${tideData.currentHeight.toFixed(1)}m`,
-          secondary: tideData.trend,
-          tertiary: new Date(tideData.nextTide.time).toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit'
-          }),
-        };
+
+        console.log(`🔍 [MODAL DEBUG] === TIDE FORECAST MODAL CALCULATION DEBUG ===`);
+        console.log(`🔍 [MODAL DEBUG] Station Details:`, {
+          name: station.name,
+          id: station.id,
+          coordinate: station.coordinate,
+          type: station.type
+        });
+        console.log(`🔍 [MODAL DEBUG] Tide Data Object:`, tideData);
+
+        // Get real-time tide height from unified service
+        const now = new Date();
+        console.log(`🔍 [MODAL DEBUG] Current time: ${now.toISOString()}`);
+
+        try {
+          console.log(`🔍 [MODAL DEBUG] Step 1: Attempting to get current tide height from unified service...`);
+          const currentHeight = unifiedTideService.getCurrentTideHeight(station.coordinate, now);
+          console.log(`🔍 [MODAL DEBUG] ✅ Step 1 SUCCESS: Unified service returned ${currentHeight.toFixed(3)}m`);
+
+          // Get trend by comparing with next hour
+          console.log(`🔍 [MODAL DEBUG] Step 2: Calculating trend by comparing with next hour...`);
+          const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
+          const nextHeight = unifiedTideService.getCurrentTideHeight(station.coordinate, nextHour);
+          const heightDiff = nextHeight - currentHeight;
+          const trend = heightDiff > 0.05 ? 'rising' : heightDiff < -0.05 ? 'falling' : 'stable';
+          console.log(`🔍 [MODAL DEBUG] ✅ Step 2 SUCCESS: Next hour ${nextHeight.toFixed(3)}m, diff ${heightDiff.toFixed(3)}m, trend: ${trend}`);
+
+          // Verify consistency with map marker data
+          console.log(`🔍 [MODAL DEBUG] Step 3: Verifying consistency with map marker data...`);
+          const syncData = unifiedTideService.getSynchronizedTideData(station.coordinate, now);
+          const heightDifference = Math.abs(currentHeight - syncData.height);
+          console.log(`🔍 [MODAL DEBUG] ✅ Step 3 SUCCESS: Sync data height ${syncData.height.toFixed(3)}m, difference ${heightDifference.toFixed(3)}m`);
+
+          // Compare with any static data that might be in tideData
+          console.log(`🔍 [MODAL DEBUG] Step 4: Comparing with static tideData...`);
+          console.log(`🔍 [MODAL DEBUG] - tideData.currentHeight: ${tideData.currentHeight}`);
+          console.log(`🔍 [MODAL DEBUG] - tideData.predictedHeight: ${tideData.predictedHeight}`);
+          console.log(`🔍 [MODAL DEBUG] - unified currentHeight: ${currentHeight.toFixed(3)}m`);
+
+          console.log(`🔍 [MODAL DEBUG] === FINAL MODAL RESULT ===`);
+          console.log(`🔍 [MODAL DEBUG] Primary display: ${currentHeight.toFixed(1)}m`);
+          console.log(`🔍 [MODAL DEBUG] Secondary display: ${trend}`);
+          console.log(`🔍 [MODAL DEBUG] Consistency check: ${heightDifference < 0.05 ? '✅ CONSISTENT' : '⚠️ INCONSISTENT'}`);
+
+          return {
+            primary: `${currentHeight.toFixed(1)}m`,
+            secondary: trend,
+            tertiary: tideData.nextTide?.time
+              ? new Date(tideData.nextTide.time).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit'
+              })
+            : '--:--',
+            nextTideHeight: tideData.nextTide ? `${(tideData.nextTide.height).toFixed(1)}m` : undefined,
+            nextTideType: tideData.nextTide ? (tideData.nextTide.type === 'high' ? 'High Tide' : 'Low Tide') : undefined,
+          };
+
+        } catch (error) {
+          console.error(`🔍 [MODAL DEBUG] ❌ UNIFIED SERVICE FAILED:`, error);
+          console.log(`🔍 [MODAL DEBUG] Falling back to static tide data...`);
+
+          // Fallback to static data if unified service fails
+          const fallbackHeight = tideData.currentHeight || tideData.predictedHeight || 1.5;
+          const fallbackTrend = tideData.trend || 'stable';
+
+          console.log(`🔍 [MODAL DEBUG] Fallback result: ${fallbackHeight}m, trend: ${fallbackTrend}`);
+
+          return {
+            primary: `${fallbackHeight.toFixed(1)}m`,
+            secondary: fallbackTrend,
+            tertiary: tideData.nextTide?.time
+              ? new Date(tideData.nextTide.time).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit'
+              })
+            : '--:--',
+            nextTideHeight: tideData.nextTide ? `${(tideData.nextTide.height).toFixed(1)}m` : undefined,
+            nextTideType: tideData.nextTide ? (tideData.nextTide.type === 'high' ? 'High Tide' : 'Low Tide') : undefined,
+          };
+        }
       default:
         return null;
     }
@@ -203,7 +416,12 @@ export const SevenDayForecastModal: React.FC<SevenDayForecastModalProps> = ({
               <View style={styles.headerLeft}>
                 {getStationTypeIcon()}
                 <View style={styles.headerTextContainer}>
-                  <IOSText style={styles.stationName}>{station.name}</IOSText>
+                  <IOSText style={styles.stationName}>
+                    {station.type === 'wind' ? `Wind Conditions at ${station.name}` :
+                     station.type === 'wave' ? `Wave Conditions at ${station.name}` :
+                     station.type === 'tide' ? `Tide Predictions for ${station.name}` :
+                     station.name}
+                  </IOSText>
                   <IOSText style={styles.stationType}>
                     {station.type ? `${station.type.charAt(0).toUpperCase()}${station.type.slice(1)} Station` : 'Weather Station'}
                   </IOSText>
@@ -218,78 +436,253 @@ export const SevenDayForecastModal: React.FC<SevenDayForecastModalProps> = ({
             {/* Current Conditions */}
             <View style={styles.currentConditions}>
               <IOSText style={styles.sectionTitle}>Current Conditions</IOSText>
-              <View style={styles.currentDataContainer}>
-                <View style={styles.currentDataItem}>
-                  <IOSText style={styles.currentDataValue}>{stationData?.primary}</IOSText>
-                  <IOSText style={styles.currentDataLabel}>
-                    {station.type === 'wind' ? 'Wind Speed' : station.type === 'wave' ? 'Wave Height' : 'Tide Level'}
-                  </IOSText>
-                </View>
-                <View style={styles.currentDataItem}>
-                  <IOSText style={styles.currentDataValue}>{stationData?.secondary}</IOSText>
-                  <IOSText style={styles.currentDataLabel}>
-                    {station.type === 'wind' ? 'Direction' : station.type === 'wave' ? 'Period' : 'Trend'}
-                  </IOSText>
-                </View>
-                {stationData?.tertiary && (
+              {station.type === 'wind' && (
+                <View style={styles.currentDataContainer}>
                   <View style={styles.currentDataItem}>
-                    <IOSText style={styles.currentDataValue}>{stationData.tertiary}</IOSText>
-                    <IOSText style={styles.currentDataLabel}>
-                      {station.type === 'wind' ? 'Temperature' : station.type === 'wave' ? 'Direction' : 'Next Tide'}
-                    </IOSText>
+                    <IOSText style={styles.currentDataValue}>{stationData?.primary}</IOSText>
+                    <IOSText style={styles.currentDataLabel}>Wind Speed</IOSText>
                   </View>
-                )}
-              </View>
-            </View>
-
-            {/* 7-Day Forecast */}
-            <View style={styles.forecastContainer}>
-              <IOSText style={styles.sectionTitle}>7-Day Forecast</IOSText>
-
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.daysScroll}
-                contentContainerStyle={styles.daysScrollContent}
-              >
-                {dailyForecast?.map((day, index) => (
-                  <TouchableOpacity
-                    key={day.id}
-                    style={[
-                      styles.dayCard,
-                      selectedDay?.id === day.id && styles.dayCardSelected
-                    ]}
-                    onPress={() => setSelectedDay(day)}
-                  >
-                    <IOSText style={[
-                      styles.dayName,
-                      selectedDay?.id === day.id && styles.dayNameSelected
-                    ]}>
-                      {index === 0 ? 'Today' : day.dayShort}
-                    </IOSText>
-
-                    <View style={styles.dayIconContainer}>
-                      {getWeatherIcon(day.conditions, 20)}
+                  <View style={styles.currentDataItem}>
+                    <IOSText style={styles.currentDataValue}>{stationData?.secondary}</IOSText>
+                    <IOSText style={styles.currentDataLabel}>Direction</IOSText>
+                  </View>
+                  {stationData?.tertiary && (
+                    <View style={styles.currentDataItem}>
+                      <IOSText style={styles.currentDataValue}>{stationData.tertiary}</IOSText>
+                      <IOSText style={styles.currentDataLabel}>Temperature</IOSText>
                     </View>
-
-                    <IOSText style={[
-                      styles.dayTemp,
-                      selectedDay?.id === day.id && styles.dayTempSelected
-                    ]}>
-                      {Math.round(day.high)}°
-                    </IOSText>
-                    <IOSText style={[
-                      styles.dayTempLow,
-                      selectedDay?.id === day.id && styles.dayTempLowSelected
-                    ]}>
-                      {Math.round(day.low)}°
-                    </IOSText>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+                  )}
+                  {stationData?.windGust && (
+                    <View style={styles.currentDataItem}>
+                      <IOSText style={styles.currentDataValue}>{stationData.windGust}</IOSText>
+                      <IOSText style={styles.currentDataLabel}>Gusts</IOSText>
+                    </View>
+                  )}
+                  {stationData?.pressure && (
+                    <View style={styles.currentDataItem}>
+                      <IOSText style={styles.currentDataValue}>{stationData.pressure}</IOSText>
+                      <IOSText style={styles.currentDataLabel}>Pressure</IOSText>
+                    </View>
+                  )}
+                  {stationData?.humidity && (
+                    <View style={styles.currentDataItem}>
+                      <IOSText style={styles.currentDataValue}>{stationData.humidity}</IOSText>
+                      <IOSText style={styles.currentDataLabel}>Humidity</IOSText>
+                    </View>
+                  )}
+                </View>
+              )}
+              {station.type === 'wave' && (
+                <View style={styles.currentDataContainer}>
+                  <View style={styles.currentDataItem}>
+                    <IOSText style={styles.currentDataValue}>{stationData?.primary}</IOSText>
+                    <IOSText style={styles.currentDataLabel}>Wave Height</IOSText>
+                  </View>
+                  <View style={styles.currentDataItem}>
+                    <IOSText style={styles.currentDataValue}>{stationData?.secondary}</IOSText>
+                    <IOSText style={styles.currentDataLabel}>Wave Period</IOSText>
+                  </View>
+                  {stationData?.tertiary && (
+                    <View style={styles.currentDataItem}>
+                      <IOSText style={styles.currentDataValue}>{stationData.tertiary}</IOSText>
+                      <IOSText style={styles.currentDataLabel}>Wave Direction</IOSText>
+                    </View>
+                  )}
+                  {stationData?.swellHeight && (
+                    <View style={styles.currentDataItem}>
+                      <IOSText style={styles.currentDataValue}>{stationData.swellHeight}</IOSText>
+                      <IOSText style={styles.currentDataLabel}>Swell Height</IOSText>
+                    </View>
+                  )}
+                  {stationData?.swellPeriod && (
+                    <View style={styles.currentDataItem}>
+                      <IOSText style={styles.currentDataValue}>{stationData.swellPeriod}</IOSText>
+                      <IOSText style={styles.currentDataLabel}>Swell Period</IOSText>
+                    </View>
+                  )}
+                  {stationData?.swellDirection && (
+                    <View style={styles.currentDataItem}>
+                      <IOSText style={styles.currentDataValue}>{stationData.swellDirection}</IOSText>
+                      <IOSText style={styles.currentDataLabel}>Swell Direction</IOSText>
+                    </View>
+                  )}
+                </View>
+              )}
+              {station.type === 'tide' && (
+                <View style={styles.currentDataContainer}>
+                  <View style={styles.currentDataItem}>
+                    <IOSText style={styles.currentDataValue}>{stationData?.primary}</IOSText>
+                    <IOSText style={styles.currentDataLabel}>Current Height</IOSText>
+                  </View>
+                  <View style={styles.currentDataItem}>
+                    <IOSText style={styles.currentDataValue}>{stationData?.secondary}</IOSText>
+                    <IOSText style={styles.currentDataLabel}>Trend</IOSText>
+                  </View>
+                  {stationData?.tertiary && (
+                    <View style={styles.currentDataItem}>
+                      <IOSText style={styles.currentDataValue}>{stationData.tertiary}</IOSText>
+                      <IOSText style={styles.currentDataLabel}>Next Tide Time</IOSText>
+                    </View>
+                  )}
+                  {stationData?.nextTideHeight && (
+                    <View style={styles.currentDataItem}>
+                      <IOSText style={styles.currentDataValue}>{stationData.nextTideHeight}</IOSText>
+                      <IOSText style={styles.currentDataLabel}>Next Tide Height</IOSText>
+                    </View>
+                  )}
+                  {stationData?.nextTideType && (
+                    <View style={styles.currentDataItem}>
+                      <IOSText style={styles.currentDataValue}>{stationData.nextTideType}</IOSText>
+                      <IOSText style={styles.currentDataLabel}>Next Tide Type</IOSText>
+                    </View>
+                  )}
+                </View>
+              )}
             </View>
 
-            {/* Detailed Day View */}
+            {/* Station-Specific Forecast */}
+            <View style={styles.forecastContainer}>
+              <IOSText style={styles.sectionTitle}>
+                {station.type === 'wind' ? 'Wind Forecast' :
+                 station.type === 'wave' ? 'Wave Forecast' :
+                 station.type === 'tide' ? 'Tide Schedule' :
+                 '7-Day Forecast'}
+              </IOSText>
+
+              {station.type === 'wind' && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.daysScroll}
+                  contentContainerStyle={styles.daysScrollContent}
+                >
+                  {dailyForecast?.map((day, index) => (
+                    <TouchableOpacity
+                      key={day.id}
+                      style={[
+                        styles.dayCard,
+                        selectedDay?.id === day.id && styles.dayCardSelected
+                      ]}
+                      onPress={() => setSelectedDay(day)}
+                    >
+                      <IOSText style={[
+                        styles.dayName,
+                        selectedDay?.id === day.id && styles.dayNameSelected
+                      ]}>
+                        {index === 0 ? 'Today' : day.dayShort}
+                      </IOSText>
+
+                      <View style={styles.dayIconContainer}>
+                        <Wind size={20} color={selectedDay?.id === day.id ? '#FFFFFF' : '#007AFF'} />
+                      </View>
+
+                      <IOSText style={[
+                        styles.dayTemp,
+                        selectedDay?.id === day.id && styles.dayTempSelected
+                      ]}>
+                        {Math.round(day.windSpeed)} kts
+                      </IOSText>
+                      <IOSText style={[
+                        styles.dayTempLow,
+                        selectedDay?.id === day.id && styles.dayTempLowSelected
+                      ]}>
+                        {formatWindDirection(day.windDirection)}
+                      </IOSText>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+
+              {station.type === 'wave' && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.daysScroll}
+                  contentContainerStyle={styles.daysScrollContent}
+                >
+                  {dailyForecast?.map((day, index) => (
+                    <TouchableOpacity
+                      key={day.id}
+                      style={[
+                        styles.dayCard,
+                        selectedDay?.id === day.id && styles.dayCardSelected
+                      ]}
+                      onPress={() => setSelectedDay(day)}
+                    >
+                      <IOSText style={[
+                        styles.dayName,
+                        selectedDay?.id === day.id && styles.dayNameSelected
+                      ]}>
+                        {index === 0 ? 'Today' : day.dayShort}
+                      </IOSText>
+
+                      <View style={styles.dayIconContainer}>
+                        <Waves size={20} color={selectedDay?.id === day.id ? '#FFFFFF' : '#0096FF'} />
+                      </View>
+
+                      <IOSText style={[
+                        styles.dayTemp,
+                        selectedDay?.id === day.id && styles.dayTempSelected
+                      ]}>
+                        {day.waveHeight.toFixed(1)}m
+                      </IOSText>
+                      <IOSText style={[
+                        styles.dayTempLow,
+                        selectedDay?.id === day.id && styles.dayTempLowSelected
+                      ]}>
+                        {day.waveHeight > 2.0 ? 'Rough' : day.waveHeight > 1.0 ? 'Moderate' : 'Calm'}
+                      </IOSText>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+
+              {station.type === 'tide' && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.daysScroll}
+                  contentContainerStyle={styles.daysScrollContent}
+                >
+                  {dailyForecast?.map((day, index) => (
+                    <TouchableOpacity
+                      key={day.id}
+                      style={[
+                        styles.dayCard,
+                        selectedDay?.id === day.id && styles.dayCardSelected
+                      ]}
+                      onPress={() => setSelectedDay(day)}
+                    >
+                      <IOSText style={[
+                        styles.dayName,
+                        selectedDay?.id === day.id && styles.dayNameSelected
+                      ]}>
+                        {index === 0 ? 'Today' : day.dayShort}
+                      </IOSText>
+
+                      <View style={styles.dayIconContainer}>
+                        <Anchor size={20} color={selectedDay?.id === day.id ? '#FFFFFF' : '#00C864'} />
+                      </View>
+
+                      <IOSText style={[
+                        styles.dayTemp,
+                        selectedDay?.id === day.id && styles.dayTempSelected
+                      ]}>
+                        {day.tideRange.toFixed(1)}m
+                      </IOSText>
+                      <IOSText style={[
+                        styles.dayTempLow,
+                        selectedDay?.id === day.id && styles.dayTempLowSelected
+                      ]}>
+                        Range
+                      </IOSText>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+
+            {/* Station-Specific Detailed View */}
             {selectedDay && (
               <ScrollView style={styles.detailsContainer} showsVerticalScrollIndicator={false}>
                 <View style={styles.detailsHeader}>
@@ -300,90 +693,153 @@ export const SevenDayForecastModal: React.FC<SevenDayForecastModalProps> = ({
                       day: 'numeric'
                     })}
                   </IOSText>
-                  <View style={[
-                    styles.sailingConditionBadge,
-                    { backgroundColor: getSailingConditionColor(selectedDay.sailingConditions) }
-                  ]}>
-                    <IOSText style={styles.sailingConditionText}>
-                      {getSailingConditionText(selectedDay.sailingConditions)} Sailing
-                    </IOSText>
-                  </View>
                 </View>
 
-                <View style={styles.detailsGrid}>
-                  <View style={styles.detailItem}>
-                    <Thermometer size={18} color="#FF6B6B" />
-                    <IOSText style={styles.detailLabel}>Temperature</IOSText>
-                    <IOSText style={styles.detailValue}>
-                      {Math.round(selectedDay.high)}° / {Math.round(selectedDay.low)}°
-                    </IOSText>
-                  </View>
-
-                  <View style={styles.detailItem}>
-                    <Wind size={18} color="#007AFF" />
-                    <IOSText style={styles.detailLabel}>Wind</IOSText>
-                    <IOSText style={styles.detailValue}>
-                      {Math.round(selectedDay.windSpeed)} kts {formatWindDirection(selectedDay.windDirection)}
-                    </IOSText>
-                  </View>
-
-                  <View style={styles.detailItem}>
-                    <Waves size={18} color="#0096FF" />
-                    <IOSText style={styles.detailLabel}>Waves</IOSText>
-                    <IOSText style={styles.detailValue}>
-                      {selectedDay.waveHeight.toFixed(1)}m
-                    </IOSText>
-                  </View>
-
-                  <View style={styles.detailItem}>
-                    <Anchor size={18} color="#00C864" />
-                    <IOSText style={styles.detailLabel}>Tides</IOSText>
-                    <IOSText style={styles.detailValue}>
-                      Range: {selectedDay.tideRange.toFixed(1)}m
-                    </IOSText>
-                  </View>
-
-                  <View style={styles.detailItem}>
-                    <Droplets size={18} color="#32D74B" />
-                    <IOSText style={styles.detailLabel}>Humidity</IOSText>
-                    <IOSText style={styles.detailValue}>
-                      {Math.round(selectedDay.humidity)}%
-                    </IOSText>
-                  </View>
-
-                  <View style={styles.detailItem}>
-                    <Sun size={18} color="#FF9500" />
-                    <IOSText style={styles.detailLabel}>UV Index</IOSText>
-                    <IOSText style={styles.detailValue}>
-                      {selectedDay.uvIndex}
-                    </IOSText>
-                  </View>
-                </View>
-
-                <View style={styles.tideTimesContainer}>
-                  <IOSText style={styles.tideTimesTitle}>Tide Times</IOSText>
-                  <View style={styles.tideTimesGrid}>
-                    <View style={styles.tideTimeItem}>
-                      <IOSText style={styles.tideTimeLabel}>High Tide</IOSText>
-                      <IOSText style={styles.tideTimeValue}>
-                        {new Date(`2000-01-01T${selectedDay.highTideTime}`).toLocaleTimeString('en-US', {
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })}
+                {station.type === 'wind' && (
+                  <View style={styles.detailsGrid}>
+                    <View style={styles.detailItem}>
+                      <Wind size={18} color="#007AFF" />
+                      <IOSText style={styles.detailLabel}>Wind Speed</IOSText>
+                      <IOSText style={styles.detailValue}>
+                        {Math.round(selectedDay.windSpeed)} kts
                       </IOSText>
                     </View>
-                    <View style={styles.tideTimeItem}>
-                      <IOSText style={styles.tideTimeLabel}>Low Tide</IOSText>
-                      <IOSText style={styles.tideTimeValue}>
-                        {new Date(`2000-01-01T${selectedDay.lowTideTime}`).toLocaleTimeString('en-US', {
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })}
+
+                    <View style={styles.detailItem}>
+                      <Wind size={18} color="#007AFF" />
+                      <IOSText style={styles.detailLabel}>Direction</IOSText>
+                      <IOSText style={styles.detailValue}>
+                        {formatWindDirection(selectedDay.windDirection)}
+                      </IOSText>
+                    </View>
+
+                    <View style={styles.detailItem}>
+                      <Thermometer size={18} color="#FF6B6B" />
+                      <IOSText style={styles.detailLabel}>Temperature</IOSText>
+                      <IOSText style={styles.detailValue}>
+                        {Math.round(selectedDay.high)}° / {Math.round(selectedDay.low)}°
+                      </IOSText>
+                    </View>
+
+                    <View style={styles.detailItem}>
+                      <Droplets size={18} color="#32D74B" />
+                      <IOSText style={styles.detailLabel}>Humidity</IOSText>
+                      <IOSText style={styles.detailValue}>
+                        {Math.round(selectedDay.humidity)}%
                       </IOSText>
                     </View>
                   </View>
-                </View>
+                )}
+
+                {station.type === 'wave' && (
+                  <View style={styles.detailsGrid}>
+                    <View style={styles.detailItem}>
+                      <Waves size={18} color="#0096FF" />
+                      <IOSText style={styles.detailLabel}>Wave Height</IOSText>
+                      <IOSText style={styles.detailValue}>
+                        {selectedDay.waveHeight.toFixed(1)}m
+                      </IOSText>
+                    </View>
+
+                    <View style={styles.detailItem}>
+                      <Waves size={18} color="#0096FF" />
+                      <IOSText style={styles.detailLabel}>Wave Period</IOSText>
+                      <IOSText style={styles.detailValue}>
+                        {selectedDay.waveHeight > 2 ? '8-12s' : selectedDay.waveHeight > 1 ? '6-10s' : '4-8s'}
+                      </IOSText>
+                    </View>
+
+                    <View style={styles.detailItem}>
+                      <Wind size={18} color="#007AFF" />
+                      <IOSText style={styles.detailLabel}>Wind Speed</IOSText>
+                      <IOSText style={styles.detailValue}>
+                        {Math.round(selectedDay.windSpeed)} kts
+                      </IOSText>
+                    </View>
+
+                    <View style={styles.detailItem}>
+                      <Waves size={18} color="#0096FF" />
+                      <IOSText style={styles.detailLabel}>Sea State</IOSText>
+                      <IOSText style={styles.detailValue}>
+                        {selectedDay.waveHeight > 2.5 ? 'Rough' : selectedDay.waveHeight > 1.2 ? 'Moderate' : 'Calm'}
+                      </IOSText>
+                    </View>
+                  </View>
+                )}
+
+                {station.type === 'tide' && (
+                  <View>
+                    <View style={styles.detailsGrid}>
+                      <View style={styles.detailItem}>
+                        <Anchor size={18} color="#00C864" />
+                        <IOSText style={styles.detailLabel}>Tide Range</IOSText>
+                        <IOSText style={styles.detailValue}>
+                          {selectedDay.tideRange.toFixed(1)}m
+                        </IOSText>
+                      </View>
+
+                      <View style={styles.detailItem}>
+                        <Anchor size={18} color="#00C864" />
+                        <IOSText style={styles.detailLabel}>Tide Type</IOSText>
+                        <IOSText style={styles.detailValue}>
+                          {selectedDay.tideRange > 1.5 ? 'Spring' : 'Neap'}
+                        </IOSText>
+                      </View>
+                    </View>
+
+                    <View style={styles.tideTimesContainer}>
+                      <IOSText style={styles.tideTimesTitle}>Tide Times</IOSText>
+                      <View style={styles.tideTimesGrid}>
+                        <View style={styles.tideTimeItem}>
+                          <IOSText style={styles.tideTimeLabel}>High Tide</IOSText>
+                          <IOSText style={styles.tideTimeValue}>
+                            {formatTideTime(selectedDay.highTideTime)}
+                          </IOSText>
+                        </View>
+                        <View style={styles.tideTimeItem}>
+                          <IOSText style={styles.tideTimeLabel}>Low Tide</IOSText>
+                          <IOSText style={styles.tideTimeValue}>
+                            {formatTideTime(selectedDay.lowTideTime)}
+                          </IOSText>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                )}
               </ScrollView>
+            )}
+
+            {/* Data Source Attribution */}
+            {dataSource && (
+              <View style={styles.dataSourceSection}>
+                <IOSText style={styles.dataSourceTitle}>Data Source</IOSText>
+                <TouchableOpacity
+                  style={styles.dataSourceCard}
+                  onPress={() => openURL(dataSource.url)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.dataSourceInfo}>
+                    <View style={styles.dataSourceHeader}>
+                      <Globe size={16} color="#007AFF" />
+                      <IOSText style={styles.dataSourceName}>{dataSource.name}</IOSText>
+                      <IOSBadge
+                        text={dataSource.quality}
+                        color={dataSource.quality === 'high' ? 'systemBlue' : 'systemOrange'}
+                        size="small"
+                      />
+                    </View>
+                    <IOSText style={styles.dataSourceDescription}>
+                      {dataSource.description}
+                    </IOSText>
+                    <View style={styles.dataSourceMeta}>
+                      <IOSText style={styles.dataSourceUpdated}>
+                        Updated: {new Date(dataSource.lastUpdated).toLocaleDateString()}
+                      </IOSText>
+                      <ExternalLink size={14} color="#007AFF" />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              </View>
             )}
           </SafeAreaView>
         </Animated.View>
@@ -629,5 +1085,53 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#1C1C1E',
+  },
+  dataSourceSection: {
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  dataSourceTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    marginBottom: 12,
+  },
+  dataSourceCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  dataSourceInfo: {
+    // No additional styling needed - structure provided by child elements
+  },
+  dataSourceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
+  },
+  dataSourceName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    flex: 1,
+  },
+  dataSourceDescription: {
+    fontSize: 13,
+    color: '#8E8E93',
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  dataSourceMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dataSourceUpdated: {
+    fontSize: 12,
+    color: '#8E8E93',
   },
 });

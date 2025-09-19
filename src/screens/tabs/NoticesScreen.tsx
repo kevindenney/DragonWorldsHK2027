@@ -375,8 +375,9 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
       });
     });
 
+    // Return all categories, showing count 0 for categories with no data
+    // This ensures consistent category display regardless of data availability
     return Array.from(categoryMap.entries())
-      .filter(([category, data]) => category === 'all' || data.count > 0)
       .map(([category, data]) => ({
         category,
         count: Math.max(0, data.count || 0), // Ensure non-negative number

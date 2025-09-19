@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Marker, Polyline, Circle } from '../../utils/mapComponentStubs';
 import { TrendingUp, TrendingDown, Navigation, Waves } from 'lucide-react-native';
@@ -6,6 +6,8 @@ import Animated, { useSharedValue, withRepeat, withSequence, withTiming, useAnim
 import { IOSText } from '../ios';
 import { colors, typography, spacing } from '../../constants/theme';
 import type { WeatherDataPoint } from './WeatherMapLayer';
+import { tideDataService, type TideStation as TideStationData } from '../../services/tideDataService';
+import { unifiedTideService, type UnifiedTideStation } from '../../services/unifiedTideService';
 
 interface TideCurrentOverlayProps {
   weatherData: WeatherDataPoint[];
@@ -22,7 +24,7 @@ interface TideStation {
   };
   name: string;
   currentHeight: number;
-  trend: 'rising' | 'falling' | 'slack';
+  trend: 'rising' | 'falling' | 'stable';
   nextTide: {
     type: 'high' | 'low';
     time: string;
@@ -51,9 +53,14 @@ export const TideCurrentOverlay: React.FC<TideCurrentOverlayProps> = ({
   showCurrentVectors = true,
   animateFlow = true
 }) => {
+  // State for real tide data
+  const [tideStations, setTideStations] = useState<TideStation[]>([]);
+  const [isLoadingTides, setIsLoadingTides] = useState(false);
+  const [tideError, setTideError] = useState<string | null>(null);
+
   // Animation values for flowing current indicators
   const flowAnimationValue = useSharedValue(0);
-  
+
   React.useEffect(() => {
     if (animateFlow && visible) {
       flowAnimationValue.value = withRepeat(
@@ -69,42 +76,91 @@ export const TideCurrentOverlay: React.FC<TideCurrentOverlayProps> = ({
     }
   }, [animateFlow, visible, flowAnimationValue]);
 
-  // Generate tide stations based on racing area
-  const tideStations: TideStation[] = useMemo(() => [
-    {
-      coordinate: { latitude: 22.2783, longitude: 114.1757 },
-      name: 'Clearwater Bay Marina',
-      currentHeight: 1.2,
-      trend: 'rising',
-      nextTide: {
-        type: 'high',
-        time: '14:30',
-        height: 2.1
-      }
-    },
-    {
-      coordinate: { latitude: 22.3200, longitude: 114.2300 },
-      name: 'West Race Area',
-      currentHeight: 1.1,
-      trend: 'rising',
-      nextTide: {
-        type: 'high',
-        time: '14:35',
-        height: 2.0
-      }
-    },
-    {
-      coordinate: { latitude: 22.3600, longitude: 114.2600 },
-      name: 'East Race Area', 
-      currentHeight: 1.3,
-      trend: 'rising',
-      nextTide: {
-        type: 'high',
-        time: '14:25',
-        height: 2.2
-      }
+  // Load tide data when component becomes visible
+  useEffect(() => {
+    if (visible && showTideStations) {
+      loadTideData();
     }
-  ], []);
+  }, [visible, showTideStations]);
+
+  const loadTideData = async () => {
+    setIsLoadingTides(true);
+    setTideError(null);
+
+    try {
+      console.log('🌊 TideCurrentOverlay: Loading unified tide stations...');
+
+      // Synchronize time to ensure consistency with forecast data
+      const now = new Date();
+      unifiedTideService.synchronizeTime(now);
+
+      // Test data consistency
+      const testCoordinate = { latitude: 22.225, longitude: 114.125 };
+      const consistencyCheck = unifiedTideService.verifyDataConsistency(testCoordinate, now);
+      console.log('🌊 [DATA CONSISTENCY CHECK]', consistencyCheck);
+
+      // Use unified tide service for consistent data
+      const unifiedStations = await unifiedTideService.getUnifiedTideStations();
+      console.log('🌊 TideCurrentOverlay: Loaded unified stations:', unifiedStations.length);
+
+      // Convert to component interface with real-time current heights
+      const convertedStations: TideStation[] = unifiedStations.map(station => {
+        // Get current tide height for this exact moment
+        const currentHeight = unifiedTideService.getCurrentTideHeight(station.coordinate, now);
+
+        // Get next hour's height to determine trend
+        const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
+        const nextHeight = unifiedTideService.getCurrentTideHeight(station.coordinate, nextHour);
+        const heightDiff = nextHeight - currentHeight;
+        const trend = heightDiff > 0.05 ? 'rising' : heightDiff < -0.05 ? 'falling' : 'stable';
+
+        console.log(`🌊 TideCurrentOverlay: ${station.name} - Current: ${currentHeight.toFixed(1)}m, Trend: ${trend}`);
+
+        return {
+          coordinate: station.coordinate,
+          name: station.name,
+          currentHeight: Math.round(currentHeight * 100) / 100,
+          trend: trend,
+          nextTide: station.nextTide
+        };
+      });
+
+      setTideStations(convertedStations);
+    } catch (error) {
+      console.error('❌ TideCurrentOverlay: Failed to load unified tide data:', error);
+      setTideError('Failed to load tide data');
+
+      // Use unified service fallback data
+      const now = new Date();
+      const defaultCoordinate = { latitude: 22.3, longitude: 114.225 };
+      const currentHeight = unifiedTideService.getCurrentTideHeight(defaultCoordinate, now);
+      const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
+      const nextHeight = unifiedTideService.getCurrentTideHeight(defaultCoordinate, nextHour);
+      const heightDiff = nextHeight - currentHeight;
+      const trend = heightDiff > 0.05 ? 'rising' : heightDiff < -0.05 ? 'falling' : 'stable';
+
+      setTideStations([
+        {
+          coordinate: defaultCoordinate,
+          name: 'Eastern Waters (Unified)',
+          currentHeight: Math.round(currentHeight * 100) / 100,
+          trend: trend,
+          nextTide: {
+            type: trend === 'rising' ? 'high' : 'low',
+            time: new Date(now.getTime() + 2 * 60 * 60 * 1000).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false
+            }),
+            height: Math.round((trend === 'rising' ? nextHeight + 0.5 : nextHeight - 0.3) * 100) / 100
+          }
+        }
+      ]);
+    } finally {
+      setIsLoadingTides(false);
+    }
+  };
+
 
   // Generate current vectors from weather data
   const currentVectors: CurrentVector[] = useMemo(() => {
@@ -185,7 +241,41 @@ export const TideCurrentOverlay: React.FC<TideCurrentOverlayProps> = ({
   return (
     <>
       {/* Tide Stations */}
-      {showTideStations && tideStations.map((station, index) => (
+      {showTideStations && isLoadingTides && (
+        <Marker
+          coordinate={{ latitude: 22.3, longitude: 114.225 }}
+          anchor={{ x: 0.5, y: 0.5 }}
+          tracksViewChanges={false}
+        >
+          <View style={styles.tideStationMarker}>
+            <Waves size={16} color={colors.textMuted} />
+            <View style={styles.tideDataBubble}>
+              <IOSText style={styles.tideStationName}>Loading...</IOSText>
+              <IOSText style={styles.tideHeight}>--.-m</IOSText>
+              <IOSText style={styles.tideNextChange}>Fetching data...</IOSText>
+            </View>
+          </View>
+        </Marker>
+      )}
+
+      {showTideStations && tideError && !isLoadingTides && tideStations.length === 0 && (
+        <Marker
+          coordinate={{ latitude: 22.3, longitude: 114.225 }}
+          anchor={{ x: 0.5, y: 0.5 }}
+          tracksViewChanges={false}
+        >
+          <View style={styles.tideStationMarker}>
+            <Waves size={16} color={colors.error} />
+            <View style={styles.tideDataBubble}>
+              <IOSText style={styles.tideStationName}>Error</IOSText>
+              <IOSText style={styles.tideHeight}>--.-m</IOSText>
+              <IOSText style={styles.tideNextChange}>Failed to load</IOSText>
+            </View>
+          </View>
+        </Marker>
+      )}
+
+      {showTideStations && !isLoadingTides && tideStations.map((station, index) => (
         <React.Fragment key={`tide-station-${index}`}>
           {/* Tide influence circles */}
           <Circle
@@ -331,7 +421,7 @@ export const TideCurrentOverlay: React.FC<TideCurrentOverlayProps> = ({
           
           <View style={styles.legendItem}>
             <Waves size={12} color={colors.textMuted} />
-            <IOSText style={styles.legendText}>Slack</IOSText>
+            <IOSText style={styles.legendText}>Stable</IOSText>
           </View>
         </View>
       </Marker>

@@ -3,6 +3,7 @@ import { View, StyleSheet, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import Svg, { Line, Text as SvgText, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { IOSText } from '../../ios';
+import { formatChartTime, formatCurrentTime } from '../../../utils/timeUtils';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -114,7 +115,7 @@ export const ChartWithTimeIndicators: React.FC<ChartWithTimeIndicatorsProps> = (
                 textAnchor="middle"
                 fontWeight="600"
               >
-                NOW
+                NOW (HKT)
               </SvgText>
             </>
           )}
@@ -161,6 +162,13 @@ export const ChartWithTimeIndicators: React.FC<ChartWithTimeIndicatorsProps> = (
           )}
         </View>
       )}
+
+      {/* Always show timezone indicator */}
+      <View style={styles.timezoneFooter}>
+        <IOSText style={styles.timezoneText}>
+          Times in Hong Kong Time (HKT)
+        </IOSText>
+      </View>
     </View>
   );
 };
@@ -211,6 +219,18 @@ const styles = StyleSheet.create({
     color: '#C7C7CC',
     marginTop: 2,
     textAlign: 'center',
+  },
+
+  // Timezone footer
+  timezoneFooter: {
+    marginTop: 8,
+    alignItems: 'center',
+  },
+
+  timezoneText: {
+    fontSize: 10,
+    color: '#8E8E93',
+    fontStyle: 'italic',
   },
 });
 

@@ -81,23 +81,71 @@ export const SatelliteOverlay: React.FC<SatelliteOverlayProps> = ({
   // Get current frame to display (typically just one for satellite)
   const currentFrame = satelliteFrames[0];
 
-  if (!visible || !currentFrame || currentFrame.tiles.length === 0) {
+  // Add detailed logging about what's happening with the overlay
+  React.useEffect(() => {
+    console.log('🛰️ SatelliteOverlay render state:', {
+      visible,
+      type,
+      frameCount: satelliteFrames.length,
+      currentFrameExists: !!currentFrame,
+      currentFrameTileCount: currentFrame?.tiles.length || 0,
+      loading,
+      error
+    });
+
+    if (currentFrame && currentFrame.tiles.length > 0) {
+      console.log('🛰️ SatelliteOverlay will render', currentFrame.tiles.length, 'tiles');
+      currentFrame.tiles.forEach((tile, index) => {
+        console.log(`🛰️ Tile ${index}: ${tile.url}`);
+      });
+    } else {
+      console.log('🛰️ SatelliteOverlay has no tiles to render');
+    }
+  }, [visible, type, satelliteFrames, currentFrame, loading, error]);
+
+  if (!visible) {
+    console.log('🛰️ SatelliteOverlay not visible, returning null');
     return null;
   }
 
+  if (loading) {
+    console.log('🛰️ SatelliteOverlay loading, returning null');
+    return null;
+  }
+
+  if (error) {
+    console.log('🛰️ SatelliteOverlay has error:', error);
+    return null;
+  }
+
+  if (!currentFrame) {
+    console.log('🛰️ SatelliteOverlay no current frame, returning null');
+    return null;
+  }
+
+  if (currentFrame.tiles.length === 0) {
+    console.log('🛰️ SatelliteOverlay current frame has no tiles, returning null');
+    return null;
+  }
+
+  console.log('🛰️ SatelliteOverlay rendering', currentFrame.tiles.length, 'tiles');
+
   return (
     <View style={styles.container}>
-      {currentFrame.tiles.map((tile, index) => (
-        <UrlTile
-          key={`satellite-tile-${type}-${index}`}
-          urlTemplate={tile.url}
-          maximumZ={10}
-          minimumZ={3}
-          flipY={false}
-          zIndex={zIndex + index}
-          opacity={opacity}
-        />
-      ))}
+      {currentFrame.tiles.map((tile, index) => {
+        console.log(`🛰️ Rendering UrlTile ${index}: ${tile.url} with opacity ${opacity}`);
+        return (
+          <UrlTile
+            key={`satellite-tile-${type}-${index}`}
+            urlTemplate={tile.url}
+            maximumZ={10}
+            minimumZ={3}
+            flipY={false}
+            zIndex={zIndex + index}
+            opacity={opacity}
+          />
+        );
+      })}
     </View>
   );
 };

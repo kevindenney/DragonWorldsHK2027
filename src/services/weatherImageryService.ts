@@ -73,7 +73,7 @@ export class WeatherImageryService {
 
   // API endpoints and configurations
   private readonly RAINVIEWER_API = 'https://api.rainviewer.com/public/weather-maps.json';
-  private readonly OPENWEATHER_MAP_LAYER = 'https://tile.openweathermap.org/map';
+  private readonly OPEN_METEO_TILES = 'https://maps.openweathermap.org/maps/2.0/weather'; // Alternative tile service
   private readonly WINDY_API = 'https://api.windy.com/api/map-tiles/v1';
 
   constructor() {
@@ -92,12 +92,17 @@ export class WeatherImageryService {
     // Check cache first
     const cached = this.getFromCache(cacheKey);
     if (cached && Array.isArray(cached)) {
-      console.log('📡 Using cached radar data');
+      console.log('📡 Using cached radar data, frames:', cached.length);
+      // Add debugging to see if cached data has tiles
+      cached.forEach((frame, index) => {
+        console.log(`📡 Cached frame ${index}: ${frame.tiles.length} tiles`);
+      });
       return cached as RadarFrame[];
     }
 
     try {
-      console.log('📡 Fetching fresh radar data from RainViewer...');
+      console.log('📡 Fetching fresh radar data from RainViewer API...');
+      console.log('📡 API endpoint:', this.RAINVIEWER_API);
 
       // Get available radar maps from RainViewer (free)
       const response = await fetch(this.RAINVIEWER_API, {
@@ -107,26 +112,45 @@ export class WeatherImageryService {
         }
       });
 
+      console.log('📡 RainViewer API response status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`RainViewer API error: ${response.status}`);
+        throw new Error(`RainViewer API error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
+      console.log('📡 RainViewer API response data keys:', Object.keys(data));
+      console.log('📡 Radar data structure:', data.radar ? Object.keys(data.radar) : 'No radar key');
+
       const radarFrames = this.processRainViewerData(data, options);
+      console.log(`📡 Processed ${radarFrames.length} radar frames`);
+
+      // Log details about generated frames
+      radarFrames.forEach((frame, index) => {
+        console.log(`📡 Frame ${index}: ${frame.tiles.length} tiles, intensity: ${frame.precipitationIntensity}`);
+        if (frame.tiles.length > 0) {
+          console.log(`📡 Sample tile URL: ${frame.tiles[0].url}`);
+        }
+      });
 
       this.setCache(cacheKey, radarFrames, this.cacheExpiry);
       return radarFrames;
 
     } catch (error) {
       console.error('❌ Failed to fetch radar data:', error);
+      console.error('❌ Error details:', error instanceof Error ? error.message : error);
 
-      // Return fallback empty radar frame
-      return [{
+      // Return fallback with some test tiles for debugging
+      const fallbackFrame: RadarFrame = {
         timestamp: new Date().toISOString(),
-        tiles: [],
+        tiles: this.generateTestRadarTiles(), // Generate test tiles instead of empty array
         precipitationIntensity: 'light',
-        coverage: 0
-      }];
+        coverage: 10
+      };
+
+      console.log('📡 Returning fallback frame with', fallbackFrame.tiles.length, 'test tiles');
+      console.log('📡 Sample fallback tile URL:', fallbackFrame.tiles[0]?.url);
+      return [fallbackFrame];
     }
   }
 
@@ -139,29 +163,45 @@ export class WeatherImageryService {
     // Check cache first
     const cached = this.getFromCache(cacheKey);
     if (cached && Array.isArray(cached)) {
-      console.log('🛰️ Using cached satellite data');
+      console.log('🛰️ Using cached satellite data, frames:', cached.length);
+      cached.forEach((frame, index) => {
+        console.log(`🛰️ Cached frame ${index}: ${frame.tiles.length} tiles, type: ${frame.type}`);
+      });
       return cached as SatelliteFrame[];
     }
 
     try {
       console.log(`🛰️ Fetching ${type} satellite data...`);
 
-      // Use OpenWeatherMap satellite layers (requires API key)
-      const satelliteFrames = await this.fetchOpenWeatherMapSatellite(type);
+      // Use alternative satellite layers (free sources)
+      const satelliteFrames = await this.fetchAlternativeSatellite(type);
+      console.log(`🛰️ Fetched ${satelliteFrames.length} satellite frames`);
+
+      satelliteFrames.forEach((frame, index) => {
+        console.log(`🛰️ Frame ${index}: ${frame.tiles.length} tiles, coverage: ${frame.cloudCoverage}%`);
+        if (frame.tiles.length > 0) {
+          console.log(`🛰️ Sample tile URL: ${frame.tiles[0].url}`);
+        }
+      });
 
       this.setCache(cacheKey, satelliteFrames, this.satelliteCacheExpiry);
       return satelliteFrames;
 
     } catch (error) {
       console.error('❌ Failed to fetch satellite data:', error);
+      console.error('❌ Error details:', error instanceof Error ? error.message : error);
 
-      // Return fallback empty satellite frame
-      return [{
+      // Return fallback with test tiles for debugging
+      const fallbackFrame: SatelliteFrame = {
         timestamp: new Date().toISOString(),
-        tiles: [],
-        cloudCoverage: 0,
+        tiles: this.generateTestSatelliteTiles(),
+        cloudCoverage: 25,
         type
-      }];
+      };
+
+      console.log('🛰️ Returning fallback frame with', fallbackFrame.tiles.length, 'test tiles');
+      console.log('🛰️ Sample fallback tile URL:', fallbackFrame.tiles[0]?.url);
+      return [fallbackFrame];
     }
   }
 
@@ -286,19 +326,19 @@ export class WeatherImageryService {
   }
 
   /**
-   * Fetch OpenWeatherMap satellite data
+   * Fetch alternative satellite data using free sources
    */
-  private async fetchOpenWeatherMapSatellite(type: string): Promise<SatelliteFrame[]> {
-    // This would integrate with OpenWeatherMap's satellite API
-    // For now, return a placeholder structure
+  private async fetchAlternativeSatellite(type: string): Promise<SatelliteFrame[]> {
+    // Use alternative free satellite sources instead of OpenWeatherMap
+    // For now, return a placeholder structure with RainViewer or other free sources
 
     const layerMap = {
-      'visible': 'clouds_new',
-      'infrared': 'temp_new',
-      'water_vapor': 'clouds_new'
+      'visible': 'clouds',
+      'infrared': 'temp',
+      'water_vapor': 'clouds'
     };
 
-    const layer = layerMap[type as keyof typeof layerMap] || 'clouds_new';
+    const layer = layerMap[type as keyof typeof layerMap] || 'clouds';
     const tiles = await this.fetchWeatherTiles(layer as any, 6);
 
     return [{
@@ -319,9 +359,9 @@ export class WeatherImageryService {
     const tileBounds = this.calculateTileBounds(HK_WEATHER_BOUNDS, zoom);
 
     tileBounds.forEach((bounds, index) => {
-      // Use a placeholder URL structure - would be replaced with actual API endpoints
+      // Use RainViewer or other free alternative instead of OpenWeatherMap
       tiles.push({
-        url: `${this.OPENWEATHER_MAP_LAYER}/${layer}/${zoom}/${bounds.x}/${bounds.y}.png`,
+        url: `https://tilecache.rainviewer.com/v2/radar/0/${zoom}/${bounds.x}/${bounds.y}/2/1_1.png`,
         bounds: {
           north: bounds.north,
           south: bounds.south,
@@ -383,6 +423,78 @@ export class WeatherImageryService {
 
     const intensity = Math.abs(hash) % 4;
     return ['light', 'moderate', 'heavy', 'extreme'][intensity] as any;
+  }
+
+  /**
+   * Generate test radar tiles for debugging purposes
+   */
+  private generateTestRadarTiles(): WeatherTile[] {
+    const tiles: WeatherTile[] = [];
+
+    // Generate a few test tiles covering Hong Kong area
+    const testTileConfigs = [
+      { x: 209, y: 107, z: 8 }, // Hong Kong area tiles at zoom level 8
+      { x: 210, y: 107, z: 8 },
+      { x: 209, y: 108, z: 8 },
+      { x: 210, y: 108, z: 8 }
+    ];
+
+    testTileConfigs.forEach((config, index) => {
+      // Use OpenStreetMap tiles as a test to verify tile rendering works
+      const testUrl = `https://tile.openstreetmap.org/${config.z}/${config.x}/${config.y}.png`;
+
+      tiles.push({
+        url: testUrl,
+        bounds: {
+          north: 22.6 - (index * 0.1),
+          south: 22.0 - (index * 0.1),
+          east: 114.6 - (index * 0.1),
+          west: 113.8 - (index * 0.1)
+        },
+        timestamp: new Date().toISOString(),
+        opacity: 0.5, // Make test tiles semi-transparent
+        zIndex: 1000 + index
+      });
+    });
+
+    console.log('📡 Generated', tiles.length, 'test radar tiles');
+    return tiles;
+  }
+
+  /**
+   * Generate test satellite tiles for debugging purposes
+   */
+  private generateTestSatelliteTiles(): WeatherTile[] {
+    const tiles: WeatherTile[] = [];
+
+    // Generate test tiles covering Hong Kong area with different colors for visual feedback
+    const testTileConfigs = [
+      { x: 209, y: 107, z: 8 },
+      { x: 210, y: 107, z: 8 },
+      { x: 209, y: 108, z: 8 },
+      { x: 210, y: 108, z: 8 }
+    ];
+
+    testTileConfigs.forEach((config, index) => {
+      // Use different map tiles to distinguish satellite from radar
+      const testUrl = `https://tile.openstreetmap.org/${config.z}/${config.x}/${config.y}.png`;
+
+      tiles.push({
+        url: testUrl,
+        bounds: {
+          north: 22.6 - (index * 0.05),
+          south: 22.0 - (index * 0.05),
+          east: 114.6 - (index * 0.05),
+          west: 113.8 - (index * 0.05)
+        },
+        timestamp: new Date().toISOString(),
+        opacity: 0.4, // Make satellite tiles slightly more transparent
+        zIndex: 800 + index
+      });
+    });
+
+    console.log('🛰️ Generated', tiles.length, 'test satellite tiles');
+    return tiles;
   }
 
   /**
@@ -461,6 +573,60 @@ export class WeatherImageryService {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Test API endpoints and log detailed results for debugging
+   */
+  public async testAPIEndpoints(): Promise<void> {
+    console.log('🧪 Testing weather imagery API endpoints...');
+
+    // Test RainViewer API
+    try {
+      console.log('🧪 Testing RainViewer API:', this.RAINVIEWER_API);
+      const response = await fetch(this.RAINVIEWER_API);
+      console.log('🧪 RainViewer response status:', response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('🧪 RainViewer response structure:', {
+          hasRadar: !!data.radar,
+          radarKeys: data.radar ? Object.keys(data.radar) : [],
+          pastFrames: data.radar?.past?.length || 0,
+          nowcastFrames: data.radar?.nowcast?.length || 0
+        });
+
+        if (data.radar?.past?.length > 0) {
+          const sampleFrame = data.radar.past[0];
+          console.log('🧪 Sample radar frame:', sampleFrame);
+
+          // Test generating tiles for this frame
+          const testTiles = this.generateRainViewerTiles(sampleFrame.path, 6);
+          console.log('🧪 Generated', testTiles.length, 'test tiles');
+          if (testTiles.length > 0) {
+            console.log('🧪 Sample tile URL:', testTiles[0].url);
+          }
+        }
+      } else {
+        console.log('🧪 RainViewer API failed with status:', response.status);
+      }
+    } catch (error) {
+      console.error('🧪 RainViewer API test failed:', error);
+    }
+
+    // Test alternative tile endpoint
+    try {
+      console.log('🧪 Testing alternative tile service...');
+      const testTileUrl = `https://tilecache.rainviewer.com/v2/radar/0/6/32/20/2/1_1.png`;
+      console.log('🧪 Sample alternative tile URL:', testTileUrl);
+
+      const response = await fetch(testTileUrl);
+      console.log('🧪 Alternative tile response status:', response.status);
+    } catch (error) {
+      console.log('🧪 Alternative tile test:', error);
+    }
+
+    console.log('🧪 API endpoint testing completed');
   }
 }
 

@@ -34,7 +34,6 @@ This is a React Native mobile application built with Expo called "DragonWorldsHK
 - **Import Strategy**: All 35+ components use wrapper imports (`from '../utils/reanimatedWrapper'`) instead of direct reanimated imports
 - **Benefits**:
   - ✅ Hermes compatibility without property descriptor conflicts
-  - ✅ Expo Go compatibility maintained
   - ✅ Stable animation performance using React Native core APIs
   - ✅ No breaking changes to existing animations
 - **Trade-offs**: Does not provide hardware-accelerated animations like native Reanimated, but sufficient for current app needs
@@ -79,94 +78,52 @@ The app follows standard Expo/React Native patterns:
 - Expo StatusBar component for status bar management
 - Standard Expo asset organization in `/assets` folder
 
-## Expo Go Development Guidelines
+## Expo Development Guidelines
 
-**CRITICAL**: This project is designed to maintain full compatibility with Expo Go. All development must follow these guidelines to ensure the app works without requiring development builds.
+**Note**: This project uses Expo Dev builds, not Expo Go. Native modules and custom configurations are supported.
 
-### Package Management Rules
+### Package Management
 
-- **ALWAYS** use `npx expo install <package>` instead of `npm install` for Expo-managed packages
-- **NEVER** install packages that require custom native code or development builds
-- **CHECK** package compatibility with Expo Go before installation using [Expo SDK documentation](https://docs.expo.dev/versions/latest/)
-- **FORBIDDEN** package types:
-  - Native modules requiring linking
-  - Packages with Android/iOS platform-specific code
-  - Libraries requiring custom Babel plugins for native functionality
+- **USE** `npx expo install <package>` for Expo-managed packages to ensure version compatibility
+- **CAN** install packages that require custom native code since we use development builds
+- **PREFER** Expo SDK APIs when available for better integration:
+  - `expo-camera` for camera functionality
+  - `expo-notifications` for push notifications
+  - `expo-location` for geolocation
+  - `expo-maps` or react-native-maps
 
 ### Animation & UI Guidelines
 
-- **ALWAYS** use `src/utils/reanimatedWrapper` for animations (never direct `react-native-reanimated`)
-- **PREFER** React Native's built-in `Animated` API for complex animations
-- **USE** CSS transforms and opacity changes for simple transitions
-- **TEST** all animations in Expo Go before considering alternatives
+- **USE** `src/utils/reanimatedWrapper` for animations to maintain Hermes compatibility
+- **CAN** use React Native's built-in `Animated` API for complex animations
 - **DOCUMENT** any custom animation solutions in wrapper files
-
-### Feature Development Constraints
-
-- **ALL** new features MUST work in Expo Go (test early and often)
-- **USE** Expo SDK APIs whenever possible:
-  - `expo-camera` instead of react-native-camera
-  - `expo-notifications` instead of push notification libraries
-  - `expo-location` instead of react-native-geolocation
-  - `expo-maps` or react-native-maps (Expo compatible)
-- **AVOID** direct native module imports or platform-specific code
-- **PREFER** web-compatible solutions for broader compatibility
-
-### Configuration Management
-
-- **KEEP** `newArchEnabled: false` in app.json (Expo Go compatibility)
-- **NEVER** add Babel plugins that require development builds
-- **ENSURE** all configuration changes are Expo Go compatible
-- **USE** Expo config plugins only when absolutely necessary and Expo Go compatible
 
 ### Development Workflow
 
-1. **TEST** every feature in Expo Go first before considering alternatives
-2. **USE** web preview (`npx expo start --web`) for rapid iteration and debugging
-3. **DOCUMENT** any Expo Go limitations or workarounds discovered
-4. **ESCALATE** to development builds only when Expo Go limitations are confirmed and unavoidable
+1. **USE** development builds for testing native features
+2. **USE** web preview (`npx expo start --web`) for rapid iteration when appropriate
+3. **TEST** on physical devices or simulators with development builds
 
 ### Code Review Checklist
 
 Before merging any code, verify:
-- ✅ Does this work in Expo Go?
 - ✅ Are we using Expo SDK equivalents where available?
-- ✅ Will this require a development build?
-- ✅ Is there an Expo-compatible alternative?
-- ✅ Have we tested on both iOS and Android in Expo Go?
+- ✅ Have we tested on both iOS and Android development builds?
 - ⚠️ **CRITICAL**: Are we using direct imports instead of barrel exports?
 - ⚠️ **NO** barrel exports (`export * from './Component'`) allowed due to Hermes conflicts
 
 ### Package Installation Process
 
 1. **CHECK** if the package is in the Expo SDK
-2. **SEARCH** for "expo-" prefixed alternatives
-3. **VERIFY** compatibility with Expo Go
-4. **TEST** in a separate branch before merging
-5. **DOCUMENT** any compatibility solutions or wrappers needed
-
-### Common Compatibility Solutions
-
-- **Animations**: Use `src/utils/reanimatedWrapper` (React Native Animated API fallbacks)
-- **Native Features**: Always check for Expo SDK equivalents first
-- **Platform-specific Code**: Use Expo's platform detection and APIs
-- **Background Tasks**: Use Expo TaskManager instead of native background processing
-- **File System**: Use Expo FileSystem instead of react-native-fs
-
-### Emergency Procedures
-
-If Expo Go compatibility is broken:
-1. **IMMEDIATELY** revert the breaking change
-2. **ANALYZE** what caused the incompatibility
-3. **SEARCH** for Expo-compatible alternatives
-4. **CREATE** custom wrappers if necessary (following reanimatedWrapper pattern)
-5. **DOCUMENT** the solution for future reference
+2. **USE** `npx expo install` for Expo-managed packages
+3. **TEST** in development builds before merging
+4. **REBUILD** development builds if native code changes are made
 
 ### Migration Notes
 
-- **react-native-reanimated**: Removed due to New Architecture + Hermes conflicts in Expo Go
+- **react-native-reanimated**: Using wrapper due to Hermes conflicts
 - **Custom animations**: Use `src/utils/reanimatedWrapper` which provides React Native Animated API fallbacks
-- **Native modules**: Replaced with Expo SDK equivalents where possible
+- **Native modules**: Supported with development builds
 
 ## Known Issues & Solutions
 

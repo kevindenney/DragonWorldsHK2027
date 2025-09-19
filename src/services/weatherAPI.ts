@@ -21,6 +21,23 @@ export interface OpenMeteoMarineResponse {
   };
 }
 
+export interface OpenMeteoWeatherResponse {
+  location: {
+    lat: number;
+    lon: number;
+  };
+  data: {
+    wind: OpenMeteoWindData[];
+    weather: WeatherData[];
+  };
+  metadata: {
+    updated: string;
+    source: 'open-meteo';
+    model: string;
+    resolution: string;
+  };
+}
+
 export interface OpenMeteoWindData {
   time: string;
   windSpeed: number;
@@ -33,46 +50,6 @@ export interface OpenMeteoWindData {
   conditions: string;
 }
 
-export interface OpenWeatherMapResponse {
-  location: {
-    lat: number;
-    lon: number;
-  };
-  current: {
-    temp: number;
-    feels_like: number;
-    pressure: number;
-    humidity: number;
-    visibility: number;
-    wind_speed: number;
-    wind_deg: number;
-    wind_gust?: number;
-    weather: Array<{
-      main: string;
-      description: string;
-      icon: string;
-    }>;
-  };
-  hourly: Array<{
-    dt: number;
-    temp: number;
-    feels_like: number;
-    pressure: number;
-    humidity: number;
-    wind_speed: number;
-    wind_deg: number;
-    wind_gust?: number;
-    weather: Array<{
-      main: string;
-      description: string;
-      icon: string;
-    }>;
-  }>;
-  metadata: {
-    updated: string;
-    source: 'openweathermap';
-  };
-}
 
 export interface WaveData {
   time: string;
@@ -160,6 +137,7 @@ export interface WeatherAPIError {
   error: string;
   code?: number;
   retryAfter?: number;
+  silent?: boolean; // Flag to indicate error should be handled silently
 }
 
 export interface WeatherCache {
@@ -172,8 +150,8 @@ export interface WeatherCache {
 
 // Weather API client class
 export class WeatherAPI {
-  private openWeatherMapKey: string;
   private noaaKey: string;
+  private openWeatherMapKey: string;
   private cache: WeatherCache = {};
   private cacheExpiry = 10 * 60 * 1000; // 10 minutes
   
@@ -184,11 +162,11 @@ export class WeatherAPI {
   private readonly RACING_AREA_LON = CENTRAL_RACING_LON;
 
   constructor(
-    openWeatherMapKey: string = process.env.EXPO_PUBLIC_OPENWEATHERMAP_API_KEY || '',
-    noaaKey: string = process.env.EXPO_PUBLIC_NOAA_API_KEY || ''
+    noaaKey: string = process.env.EXPO_PUBLIC_NOAA_API_KEY || '',
+    openWeatherMapKey: string = process.env.EXPO_PUBLIC_OPENWEATHERMAP_API_KEY || ''
   ) {
-    this.openWeatherMapKey = openWeatherMapKey;
     this.noaaKey = noaaKey;
+    this.openWeatherMapKey = openWeatherMapKey;
     this.loadCache();
   }
 
@@ -247,83 +225,62 @@ export class WeatherAPI {
     }
   }
 
-  // OpenWeatherMap API integration for comprehensive weather
-  async getOpenWeatherMapData(
+  // Open-Meteo Weather API integration for comprehensive weather (free)
+  async getOpenMeteoWeatherData(
     lat: number = this.RACING_AREA_LAT,
     lon: number = this.RACING_AREA_LON
-  ): Promise<OpenWeatherMapResponse> {
-    const cacheKey = `openweathermap_${lat}_${lon}`;
-    
+  ): Promise<OpenMeteoWeatherResponse> {
+    const cacheKey = `openmeteo_weather_${lat}_${lon}`;
+
     // Check cache first
     const cached = this.getFromCache(cacheKey);
-    if (cached) {
-      console.log('📦 Using cached OpenWeatherMap data for', { lat, lon });
-      return cached;
-    }
-
-    if (!this.openWeatherMapKey) {
-      console.warn('⚠️ OpenWeatherMap API key not configured - skipping weather data');
-      throw {
-        source: 'openweathermap',
-        error: 'OpenWeatherMap API key not configured'
-      } as WeatherAPIError;
-    }
-
-    // Log API key status (first/last 4 chars only for security)
-    const keyPreview = this.openWeatherMapKey.length > 8 
-      ? `${this.openWeatherMapKey.slice(0, 4)}...${this.openWeatherMapKey.slice(-4)}`
-      : 'KEY_TOO_SHORT';
-    console.log('🔑 OpenWeatherMap API key status:', { 
-      keyLength: this.openWeatherMapKey.length,
-      keyPreview,
-      endpoint: 'onecall (2.5)'
-    });
+    if (cached) return cached;
 
     try {
-      const url = `https://api.openweathermap.org/data/2.5/onecall?` +
-        `lat=${lat}&lon=${lon}&` +
-        `appid=${this.openWeatherMapKey}&` +
-        `units=metric&exclude=minutely,daily,alerts`;
-      
-      console.log('🌤️ Fetching OpenWeatherMap current data:', { lat, lon, url: url.replace(this.openWeatherMapKey, 'API_KEY_HIDDEN') });
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'DragonWorlds2027/1.0'
+      const weatherParams = [
+        'temperature_2m',
+        'relative_humidity_2m',
+        'surface_pressure',
+        'wind_speed_10m',
+        'wind_direction_10m',
+        'wind_gusts_10m',
+        'visibility'
+      ].join(',');
+
+      const response = await fetch(
+        `https://api.open-meteo.com/v1/forecast?` +
+        `latitude=${lat}&longitude=${lon}&` +
+        `hourly=${weatherParams}&` +
+        `timezone=Asia%2FHong_Kong&forecast_days=7`,
+        {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'DragonWorlds2027/1.0'
+          }
         }
-      });
+      );
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ OpenWeatherMap API error:', {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorText,
-          possibleCause: response.status === 401 ? 'Invalid API key or plan limitation' :
-                        response.status === 403 ? 'API plan does not include this endpoint' :
-                        response.status === 404 ? 'Endpoint not found - check API version' :
-                        'Unknown error'
-        });
-        throw new Error(`OpenWeatherMap API error: ${response.status} ${response.statusText} - ${errorText}`);
+        throw new Error(`Open-Meteo Weather API error: ${response.status} ${response.statusText}`);
       }
 
       const rawData = await response.json();
-      const processedData = this.processOpenWeatherMapData(rawData, lat, lon);
-      
+      const processedData = this.processOpenMeteoWeatherData(rawData, lat, lon);
+
       this.setCache(cacheKey, processedData);
       return processedData;
-      
+
     } catch (error) {
-      console.error('OpenWeatherMap API error:', error);
+      console.error('Open-Meteo Weather API error:', error);
       throw {
-        source: 'openweathermap',
+        source: 'open-meteo-weather',
         error: error instanceof Error ? error.message : 'Unknown error',
         code: error instanceof Error && 'status' in error ? (error as any).status : undefined
       } as WeatherAPIError;
     }
   }
+
 
   // NOAA API for tide data and backup weather
   async getNOAAData(
@@ -406,24 +363,24 @@ export class WeatherAPI {
     const errors: WeatherAPIError[] = [];
     const results: any = {};
 
-    // Try OpenWeatherMap first (if API key available and valid)
-    if (this.openWeatherMapKey && this.openWeatherMapKey !== 'c089357aed2f67847d4a8425d3e122fa') {
-      try {
-        results.openweathermap = await this.getOpenWeatherMapData(location?.lat, location?.lon);
-      } catch (error) {
-        console.log('⚠️ OpenWeatherMap failed, continuing with other sources:', error);
-        errors.push(error as WeatherAPIError);
-      }
-    } else {
-      console.log('⚠️ Skipping OpenWeatherMap due to invalid/default API key, using free alternatives');
+    // Get Open-Meteo weather data first (free, no API key needed, reliable)
+    try {
+      results.openmeteo_weather = await this.getOpenMeteoWeatherData(location?.lat, location?.lon);
+      console.log('✅ Open-Meteo Weather API data retrieved successfully');
+    } catch (error) {
+      console.log('⚠️ Open-Meteo Weather failed, continuing with other sources:', error);
+      errors.push(error as WeatherAPIError);
     }
 
     // Get Open-Meteo marine data (free, no API key needed)
     try {
       results.openmeteo = await this.getOpenMeteoMarineData(location?.lat, location?.lon);
+      console.log('✅ Open-Meteo Marine API data retrieved successfully');
     } catch (error) {
+      console.log('⚠️ Open-Meteo Marine failed:', error);
       errors.push(error as WeatherAPIError);
     }
+
 
     // Get NOAA tide data
     try {
@@ -465,38 +422,6 @@ export class WeatherAPI {
 
     console.log(`📅 Fetching weather data for ${date.toDateString()} at ${location?.lat}, ${location?.lon}`);
 
-    // For historical data, use OpenWeatherMap "timemachine" ONLY when within last 5 days
-    // to avoid plan/endpoint limitations. Otherwise, skip quietly and rely on fallbacks.
-    if (this.openWeatherMapKey) {
-      const now = new Date();
-      const diffMs = Math.abs(now.getTime() - date.getTime());
-      const diffDays = diffMs / (1000 * 60 * 60 * 24);
-      const withinFiveDays = diffDays <= 5.01; // small cushion
-
-      if (withinFiveDays) {
-        try {
-          console.log('📊 Attempting OpenWeatherMap historical fetch (within 5-day window)');
-          results.openweathermap = await this.getOpenWeatherMapHistoricalData(date, location?.lat, location?.lon);
-        } catch (error) {
-          // Degrade gracefully: record error but don't block other sources
-          const err = error as WeatherAPIError;
-          console.warn('⚠️ OpenWeatherMap historical failed, using fallback sources:', err.error);
-          errors.push(err);
-          // Add a user-friendly error message
-          errors.push({
-            source: 'openweathermap_historical',
-            error: 'Historical data error: Erro...',
-            code: 403,
-            details: 'OpenWeatherMap historical data requires a paid subscription ($40+/month). Using free alternative data sources instead.'
-          } as WeatherAPIError);
-        }
-      } else {
-        console.log('ℹ️ Date is beyond 5-day window - skipping OpenWeatherMap and using free data sources');
-        // Don't attempt the call at all if beyond 5 days
-      }
-    } else {
-      console.log('ℹ️ No OpenWeatherMap API key configured - using free data sources only');
-    }
 
     // For marine data, we'll use Open-Meteo with date parameter
     try {
@@ -530,14 +455,6 @@ export class WeatherAPI {
 
     console.log(`⏰ Fetching weather data for ${time.toTimeString()} at ${location?.lat}, ${location?.lon}`);
 
-    // Get hourly forecast data
-    if (this.openWeatherMapKey) {
-      try {
-        results.openweathermap = await this.getOpenWeatherMapHourlyData(time, location?.lat, location?.lon);
-      } catch (error) {
-        errors.push(error as WeatherAPIError);
-      }
-    }
 
     // Get hourly marine data
     try {
@@ -554,133 +471,6 @@ export class WeatherAPI {
     };
   }
 
-  // Historical weather data from OpenWeatherMap
-  private async getOpenWeatherMapHistoricalData(
-    date: Date, 
-    lat: number = this.RACING_AREA_LAT, 
-    lon: number = this.RACING_AREA_LON
-  ) {
-    const cacheKey = `openweathermap_historical_${lat}_${lon}_${date.toISOString().split('T')[0]}`;
-    
-    // Check cache first
-    const cached = this.getFromCache(cacheKey);
-    if (cached) {
-      console.log('📦 Using cached OpenWeatherMap historical data for', { date: date.toISOString(), lat, lon });
-      return cached;
-    }
-
-    // Validate API key first
-    if (!this.openWeatherMapKey) {
-      console.warn('⚠️ OpenWeatherMap API key not configured - cannot fetch historical data');
-      throw {
-        source: 'openweathermap_historical',
-        error: 'API key not configured',
-        details: 'Please set EXPO_PUBLIC_OPENWEATHERMAP_API_KEY in your .env file'
-      } as WeatherAPIError;
-    }
-
-    try {
-      // Convert date to Unix timestamp
-      const unixTime = Math.floor(date.getTime() / 1000);
-      const now = Math.floor(Date.now() / 1000);
-      const daysAgo = (now - unixTime) / (60 * 60 * 24);
-      
-      console.log('📅 Historical data request:', {
-        requestedDate: date.toISOString(),
-        unixTime,
-        daysAgo: daysAgo.toFixed(1),
-        isWithin5Days: daysAgo <= 5
-      });
-
-      // Note: timemachine endpoint requires paid subscription
-      const url = `https://api.openweathermap.org/data/2.5/onecall/timemachine?` +
-        `lat=${lat}&lon=${lon}&dt=${unixTime}&` +
-        `appid=${this.openWeatherMapKey}&units=metric`;
-      
-      console.log('🕐 Fetching OpenWeatherMap historical data:', { 
-        date: date.toISOString(),
-        lat, 
-        lon,
-        endpoint: 'timemachine (requires paid plan)',
-        url: url.replace(this.openWeatherMapKey, 'API_KEY_HIDDEN')
-      });
-      
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ OpenWeatherMap historical API error:', {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorText,
-          requestedDate: date.toISOString(),
-          daysAgo: daysAgo.toFixed(1),
-          possibleCause: response.status === 401 ? 'Invalid API key or FREE plan (timemachine requires $40+/month subscription)' :
-                        response.status === 403 ? 'Your API plan does not include historical data access' :
-                        response.status === 404 ? 'Historical data not available for this date/location' :
-                        response.status === 400 ? 'Invalid date or coordinates' :
-                        'Unknown error - check API documentation'
-        });
-        throw new Error(`OpenWeatherMap historical API error: ${response.status} - ${errorText}`);
-      }
-
-      const data = await response.json();
-      console.log('✅ Historical data fetched successfully');
-      const processedData = this.processOpenWeatherMapData(data, lat, lon);
-      
-      // Cache the result
-      this.setCache(cacheKey, processedData);
-      return processedData;
-      
-    } catch (error) {
-      console.error('OpenWeatherMap historical data error:', error);
-      throw {
-        source: 'openweathermap_historical',
-        error: 'Historical weather data unavailable',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      } as WeatherAPIError;
-    }
-  }
-
-  // Hourly weather data from OpenWeatherMap
-  private async getOpenWeatherMapHourlyData(
-    time: Date, 
-    lat: number = this.RACING_AREA_LAT, 
-    lon: number = this.RACING_AREA_LON
-  ) {
-    const cacheKey = `openweathermap_hourly_${lat}_${lon}_${time.getHours()}`;
-    
-    // Check cache first
-    const cached = this.getFromCache(cacheKey);
-    if (cached) return cached;
-
-    try {
-      const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/onecall?` +
-        `lat=${lat}&lon=${lon}&exclude=minutely,daily,alerts&` +
-        `appid=${this.openWeatherMapKey}&units=metric`
-      );
-
-      if (!response.ok) {
-        throw new Error(`OpenWeatherMap hourly API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const processedData = this.processOpenWeatherMapData(data, lat, lon);
-      
-      // Cache the result
-      this.setCache(cacheKey, processedData);
-      return processedData;
-      
-    } catch (error) {
-      console.error('OpenWeatherMap hourly data error:', error);
-      throw {
-        source: 'openweathermap_hourly',
-        error: 'Hourly weather data unavailable',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      } as WeatherAPIError;
-    }
-  }
 
   // Date-specific marine data from Open-Meteo
   private async getOpenMeteoMarineDataForDate(
@@ -845,40 +635,60 @@ export class WeatherAPI {
     };
   }
 
-  private processOpenWeatherMapData(rawData: any, lat: number, lon: number): OpenWeatherMapResponse {
+  private processOpenMeteoWeatherData(rawData: any, lat: number, lon: number): OpenMeteoWeatherResponse {
+    const hourlyData = rawData.hourly || {};
+    const times = Array.isArray(hourlyData.time) ? hourlyData.time : [];
+
     return {
       location: {
         lat: lat,
         lon: lon
       },
-      current: {
-        temp: Math.round(rawData.current?.temp || 25),
-        feels_like: Math.round(rawData.current?.feels_like || 25),
-        pressure: Math.round(rawData.current?.pressure || 1013),
-        humidity: Math.round(rawData.current?.humidity || 70),
-        visibility: Math.round((rawData.current?.visibility || 10000) / 1000), // Convert m to km
-        wind_speed: Math.round((rawData.current?.wind_speed || 0) * 1.94384), // Convert m/s to knots
-        wind_deg: Math.round(rawData.current?.wind_deg || 0),
-        wind_gust: rawData.current?.wind_gust ? Math.round(rawData.current.wind_gust * 1.94384) : undefined,
-        weather: rawData.current?.weather || []
+      data: {
+        wind: times.map((time: string, index: number) => ({
+          time,
+          windSpeed: Math.round((hourlyData.wind_speed_10m?.[index] || 0) * 1.94384 * 10) / 10, // Convert m/s to knots
+          windDirection: Math.round(hourlyData.wind_direction_10m?.[index] || 0),
+          windGust: hourlyData.wind_gusts_10m?.[index] ? Math.round(hourlyData.wind_gusts_10m[index] * 1.94384 * 10) / 10 : undefined,
+          pressure: Math.round(hourlyData.surface_pressure?.[index] || 1013),
+          temperature: Math.round((hourlyData.temperature_2m?.[index] || 25) * 10) / 10,
+          humidity: Math.round(hourlyData.relative_humidity_2m?.[index] || 70),
+          visibility: Math.round((hourlyData.visibility?.[index] || 10000) / 1000), // Convert m to km
+          conditions: this.mapOpenMeteoWeatherConditions(hourlyData, index)
+        })),
+        weather: times.map((time: string, index: number) => ({
+          time,
+          temperature: Math.round((hourlyData.temperature_2m?.[index] || 25) * 10) / 10,
+          feelsLike: Math.round((hourlyData.temperature_2m?.[index] || 25) * 10) / 10, // Open-Meteo doesn't provide feels-like directly
+          humidity: Math.round(hourlyData.relative_humidity_2m?.[index] || 70),
+          pressure: Math.round(hourlyData.surface_pressure?.[index] || 1013),
+          visibility: Math.round((hourlyData.visibility?.[index] || 10000) / 1000),
+          cloudCover: 0, // Would need cloud_cover parameter
+          precipitation: 0, // Would need precipitation parameter
+          conditions: this.mapOpenMeteoWeatherConditions(hourlyData, index),
+          icon: 'clear-day' // Default icon
+        }))
       },
-      hourly: (rawData.hourly || []).slice(0, 48).map((hour: any) => ({
-        dt: hour.dt,
-        temp: Math.round(hour.temp || 25),
-        feels_like: Math.round(hour.feels_like || 25),
-        pressure: Math.round(hour.pressure || 1013),
-        humidity: Math.round(hour.humidity || 70),
-        wind_speed: Math.round((hour.wind_speed || 0) * 1.94384), // Convert m/s to knots
-        wind_deg: Math.round(hour.wind_deg || 0),
-        wind_gust: hour.wind_gust ? Math.round(hour.wind_gust * 1.94384) : undefined,
-        weather: hour.weather || []
-      })),
       metadata: {
         updated: new Date().toISOString(),
-        source: 'openweathermap'
+        source: 'open-meteo',
+        model: 'ICON',
+        resolution: '11km'
       }
     };
   }
+
+  private mapOpenMeteoWeatherConditions(hourlyData: any, index: number): string {
+    // Simple condition mapping based on available data
+    const windSpeed = hourlyData.wind_speed_10m?.[index] || 0;
+    const humidity = hourlyData.relative_humidity_2m?.[index] || 70;
+
+    if (windSpeed > 15) return 'Windy';
+    if (humidity > 85) return 'Humid';
+    if (humidity < 40) return 'Dry';
+    return 'Clear';
+  }
+
 
   private processNOAAData(rawData: any): NOAAResponse {
     return {

@@ -1,11 +1,11 @@
 import React, { useRef, useImperativeHandle, forwardRef } from 'react';
 import { StyleSheet, View } from 'react-native';
-import MapView, { 
-  UrlTile, 
-  MapType, 
+import MapView, {
+  UrlTile,
+  MapType,
   Region,
-  PROVIDER_DEFAULT 
-} from '../../../utils/mapComponentStubs';
+  PROVIDER_DEFAULT
+} from 'react-native-maps';
 
 interface OpenSeaMapViewProps {
   initialRegion?: Region;
