@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useFocusEffect } from '@react-navigation/native';
 
 console.log('[NoticesScreen] Module loading...');
-import { View, StyleSheet, FlatList, RefreshControl, ScrollView } from 'react-native';
+import { View, StyleSheet, FlatList, RefreshControl, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // Animated import removed to fix Hermes property configuration error
 import {
@@ -10,7 +10,11 @@ import {
   Search,
   WifiOff,
   Settings,
-  ChevronLeft
+  ChevronLeft,
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
+  Info
 } from 'lucide-react-native';
 
 import { colors, spacing } from '../../constants/theme';
@@ -132,6 +136,7 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
   // UI State
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<RegattaCategory | 'all'>('all');
+  const [showHelpLegend, setShowHelpLegend] = useState(false);
   const [activeFilters, setActiveFilters] = useState<SearchFilters>({
     categories: [],
     documentTypes: [],
@@ -586,6 +591,84 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
           onCategoryChange={handleCategoryChange}
         />
 
+        {/* Help/Legend Section */}
+        <TouchableOpacity
+          style={styles.helpToggleButton}
+          onPress={() => {
+            haptics.selection();
+            setShowHelpLegend(!showHelpLegend);
+          }}
+        >
+          <View style={styles.helpToggleContent}>
+            <HelpCircle size={16} color={colors.primary} />
+            <IOSText textStyle="caption1" color="systemBlue" weight="medium">
+              Understanding Notice Indicators
+            </IOSText>
+            {showHelpLegend ? (
+              <ChevronUp size={16} color={colors.primary} />
+            ) : (
+              <ChevronDown size={16} color={colors.primary} />
+            )}
+          </View>
+        </TouchableOpacity>
+
+        {showHelpLegend && (
+          <View style={styles.helpLegendContainer}>
+            <View style={styles.helpSection}>
+              <IOSText textStyle="caption1" weight="semibold" style={styles.helpSectionTitle}>
+                Notice Status
+              </IOSText>
+              <View style={styles.helpItem}>
+                <View style={[styles.helpIndicator, styles.unreadIndicator]} />
+                <IOSText textStyle="caption2" color="secondaryLabel">
+                  Blue border on left = Unread notice
+                </IOSText>
+              </View>
+              <View style={styles.helpItem}>
+                <View style={styles.helpBadgeExample}>
+                  <View style={[styles.helpBadge, { backgroundColor: colors.primary }]}>
+                    <IOSText textStyle="caption2" color="white" weight="medium">
+                      UNREAD
+                    </IOSText>
+                  </View>
+                </View>
+                <IOSText textStyle="caption2" color="secondaryLabel">
+                  Unread label badge
+                </IOSText>
+              </View>
+            </View>
+
+            <View style={styles.helpSection}>
+              <IOSText textStyle="caption1" weight="semibold" style={styles.helpSectionTitle}>
+                Priority Colors
+              </IOSText>
+              <View style={styles.helpItem}>
+                <View style={[styles.helpDot, { backgroundColor: colors.error }]} />
+                <IOSText textStyle="caption2" color="secondaryLabel">
+                  Red = Urgent priority
+                </IOSText>
+              </View>
+              <View style={styles.helpItem}>
+                <View style={[styles.helpDot, { backgroundColor: colors.warning }]} />
+                <IOSText textStyle="caption2" color="secondaryLabel">
+                  Yellow = High priority
+                </IOSText>
+              </View>
+              <View style={styles.helpItem}>
+                <View style={[styles.helpDot, { backgroundColor: colors.primary }]} />
+                <IOSText textStyle="caption2" color="secondaryLabel">
+                  Blue = Medium priority
+                </IOSText>
+              </View>
+              <View style={styles.helpItem}>
+                <View style={[styles.helpDot, { backgroundColor: colors.textSecondary }]} />
+                <IOSText textStyle="caption2" color="secondaryLabel">
+                  Gray = Low priority
+                </IOSText>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Notices Content */}
         <ScrollView
@@ -697,5 +780,63 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  helpToggleButton: {
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  helpToggleContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+  },
+  helpLegendContainer: {
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    padding: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  helpSection: {
+    marginBottom: spacing.md,
+  },
+  helpSectionTitle: {
+    marginBottom: spacing.sm,
+  },
+  helpItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  helpIndicator: {
+    width: 32,
+    height: 24,
+    borderRadius: 4,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  unreadIndicator: {
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+  },
+  helpDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginLeft: 10,
+  },
+  helpBadgeExample: {
+    marginLeft: 4,
+  },
+  helpBadge: {
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
 });

@@ -199,6 +199,16 @@ export const NoticeCard: React.FC<NoticeCardProps> = ({
                   {notice.priority?.toUpperCase() || 'MEDIUM'}
                 </IOSBadge>
 
+                {isUnread && (
+                  <IOSBadge
+                    color="systemBlue"
+                    variant="filled"
+                    size="small"
+                  >
+                    UNREAD
+                  </IOSBadge>
+                )}
+
                 {categoryName && (
                   <IOSText textStyle="caption2" color="tertiaryLabel">
                     {categoryName}
