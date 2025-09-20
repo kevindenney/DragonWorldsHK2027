@@ -12,10 +12,10 @@ import { MapScreen } from '../../screens/MapScreen';
 import { ScheduleScreen } from '../../screens/tabs/ScheduleScreen';
 import { ResultsStackNavigator } from './ResultsStackNavigator';
 import { NoticesScreen } from '../../screens/tabs/NoticesScreen';
-import { MoreScreen } from '../../screens/tabs/MoreScreen';
+import { MoreStackNavigator } from './MoreStackNavigator';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
 
-console.log('✅ [TabNavigator] All screens imported (using MapScreen)');
+console.log('✅ [TabNavigator] All screens imported (using ScheduleScreen)');
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -104,9 +104,9 @@ export function TabNavigator() {
           backgroundColor: `${colors.surface}F5`,
           borderTopColor: colors.borderLight,
           borderTopWidth: 0.5,
-          height: spacing.tabHeight + 8,
-          paddingBottom: 16,
-          paddingTop: 12,
+          height: spacing.tabHeight - 10,
+          paddingBottom: 8,
+          paddingTop: 6,
           paddingHorizontal: 8,
           ...shadows.tabBar,
           elevation: 8,
@@ -117,13 +117,13 @@ export function TabNavigator() {
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
-          marginTop: 4,
+          marginTop: 2,
         },
         tabBarItemStyle: {
-          paddingVertical: 6,
+          paddingVertical: 4,
           marginHorizontal: 2,
           borderRadius: borderRadius.md,
-          minHeight: 48,
+          minHeight: 40,
         },
         headerShown: false,
         tabBarShowLabel: true,
@@ -193,7 +193,7 @@ export function TabNavigator() {
       />
       <Tab.Screen
         name="More"
-        component={MoreScreen}
+        component={MoreStackNavigator}
         options={{
           tabBarLabel: 'More',
           tabBarAccessibilityLabel: 'Additional features and tools including Social and Weather',

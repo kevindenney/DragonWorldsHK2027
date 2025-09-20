@@ -35,6 +35,7 @@ import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
 import { SkeletonLoader } from '../../components/shared/SkeletonLoader';
 import { SimpleError } from '../../components/shared/SimpleError';
 import { OfflineError } from '../../components/shared/OfflineError';
+import { IOSSegmentedControl } from '../../components/ios/IOSSegmentedControl';
 import { haptics } from '../../utils/haptics';
 import { offlineManager } from '../../services/offlineManager';
 import {
@@ -93,7 +94,7 @@ interface NoticeItem {
 export function UnifiedRaceScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<'asia-cup' | 'dragon-worlds'>('dragon-worlds');
+  const [selectedEvent, setSelectedEvent] = useState<'asia-pacific-2026' | 'dragon-worlds-2026'>('dragon-worlds-2026');
   const userType = useUserType();
 
   // Live context state
@@ -252,24 +253,22 @@ export function UnifiedRaceScreen() {
     </Animated.View>
   );
 
-  const renderEventToggle = () => (
-    <View style={styles.eventToggle}>
-      <IOSButton
-        title="Asia Cup"
-        variant={selectedEvent === 'asia-cup' ? 'primary' : 'secondary'}
-        size="small"
-        style={[styles.toggleButton, selectedEvent === 'asia-cup' && styles.activeToggle]}
-        onPress={() => setSelectedEvent('asia-cup')}
-      />
-      <IOSButton
-        title="Dragon Worlds"
-        variant={selectedEvent === 'dragon-worlds' ? 'primary' : 'secondary'}
-        size="small"
-        style={[styles.toggleButton, selectedEvent === 'dragon-worlds' && styles.activeToggle]}
-        onPress={() => setSelectedEvent('dragon-worlds')}
-      />
-    </View>
-  );
+  const renderEventToggle = () => {
+    console.log('[UnifiedRaceScreen] 🎯 COMPONENT IDENTIFICATION: Using IOSSegmentedControl from ios/IOSSegmentedControl');
+    console.log('[UnifiedRaceScreen] Rendering IOSSegmentedControl with selectedEvent:', selectedEvent);
+    return (
+      <View style={styles.eventToggleContainer}>
+        <IOSSegmentedControl
+          options={[
+            { label: 'Asia Pacific Championships', value: 'asia-pacific-2026' },
+            { label: 'Dragon World Championship', value: 'dragon-worlds-2026' }
+          ]}
+          selectedValue={selectedEvent}
+          onValueChange={(eventId) => setSelectedEvent(eventId as 'asia-pacific-2026' | 'dragon-worlds-2026')}
+        />
+      </View>
+    );
+  };
 
   const renderRaceEvents = () => (
     <Animated.View entering={SlideInRight.duration(600).delay(600)}>
@@ -380,20 +379,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.screenPadding,
     paddingBottom: spacing.xl,
   },
-  eventToggle: {
-    flexDirection: 'row',
-    marginBottom: spacing.lg,
-    backgroundColor: colors.surfaceSecondary,
-    borderRadius: borderRadius.md,
-    padding: spacing.xs,
-  },
-  toggleButton: {
-    flex: 1,
-    marginHorizontal: spacing.xs,
-  },
-  activeToggle: {
-    backgroundColor: colors.primary,
-  },
   liveCard: {
     marginBottom: spacing.lg,
     borderLeftWidth: 4,
@@ -481,5 +466,12 @@ const styles = StyleSheet.create({
   },
   eventAction: {
     alignSelf: 'flex-start',
+  },
+  eventToggleContainer: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
 });

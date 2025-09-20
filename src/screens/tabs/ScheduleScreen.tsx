@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IOSText } from '../../components/ios/IOSText';
-import { EventSelector } from '../../components/schedule/EventSelector';
+import { IOSSegmentedControl } from '../../components/ios/IOSSegmentedControl';
 import { EventHeader } from '../../components/schedule/EventHeader';
 import { DayCard } from '../../components/schedule/DayCard';
 import { colors, spacing } from '../../constants/theme';
@@ -10,12 +10,12 @@ import { eventSchedules } from '../../data/scheduleData';
 import type { ScheduleScreenProps } from '../../types/navigation';
 
 export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
-  const [selectedEvent, setSelectedEvent] = useState<string>('asia-pacific-championships');
+  const [selectedEvent, setSelectedEvent] = useState<'asia-pacific-2026' | 'dragon-worlds-2026'>('dragon-worlds-2026');
   const [refreshing, setRefreshing] = useState(false);
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
 
-  const currentEvent = selectedEvent === 'world-championship' 
-    ? eventSchedules.worldChampionship 
+  const currentEvent = selectedEvent === 'dragon-worlds-2026'
+    ? eventSchedules.worldChampionship
     : eventSchedules.asiaPacificChampionships;
 
   // Handle navigation parameters to auto-expand and highlight specific events
@@ -42,7 +42,7 @@ export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
     setTimeout(() => setRefreshing(false), 1000);
   };
 
-  const handleEventChange = (eventId: string) => {
+  const handleEventChange = (eventId: 'asia-pacific-2026' | 'dragon-worlds-2026') => {
     setSelectedEvent(eventId);
     // Clear expanded days when switching events
     setExpandedDays(new Set());
@@ -77,10 +77,16 @@ export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
       </View>
 
       {/* Event Selector */}
-      <EventSelector
-        selectedEvent={selectedEvent}
-        onEventChange={handleEventChange}
-      />
+      <View style={styles.eventToggleContainer}>
+        <IOSSegmentedControl
+          options={[
+            { label: 'Asia Pacific Championships', value: 'asia-pacific-2026' },
+            { label: 'Dragon World Championship', value: 'dragon-worlds-2026' }
+          ]}
+          selectedValue={selectedEvent}
+          onValueChange={(eventId) => handleEventChange(eventId as 'asia-pacific-2026' | 'dragon-worlds-2026')}
+        />
+      </View>
 
       {/* Main Content */}
       <ScrollView
@@ -216,5 +222,12 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: spacing.lg,
+  },
+  eventToggleContainer: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
 });

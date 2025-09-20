@@ -31,20 +31,25 @@ import {
   ChevronRight
 } from 'lucide-react-native';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
-import firebaseRaceDataService, { 
-  Standing, 
-  EventData, 
-  Competitor 
+import { IOSSegmentedControl } from '../../components/ios/IOSSegmentedControl';
+import firebaseRaceDataService, {
+  Standing,
+  EventData,
+  Competitor
 } from '../../services/firebaseRaceDataService';
 import type { ResultsScreenProps } from '../../types/navigation';
 
 const { colors, typography, spacing, shadows, borderRadius } = dragonChampionshipsLightTheme;
 const { width } = Dimensions.get('window');
 
-// Default event ID for Dragon Worlds HK 2027
-const DEFAULT_EVENT_ID = 'dragon-worlds-2027';
+// Available event IDs
+const EVENT_IDS = {
+  ASIA_PACIFIC: 'asia-pacific-2026',
+  DRAGON_WORLDS: 'dragon-worlds-2027'
+};
 
 export function SimplifiedResultsScreen({ navigation }: ResultsScreenProps) {
+  const [selectedEventId, setSelectedEventId] = useState<string>(EVENT_IDS.DRAGON_WORLDS);
   const [eventData, setEventData] = useState<EventData | null>(null);
   const [standings, setStandings] = useState<Standing[]>([]);
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
@@ -56,10 +61,10 @@ export function SimplifiedResultsScreen({ navigation }: ResultsScreenProps) {
   // Load initial data
   useEffect(() => {
     loadEventData();
-    
+
     // Subscribe to real-time updates
     const unsubscribe = firebaseRaceDataService.subscribeToStandings(
-      DEFAULT_EVENT_ID,
+      selectedEventId,
       (updatedStandings) => {
         setStandings(updatedStandings);
         setLastUpdated(new Date());
@@ -67,7 +72,7 @@ export function SimplifiedResultsScreen({ navigation }: ResultsScreenProps) {
     );
 
     return unsubscribe;
-  }, []);
+  }, [selectedEventId]);
 
   // Load event data - now with CCR 2024 scraping support
   const loadEventData = async () => {
@@ -131,9 +136,9 @@ export function SimplifiedResultsScreen({ navigation }: ResultsScreenProps) {
           try {
             console.log('🔥 Trying to load Firestore data...');
             const [event, standingsData, competitorsData] = await Promise.all([
-              firebaseRaceDataService.getEvent(DEFAULT_EVENT_ID),
-              firebaseRaceDataService.getStandings(DEFAULT_EVENT_ID),
-              firebaseRaceDataService.getCompetitors(DEFAULT_EVENT_ID)
+              firebaseRaceDataService.getEvent(selectedEventId),
+              firebaseRaceDataService.getStandings(selectedEventId),
+              firebaseRaceDataService.getCompetitors(selectedEventId)
             ]);
 
             console.log('🔥 Firestore data loaded:', { event, standingsData: standingsData?.length, competitorsData: competitorsData?.length });
@@ -186,7 +191,7 @@ export function SimplifiedResultsScreen({ navigation }: ResultsScreenProps) {
     try {
       // Trigger Firebase Function to scrape latest data
       console.log('🔄 Attempting data sync...');
-      const syncSuccess = await firebaseRaceDataService.triggerDataSync(DEFAULT_EVENT_ID);
+      const syncSuccess = await firebaseRaceDataService.triggerDataSync(selectedEventId);
       
       if (syncSuccess) {
         console.log('🔄 Sync successful, reloading data...');
@@ -434,6 +439,23 @@ export function SimplifiedResultsScreen({ navigation }: ResultsScreenProps) {
           <RefreshCw color={colors.primary} size={22} />
         </TouchableOpacity>
       </View>
+
+      {/* Event Toggle */}
+      {(() => {
+        console.log('[SimplifiedResultsScreen] 🎯 COMPONENT IDENTIFICATION: Using IOSSegmentedControl from ios/IOSSegmentedControl');
+        return (
+          <View style={styles.eventToggleContainer}>
+            <IOSSegmentedControl
+              options={[
+                { label: 'Asia Pacific Championships', value: EVENT_IDS.ASIA_PACIFIC },
+                { label: 'Dragon World Championship', value: EVENT_IDS.DRAGON_WORLDS }
+              ]}
+              selectedValue={selectedEventId}
+              onValueChange={setSelectedEventId}
+            />
+          </View>
+        );
+      })()}
 
       {/* Series Header + Stats */}
       <View style={styles.seriesHeaderSection}>
@@ -801,5 +823,12 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     color: colors.textTertiary,
     marginTop: spacing.xs,
+  },
+  eventToggleContainer: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
 });

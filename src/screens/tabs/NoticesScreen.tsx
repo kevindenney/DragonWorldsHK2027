@@ -19,6 +19,7 @@ import { ErrorBoundary } from '../../components/shared/ErrorBoundary';
 import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
 import { SimpleError } from '../../components/shared/SimpleError';
 import { OfflineError } from '../../components/shared/OfflineError';
+import { IOSSegmentedControl } from '../../components/ios/IOSSegmentedControl';
 import { haptics } from '../../utils/haptics';
 import { offlineManager } from '../../services/offlineManager';
 import {
@@ -30,7 +31,6 @@ import {
 import { NoticeCard } from '../../components/notices/NoticeCard';
 import { NoticeFilters } from '../../components/notices/NoticeFilters';
 import { NoticeSearchBar } from '../../components/notices/NoticeSearchBar';
-import { EventSelector } from '../../components/notices/EventSelector';
 import { CategoryFilterChips, type CategoryCount } from '../../components/notices/CategoryFilterChips';
 import { CollapsibleCategorySection } from '../../components/notices/CollapsibleCategorySection';
 
@@ -532,23 +532,33 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
       }}
     >
       <SafeAreaView style={styles.container} edges={['top']}>
-        {/* Header */}
-        <View style={styles.header}>
-        </View>
-
         {/* Event Selector */}
-        <EventSelector
-          selectedEventId={selectedEventId}
-          onEventChange={handleEventChange}
-          unreadCounts={{
-            'asia-pacific-2026': allNotices.filter(n =>
-              'isRead' in n ? !n.isRead : false
-            ).length,
-            'dragon-worlds-2026': allNotices.filter(n =>
-              'isRead' in n ? !n.isRead : false
-            ).length
-          }}
-        />
+        {(() => {
+          console.log('[NoticesScreen] 🎯 COMPONENT IDENTIFICATION: Using IOSSegmentedControl from ios/IOSSegmentedControl');
+          console.log('[NoticesScreen] Rendering IOSSegmentedControl with selectedEventId:', selectedEventId);
+          return (
+            <View style={styles.eventToggleContainer}>
+              <IOSSegmentedControl
+                options={[
+                  {
+                    label: 'Asia Pacific Championships',
+                    value: 'asia-pacific-2026',
+                    badge: allNotices.filter(n => 'isRead' in n ? !n.isRead : false).length > 0 ?
+                      allNotices.filter(n => 'isRead' in n ? !n.isRead : false).length.toString() : undefined
+                  },
+                  {
+                    label: 'Dragon World Championship',
+                    value: 'dragon-worlds-2026',
+                    badge: allNotices.filter(n => 'isRead' in n ? !n.isRead : false).length > 0 ?
+                      allNotices.filter(n => 'isRead' in n ? !n.isRead : false).length.toString() : undefined
+                  }
+                ]}
+                selectedValue={selectedEventId}
+                onValueChange={handleEventChange}
+              />
+            </View>
+          );
+        })()}
 
         {/* Offline indicator */}
         {isOffline && (
@@ -640,13 +650,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    backgroundColor: colors.background,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.borderLight,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -687,5 +690,12 @@ const styles = StyleSheet.create({
   emptyDescription: {
     textAlign: 'center',
     maxWidth: 280,
+  },
+  eventToggleContainer: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
 });
