@@ -13,6 +13,8 @@ import {
   RefreshControl,
   Dimensions,
   SafeAreaView,
+  Linking,
+  Alert,
 } from 'react-native';
 import {
   Trophy,
@@ -84,17 +86,54 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
   };
 
   // Live Results Controls Component
-  const LiveResultsControls = () => (
-    <View style={styles.liveResultsContainer}>
-      <TouchableOpacity style={styles.liveResultsButton}>
-        <Play size={16} color={colors.textInverted} />
-        <Text style={styles.liveResultsText}>Live Results</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
-        <RefreshCw size={20} color={colors.textSecondary} />
-      </TouchableOpacity>
-    </View>
-  );
+  const LiveResultsControls = () => {
+    const getLiveResultsUrl = () => {
+      // Different URLs for each championship on racingrulesofsailing.org for RHKYC
+      switch (selectedChampionship) {
+        case 'asia-pacific-2026':
+          return 'https://www.racingrulesofsailing.org/events/3245'; // Asia Pacific Championship 2026
+        case 'dragon-world-2026':
+          return 'https://www.racingrulesofsailing.org/events/3246'; // Dragon World Championship 2026
+        default:
+          return 'https://www.racingrulesofsailing.org/events/3246';
+      }
+    };
+
+    const handleLiveResultsPress = async () => {
+      const url = getLiveResultsUrl();
+      try {
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+          await Linking.openURL(url);
+        } else {
+          Alert.alert(
+            'Cannot Open URL',
+            'Unable to open the live results page. Please check your internet connection.',
+            [{ text: 'OK' }]
+          );
+        }
+      } catch (error) {
+        console.error('Error opening live results:', error);
+        Alert.alert(
+          'Error',
+          'There was an error opening the live results page.',
+          [{ text: 'OK' }]
+        );
+      }
+    };
+
+    return (
+      <View style={styles.liveResultsContainer}>
+        <TouchableOpacity style={styles.liveResultsButton} onPress={handleLiveResultsPress}>
+          <Play size={16} color={colors.textInverted} />
+          <Text style={styles.liveResultsText}>Live Results</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
+          <RefreshCw size={20} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
 
   // Championship Info Card Component
