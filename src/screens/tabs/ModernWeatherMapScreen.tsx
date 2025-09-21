@@ -32,6 +32,14 @@ interface DetailSheetState {
 }
 
 export function ModernWeatherMapScreen({navigation}: {navigation?: {goBack: () => void}}) {
+  console.log('🌤️ [WeatherScreen] Component mounted with navigation:', {
+    hasNavigation: !!navigation,
+    hasGoBack: !!(navigation?.goBack),
+    navigationType: typeof navigation,
+    navigationKeys: navigation ? Object.keys(navigation) : [],
+    timestamp: Date.now()
+  });
+
   const store = useSevenDayWeatherStore();
   const {bundles, loading, fetchAllBundles, clearCache} = store;
   const [detailSheet, setDetailSheet] = useState<DetailSheetState>({
@@ -86,7 +94,10 @@ export function ModernWeatherMapScreen({navigation}: {navigation?: {goBack: () =
       {navigation && (
         <SafeAreaView style={styles.backButtonContainer}>
           <TouchableOpacity
-            onPress={navigation.goBack}
+            onPress={() => {
+              console.log('🌤️ [WeatherScreen] Back button pressed, calling navigation.goBack');
+              navigation.goBack();
+            }}
             style={styles.backButton}
             accessibilityRole="button"
             accessibilityLabel="Go back"
@@ -270,7 +281,7 @@ const styles = StyleSheet.create({
   },
   areaLabelText: {
     color: '#fff',
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: '600'
   },
   badgeRow: {

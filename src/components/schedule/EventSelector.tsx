@@ -13,11 +13,11 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
 }) => {
   const options: IOSSegmentedControlOption[] = [
     {
-      label: 'Asia Pacific Championships',
+      label: '2026 Asia Pacific Championship',
       value: 'asia-pacific-championships'
     },
     {
-      label: 'World Championship',
+      label: '2027 Dragon World Championship',
       value: 'world-championship'
     }
   ];

@@ -36,7 +36,7 @@ export const MOCK_CHAMPIONSHIPS: Championship[] = [
   {
     id: 'asia-pacific-2026',
     name: 'Asia Pacific Championship',
-    shortName: 'Asia Pacific Championship',
+    shortName: '2026 Asia Pacific Championship',
     startDate: 'Nov 17-21, 2026',
     endDate: 'Nov 21, 2026',
     location: 'Hong Kong',
@@ -116,7 +116,7 @@ export const MOCK_CHAMPIONSHIPS: Championship[] = [
   {
     id: 'dragon-world-2026',
     name: 'Dragon World Championship',
-    shortName: 'Dragon World Championship',
+    shortName: '2027 Dragon World Championship',
     startDate: 'Nov 22-29, 2026',
     endDate: 'Nov 29, 2026',
     location: 'Hong Kong',

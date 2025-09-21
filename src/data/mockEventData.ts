@@ -32,7 +32,7 @@ export const EVENT_INFO: Record<string, EventInfo> = {
   'asia-pacific-2026': {
     id: 'asia-pacific-2026',
     name: 'Asia Pacific Dragon Championships 2026',
-    shortName: 'Asia Pacific Championships',
+    shortName: '2026 Asia Pacific Championship',
     organizer: 'Royal Hong Kong Yacht Club',
     venue: 'Clearwater Bay, Hong Kong SAR',
     location: 'Hong Kong, China',
@@ -47,8 +47,8 @@ export const EVENT_INFO: Record<string, EventInfo> = {
   },
   'dragon-worlds-2026': {
     id: 'dragon-worlds-2026',
-    name: 'Dragon World Championships 2026',
-    shortName: 'World Championships',
+    name: '2027 Dragon World Championship',
+    shortName: '2027 Dragon World Championship',
     organizer: 'Royal Hong Kong Yacht Club',
     venue: 'Clearwater Bay, Hong Kong SAR',
     location: 'Hong Kong, China',
@@ -66,7 +66,6 @@ export const EVENT_INFO: Record<string, EventInfo> = {
 export const generateEventDocuments = (eventId: string): EventDocument[] => {
   const eventInfo = EVENT_INFO[eventId];
   const isWorldChampionships = eventId === 'dragon-worlds-2026';
-  const baseUrl = 'https://www.racingrulesofsailing.org';
 
   const commonDocs: EventDocument[] = [
     {
@@ -74,7 +73,7 @@ export const generateEventDocuments = (eventId: string): EventDocument[] => {
       title: 'Notice of Race',
       type: 'notice_of_race',
       category: RegattaCategory.PRE_EVENT,
-      url: `${baseUrl}/documents/${eventId}/notice_of_race.pdf`,
+      url: 'https://www.sailing.org/tools/documents/AppendixKNoticeofRace-[25919].pdf',
       fileType: 'pdf',
       size: 2456789,
       uploadedAt: new Date('2026-09-15T10:00:00.000Z').toISOString(),
@@ -82,7 +81,7 @@ export const generateEventDocuments = (eventId: string): EventDocument[] => {
       downloadCount: isWorldChampionships ? 324 : 156,
       isRequired: true,
       language: 'English',
-      description: `Official Notice of Race for ${eventInfo.name}`,
+      description: `Official Notice of Race template for ${eventInfo.name}`,
       version: '1.2',
       priority: 'critical',
       status: 'published'
@@ -92,7 +91,7 @@ export const generateEventDocuments = (eventId: string): EventDocument[] => {
       title: 'Sailing Instructions',
       type: 'sailing_instructions',
       category: RegattaCategory.COMPETITION_MANAGEMENT,
-      url: `${baseUrl}/documents/${eventId}/sailing_instructions.pdf`,
+      url: 'https://www.sailing.org/tools/documents/AppendixLSailingInstructions-[25920].pdf',
       fileType: 'pdf',
       size: 3876543,
       uploadedAt: new Date('2026-11-10T16:00:00.000Z').toISOString(),
@@ -110,13 +109,13 @@ export const generateEventDocuments = (eventId: string): EventDocument[] => {
       title: 'Race Schedule',
       type: 'race_schedule',
       category: RegattaCategory.DAILY_OPERATIONS,
-      url: `${baseUrl}/documents/${eventId}/race_schedule.pdf`,
+      url: 'https://www.sailing.org/tools/documents/RRS2021-2024-[25918].pdf#page=25',
       fileType: 'pdf',
       size: 456789,
       uploadedAt: new Date('2026-11-16T08:00:00.000Z').toISOString(),
       isRequired: false,
       language: 'English',
-      description: `Daily racing schedule for ${eventInfo.shortName}`,
+      description: `Daily racing schedule and course layout for ${eventInfo.shortName}`,
       version: '1.0',
       priority: 'high',
       status: 'published'
@@ -126,7 +125,7 @@ export const generateEventDocuments = (eventId: string): EventDocument[] => {
       title: 'Measurement Requirements',
       type: 'measurement_requirements',
       category: RegattaCategory.SAFETY_REGULATORY,
-      url: `${baseUrl}/documents/${eventId}/measurement_requirements.pdf`,
+      url: 'https://www.sailing.org/tools/documents/EquipmentRulesofSailing2021-2024-[25921].pdf',
       fileType: 'pdf',
       size: 1234567,
       uploadedAt: new Date('2026-09-01T12:00:00.000Z').toISOString(),
@@ -143,7 +142,7 @@ export const generateEventDocuments = (eventId: string): EventDocument[] => {
       title: 'Protest Procedures and Forms',
       type: 'protest_info',
       category: RegattaCategory.PROTESTS_HEARINGS,
-      url: `${baseUrl}/documents/${eventId}/protest_procedures.pdf`,
+      url: 'https://www.sailing.org/tools/documents/RRS2021-2024-[25918].pdf#page=89',
       fileType: 'pdf',
       size: 567890,
       uploadedAt: new Date('2026-10-15T10:00:00.000Z').toISOString(),
@@ -164,7 +163,7 @@ export const generateEventDocuments = (eventId: string): EventDocument[] => {
         title: 'Charter Boat Information',
         type: 'venue_info',
         category: RegattaCategory.ADMINISTRATIVE,
-        url: `${baseUrl}/documents/${eventId}/charter_boats.pdf`,
+        url: 'https://www.sailing.org/tools/documents/RegulationRegatta-[26789].pdf#page=12',
         fileType: 'pdf',
         size: 876543,
         uploadedAt: new Date('2026-08-15T14:00:00.000Z').toISOString(),
@@ -172,7 +171,7 @@ export const generateEventDocuments = (eventId: string): EventDocument[] => {
         downloadCount: 145,
         isRequired: false,
         language: 'English',
-        description: 'Charter boat availability and pricing information',
+        description: 'Charter boat requirements and crew qualification guidelines',
         version: '1.3',
         priority: 'medium',
         status: 'published'
@@ -182,16 +181,33 @@ export const generateEventDocuments = (eventId: string): EventDocument[] => {
         title: 'International Shipping Guide',
         type: 'venue_info',
         category: RegattaCategory.ADMINISTRATIVE,
-        url: `${baseUrl}/documents/${eventId}/shipping_guide.pdf`,
+        url: 'https://www.sailing.org/tools/documents/SafetyRecommendations-[24839].pdf#page=8',
         fileType: 'pdf',
         size: 1543210,
         uploadedAt: new Date('2026-07-30T10:00:00.000Z').toISOString(),
         downloadCount: 87,
         isRequired: false,
         language: 'English',
-        description: 'Guide for international teams shipping boats to Hong Kong',
+        description: 'Safety recommendations for international boat transportation and setup',
         version: '1.0',
         priority: 'medium',
+        status: 'published'
+      },
+      {
+        id: `${eventId}_safety`,
+        title: 'Safety Equipment Requirements',
+        type: 'safety_notice',
+        category: RegattaCategory.SAFETY_REGULATORY,
+        url: 'https://www.sailing.org/tools/documents/OffshoreSRS2022-2026-[27653].pdf',
+        fileType: 'pdf',
+        size: 987654,
+        uploadedAt: new Date('2026-08-01T09:00:00.000Z').toISOString(),
+        downloadCount: 203,
+        isRequired: true,
+        language: 'English',
+        description: 'Offshore Special Regulations and safety equipment requirements',
+        version: '1.0',
+        priority: 'high',
         status: 'published'
       }
     );
@@ -205,6 +221,8 @@ export const generateEventNotifications = (eventId: string): OfficialNotificatio
   const isWorldChampionships = eventId === 'dragon-worlds-2026';
   const baseDate = new Date(eventInfo.dates.start);
 
+  const eventWebsite = isWorldChampionships ? 'https://dragonworldshk2027.com' : 'https://asiapacificdragon2026.com';
+
   const notifications: OfficialNotification[] = [
     {
       id: `${eventId}_weather_update`,
@@ -217,7 +235,8 @@ export const generateEventNotifications = (eventId: string): OfficialNotificatio
       authorRole: 'race_committee',
       tags: ['weather', 'forecast', 'conditions'],
       isRead: false,
-      version: '1.0'
+      version: '1.0',
+      sourceUrl: `${eventWebsite}/weather-updates`
     },
     {
       id: `${eventId}_course_briefing`,
@@ -230,7 +249,8 @@ export const generateEventNotifications = (eventId: string): OfficialNotificatio
       authorRole: 'race_committee',
       tags: ['course', 'briefing', 'location'],
       isRead: false,
-      version: '1.0'
+      version: '1.0',
+      sourceUrl: `${eventWebsite}/racing-area`
     },
     {
       id: `${eventId}_registration_update`,
@@ -243,7 +263,8 @@ export const generateEventNotifications = (eventId: string): OfficialNotificatio
       authorRole: 'organizer',
       tags: ['registration', 'entries', 'measurement'],
       isRead: true,
-      version: '1.0'
+      version: '1.0',
+      sourceUrl: `${eventWebsite}/registration`
     },
     {
       id: `${eventId}_protest_hearing`,
@@ -257,6 +278,7 @@ export const generateEventNotifications = (eventId: string): OfficialNotificatio
       tags: ['protest', 'hearing', 'schedule'],
       isRead: false,
       version: '1.0',
+      sourceUrl: `${eventWebsite}/protests`,
       metadata: {
         category: RegattaCategory.PROTESTS_HEARINGS
       }
@@ -276,7 +298,8 @@ export const generateEventNotifications = (eventId: string): OfficialNotificatio
         authorRole: 'organizer',
         tags: ['charter', 'boats', 'availability'],
         isRead: false,
-        version: '1.0'
+        version: '1.0',
+        sourceUrl: `${eventWebsite}/charter-boats`
       },
       {
         id: `${eventId}_shipping_deadline`,
@@ -289,7 +312,8 @@ export const generateEventNotifications = (eventId: string): OfficialNotificatio
         authorRole: 'organizer',
         tags: ['shipping', 'deadline', 'international'],
         isRead: false,
-        version: '1.0'
+        version: '1.0',
+        sourceUrl: `${eventWebsite}/logistics-shipping`
       }
     );
   }
@@ -468,7 +492,7 @@ export const generateMockEvent = (eventId: string): NoticeBoardEvent => {
     entryCount: eventInfo.entryCount,
     classes: eventInfo.classes,
     languages: ['English', 'Chinese (Traditional)'],
-    lastUpdated: new Date().toISOString(),
+    lastUpdated: new Date(eventInfo.dates.start).toISOString(),
     noticeBoard: {
       documents: generateEventDocuments(eventId),
       notifications: generateEventNotifications(eventId),

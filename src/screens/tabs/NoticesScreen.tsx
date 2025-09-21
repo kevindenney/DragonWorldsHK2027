@@ -119,6 +119,21 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
     }
   }, [persistentSelectedEventId, storeHydrated]);
 
+  // Initial load effect - triggers when store is first hydrated
+  useEffect(() => {
+    console.log('[NoticesScreen] Initial load effect triggered:', {
+      storeHydrated,
+      hasEvent: !!event,
+      selectedEventId
+    });
+
+    // If store just became hydrated and we don't have event data, load it immediately
+    if (storeHydrated && !event && selectedEventId) {
+      console.log('[NoticesScreen] Store hydrated, triggering initial data load');
+      loadEventData();
+    }
+  }, [storeHydrated]);
+
   // If route has eventId parameter, use it and update both states
   useEffect(() => {
     if (route.params?.eventId && route.params.eventId !== selectedEventId) {
@@ -272,6 +287,17 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
     }
   }, [selectedEventId, storeHydrated]); // Remove loadEventData from dependencies to prevent loops
 
+  // Refresh data when returning to the screen
+  useFocusEffect(
+    useCallback(() => {
+      console.log('[NoticesScreen] useFocusEffect triggered - screen focused');
+      if (selectedEventId && storeHydrated && event) {
+        console.log('[NoticesScreen] Refreshing data on screen focus');
+        loadEventData(false); // Don't show loading spinner for focus refresh
+      }
+    }, [selectedEventId, storeHydrated, event, loadEventData])
+  );
+
 
   // Combine and process notices
   const allNotices = useMemo((): NoticeItem[] => {
@@ -346,7 +372,7 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
     return filtered;
   }, [allNotices, searchQuery, activeFilters]);
 
-  // Category counts for filter chips
+  // Category counts for filter chips - based on all notices (not filtered) to show total counts
   const categoryCounts = useMemo((): CategoryCount[] => {
     const categoryMap = new Map<RegattaCategory | 'all', { count: number; unreadCount: number }>();
 
@@ -360,8 +386,8 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
       categoryMap.set(cat, { count: 0, unreadCount: 0 });
     });
 
-    // Count notices by category
-    filteredNotices.forEach(notice => {
+    // Count notices by category using allNotices to show total counts
+    allNotices.forEach(notice => {
       const category = notice.category || 'administrative';
       const isUnread = 'isRead' in notice ? !notice.isRead : false;
 
@@ -389,7 +415,7 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
         unreadCount: Math.max(0, data.unreadCount || 0) // Ensure non-negative number
       }))
       .filter(item => item.category && typeof item.category === 'string'); // Final safety check
-  }, [filteredNotices]);
+  }, [allNotices]); // Changed dependency from filteredNotices to allNotices
 
   // Group notices by category for sectioned view
   const noticesByCategory = useMemo(() => {
@@ -432,18 +458,43 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
 
   // Handle notice press
   const handleNoticePress = useCallback(async (notice: NoticeItem) => {
+    console.log('[NoticesScreen] handleNoticePress called with notice:', {
+      id: notice.id,
+      title: notice.title,
+      itemType: notice.itemType
+    });
+
     await haptics.buttonPress();
 
     if (notice.itemType === 'notification') {
+      console.log('[NoticesScreen] Navigating to NotificationDetail');
       navigation.navigate('NotificationDetail', {
         notificationId: notice.id,
         eventId: selectedEventId,
         notification: notice
       });
     } else {
-      navigation.navigate('DocumentViewer', {
-        document: notice
-      });
+      console.log('[NoticesScreen] Navigating to DocumentViewer');
+      // Cast to EventDocument and ensure proper structure for DocumentViewer
+      const document = notice as EventDocument;
+      const documentForViewer = {
+        ...document,
+        // Ensure required EventDocument properties are present
+        uploadedAt: document.uploadedAt || notice.publishedAt,
+        fileType: document.fileType || 'pdf',
+        url: document.url || '#',
+        type: document.type || 'notice_of_race',
+        category: document.category || 'administrative'
+      };
+      console.log('[NoticesScreen] Document for viewer:', documentForViewer);
+
+      try {
+        navigation.navigate('DocumentViewer', {
+          document: documentForViewer
+        });
+      } catch (error) {
+        console.error('[NoticesScreen] Navigation error:', error);
+      }
     }
   }, [navigation, selectedEventId]);
 
@@ -546,15 +597,15 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
               <IOSSegmentedControl
                 options={[
                   {
-                    label: 'Asia Pacific Championships',
+                    label: '2026 Asia Pacific Championship',
                     value: 'asia-pacific-2026',
-                    badge: allNotices.filter(n => 'isRead' in n ? !n.isRead : false).length > 0 ?
+                    badge: selectedEventId === 'asia-pacific-2026' && allNotices.filter(n => 'isRead' in n ? !n.isRead : false).length > 0 ?
                       allNotices.filter(n => 'isRead' in n ? !n.isRead : false).length.toString() : undefined
                   },
                   {
-                    label: 'Dragon World Championship',
+                    label: '2027 Dragon World Championship',
                     value: 'dragon-worlds-2026',
-                    badge: allNotices.filter(n => 'isRead' in n ? !n.isRead : false).length > 0 ?
+                    badge: selectedEventId === 'dragon-worlds-2026' && allNotices.filter(n => 'isRead' in n ? !n.isRead : false).length > 0 ?
                       allNotices.filter(n => 'isRead' in n ? !n.isRead : false).length.toString() : undefined
                   }
                 ]}

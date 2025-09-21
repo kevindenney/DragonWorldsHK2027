@@ -37,7 +37,7 @@ export interface EventSchedule {
 export const eventSchedules = {
   worldChampionship: {
     id: 'world-championship',
-    title: "Hong Kong Dragon World Championship 2027",
+    title: "2027 Dragon World Championship",
     dates: "November 21-29, 2026",
     venue: "Royal Hong Kong Yacht Club, Port Shelter",
     description: "The premier international Dragon class sailing world championship",
@@ -470,7 +470,7 @@ export const eventSchedules = {
   
   asiaPacificChampionships: {
     id: 'asia-pacific-championships',
-    title: "2026 Asia Pacific Championships",
+    title: "2026 Asia Pacific Championship",
     dates: "November 14-17, 2026",
     venue: "Royal Hong Kong Yacht Club, Port Shelter",
     description: "Regional championship for Asia Pacific Dragon sailors",
@@ -521,8 +521,8 @@ export const eventSchedules = {
             registrationRequired: false,
             contactPerson: "Registration Team - regatta@rhkyc.org.hk",
             bringItems: ["Sailing license", "Passport/ID", "Medical certificate"],
-            calendarTitle: "Registration Opens - Asia Pacific Championships",
-            calendarDescription: "Complete your registration for the Asia Pacific Dragon Championships. Bring all required documentation."
+            calendarTitle: "Registration Opens - 2026 Asia Pacific Championship",
+            calendarDescription: "Complete your registration for the 2026 Asia Pacific Championship. Bring all required documentation."
           },
           {
             time: "09:00-16:00",

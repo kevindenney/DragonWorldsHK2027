@@ -177,6 +177,7 @@ export const CategoryFilterChips: React.FC<CategoryFilterChipsProps> = ({
 const styles = StyleSheet.create({
   container: {
     paddingVertical: spacing.sm,
+    paddingTop: spacing.md,
   },
   scrollContent: {
     paddingHorizontal: spacing.md,
@@ -193,6 +194,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.borderLight,
+    marginRight: spacing.xs,
   },
   chipIcon: {
     marginRight: spacing.xs,
@@ -200,6 +202,7 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 14,
     fontWeight: '500',
+    flexShrink: 0,
   },
   chipTextSelected: {
     color: colors.surface,

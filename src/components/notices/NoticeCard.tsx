@@ -167,7 +167,8 @@ export const NoticeCard: React.FC<NoticeCardProps> = ({
 
   // Check if document has racing rules link
   const isRacingRulesDocument = notice.itemType === 'document' &&
-    (notice as EventDocument).url?.includes('racingrulesofsailing.org');
+    ((notice as EventDocument).url?.includes('racingrulesofsailing.org') ||
+     (notice as EventDocument).url?.includes('sailing.org'));
 
   return (
     <View
@@ -287,7 +288,7 @@ export const NoticeCard: React.FC<NoticeCardProps> = ({
                   </IOSText>
                 </View>
                 <IOSButton
-                  title="View Original on racingrulesofsailing.org"
+                  title="View Original on sailing.org"
                   size="small"
                   variant="tinted"
                   color={colors.primary}

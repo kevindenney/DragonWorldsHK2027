@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Users, Cloud, ChevronRight, FileText, User, LogIn, LogOut, Trophy, Info, RefreshCw } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
 import { EnhancedContactsScreen } from './EnhancedContactsScreen';
 import { SponsorsScreen } from './SponsorsScreen';
@@ -138,6 +138,46 @@ export function MoreScreen() {
   const { isAuthenticated, user, logout } = useAuth();
   const { setUserType, completeOnboarding, resetOnboarding } = useUserStore();
 
+  // Simple approach: Reset to root when coming from other tabs OR when More tab is pressed while already on More
+  const wasOnDifferentTab = React.useRef(false);
+
+  // Listen for tab focus events
+  React.useEffect(() => {
+    const parentNavigation = navigation.getParent();
+    if (!parentNavigation) return;
+
+    const stateListener = parentNavigation.addListener('state', (e) => {
+      const state = parentNavigation.getState();
+      const currentRoute = state.routes[state.index];
+
+      // Track if we're switching TO More tab from another tab
+      if (currentRoute.name === 'More' && wasOnDifferentTab.current && selectedOption !== null) {
+        console.log('🔍 [MoreScreen] Switching to More tab from another tab, resetting to root');
+        setSelectedOption(null);
+      }
+
+      // Update flag for next time
+      wasOnDifferentTab.current = currentRoute.name !== 'More';
+    });
+
+    // Also listen for tab press events when already on More tab
+    const tabPressListener = parentNavigation.addListener('tabPress', (e) => {
+      const state = parentNavigation.getState();
+      const currentRoute = state.routes[state.index];
+
+      // If we're already on More tab and have a selected option, reset to root
+      if (currentRoute.name === 'More' && selectedOption !== null) {
+        console.log('🔍 [MoreScreen] More tab pressed while already on More tab with sub-screen, resetting to root');
+        setSelectedOption(null);
+      }
+    });
+
+    return () => {
+      stateListener();
+      tabPressListener();
+    };
+  }, [navigation, selectedOption]);
+
   // Get dynamic options based on auth state
   const moreOptions = React.useMemo(() => {
     console.log('🔍 [MoreScreen] GENERATING OPTIONS - Auth state:', {
@@ -167,6 +207,14 @@ export function MoreScreen() {
   }, [isAuthenticated, user]);
 
   const handleOptionPress = async (option: MoreOption) => {
+    console.log('🔍 [MoreScreen] handleOptionPress called for option:', {
+      optionId: option.id,
+      optionTitle: option.title,
+      hasComponent: !!option.component,
+      action: option.action,
+      timestamp: Date.now()
+    });
+
     await Haptics.selectionAsync();
 
     // Handle sign out
@@ -205,12 +253,15 @@ export function MoreScreen() {
       (navigation as any).navigate(option.navigationTarget);
     } else if (option.component) {
       // Show component in current screen
+      console.log('🔍 [MoreScreen] Setting selectedOption to:', option.id);
       setSelectedOption(option.id);
     }
   };
 
   const handleBackPress = async () => {
+    console.log('🔍 [MoreScreen] handleBackPress called from selectedOption:', selectedOption);
     await Haptics.selectionAsync();
+    console.log('🔍 [MoreScreen] handleBackPress - Setting selectedOption to null');
     setSelectedOption(null);
   };
 
@@ -230,9 +281,17 @@ export function MoreScreen() {
 
       // Special handling for weather screen - render without header for full-screen experience
       if (option.id === 'weather') {
+        console.log('🔍 [MoreScreen] Rendering weather screen with custom navigation props');
+        const weatherNavigation = {
+          goBack: handleBackPress,
+          // Add debug info
+          __debug: 'CustomWeatherNavigation'
+        };
+        console.log('🔍 [MoreScreen] Weather navigation object:', weatherNavigation);
+
         return (
           <View style={styles.container}>
-            <Component navigation={{ goBack: handleBackPress }} />
+            <Component navigation={weatherNavigation} />
           </View>
         );
       }
@@ -254,7 +313,6 @@ export function MoreScreen() {
               />
               <Text style={styles.backText}>More</Text>
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>{option.title}</Text>
           </SafeAreaView>
           <View style={styles.contentContainer}>
             <Component />

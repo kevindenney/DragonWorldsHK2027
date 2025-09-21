@@ -54,6 +54,10 @@ const LiveCommentary: React.FC<LiveCommentaryProps> = ({
           <View style={styles.liveIcon} />
           <IOSText style={styles.liveTitle}>LIVE RACE COMMENTARY</IOSText>
         </View>
+        <View style={styles.whatsappBranding}>
+          <MessageCircle size={14} color="#FFFFFF" style={styles.whatsappIcon} />
+          <IOSText style={styles.whatsappText}>WhatsApp Group</IOSText>
+        </View>
         <IOSText style={styles.liveParticipants}>
           {participantCount} participants
         </IOSText>
@@ -69,7 +73,7 @@ const LiveCommentary: React.FC<LiveCommentaryProps> = ({
       </View>
       
       <IOSButton
-        title="Join Live Discussion"
+        title="Join WhatsApp Group"
         onPress={onJoin}
         variant="filled"
         style={styles.joinLiveButton}
@@ -377,34 +381,15 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Image 
-            source={require('../../../assets/dragon-logo.png')} 
+          <Image
+            source={require('../../../assets/dragon-logo.png')}
             style={styles.dragonLogo}
             resizeMode="contain"
           />
           <IOSText style={styles.headerTitle}>Contacts & Groups</IOSText>
-        </View>
-        
-        <View style={styles.headerActions}>
-          <IOSButton
-            title=""
-            onPress={handleShowSearch}
-            variant="tinted"
-            size="small"
-            icon={<Search size={20} color="#007AFF" />}
-            style={styles.headerButton}
-          />
-          <IOSButton
-            title=""
-            onPress={handleShowFilters}
-            variant="tinted"
-            size="small"
-            icon={<Filter size={20} color="#007AFF" />}
-            style={styles.headerButton}
-          />
         </View>
       </View>
 
@@ -637,8 +622,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingLeft: 20,
+    paddingRight: 24,
+    paddingTop: 8,
+    paddingBottom: 12,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 0.5,
     borderBottomColor: '#C6C6C8',
@@ -662,8 +649,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerButton: {
-    width: 40,
-    height: 40,
+    minWidth: 50,
+    height: 28,
+    paddingHorizontal: 6,
   },
   scrollView: {
     flex: 1,
@@ -705,6 +693,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FF3B30',
     letterSpacing: 0.5,
+  },
+  whatsappBranding: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#25D366',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginTop: 4,
+  },
+  whatsappIcon: {
+    marginRight: 4,
+  },
+  whatsappText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   liveParticipants: {
     fontSize: 13,

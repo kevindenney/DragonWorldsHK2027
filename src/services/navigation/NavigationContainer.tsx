@@ -7,6 +7,7 @@ import { SimplePasswordResetScreen } from '../../screens/auth/SimplePasswordRese
 import { UnifiedAuthScreen } from '../../screens/auth/UnifiedAuthScreen';
 // CompetitorDetail is now nested under the Results stack so we do not import it here
 import { DocumentViewer } from '../../components/noticeBoard/DocumentViewer';
+import { NotificationDetail } from '../../components/noticeBoard/NotificationDetail';
 import { EntryList } from '../../components/noticeBoard/EntryListCard';
 import { AuthProvider } from '../../auth/AuthProvider';
 import { useAuth } from '../../auth/useAuth';
@@ -144,6 +145,10 @@ const MainApp = () => {
       <Stack.Screen
         name="DocumentViewer"
         component={DocumentViewer}
+      />
+      <Stack.Screen
+        name="NotificationDetail"
+        component={NotificationDetail}
       />
       <Stack.Screen
         name="EntryList"

@@ -99,7 +99,7 @@ export function UnifiedRaceScreen() {
 
   // Live context state
   const [liveContext, setLiveContext] = useState<LiveContext>({
-    eventName: 'Dragon World Championships 2027',
+    eventName: '2027 Dragon World Championship',
     eventType: 'dragon-worlds',
     status: 'race-day',
     currentTime: new Date().toLocaleTimeString()
@@ -260,8 +260,8 @@ export function UnifiedRaceScreen() {
       <View style={styles.eventToggleContainer}>
         <IOSSegmentedControl
           options={[
-            { label: 'Asia Pacific Championships', value: 'asia-pacific-2026' },
-            { label: 'Dragon World Championship', value: 'dragon-worlds-2026' }
+            { label: '2026 Asia Pacific Championship', value: 'asia-pacific-2026' },
+            { label: '2027 Dragon World Championship', value: 'dragon-worlds-2026' }
           ]}
           selectedValue={selectedEvent}
           onValueChange={(eventId) => setSelectedEvent(eventId as 'asia-pacific-2026' | 'dragon-worlds-2026')}

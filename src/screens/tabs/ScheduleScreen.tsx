@@ -80,8 +80,8 @@ export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
       <View style={styles.eventToggleContainer}>
         <IOSSegmentedControl
           options={[
-            { label: 'Asia Pacific Championships', value: 'asia-pacific-2026' },
-            { label: 'Dragon World Championship', value: 'dragon-worlds-2026' }
+            { label: '2026 Asia Pacific Championship', value: 'asia-pacific-2026' },
+            { label: '2027 Dragon World Championship', value: 'dragon-worlds-2026' }
           ]}
           selectedValue={selectedEvent}
           onValueChange={(eventId) => handleEventChange(eventId as 'asia-pacific-2026' | 'dragon-worlds-2026')}

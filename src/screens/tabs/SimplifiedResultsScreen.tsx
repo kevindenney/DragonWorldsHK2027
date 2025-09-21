@@ -447,8 +447,8 @@ export function SimplifiedResultsScreen({ navigation }: ResultsScreenProps) {
           <View style={styles.eventToggleContainer}>
             <IOSSegmentedControl
               options={[
-                { label: 'Asia Pacific Championships', value: EVENT_IDS.ASIA_PACIFIC },
-                { label: 'Dragon World Championship', value: EVENT_IDS.DRAGON_WORLDS }
+                { label: '2026 Asia Pacific Championship', value: EVENT_IDS.ASIA_PACIFIC },
+                { label: '2027 Dragon World Championship', value: EVENT_IDS.DRAGON_WORLDS }
               ]}
               selectedValue={selectedEventId}
               onValueChange={setSelectedEventId}
@@ -460,7 +460,7 @@ export function SimplifiedResultsScreen({ navigation }: ResultsScreenProps) {
       {/* Series Header + Stats */}
       <View style={styles.seriesHeaderSection}>
         <View style={styles.seriesHeaderLeft}>
-          <Text style={styles.seriesTitle}>{eventData?.name || 'Dragon World Championship'}</Text>
+          <Text style={styles.seriesTitle}>{eventData?.name || '2027 Dragon World Championship'}</Text>
           <View style={styles.seriesMetaRow}>
             <View style={styles.seriesMetaItem}>
               <MapPin color={colors.textSecondary} size={16} />

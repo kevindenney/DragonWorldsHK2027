@@ -272,20 +272,20 @@ export const WhatsAppGroupCard: React.FC<WhatsAppGroupCardProps> = ({
           <IOSButton
             title="Leave"
             onPress={handleLeavePress}
-            variant="secondary"
+            variant="tinted"
             size="small"
-            style={styles.leaveButton}
+            style={[styles.leaveButton, styles.highContrastButton]}
           />
         )}
-        
+
         {group.joinUrl && !isJoined && (
           <IOSButton
-            title="QR"
+            title="QR Code"
             onPress={handleShowQRCode}
-            variant="secondary"
+            variant="tinted"
             size="small"
             icon={<QrCode size={16} color="#007AFF" />}
-            style={styles.qrButton}
+            style={[styles.qrButton, styles.highContrastButton]}
           />
         )}
         
@@ -409,12 +409,17 @@ const styles = StyleSheet.create({
     borderTopColor: '#C6C6C8',
   },
   leaveButton: {
-    minWidth: 60,
+    minWidth: 70,
   },
   qrButton: {
-    minWidth: 50,
+    minWidth: 80,
   },
   actionButton: {
     minWidth: 80,
+  },
+  highContrastButton: {
+    backgroundColor: '#F2F2F7',
+    borderWidth: 1,
+    borderColor: '#C6C6C8',
   },
 });

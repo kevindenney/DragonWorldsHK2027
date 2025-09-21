@@ -117,7 +117,7 @@ export const EnhancedLiveScreen: React.FC<LiveScreenProps> = ({ navigation }) =>
   const renderEventContext = () => (
     <IOSCard style={styles.contextCard}>
       <View style={styles.contextHeader}>
-        <IOSText style={styles.contextTitle}>Dragon World Championships</IOSText>
+        <IOSText style={styles.contextTitle}>2027 Dragon World Championship</IOSText>
         <View style={styles.eventToggle}>
           <IOSBadge 
             text="Asia Pacific" 
@@ -409,7 +409,7 @@ export const EnhancedLiveScreen: React.FC<LiveScreenProps> = ({ navigation }) =>
 
 // Mock data based on your screen designs
 const mockLiveContext: LiveContext = {
-  eventName: 'Dragon World Championships',
+  eventName: '2027 Dragon World Championship',
   eventType: 'world-championship',
   status: 'race-day',
   currentTime: new Date().toISOString()

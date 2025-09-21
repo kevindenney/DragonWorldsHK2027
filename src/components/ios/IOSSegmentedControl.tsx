@@ -45,6 +45,9 @@ export const IOSSegmentedControl: React.FC<IOSSegmentedControlProps> = ({
                   styles.segmentText,
                   isSelected && styles.selectedSegmentText
                 ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit={true}
+                minimumFontScale={0.7}
               >
                 {option.label}
               </IOSText>
@@ -74,7 +77,7 @@ const styles = StyleSheet.create({
   segment: {
     flex: 1,
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 8,
@@ -106,7 +109,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 8,
   },
   segmentText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '500',
     color: '#007AFF',
     textAlign: 'center',
@@ -114,6 +117,6 @@ const styles = StyleSheet.create({
   selectedSegmentText: {
     fontWeight: '700',
     color: '#007AFF',
-    fontSize: 15,
+    fontSize: 14,
   },
 });

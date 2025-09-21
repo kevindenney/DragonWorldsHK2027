@@ -40,7 +40,11 @@ export function TabNavigator() {
   }, []);
 
   const handleTabPress = async (tabName?: string) => {
-    console.log(`📱 [TabNavigator] Tab pressed: ${tabName || 'unknown'}`);
+    console.log(`📱 [TabNavigator] 🎯 TAB PRESSED: ${tabName || 'unknown'}`, {
+      tabName,
+      timestamp: Date.now(),
+      isMoreTab: tabName?.includes('More') || tabName?.includes('Additional features')
+    });
     await Haptics.selectionAsync();
   };
 
