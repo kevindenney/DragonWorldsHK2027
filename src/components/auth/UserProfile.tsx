@@ -42,6 +42,7 @@ import { colors, typography, spacing, borderRadius, shadows } from '../../consta
 import { useAuth } from '../../auth/useAuth';
 import { User as UserType, UserProfile as UserProfileType, LinkedProvider } from '../../types/auth';
 import { AuthButton } from './AuthButton';
+import { imageUploadService, UploadProgress } from '../../services/imageUploadService';
 
 interface UserProfileProps {
   onEditProfile?: () => void;
@@ -62,6 +63,7 @@ export function UserProfile({
     user?.preferences?.notifications?.push || false
   );
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -105,8 +107,16 @@ export function UserProfile({
   };
 
   const handleImageSelection = async (source: 'camera' | 'library') => {
+    if (!user?.uid) {
+      Alert.alert('Error', 'User not authenticated. Please log in again.');
+      return;
+    }
+
     try {
       setIsUploadingPhoto(true);
+      setUploadProgress(null);
+
+      console.log('📷 [UserProfile] Starting image selection:', source);
 
       let result: ImagePicker.ImagePickerResult;
 
@@ -121,33 +131,61 @@ export function UserProfile({
           mediaTypes: ['images'] as ImagePicker.MediaType[],
           allowsEditing: true,
           aspect: [1, 1],
-          quality: 0.7,
+          quality: 0.8, // Better quality for profile pictures
         });
       } else {
         result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ['images'] as ImagePicker.MediaType[],
           allowsEditing: true,
           aspect: [1, 1],
-          quality: 0.7,
+          quality: 0.8, // Better quality for profile pictures
         });
       }
 
       if (!result.canceled && result.assets[0]) {
         const imageUri = result.assets[0].uri;
+        console.log('📷 [UserProfile] Image selected:', imageUri);
 
-        // Update the profile with the new photo URI
-        // In a real app, you would upload this to a storage service first
+        // Compress image if needed to reduce upload time
+        const compressedUri = await imageUploadService.compressImage(imageUri, 400, 0.8);
+        console.log('📷 [UserProfile] Image compressed:', compressedUri);
+
+        // Upload to Firebase Storage with progress tracking
+        const uploadResult = await imageUploadService.uploadProfilePicture(
+          user.uid,
+          compressedUri,
+          {
+            onProgress: (progress) => {
+              console.log('📷 [UserProfile] Upload progress:', progress.percentage + '%');
+              setUploadProgress(progress);
+            },
+            timeoutMs: 30000, // 30 second timeout
+            maxSizeBytes: 5 * 1024 * 1024, // 5MB limit
+          }
+        );
+
+        console.log('📷 [UserProfile] Upload completed:', uploadResult.downloadURL);
+
+        // Update the profile with the cloud storage URL
         await updateProfile({
-          photoURL: imageUri,
+          photoURL: uploadResult.downloadURL,
         });
 
         showSuccessMessage('Profile photo updated successfully!');
       }
     } catch (error) {
-      console.error('Error selecting/uploading image:', error);
-      Alert.alert('Error', 'Failed to update profile photo. Please try again.');
+      console.error('📷 [UserProfile] Image upload failed:', error);
+
+      let errorMessage = 'Failed to update profile photo.';
+      if (error instanceof Error) {
+        // Use the user-friendly error messages from the upload service
+        errorMessage = error.message;
+      }
+
+      Alert.alert('Upload Error', errorMessage + ' Please try again.');
     } finally {
       setIsUploadingPhoto(false);
+      setUploadProgress(null);
     }
   };
 
@@ -252,6 +290,7 @@ export function UserProfile({
         onEditProfile={onEditProfile}
         onPhotoUpload={handlePhotoUpload}
         isUploadingPhoto={isUploadingPhoto}
+        uploadProgress={uploadProgress}
       />
       
       <ProfileSection title="Account Information">
@@ -510,6 +549,7 @@ interface ProfileHeaderProps {
   onEditProfile?: () => void;
   onPhotoUpload?: () => void;
   isUploadingPhoto?: boolean;
+  uploadProgress?: UploadProgress | null;
 }
 
 function ProfileHeader({
@@ -517,15 +557,34 @@ function ProfileHeader({
   onEditProfile,
   onPhotoUpload,
   isUploadingPhoto,
+  uploadProgress,
 }: ProfileHeaderProps) {
+  const showDragonLogo = !user.photoURL && !isUploadingPhoto;
+
   return (
     <View style={styles.header}>
       <View style={styles.avatarContainer}>
         {user.photoURL ? (
           <Image source={{ uri: user.photoURL }} style={styles.avatar} />
+        ) : showDragonLogo ? (
+          <Image
+            source={require('../../../assets/dragon-logo.png')}
+            style={styles.avatarDragonLogo}
+            resizeMode="contain"
+          />
         ) : (
           <View style={styles.avatarPlaceholder}>
             <User size={40} color={colors.textMuted} />
+          </View>
+        )}
+
+        {/* Upload progress overlay */}
+        {isUploadingPhoto && uploadProgress && (
+          <View style={styles.uploadProgressOverlay}>
+            <View style={styles.uploadProgressContainer}>
+              <View style={[styles.uploadProgressBar, { width: `${uploadProgress.percentage}%` }]} />
+            </View>
+            <Text style={styles.uploadProgressText}>{uploadProgress.percentage}%</Text>
           </View>
         )}
 
@@ -765,6 +824,43 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  avatarDragonLogo: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.surface,
+    borderWidth: 2,
+    borderColor: colors.primary + '20',
+  },
+  uploadProgressOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 40,
+    backgroundColor: colors.text + '80',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
+  uploadProgressContainer: {
+    width: 60,
+    height: 4,
+    backgroundColor: colors.background + '40',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  uploadProgressBar: {
+    height: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 2,
+  },
+  uploadProgressText: {
+    ...typography.caption,
+    color: colors.background,
+    fontWeight: '600',
   },
   cameraButton: {
     position: 'absolute',

@@ -363,7 +363,8 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
                 testID="register-submit"
               />
 
-              {/* Social Sign Up Options */}
+              {/* Social Sign Up Options - Temporarily hidden for future implementation */}
+              {/*
               <View style={styles.socialSection}>
                 <View style={styles.dividerContainer}>
                   <View style={styles.dividerLine} />
@@ -390,6 +391,7 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
                   </TouchableOpacity>
                 </View>
               </View>
+              */}
 
               <View style={styles.loginSection}>
                 <Text style={styles.loginPrompt}>Already part of the crew?</Text>

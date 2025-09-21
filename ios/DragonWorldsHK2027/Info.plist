@@ -33,6 +33,14 @@
         </array>
       </dict>
       <dict>
+        <key>CFBundleURLName</key>
+        <string>google-signin</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>com.googleusercontent.apps.272884873953-q9bnuce7mrdm47iiqo28uhous2mgicfa</string>
+        </array>
+      </dict>
+      <dict>
         <key>CFBundleURLSchemes</key>
         <array>
           <string>exp+dragonworldshk2027</string>
@@ -64,8 +72,6 @@
         </dict>
       </dict>
     </dict>
-    <key>NSCalendarsUsageDescription</key>
-    <string>This app can add race events to your calendar to help you stay organized.</string>
     <key>NSCameraUsageDescription</key>
     <string>This app uses the camera to allow you to share photos of racing moments and connect with other sailors.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
@@ -74,8 +80,6 @@
     <string>This app uses your location to provide accurate local weather conditions and nearby sailing venues.</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>This app accesses your photo library to let you share sailing photos and memories.</string>
-    <key>NSRemindersUsageDescription</key>
-    <string>This app can create reminders for important race events and weather conditions.</string>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>

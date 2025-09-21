@@ -19,7 +19,7 @@ const Stack = createStackNavigator();
 
 // Onboarding Navigator for first-time users
 const OnboardingNavigator = () => {
-  const [currentStep, setCurrentStep] = React.useState<'welcome' | 'signup'>('welcome');
+  const [currentStep, setCurrentStep] = React.useState<'welcome' | 'signup' | 'login'>('welcome');
   const { completeOnboarding, setUserType, setSelectedOnboardingType } = useUserStore();
   const { isAuthenticated, user } = useAuth();
 
@@ -59,6 +59,16 @@ const OnboardingNavigator = () => {
     setCurrentStep('welcome');
   };
 
+  const handleNavigateToLogin = () => {
+    console.log('📋 [OnboardingNavigator] Navigating to login');
+    setCurrentStep('login');
+  };
+
+  const handleLoginBack = () => {
+    console.log('📋 [OnboardingNavigator] Login back -> signup');
+    setCurrentStep('signup');
+  };
+
   switch (currentStep) {
     case 'welcome':
       return (
@@ -73,7 +83,29 @@ const OnboardingNavigator = () => {
         <SimpleRegisterScreen
           navigation={{
             goBack: handleSignupBack,
-            navigate: () => {},
+            navigate: (routeName: string) => {
+              console.log('📋 [OnboardingNavigator] Navigate called with:', routeName);
+              if (routeName === 'Login') {
+                handleNavigateToLogin();
+              }
+            },
+            canGoBack: () => true,
+            reset: () => {}
+          }}
+        />
+      );
+
+    case 'login':
+      return (
+        <SimpleLoginScreen
+          navigation={{
+            goBack: handleLoginBack,
+            navigate: (routeName: string) => {
+              console.log('📋 [OnboardingNavigator] Login navigate called with:', routeName);
+              if (routeName === 'Register') {
+                setCurrentStep('signup');
+              }
+            },
             canGoBack: () => true,
             reset: () => {}
           }}

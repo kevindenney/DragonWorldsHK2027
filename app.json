@@ -26,7 +26,7 @@
     "primaryColor": "#DC2626",
     "splash": {
       "image": "./assets/dragon-logo-xl.png",
-      "resizeMode": "stretch",
+      "resizeMode": "contain",
       "backgroundColor": "#DC2626"
     },
     "assetBundlePatterns": [
@@ -43,7 +43,7 @@
       "hermes": true,
       "splash": {
         "image": "./assets/dragon-logo-xl.png",
-        "resizeMode": "stretch",
+        "resizeMode": "contain",
         "backgroundColor": "#DC2626"
       },
       "infoPlist": {
@@ -59,9 +59,9 @@
             ]
           },
           {
-            "CFBundleURLName": "dragonworlds-deep-linking",
+            "CFBundleURLName": "google-signin",
             "CFBundleURLSchemes": [
-              "dragonworlds"
+              "com.googleusercontent.apps.272884873953-q9bnuce7mrdm47iiqo28uhous2mgicfa"
             ]
           }
         ],
@@ -93,7 +93,7 @@
       "targetSdkVersion": 34,
       "splash": {
         "image": "./assets/dragon-logo-xl.png",
-        "resizeMode": "stretch",
+        "resizeMode": "contain",
         "backgroundColor": "#DC2626"
       },
       "adaptiveIcon": {
@@ -214,7 +214,7 @@
         "expo-splash-screen",
         {
           "image": "./assets/dragon-logo-xl.png",
-          "resizeMode": "stretch",
+          "resizeMode": "contain",
           "backgroundColor": "#DC2626"
         }
       ],
