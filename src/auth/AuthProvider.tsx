@@ -193,7 +193,7 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
             console.error('❌ [AuthProvider] Error details:', {
               message: error?.message,
               name: error?.name,
-              stack: error?.stack?.substring(0, 300)
+              stack: error?.stack ? error.stack.substring(0, 300) : undefined
             });
 
             // Fall back to mock authentication if Firebase fails to load
@@ -313,12 +313,34 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
     } catch (error) {
       const loginDuration = Date.now() - loginStartTime;
       console.error(`❌ [AuthProvider] Login failed after ${loginDuration}ms:`, error);
-      console.error('❌ [AuthProvider] Error details:', {
-        message: error?.message,
-        code: error?.code,
-        name: error?.name,
-        stack: error?.stack?.substring(0, 300)
-      });
+
+      // Ultra-safe error logging - completely bulletproof
+      try {
+        let errorMessage = 'Unknown error';
+        let errorCode = 'unknown';
+        let errorName = 'unknown';
+        let errorStack = 'No stack available';
+
+        try { errorMessage = error?.message || String(error); } catch {}
+        try { errorCode = error?.code || 'unknown'; } catch {}
+        try { errorName = error?.name || 'unknown'; } catch {}
+        try {
+          if (error && error.stack) {
+            const stackStr = String(error.stack);
+            errorStack = stackStr.length > 300 ? stackStr.slice(0, 300) : stackStr;
+          }
+        } catch {}
+
+        const errorDetails = {
+          message: errorMessage,
+          code: errorCode,
+          name: errorName,
+          stack: errorStack
+        };
+        console.error('❌ [AuthProvider] Error details:', errorDetails);
+      } catch (logError) {
+        console.error('❌ [AuthProvider] Error occurred while logging error details:', String(error));
+      }
 
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Login failed' });
       throw error;
@@ -373,12 +395,34 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
     } catch (error) {
       const regDuration = Date.now() - regStartTime;
       console.error(`❌ [AuthProvider] Registration failed after ${regDuration}ms:`, error);
-      console.error('❌ [AuthProvider] Error details:', {
-        message: error?.message,
-        code: error?.code,
-        name: error?.name,
-        stack: error?.stack?.substring(0, 300)
-      });
+
+      // Ultra-safe error logging - completely bulletproof
+      try {
+        let errorMessage = 'Unknown error';
+        let errorCode = 'unknown';
+        let errorName = 'unknown';
+        let errorStack = 'No stack available';
+
+        try { errorMessage = error?.message || String(error); } catch {}
+        try { errorCode = error?.code || 'unknown'; } catch {}
+        try { errorName = error?.name || 'unknown'; } catch {}
+        try {
+          if (error && error.stack) {
+            const stackStr = String(error.stack);
+            errorStack = stackStr.length > 300 ? stackStr.slice(0, 300) : stackStr;
+          }
+        } catch {}
+
+        const errorDetails = {
+          message: errorMessage,
+          code: errorCode,
+          name: errorName,
+          stack: errorStack
+        };
+        console.error('❌ [AuthProvider] Error details:', errorDetails);
+      } catch (logError) {
+        console.error('❌ [AuthProvider] Error occurred while logging error details:', String(error));
+      }
 
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Registration failed' });
       throw error;

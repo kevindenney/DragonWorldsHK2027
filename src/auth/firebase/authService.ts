@@ -517,7 +517,12 @@ export class FirebaseAuthService {
         message = error?.message || 'Authentication failed';
     }
 
-    return new Error(message);
+    // Create new error with preserved stack trace for better debugging
+    const newError = new Error(message);
+    if (error?.stack) {
+      newError.stack = error.stack;
+    }
+    return newError;
   }
 }
 
