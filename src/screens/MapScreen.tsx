@@ -1,16 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
-import { Filter, Layers, Navigation } from 'lucide-react-native';
+import { Filter } from 'lucide-react-native';
 
 import { SailingLocationMarker } from '../components/maps/SailingLocationMarker';
 import { LocationDetailModal } from '../components/maps/LocationDetailModal';
 import { IOSSegmentedControl } from '../components/ios';
-import { 
-  sailingLocations, 
-  locationFilters, 
-  getLocationsByType 
+import {
+  sailingLocations,
+  locationFilters,
+  getLocationsByType,
+  getLocationById
 } from '../data/sailingLocations';
 import { 
   SailingLocation, 
@@ -22,11 +22,10 @@ import type { MapScreenProps } from '../types/navigation';
 const { colors, spacing, typography, shadows, borderRadius } = dragonChampionshipsLightTheme;
 const { width, height } = Dimensions.get('window');
 
-export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
+export const MapScreen: React.FC<MapScreenProps> = ({ navigation, route }) => {
   const mapRef = useRef<MapView>(null);
   const [selectedFilter, setSelectedFilter] = useState<SailingLocationFilter['type']>('all');
   const [selectedLocation, setSelectedLocation] = useState<SailingLocation | null>(null);
-  const [mapType, setMapType] = useState<'standard' | 'satellite' | 'hybrid'>('standard');
   const [showFilters, setShowFilters] = useState(false);
 
   // Get filtered locations based on current filter
@@ -39,6 +38,30 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
     latitudeDelta: 0.15,
     longitudeDelta: 0.15,
   };
+
+  // Handle navigation from Schedule tab with location parameter
+  useEffect(() => {
+    const locationId = route?.params?.locationId;
+    if (locationId && mapRef.current) {
+      const location = getLocationById(locationId);
+      if (location) {
+        // Set the location as selected
+        setSelectedLocation(location);
+
+        // Animate to the location
+        setTimeout(() => {
+          mapRef.current?.animateToRegion({
+            ...location.coordinates,
+            latitudeDelta: 0.02,
+            longitudeDelta: 0.02,
+          }, 1000);
+        }, 500);
+
+        // Clear filter to show all locations
+        setSelectedFilter('all');
+      }
+    }
+  }, [route?.params?.locationId]);
 
   const handleLocationPress = (location: SailingLocation) => {
     setSelectedLocation(location);
@@ -78,12 +101,6 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
     }
   };
 
-  const handleMapTypeChange = () => {
-    setMapType(prev => 
-      prev === 'standard' ? 'satellite' : 
-      prev === 'satellite' ? 'hybrid' : 'standard'
-    );
-  };
 
   const handleCloseModal = () => {
     setSelectedLocation(null);
@@ -99,50 +116,7 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <View>
-            <Text style={styles.headerTitle}>Sailing Locations</Text>
-            <Text style={styles.headerSubtitle}>
-              {getCurrentFilterLabel()} ({getFilteredLocationCount()})
-            </Text>
-          </View>
-          
-          <View style={styles.headerActions}>
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={() => setShowFilters(!showFilters)}
-            >
-              <Filter size={20} color={colors.primary} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={handleMapTypeChange}
-            >
-              <Layers size={20} color={colors.primary} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Filter Controls */}
-        {showFilters && (
-          <View style={styles.filterContainer}>
-            <IOSSegmentedControl
-              options={locationFilters.map(filter => ({
-                label: filter.label,
-                value: filter.type
-              }))}
-              selectedValue={selectedFilter}
-              onValueChange={handleFilterChange}
-              style={styles.segmentedControl}
-            />
-          </View>
-        )}
-      </View>
-
+    <View style={styles.container}>
       {/* Map */}
       <View style={styles.mapContainer}>
         <MapView
@@ -150,7 +124,7 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
           provider={PROVIDER_DEFAULT}
           style={styles.map}
           initialRegion={initialRegion}
-          mapType={mapType}
+          mapType="standard"
           showsUserLocation={true}
           showsMyLocationButton={true}
           showsCompass={true}
@@ -183,6 +157,28 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
             </Marker>
           ))}
         </MapView>
+
+        {/* Floating Filter Button */}
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={() => setShowFilters(!showFilters)}
+        >
+          <Filter size={20} color={colors.white} />
+        </TouchableOpacity>
+
+        {/* Filter Controls */}
+        {showFilters && (
+          <View style={styles.filterDropdown}>
+            <IOSSegmentedControl
+              options={locationFilters.map(filter => ({
+                label: filter.label,
+                value: filter.type
+              }))}
+              selectedValue={selectedFilter}
+              onValueChange={handleFilterChange}
+            />
+          </View>
+        )}
 
         {/* Map Legend */}
         <View style={styles.legend}>
@@ -226,16 +222,6 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          <TouchableOpacity 
-            style={styles.quickActionButton}
-            onPress={() => navigation.navigate('Schedule')}
-          >
-            <Navigation size={16} color={colors.primary} />
-            <Text style={styles.quickActionText}>Schedule</Text>
-          </TouchableOpacity>
-        </View>
       </View>
 
       {/* Location Detail Modal */}
@@ -257,64 +243,44 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
           }}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-    ...shadows.cardMedium,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  headerTitle: {
-    ...typography.headlineMedium,
-    color: colors.text,
-    fontWeight: '700',
-  },
-  headerSubtitle: {
-    ...typography.caption,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  actionButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-  },
-  segmentedControl: {
-    marginTop: spacing.sm,
   },
   mapContainer: {
     flex: 1,
     position: 'relative',
   },
   map: {
-    width: width,
-    height: '100%',
+    ...StyleSheet.absoluteFillObject,
+  },
+  filterButton: {
+    position: 'absolute',
+    top: 50,
+    right: spacing.lg,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.cardMedium,
+    elevation: 8,
+  },
+  filterDropdown: {
+    position: 'absolute',
+    top: 100,
+    left: spacing.lg,
+    right: spacing.lg,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    ...shadows.cardMedium,
+    elevation: 8,
   },
   legend: {
     position: 'absolute',
@@ -362,24 +328,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FFFFFF',
     marginRight: spacing.sm,
-  },
-  quickActions: {
-    position: 'absolute',
-    top: spacing.lg,
-    right: spacing.lg,
-  },
-  quickActionButton: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    ...shadows.cardMedium,
-  },
-  quickActionText: {
-    ...typography.caption,
-    color: colors.primary,
-    fontWeight: '600',
   },
 });

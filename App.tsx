@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { AppNavigationContainer } from './src/services/navigation/NavigationContainer';
 import { Text, View, StyleSheet } from 'react-native';
 import { validateRuntimeConfiguration, logEnvironmentVariables } from './src/utils/configValidator';
+import { useUserStore } from './src/stores/userStore';
 
 // Keep the splash screen visible while we fetch resources
 console.log('🚀 [App.tsx] Preventing splash screen auto-hide');
@@ -78,11 +79,13 @@ const styles = StyleSheet.create({
 
 export default function App() {
   const [appIsReady, setAppIsReady] = React.useState(false);
+  const needsOnboarding = useUserStore(state => state.needsOnboarding);
 
   React.useEffect(() => {
     async function prepare() {
       try {
         console.log('🔄 [App.tsx] Preparing app resources...');
+        console.log(`📋 [App.tsx] User needs onboarding: ${needsOnboarding}`);
 
         // Run comprehensive configuration validation
         console.log('🔍 [App.tsx] Running configuration validation...');
@@ -98,8 +101,18 @@ export default function App() {
           }
         }
 
-        // Add any resource loading here if needed in future
-        // For now, we'll just mark as ready immediately
+        // Calendar module test removed from startup to prevent app hanging
+        // Test will be performed when user attempts to use calendar feature
+
+        // Only show splash screen delay for first-time users
+        if (needsOnboarding) {
+          console.log('⏱️ [App.tsx] First-time user detected, showing splash screen for 2 seconds...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          console.log('✅ [App.tsx] Splash screen delay complete');
+        } else {
+          console.log('🚀 [App.tsx] Returning user detected, skipping splash screen delay');
+        }
+
         setAppIsReady(true);
       } catch (e) {
         console.warn('⚠️ [App.tsx] Error during app preparation:', e);
@@ -109,7 +122,7 @@ export default function App() {
     }
 
     prepare();
-  }, []);
+  }, [needsOnboarding]);
 
   React.useEffect(() => {
     async function hideSplash() {

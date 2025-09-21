@@ -183,7 +183,7 @@ export const AuthInput = forwardRef<AuthInputRef, AuthInputProps>(
       }),
       top: focusAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [12, -8],
+        outputRange: [40, -8],
       }),
       fontWeight: focusAnim.interpolate({
         inputRange: [0, 1],
@@ -218,7 +218,11 @@ export const AuthInput = forwardRef<AuthInputRef, AuthInputProps>(
     return (
       <View style={styles.container} testID={testID}>
         <View style={styles.labelContainer}>
-          <Animated.Text style={labelStyle} pointerEvents="none">
+          <Text style={styles.staticLabel}>
+            {label}
+            {isRequired && <Text style={styles.required}> *</Text>}
+          </Text>
+          <Animated.Text style={[labelStyle, { opacity: 0 }]} pointerEvents="none">
             {label}
             {isRequired && <Text style={styles.required}> *</Text>}
           </Animated.Text>
@@ -329,8 +333,7 @@ const styles = StyleSheet.create({
   },
   labelContainer: {
     position: 'relative',
-    height: 28,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
   inputContainer: {
     position: 'relative',
@@ -388,6 +391,13 @@ const styles = StyleSheet.create({
   },
   required: {
     color: colors.error,
+  },
+  staticLabel: {
+    ...typography.labelMedium,
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
   },
 });
 

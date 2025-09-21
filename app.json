@@ -25,8 +25,8 @@
     ],
     "primaryColor": "#DC2626",
     "splash": {
-      "image": "./assets/dragon-logo.png",
-      "resizeMode": "contain",
+      "image": "./assets/dragon-logo-xl.png",
+      "resizeMode": "stretch",
       "backgroundColor": "#DC2626"
     },
     "assetBundlePatterns": [
@@ -34,7 +34,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.regattaflow.dragonworldshk2027",
+      "bundleIdentifier": "com.denneyke.dragonworldshk2027",
       "buildNumber": "1",
       "deploymentTarget": "15.0",
       "requireFullScreen": false,
@@ -42,8 +42,8 @@
       "jsEngine": "hermes",
       "hermes": true,
       "splash": {
-        "image": "./assets/dragon-logo.png",
-        "resizeMode": "contain",
+        "image": "./assets/dragon-logo-xl.png",
+        "resizeMode": "stretch",
         "backgroundColor": "#DC2626"
       },
       "infoPlist": {
@@ -51,8 +51,6 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app uses your location to provide accurate local weather conditions and nearby sailing venues.",
         "NSCameraUsageDescription": "This app uses the camera to allow you to share photos of racing moments and connect with other sailors.",
         "NSPhotoLibraryUsageDescription": "This app accesses your photo library to let you share sailing photos and memories.",
-        "NSCalendarsUsageDescription": "This app can add race events to your calendar to help you stay organized.",
-        "NSRemindersUsageDescription": "This app can create reminders for important race events and weather conditions.",
         "CFBundleURLTypes": [
           {
             "CFBundleURLName": "dragonworlds-deep-linking",
@@ -61,25 +59,13 @@
             ]
           },
           {
-            "CFBundleURLName": "google-oauth",
+            "CFBundleURLName": "dragonworlds-deep-linking",
             "CFBundleURLSchemes": [
-              "com.googleusercontent.apps.839737857128-qvdva2jrauf49erhratq7ri72d9hfjbb"
-            ]
-          },
-          {
-            "CFBundleURLName": "google-signin-url-scheme",
-            "CFBundleURLSchemes": [
-              "com.googleusercontent.apps.839737857128-qvdva2jrauf49erhratq7ri72d9hfjbb"
+              "dragonworlds"
             ]
           }
         ],
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": [
-          "background-fetch",
-          "background-processing",
-          "background-fetch",
-          "background-processing"
-        ],
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": false,
           "NSExceptionDomains": {
@@ -106,8 +92,8 @@
       "compileSdkVersion": 34,
       "targetSdkVersion": 34,
       "splash": {
-        "image": "./assets/dragon-logo.png",
-        "resizeMode": "contain",
+        "image": "./assets/dragon-logo-xl.png",
+        "resizeMode": "stretch",
         "backgroundColor": "#DC2626"
       },
       "adaptiveIcon": {
@@ -123,8 +109,20 @@
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
-        "WRITE_CALENDAR",
-        "READ_CALENDAR",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_NETWORK_STATE",
+        "INTERNET",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_NETWORK_STATE",
+        "INTERNET",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
         "ACCESS_NETWORK_STATE",
@@ -137,6 +135,34 @@
       ],
       "edgeToEdgeEnabled": true,
       "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "dragonworlds.com"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "dragonworlds.com"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
         {
           "action": "VIEW",
           "autoVerify": true,
@@ -187,8 +213,8 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/dragon-logo.png",
-          "resizeMode": "contain",
+          "image": "./assets/dragon-logo-xl.png",
+          "resizeMode": "stretch",
           "backgroundColor": "#DC2626"
         }
       ],
@@ -200,13 +226,7 @@
           "defaultChannel": "default"
         }
       ],
-      "expo-web-browser",
-      [
-        "@react-native-google-signin/google-signin",
-        {
-          "iosUrlScheme": "com.googleusercontent.apps.839737857128-qvdva2jrauf49erhratq7ri72d9hfjbb"
-        }
-      ]
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": false
@@ -225,6 +245,7 @@
     "privacy": "public",
     "githubUrl": "https://github.com/regattaflow/dragonworlds-hk2027",
     "updates": {
+      "enabled": false,
       "url": "https://u.expo.dev/c1bd372f-8ae3-4a4d-a4d0-d1300ce6e95a"
     }
   }

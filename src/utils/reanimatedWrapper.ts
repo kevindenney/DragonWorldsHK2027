@@ -46,7 +46,11 @@ const AnimatedDefault = {
 // These mimic the behavior of reanimated's entering animations with chainable duration method
 const createAnimationFunction = () => {
   const animationFn = () => ({});
-  animationFn.duration = (ms: number) => ({});
+  animationFn.duration = (ms: number) => {
+    const durationFn = () => ({});
+    durationFn.delay = (delayMs: number) => ({});
+    return durationFn;
+  };
   return animationFn;
 };
 

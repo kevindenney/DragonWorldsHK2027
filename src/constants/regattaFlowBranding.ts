@@ -9,13 +9,18 @@ export const REGATTA_FLOW_BRANDING = {
   // Company Identity
   name: 'RegattaFlow',
   tagline: 'Powering the future of sailing technology',
-  description: 'RegattaFlow specializes in creating cutting-edge mobile applications for yacht clubs, sailing associations, and championship regattas worldwide.',
+  description: 'RegattaFlow is a subsidiary of OceanFlow. RegattaFlow specializes in creating cutting-edge mobile applications for yacht clubs, sailing associations, and championship regattas worldwide.',
+  parentCompany: {
+    name: 'OceanFlow',
+    description: 'OceanFlow builds AI apps for the freight business for freight forwarders, dry bulk, rail, air, and trucking companies.',
+    website: 'https://oceanflow.io',
+  },
 
   // Contact Information
   contact: {
-    website: 'https://regattaflow.com',
-    email: 'hello@regattaflow.com',
-    support: 'support@regattaflow.com',
+    website: 'https://oceanflow.io/regattaflow',
+    email: 'regatta@oceanflow.io',
+    support: 'support@oceanflow.io',
     phone: '+1 (555) 123-4567', // Placeholder
   },
 

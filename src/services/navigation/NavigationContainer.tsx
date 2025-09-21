@@ -5,7 +5,6 @@ import { SimpleLoginScreen } from '../../screens/auth/SimpleLoginScreen';
 import { SimpleRegisterScreen } from '../../screens/auth/SimpleRegisterScreen';
 import { SimplePasswordResetScreen } from '../../screens/auth/SimplePasswordResetScreen';
 import { UnifiedAuthScreen } from '../../screens/auth/UnifiedAuthScreen';
-import { ProfileScreen } from '../../screens/ProfileScreen';
 // CompetitorDetail is now nested under the Results stack so we do not import it here
 import { DocumentViewer } from '../../components/noticeBoard/DocumentViewer';
 import { EntryList } from '../../components/noticeBoard/EntryListCard';
@@ -107,10 +106,6 @@ const MainApp = () => {
       <Stack.Screen
         name="MainTabs"
         component={TabNavigator}
-      />
-      <Stack.Screen
-        name="Profile"
-        component={ProfileScreen}
       />
       {/* Auth screens - accessible from More tab and within app flow */}
       <Stack.Screen

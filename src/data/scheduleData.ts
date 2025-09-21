@@ -5,6 +5,17 @@ export interface Activity {
   activity: string;
   type: 'racing' | 'social' | 'meeting' | 'registration' | 'technical' | 'administrative' | 'media';
   location: string;
+  detail?: string;
+  mapLocationId?: string;
+  prerequisites?: string[];           // Required activities before this one
+  relatedActivities?: string[];      // Related/follow-up activities
+  dressCode?: string;                // Dress code requirements
+  bringItems?: string[];             // Items to bring
+  contactPerson?: string;            // Contact for questions
+  maxParticipants?: number;          // Capacity limits
+  registrationRequired?: boolean;    // Whether registration needed
+  calendarTitle?: string;            // Custom calendar event title
+  calendarDescription?: string;      // Calendar event description
 }
 
 export interface Day {
@@ -36,35 +47,45 @@ export const eventSchedules = {
         date: "Friday, November 21, 2026",
         title: "Arrival Day",
         activities: [
-          { 
-            time: "09:00-18:00", 
+          {
+            time: "09:00-18:00",
             activity: "Registration Opens (Race Office)",
             type: "registration" as const,
-            location: "Race Office"
+            location: "Race Office",
+            detail: "Complete competitor check-in, collect race documents, and receive event merchandise",
+            mapLocationId: "rhkyc_kellett"
           },
-          { 
-            time: "10:00-17:00", 
+          {
+            time: "10:00-17:00",
             activity: "Boat Measurement & Equipment Inspection",
             type: "technical" as const,
-            location: "Measurement Dock"
+            location: "Measurement Dock",
+            detail: "Official measurement and safety equipment inspection. Bring measurement certificate and safety gear",
+            mapLocationId: "rhkyc_kellett"
           },
-          { 
-            time: "14:00-17:00", 
+          {
+            time: "14:00-17:00",
             activity: "Charter Boat Assignment (if applicable)",
             type: "registration" as const,
-            location: "Charter Desk"
+            location: "Charter Desk",
+            detail: "Charter boat allocation and equipment handover for international teams",
+            mapLocationId: "rhkyc_kellett"
           },
-          { 
-            time: "18:00-20:00", 
+          {
+            time: "18:00-20:00",
             activity: "Welcome Reception - Opening Ceremony",
             type: "social" as const,
-            location: "Club Terrace"
+            location: "Club Terrace",
+            detail: "Official championship opening with welcome cocktails and team introductions. Dress code: Smart casual",
+            mapLocationId: "rhkyc_kellett"
           },
-          { 
-            time: "20:00", 
+          {
+            time: "20:00",
             activity: "Skippers' Meeting #1 - Race Format Briefing",
             type: "meeting" as const,
-            location: "Main Hall"
+            location: "Main Hall",
+            detail: "Mandatory briefing covering race format, safety procedures, and local conditions",
+            mapLocationId: "clearwater_bay_marina"
           }
         ]
       },
@@ -85,23 +106,29 @@ export const eventSchedules = {
             type: "technical" as const,
             location: "Measurement Area"
           },
-          { 
-            time: "10:00-16:00", 
+          {
+            time: "10:00-16:00",
             activity: "Official Practice Race Window",
             type: "racing" as const,
-            location: "Racing Area Alpha"
+            location: "Racing Area Alpha",
+            detail: "Open practice sailing in championship race area. Wind conditions typically 10-15 knots from NE",
+            mapLocationId: "ninepins_race_course"
           },
-          { 
-            time: "13:00-14:00", 
+          {
+            time: "13:00-14:00",
             activity: "Practice Race Briefing",
             type: "meeting" as const,
-            location: "Briefing Room"
+            location: "Briefing Room",
+            detail: "Course configuration and starting sequence for practice race. Weather update included",
+            mapLocationId: "clearwater_bay_marina"
           },
-          { 
-            time: "14:30", 
+          {
+            time: "14:30",
             activity: "Warning Signal for Practice Race",
             type: "racing" as const,
-            location: "Racing Area Alpha"
+            location: "Racing Area Alpha",
+            detail: "Official practice race start. Course: Windward-Leeward, 3 laps",
+            mapLocationId: "ninepins_race_course"
           },
           { 
             time: "17:00", 
@@ -109,11 +136,13 @@ export const eventSchedules = {
             type: "meeting" as const,
             location: "Race Office"
           },
-          { 
-            time: "19:00", 
+          {
+            time: "19:00",
             activity: "Competitors' Dinner & International Dragon Association Meeting",
             type: "social" as const,
-            location: "Club Dining Room"
+            location: "Club Dining Room",
+            detail: "Welcome dinner for all competitors followed by IDA annual meeting. Buffet style, included in entry fee",
+            mapLocationId: "rhkyc_kellett"
           }
         ]
       },
@@ -128,29 +157,37 @@ export const eventSchedules = {
             type: "registration" as const,
             location: "Race Office"
           },
-          { 
-            time: "10:00", 
+          {
+            time: "10:00",
             activity: "Skippers' Meeting #2 - Weather & Course Briefing",
             type: "meeting" as const,
-            location: "Main Hall"
+            location: "Main Hall",
+            detail: "Daily weather forecast, course selection, and race management procedures",
+            mapLocationId: "clearwater_bay_marina"
           },
-          { 
-            time: "11:30", 
+          {
+            time: "11:30",
             activity: "First Warning Signal",
             type: "racing" as const,
-            location: "Racing Area Alpha"
+            location: "Racing Area Alpha",
+            detail: "First race of qualifying series. Target: 3 races, back-to-back starts",
+            mapLocationId: "ninepins_race_course"
           },
-          { 
-            time: "12:00-17:00", 
+          {
+            time: "12:00-17:00",
             activity: "Qualifying Series Races 1-3",
             type: "racing" as const,
-            location: "Racing Area Alpha"
+            location: "Racing Area Alpha",
+            detail: "Championship qualifying races. Course configurations depend on wind conditions",
+            mapLocationId: "ninepins_race_course"
           },
-          { 
-            time: "18:00", 
+          {
+            time: "18:00",
             activity: "Protest Time Limit Expires",
             type: "administrative" as const,
-            location: "Protest Room"
+            location: "Protest Room",
+            detail: "Protest filing deadline: 60 minutes after last finisher. Forms available at Race Office",
+            mapLocationId: "clearwater_bay_marina"
           },
           { 
             time: "19:00", 
@@ -158,11 +195,13 @@ export const eventSchedules = {
             type: "administrative" as const,
             location: "Results Board"
           },
-          { 
-            time: "20:00", 
+          {
+            time: "20:00",
             activity: "Welcome Cocktail Party (Host Yacht Club)",
             type: "social" as const,
-            location: "Club Terrace"
+            location: "Club Terrace",
+            detail: "RHKYC hosts welcome cocktails for all competitors. Light refreshments and local entertainment",
+            mapLocationId: "rhkyc_kellett"
           }
         ]
       },
@@ -275,11 +314,13 @@ export const eventSchedules = {
             type: "racing" as const,
             location: "Racing Area Alpha & Beta"
           },
-          { 
-            time: "18:00", 
+          {
+            time: "18:00",
             activity: "Protest Time Limit Expires",
             type: "administrative" as const,
-            location: "Protest Room"
+            location: "Protest Room",
+            detail: "Protest filing deadline: 60 minutes after last finisher. Forms available at Race Office",
+            mapLocationId: "clearwater_bay_marina"
           },
           { 
             time: "19:00", 
@@ -439,23 +480,29 @@ export const eventSchedules = {
         date: "Thursday, November 12, 2026",
         title: "Early Arrival (Optional)",
         activities: [
-          { 
-            time: "14:00-18:00", 
+          {
+            time: "14:00-18:00",
             activity: "Early Registration Opens",
             type: "registration" as const,
-            location: "Race Office"
+            location: "Race Office",
+            detail: "Optional early check-in for teams arriving ahead of schedule. Collect welcome packets and event information",
+            mapLocationId: "rhkyc_kellett"
           },
-          { 
-            time: "15:00-17:00", 
+          {
+            time: "15:00-17:00",
             activity: "Boat Inspection & Charter Assignment",
             type: "technical" as const,
-            location: "Marina"
+            location: "Marina",
+            detail: "Charter boat allocation and basic inspection for early arrivals. Bring charter documentation",
+            mapLocationId: "rhkyc_kellett"
           },
-          { 
-            time: "18:00", 
+          {
+            time: "18:00",
             activity: "Informal Welcome Drinks",
             type: "social" as const,
-            location: "Club Bar"
+            location: "Club Bar",
+            detail: "Casual welcome drinks for early arrivals. Meet fellow competitors and local sailing community",
+            mapLocationId: "rhkyc_kellett"
           }
         ]
       },
@@ -464,41 +511,78 @@ export const eventSchedules = {
         date: "Friday, November 13, 2026",
         title: "Official Arrival & Practice",
         activities: [
-          { 
-            time: "08:00-17:00", 
+          {
+            time: "08:00-17:00",
             activity: "Registration Opens",
             type: "registration" as const,
-            location: "Race Office"
+            location: "Race Office",
+            detail: "Complete competitor registration, collect race documents, and receive event credentials",
+            mapLocationId: "rhkyc_kellett",
+            registrationRequired: false,
+            contactPerson: "Registration Team - regatta@rhkyc.org.hk",
+            bringItems: ["Sailing license", "Passport/ID", "Medical certificate"],
+            calendarTitle: "Registration Opens - Asia Pacific Championships",
+            calendarDescription: "Complete your registration for the Asia Pacific Dragon Championships. Bring all required documentation."
           },
-          { 
-            time: "09:00-16:00", 
+          {
+            time: "09:00-16:00",
             activity: "Boat Measurement & Equipment Check",
             type: "technical" as const,
-            location: "Measurement Area"
+            location: "Measurement Area",
+            detail: "Official boat measurement and safety equipment inspection. Bring measurement certificate and safety gear",
+            mapLocationId: "rhkyc_kellett",
+            prerequisites: ["Valid registration confirmation"],
+            contactPerson: "Chief Measurer - measurement@rhkyc.org.hk",
+            bringItems: ["Measurement certificate", "Safety equipment", "Boat registration documents", "Sail numbers"],
+            registrationRequired: true,
+            calendarTitle: "Boat Measurement & Equipment Check",
+            calendarDescription: "Mandatory boat measurement and safety inspection. Ensure all equipment is ready for inspection."
           },
-          { 
-            time: "11:00-15:00", 
+          {
+            time: "11:00-15:00",
             activity: "Open Practice Sailing Window",
             type: "racing" as const,
-            location: "Racing Area Alpha"
+            location: "Racing Area Alpha",
+            detail: "Free practice sailing in the championship racing area. Familiarize yourself with local conditions",
+            mapLocationId: "ninepins_race_course"
           },
-          { 
-            time: "16:00", 
+          {
+            time: "16:00",
             activity: "Course Familiarization Briefing",
             type: "meeting" as const,
-            location: "Briefing Room"
+            location: "Briefing Room",
+            detail: "Local sailing conditions, course layouts, and safety procedures. Mandatory attendance",
+            mapLocationId: "clearwater_bay_marina",
+            prerequisites: ["Completed registration", "Passed boat measurement"],
+            contactPerson: "Race Director - raceoffice@rhkyc.org.hk",
+            registrationRequired: true,
+            maxParticipants: 150,
+            bringItems: ["Notebook", "Course maps (will be provided)"],
+            calendarTitle: "MANDATORY: Course Familiarization Briefing",
+            calendarDescription: "Essential briefing covering local conditions and safety procedures. Attendance is mandatory for all competitors."
           },
-          { 
-            time: "17:30", 
+          {
+            time: "17:30",
             activity: "Practice Race (Optional)",
             type: "racing" as const,
-            location: "Racing Area Alpha"
+            location: "Racing Area Alpha",
+            detail: "Optional practice race to test starting procedures and course configuration",
+            mapLocationId: "ninepins_race_course"
           },
-          { 
-            time: "19:00", 
+          {
+            time: "19:00",
             activity: "Opening Dinner - Local Hong Kong Cuisine",
             type: "social" as const,
-            location: "Club Dining Room"
+            location: "Club Dining Room",
+            detail: "Welcome dinner featuring authentic Hong Kong cuisine. Included in entry fee. Dress code: Smart casual",
+            mapLocationId: "rhkyc_kellett",
+            dressCode: "Smart casual - no shorts or sandals",
+            maxParticipants: 200,
+            registrationRequired: false,
+            contactPerson: "Events Coordinator - events@rhkyc.org.hk",
+            bringItems: ["Appetite for authentic dim sum and local delicacies"],
+            calendarTitle: "Opening Dinner - Hong Kong Cuisine Experience",
+            calendarDescription: "Welcome dinner featuring the best of Hong Kong's culinary traditions. Included in your entry fee. Smart casual dress code."
           }
         ]
       },
@@ -513,11 +597,20 @@ export const eventSchedules = {
             type: "registration" as const,
             location: "Race Office"
           },
-          { 
-            time: "09:30", 
+          {
+            time: "09:30",
             activity: "Competitors' Briefing - Race Format & Local Conditions",
             type: "meeting" as const,
-            location: "Main Hall"
+            location: "Main Hall",
+            detail: "Critical pre-racing briefing covering weather conditions, course configuration, and race management procedures",
+            mapLocationId: "clearwater_bay_marina",
+            prerequisites: ["Completed registration", "Passed boat measurement", "Attended course familiarization"],
+            contactPerson: "Race Director - raceoffice@rhkyc.org.hk",
+            registrationRequired: true,
+            maxParticipants: 150,
+            bringItems: ["Notebook", "Race instructions", "Weather radio"],
+            calendarTitle: "MANDATORY: Competitors' Race Briefing",
+            calendarDescription: "Essential pre-race briefing. Mandatory attendance for all competitors. Latest weather and course updates."
           },
           { 
             time: "11:00", 
@@ -641,11 +734,21 @@ export const eventSchedules = {
             type: "administrative" as const,
             location: "Protest Room"
           },
-          { 
-            time: "19:00", 
+          {
+            time: "19:00",
             activity: "Prize Giving Ceremony & Farewell Dinner",
             type: "social" as const,
-            location: "Club Dining Room"
+            location: "Club Dining Room",
+            detail: "Official awards ceremony followed by farewell dinner. Recognition of all competitors and sponsors",
+            mapLocationId: "rhkyc_kellett",
+            dressCode: "Formal - blazer and tie recommended",
+            maxParticipants: 200,
+            registrationRequired: false,
+            contactPerson: "Events Coordinator - events@rhkyc.org.hk",
+            bringItems: ["Camera for memories", "Formal attire"],
+            relatedActivities: ["Medal race finish", "Final results posting"],
+            calendarTitle: "Prize Giving Ceremony & Farewell Dinner",
+            calendarDescription: "Celebration of championship results with formal awards ceremony and farewell dinner. Formal dress code."
           },
           { 
             time: "21:00", 

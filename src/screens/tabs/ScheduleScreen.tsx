@@ -10,7 +10,7 @@ import { eventSchedules } from '../../data/scheduleData';
 import type { ScheduleScreenProps } from '../../types/navigation';
 
 export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
-  const [selectedEvent, setSelectedEvent] = useState<'asia-pacific-2026' | 'dragon-worlds-2026'>('dragon-worlds-2026');
+  const [selectedEvent, setSelectedEvent] = useState<'asia-pacific-2026' | 'dragon-worlds-2026'>('asia-pacific-2026');
   const [refreshing, setRefreshing] = useState(false);
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
 

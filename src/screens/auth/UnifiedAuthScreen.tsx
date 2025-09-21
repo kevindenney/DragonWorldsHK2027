@@ -71,7 +71,7 @@ export const UnifiedAuthScreen: React.FC<UnifiedAuthScreenProps> = ({ navigation
   // Form state
   const initialMode = route?.params?.mode || 'signin';
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
-  const [selectedUserType, setSelectedUserType] = useState<OnboardingUserType>(selectedOnboardingType || 'spectator');
+  const [selectedUserType] = useState<OnboardingUserType>('spectator'); // Default to spectator
 
   // Form fields
   const [email, setEmail] = useState('');
@@ -263,12 +263,6 @@ export const UnifiedAuthScreen: React.FC<UnifiedAuthScreenProps> = ({ navigation
     clearErrors();
   };
 
-  const handleUserTypeSelection = async (type: OnboardingUserType) => {
-    await Haptics.selectionAsync();
-    setSelectedUserType(type);
-  };
-
-  const currentUserType = userTypeInfo[selectedUserType];
 
   return (
     <View style={styles.container}>
@@ -349,38 +343,6 @@ export const UnifiedAuthScreen: React.FC<UnifiedAuthScreenProps> = ({ navigation
                 </TouchableOpacity>
               </View>
 
-              {/* User Type Selection (only for signup) */}
-              {mode === 'signup' && (
-                <View style={styles.userTypeSection}>
-                  <Text style={styles.sectionTitle}>I am a...</Text>
-                  <View style={styles.selectedUserTypeCard}>
-                    <View style={[styles.userTypeIcon, { backgroundColor: currentUserType.color }]}>
-                      <Text style={styles.userTypeEmoji}>{currentUserType.icon}</Text>
-                    </View>
-                    <View style={styles.userTypeContent}>
-                      <Text style={styles.userTypeTitle}>{currentUserType.title}</Text>
-                      <Text style={styles.userTypeDescription}>{currentUserType.description}</Text>
-                    </View>
-                  </View>
-
-                  {/* User Type Grid */}
-                  <View style={styles.userTypeGrid}>
-                    {(Object.keys(userTypeInfo) as OnboardingUserType[]).map((type) => (
-                      <TouchableOpacity
-                        key={type}
-                        style={[
-                          styles.userTypeOption,
-                          selectedUserType === type && styles.userTypeOptionSelected
-                        ]}
-                        onPress={() => handleUserTypeSelection(type)}
-                      >
-                        <Text style={styles.userTypeOptionEmoji}>{userTypeInfo[type].icon}</Text>
-                        <Text style={styles.userTypeOptionText}>{userTypeInfo[type].title}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              )}
 
               {/* Social Authentication */}
               <View style={styles.socialSection}>
@@ -579,78 +541,6 @@ const styles = StyleSheet.create({
   modeToggleTextActive: {
     color: colors.primary,
     fontWeight: '600',
-  },
-  userTypeSection: {
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.xs,
-  },
-  selectedUserTypeCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundSecondary,
-    padding: spacing.xs,
-    borderRadius: borderRadius.sm,
-    marginTop: spacing.xs / 2,
-    marginBottom: spacing.xs,
-  },
-  userTypeIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.xs,
-  },
-  userTypeEmoji: {
-    fontSize: 14,
-  },
-  userTypeContent: {
-    flex: 1,
-  },
-  userTypeTitle: {
-    ...typography.labelMedium,
-    color: colors.text,
-    fontWeight: '600',
-    marginBottom: 1,
-    fontSize: 13,
-  },
-  userTypeDescription: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    fontSize: 10,
-    lineHeight: 12,
-  },
-  userTypeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  userTypeOption: {
-    width: '48%',
-    backgroundColor: colors.backgroundTertiary,
-    padding: spacing.xs,
-    borderRadius: borderRadius.sm,
-    alignItems: 'center',
-    marginBottom: spacing.xs / 2,
-    borderWidth: 1,
-    borderColor: 'transparent',
-    minHeight: 50,
-  },
-  userTypeOptionSelected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryLight + '20',
-  },
-  userTypeOptionEmoji: {
-    fontSize: 14,
-    marginBottom: spacing.xs / 3,
-  },
-  userTypeOptionText: {
-    ...typography.caption,
-    color: colors.text,
-    textAlign: 'center',
-    fontWeight: '500',
-    fontSize: 9,
-    lineHeight: 11,
   },
   socialSection: {
     paddingHorizontal: spacing.md,

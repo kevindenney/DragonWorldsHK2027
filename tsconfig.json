@@ -2,5 +2,11 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true
-  }
+  },
+  "exclude": [
+    "firebase-backend/**/*",
+    "codex-bridge/**/*",
+    "scripts/**/*",
+    "node_modules"
+  ]
 }

@@ -103,7 +103,7 @@ export const DayCard: React.FC<DayCardProps> = ({
           <View style={styles.divider} />
           {day.activities.map((activity, index) => (
             <View key={index}>
-              <ActivityItem activity={activity} />
+              <ActivityItem activity={activity} activityDate={day.date} />
               {index < day.activities.length - 1 && (
                 <View style={styles.activityDivider} />
               )}

@@ -72,7 +72,8 @@
         "buildConfiguration": "Release",
         "simulator": false,
         "autoIncrement": "buildNumber"
-      }
+      },
+      "channel": "production-ios"
     },
     "production-android": {
       "extends": "production",
@@ -80,7 +81,8 @@
         "resourceClass": "large",
         "buildType": "app-bundle",
         "gradleCommand": ":app:bundleRelease"
-      }
+      },
+      "channel": "production-android"
     },
     "jsc-test": {
       "distribution": "internal",
@@ -104,9 +106,9 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "your-apple-id@dragonworlds.com",
-        "ascAppId": "123456789",
-        "appleTeamId": "TEAM123456"
+        "appleId": "kevin@regattaflow.com",
+        "ascAppId": "YOUR_ASC_APP_ID",
+        "appleTeamId": "YOUR_TEAM_ID"
       },
       "android": {
         "serviceAccountKeyPath": "./google-service-account.json",
@@ -116,9 +118,9 @@
     },
     "preview": {
       "ios": {
-        "appleId": "your-apple-id@dragonworlds.com",
-        "ascAppId": "123456789",
-        "appleTeamId": "TEAM123456"
+        "appleId": "kevin@regattaflow.com",
+        "ascAppId": "YOUR_ASC_APP_ID",
+        "appleTeamId": "YOUR_TEAM_ID"
       },
       "android": {
         "serviceAccountKeyPath": "./google-service-account.json",

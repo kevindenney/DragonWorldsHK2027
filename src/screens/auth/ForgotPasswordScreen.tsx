@@ -48,6 +48,11 @@ export function ForgotPasswordScreen({ navigation }: ForgotPasswordScreenProps) 
     navigation.goBack();
   };
 
+  const handleBackToLogin = () => {
+    // Navigate back to login screen with reset option
+    navigation.navigate('Login');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -129,7 +134,7 @@ export function ForgotPasswordScreen({ navigation }: ForgotPasswordScreenProps) 
               
               <AuthButton
                 title="Return to Port"
-                onPress={handleCancel}
+                onPress={handleBackToLogin}
                 variant="outline"
                 size="large"
                 style={styles.backToLoginButton}

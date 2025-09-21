@@ -123,6 +123,17 @@ export function AboutRegattaFlowScreen() {
           </Text>
         </View>
 
+        {/* Parent Company Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>OceanFlow - Our Parent Company</Text>
+          <Text style={styles.sectionContent}>
+            {REGATTA_FLOW_BRANDING.parentCompany.description}
+          </Text>
+          <Text style={styles.sectionContent}>
+            OceanFlow's expertise in logistics and transportation AI technology provides RegattaFlow with advanced technical capabilities and infrastructure to deliver world-class sailing applications.
+          </Text>
+        </View>
+
         {/* Services Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Our Services</Text>
@@ -209,7 +220,7 @@ export function AboutRegattaFlowScreen() {
             <ContactItem
               icon={Globe}
               label="Website"
-              value="regattaflow.com"
+              value="oceanflow.io/regattaflow"
               onPress={handleWebsitePress}
             />
             <ContactItem

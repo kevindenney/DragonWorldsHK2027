@@ -65,6 +65,7 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
 
   // Championship Toggle Component - iOS Style
   const ChampionshipToggle = () => {
+    console.log('[ModernResultsScreen] 🎯 COMPONENT IDENTIFICATION: Using IOSSegmentedControl from ios/IOSSegmentedControl');
     const segmentOptions: IOSSegmentedControlOption[] = MOCK_CHAMPIONSHIPS.map(championship => ({
       label: championship.shortName,
       value: championship.id

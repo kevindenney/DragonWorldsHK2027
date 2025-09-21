@@ -33,22 +33,6 @@
         </array>
       </dict>
       <dict>
-        <key>CFBundleURLName</key>
-        <string>google-oauth</string>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>com.googleusercontent.apps.839737857128-qvdva2jrauf49erhratq7ri72d9hfjbb</string>
-        </array>
-      </dict>
-      <dict>
-        <key>CFBundleURLName</key>
-        <string>google-signin-url-scheme</string>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>com.googleusercontent.apps.839737857128-qvdva2jrauf49erhratq7ri72d9hfjbb</string>
-        </array>
-      </dict>
-      <dict>
         <key>CFBundleURLSchemes</key>
         <array>
           <string>exp+dragonworldshk2027</string>
@@ -92,13 +76,6 @@
     <string>This app accesses your photo library to let you share sailing photos and memories.</string>
     <key>NSRemindersUsageDescription</key>
     <string>This app can create reminders for important race events and weather conditions.</string>
-    <key>UIBackgroundModes</key>
-    <array>
-      <string>background-fetch</string>
-      <string>background-processing</string>
-      <string>background-fetch</string>
-      <string>background-processing</string>
-    </array>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>
