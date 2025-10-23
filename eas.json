@@ -56,7 +56,6 @@
         "buildType": "apk",
         "gradleCommand": ":app:bundleRelease"
       },
-      "channel": "production",
       "env": {
         "NODE_ENV": "production",
         "API_URL": "https://api.dragonworlds.com",
@@ -68,12 +67,11 @@
     "production-ios": {
       "extends": "production",
       "ios": {
-        "resourceClass": "m-large",
+        "resourceClass": "m-medium",
         "buildConfiguration": "Release",
         "simulator": false,
         "autoIncrement": "buildNumber"
-      },
-      "channel": "production-ios"
+      }
     },
     "production-android": {
       "extends": "production",

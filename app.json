@@ -35,7 +35,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.denneyke.dragonworldshk2027",
-      "buildNumber": "1",
+      "buildNumber": "3",
       "deploymentTarget": "15.0",
       "requireFullScreen": false,
       "userInterfaceStyle": "light",
