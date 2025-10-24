@@ -86,7 +86,13 @@
         "buildType": "app-bundle",
         "gradleCommand": ":app:bundleRelease"
       },
-      "channel": "production-android"
+      "channel": "production-android",
+      "env": {
+        "API_URL": "https://api.dragonworlds.com",
+        "WEATHER_API_URL": "https://weather-api.dragonworlds.com",
+        "ANALYTICS_ENABLED": "true",
+        "SENTRY_ENABLED": "true"
+      }
     },
     "jsc-test": {
       "distribution": "internal",
