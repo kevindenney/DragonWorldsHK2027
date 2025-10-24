@@ -12,7 +12,7 @@ import { colors, typography, spacing, borderRadius, shadows } from '../../consta
 export interface SimpleAuthButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'text';
+  variant?: 'primary' | 'secondary' | 'outline' | 'text' | 'inverse';
   loading?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
@@ -53,6 +53,8 @@ export function SimpleAuthButton({
         return colors.background;
       case 'secondary':
         return colors.text;
+      case 'inverse':
+        return '#0A1E3D';
       case 'outline':
       case 'text':
         return colors.primary;
@@ -84,7 +86,7 @@ export function SimpleAuthButton({
       )}
 
       <Text style={textStyleCombined}>
-        {loading ? 'Loading...' : title}
+        {title}
       </Text>
     </TouchableOpacity>
   );
@@ -118,6 +120,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 0,
   },
+  buttonInverse: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0,
+  },
   buttonDisabled: {
     opacity: 0.6,
   },
@@ -138,6 +144,9 @@ const styles = StyleSheet.create({
   },
   textText: {
     color: colors.primary,
+  },
+  textInverse: {
+    color: '#0A1E3D',
   },
   textDisabled: {
     opacity: 0.7,

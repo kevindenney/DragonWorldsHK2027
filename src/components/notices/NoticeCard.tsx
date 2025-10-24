@@ -65,6 +65,38 @@ export const NoticeCard: React.FC<NoticeCardProps> = ({
     }
   };
 
+  // Get left border color based on priority
+  const getBorderColor = (priority: NoticeItem['priority'] | undefined) => {
+    switch (priority) {
+      case 'urgent':
+      case 'high':
+        return '#DC3545'; // Red for urgent/high
+      case 'medium':
+        return '#FF9800'; // Orange for medium
+      case 'low':
+      default:
+        return '#E0E0E0'; // Gray for low/normal
+    }
+  };
+
+  // Get priority badge styling
+  const getPriorityBadgeStyle = (priority: NoticeItem['priority'] | undefined) => {
+    switch (priority) {
+      case 'urgent':
+        return {
+          backgroundColor: '#FFE5E9',
+          color: '#DC3545'
+        };
+      case 'high':
+        return {
+          backgroundColor: '#FFF3E0',
+          color: '#FF9800'
+        };
+      default:
+        return null; // Use default IOSBadge styling
+    }
+  };
+
   // Get priority badge variant
   const getPriorityVariant = (priority: NoticeItem['priority'] | undefined): 'filled' | 'tinted' => {
     return priority === 'urgent' ? 'filled' : 'tinted';
@@ -150,6 +182,8 @@ export const NoticeCard: React.FC<NoticeCardProps> = ({
   const IconComponent = getNoticeIcon();
   const priorityColor = getPriorityColor(notice.priority);
   const categoryName = getCategoryName(notice.category);
+  const borderColor = getBorderColor(notice.priority);
+  const priorityBadgeStyle = getPriorityBadgeStyle(notice.priority);
 
   // Handle external link press
   const handleExternalLink = async (url: string) => {
@@ -179,7 +213,7 @@ export const NoticeCard: React.FC<NoticeCardProps> = ({
         style={[
           styles.card,
           compact && styles.cardCompact,
-          isUnread && styles.cardUnread
+          { borderLeftWidth: 4, borderLeftColor: borderColor }
         ]}
         onPress={() => onPress(notice)}
       >
@@ -192,13 +226,28 @@ export const NoticeCard: React.FC<NoticeCardProps> = ({
 
             <View style={styles.headerInfo}>
               <View style={styles.headerTopRow}>
-                <IOSBadge
-                  color={priorityColor}
-                  variant={getPriorityVariant(notice.priority)}
-                  size="small"
-                >
-                  {notice.priority?.toUpperCase() || 'MEDIUM'}
-                </IOSBadge>
+                {priorityBadgeStyle ? (
+                  <View style={[
+                    styles.customPriorityBadge,
+                    { backgroundColor: priorityBadgeStyle.backgroundColor }
+                  ]}>
+                    <IOSText
+                      textStyle="caption2"
+                      weight="semibold"
+                      style={{ color: priorityBadgeStyle.color }}
+                    >
+                      {notice.priority?.toUpperCase() || 'MEDIUM'}
+                    </IOSText>
+                  </View>
+                ) : (
+                  <IOSBadge
+                    color={priorityColor}
+                    variant={getPriorityVariant(notice.priority)}
+                    size="small"
+                  >
+                    {notice.priority?.toUpperCase() || 'MEDIUM'}
+                  </IOSBadge>
+                )}
 
                 {isUnread && (
                   <IOSBadge
@@ -354,17 +403,21 @@ export const NoticeCard: React.FC<NoticeCardProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: spacing.md,
-    marginBottom: spacing.sm,
+    marginBottom: 12, // Increased spacing between cards
   },
   card: {
     padding: spacing.md,
+    backgroundColor: '#FFFFFF', // Ensure white background
   },
   cardCompact: {
     padding: spacing.sm,
   },
-  cardUnread: {
-    borderLeftWidth: 4,
-    borderLeftColor: colors.primary,
+  customPriorityBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   header: {
     flexDirection: 'row',

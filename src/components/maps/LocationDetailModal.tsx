@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,14 +7,16 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
-  Alert
+  Alert,
+  Platform,
+  StatusBar
 } from 'react-native';
-import { 
-  X, 
-  MapPin, 
-  Clock, 
-  Phone, 
-  Globe, 
+import {
+  X,
+  MapPin,
+  Clock,
+  Phone,
+  Globe,
   Mail,
   Calendar,
   Navigation,
@@ -29,9 +31,26 @@ const { colors, spacing, typography, shadows, borderRadius } = dragonChampionshi
 export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
   location,
   onClose,
-  onNavigate,
   onScheduleNavigate
 }) => {
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewKey = `${location.name}-${location.coordinates.latitude}-${location.coordinates.longitude}`;
+
+  // Diagnostic logging
+  useEffect(() => {
+    console.log('[LocationDetailModal] Component mounted/updated');
+    console.log('[LocationDetailModal] Location:', location.name);
+    console.log('[LocationDetailModal] ScrollView key:', scrollViewKey);
+    console.log('[LocationDetailModal] Coordinates:', location.coordinates);
+
+    return () => {
+      console.log('[LocationDetailModal] Component unmounting for:', location.name);
+    };
+  }, [location, scrollViewKey]);
+
+  useEffect(() => {
+    console.log('[LocationDetailModal] Modal visibility changed, location:', location.name);
+  }, [location]);
   const handleContactPress = async (type: 'phone' | 'email' | 'website', value: string) => {
     try {
       let url = '';
@@ -106,12 +125,25 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
     <Modal
       visible={!!location}
       animationType="slide"
-      presentationStyle="pageSheet"
+      transparent={false}
+      presentationStyle={Platform.OS === 'ios' ? 'pageSheet' : 'fullScreen'}
       onRequestClose={onClose}
+      statusBarTranslucent={false}
     >
-      <View style={styles.container}>
+      <View
+        style={styles.modalContainer}
+        onLayout={(e) => console.log('[ModalContainer] Layout:', e.nativeEvent.layout)}
+      >
+        {Platform.OS === 'android' && <StatusBar backgroundColor={colors.surface} barStyle="dark-content" />}
+        <View
+          style={styles.container}
+          onLayout={(e) => console.log('[Container] Layout:', e.nativeEvent.layout)}
+        >
         {/* Header */}
-        <View style={styles.header}>
+        <View
+          style={styles.header}
+          onLayout={(e) => console.log('[Header] Layout:', e.nativeEvent.layout)}
+        >
           <View style={styles.headerContent}>
             <View style={styles.titleContainer}>
               {getLocationIcon()}
@@ -124,7 +156,7 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
               <X size={24} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
-          
+
           {location.championshipSpecific && (
             <View style={styles.championshipBadge}>
               <Text style={styles.championshipBadgeText}>Championship 2027</Text>
@@ -132,8 +164,17 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
           )}
         </View>
 
-        {/* Content */}
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Content - Scrollable with bottom padding for button */}
+        <ScrollView
+          key={scrollViewKey}
+          ref={scrollViewRef}
+          style={styles.content}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={true}
+          nestedScrollEnabled={false}
+          bounces={true}
+          onLayout={(e) => console.log('[ScrollView] Layout:', e.nativeEvent.layout)}
+        >
           {/* Description */}
           <View style={styles.section}>
             <Text style={styles.description}>{location.description}</Text>
@@ -147,16 +188,33 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
             </View>
           )}
 
-          {/* Address */}
+          {/* Address - Tappable to get directions */}
           {location.address && (
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <MapPin size={16} color={colors.primary} />
+            <TouchableOpacity
+              style={styles.addressSection}
+              onPress={handleGetDirections}
+              activeOpacity={0.7}
+            >
+              <View style={styles.addressHeader}>
+                <MapPin size={20} color={colors.primary} />
                 <Text style={styles.sectionTitle}>Address</Text>
               </View>
               <Text style={styles.address}>{location.address}</Text>
-            </View>
+              <View style={styles.directionHint}>
+                <Navigation size={16} color={colors.primary} />
+                <Text style={styles.directionHintText}>Tap for directions</Text>
+              </View>
+            </TouchableOpacity>
           )}
+
+          {/* Inline Get Directions Button */}
+          <TouchableOpacity
+            style={styles.inlineDirectionsButton}
+            onPress={handleGetDirections}
+          >
+            <Navigation size={20} color="#FFFFFF" />
+            <Text style={styles.inlineDirectionsButtonText}>Get Directions</Text>
+          </TouchableOpacity>
 
           {/* Operating Hours */}
           {location.operatingHours && (
@@ -209,24 +267,22 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                 <Text style={styles.sectionTitle}>Championship Events</Text>
               </View>
               {location.championshipEvents.map((event, index) => (
-                <TouchableOpacity 
-                  key={index} 
+                <TouchableOpacity
+                  key={index}
                   style={styles.eventItem}
                   onPress={() => onScheduleNavigate?.(event.date, event.event)}
                   disabled={!onScheduleNavigate}
                 >
                   <View style={styles.eventContent}>
-                    <View>
-                      <Text style={styles.eventDate}>{event.date} at {event.time}</Text>
-                      <Text style={styles.eventTitle}>{event.event}</Text>
-                      {event.description && (
-                        <Text style={styles.eventDescription}>{event.description}</Text>
-                      )}
-                    </View>
-                    {onScheduleNavigate && (
-                      <Calendar size={16} color={colors.primary} style={styles.eventIcon} />
+                    <Text style={styles.eventDate}>{event.date} at {event.time}</Text>
+                    <Text style={styles.eventTitle}>{event.event}</Text>
+                    {event.description && (
+                      <Text style={styles.eventDescription}>{event.description}</Text>
                     )}
                   </View>
+                  {onScheduleNavigate && (
+                    <Calendar size={24} color={colors.primary} style={styles.eventIcon} />
+                  )}
                 </TouchableOpacity>
               ))}
             </View>
@@ -290,32 +346,18 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
             </View>
           )}
         </ScrollView>
-
-        {/* Actions */}
-        <View style={styles.actions}>
-          <TouchableOpacity 
-            style={styles.directionsButton}
-            onPress={handleGetDirections}
-          >
-            <Navigation size={20} color="#FFFFFF" />
-            <Text style={styles.directionsButtonText}>Get Directions</Text>
-          </TouchableOpacity>
-          
-          {onNavigate && (
-            <TouchableOpacity 
-              style={styles.navigateButton}
-              onPress={() => onNavigate(location)}
-            >
-              <Text style={styles.navigateButtonText}>Navigate in App</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+      </View>
       </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -371,7 +413,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  contentContainer: {
     padding: spacing.lg,
+    paddingBottom: spacing.xl,
   },
   section: {
     marginBottom: spacing.lg,
@@ -402,6 +447,47 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     color: colors.textMuted,
   },
+  addressSection: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  addressHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  directionHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  directionHintText: {
+    ...typography.caption,
+    color: colors.primary,
+    marginLeft: 4,
+    fontWeight: '600',
+  },
+  inlineDirectionsButton: {
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
+    ...shadows.cardMedium,
+    elevation: 3,
+  },
+  inlineDirectionsButtonText: {
+    ...typography.bodyMedium,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginLeft: spacing.sm,
+  },
   operatingHours: {
     ...typography.bodyMedium,
     color: colors.textMuted,
@@ -421,14 +507,17 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   eventContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flex: 1,
+    marginRight: spacing.sm,
   },
   eventIcon: {
-    marginLeft: spacing.sm,
+    width: 24,
+    height: 24,
   },
   eventDate: {
     ...typography.caption,
@@ -483,10 +572,17 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
   actions: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     padding: spacing.lg,
+    paddingBottom: Platform.OS === 'android' ? spacing.xl : spacing.lg,
     borderTopWidth: 1,
     borderTopColor: colors.borderLight,
     backgroundColor: colors.surface,
+    ...shadows.cardMedium,
+    elevation: 8, // Android shadow
   },
   directionsButton: {
     backgroundColor: colors.primary,
@@ -495,26 +591,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.md,
-    marginBottom: spacing.sm,
   },
   directionsButtonText: {
     ...typography.bodyMedium,
     color: '#FFFFFF',
     fontWeight: '600',
     marginLeft: spacing.sm,
-  },
-  navigateButton: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-  },
-  navigateButtonText: {
-    ...typography.bodyMedium,
-    color: colors.primary,
-    fontWeight: '600',
   },
 });

@@ -137,10 +137,7 @@ export const CategoryFilterChips: React.FC<CategoryFilterChipsProps> = ({
                 onPress={() => handleCategoryPress(category)}
                 style={[
                   styles.chip,
-                  isSelected && {
-                    backgroundColor: categoryInfo.color,
-                    borderColor: categoryInfo.color,
-                  }
+                  isSelected ? styles.chipSelected : styles.chipUnselected
                 ]}
                 textStyle={[
                   styles.chipText,
@@ -186,29 +183,36 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   chip: {
-    borderRadius: borderRadius.full,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
     minHeight: 36,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.borderLight,
     marginRight: spacing.xs,
+  },
+  chipSelected: {
+    backgroundColor: '#0066CC',
+    borderWidth: 0,
+  },
+  chipUnselected: {
+    backgroundColor: '#F0F0F0',
+    borderWidth: 0,
   },
   chipIcon: {
     marginRight: spacing.xs,
   },
   chipText: {
     fontSize: 14,
-    fontWeight: '500',
     flexShrink: 0,
   },
   chipTextSelected: {
-    color: colors.surface,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   chipTextUnselected: {
-    color: colors.text,
+    color: '#666666',
+    fontWeight: '400',
   },
   unreadBadge: {
     position: 'absolute',

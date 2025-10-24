@@ -326,51 +326,6 @@ export const sailingLocations: SailingLocation[] = [
     operatingHours: 'Mon-Sat 09:00-18:00, Sun 10:00-17:00'
   },
 
-  {
-    id: 'asia_yachting_central',
-    name: 'Asia Yachting Chandlery',
-    type: 'chandlery',
-    coordinates: {
-      latitude: 22.2855,
-      longitude: 114.1577
-    },
-    description: 'Premium marine supplies store in Central with high-end sailing equipment and accessories.',
-    championshipRole: 'Premium marine equipment and sailing accessories',
-    importance: 'secondary',
-    championshipSpecific: false,
-    
-    address: 'Shop 3006, IFC Mall, Central, Hong Kong',
-    
-    facilities: [
-      'Premium sailing equipment',
-      'Navigation instruments',
-      'Safety equipment',
-      'Sailing accessories',
-      'Technical advice',
-      'Equipment fitting service'
-    ],
-    
-    contact: {
-      phone: '+852 2234 7110',
-      email: 'info@asiayachting.com.hk',
-      website: 'www.asiayachting.com.hk'
-    },
-    
-    racerInfo: 'High-end sailing equipment and precision instruments. Expert technical advice for competitive sailing. Premium brands and latest technology.',
-    spectatorInfo: 'Premium sailing gear showroom in Central\'s IFC Mall. Educational displays of sailing equipment and technology.',
-    
-    transportation: [
-      {
-        type: 'mtr',
-        route: 'Central Station (Exit A)',
-        schedule: '05:00-01:00 daily',
-        cost: 'Direct MTR access',
-        notes: 'Inside IFC Mall complex'
-      }
-    ],
-    
-    operatingHours: 'Daily 10:00-20:00'
-  },
 
   // === SAILING GEAR STORES ===
   {

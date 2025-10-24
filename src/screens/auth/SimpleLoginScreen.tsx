@@ -11,6 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '../../auth/useAuth';
 import { SimpleAuthInput } from '../../components/auth/SimpleAuthInput';
@@ -25,6 +27,7 @@ interface SimpleLoginScreenProps {
 
 export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
   const { login, loginWithProvider, isLoading, register, isAuthenticated, user } = useAuth();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -150,19 +153,25 @@ export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="light" backgroundColor={colors.primary} />
-
-      <KeyboardAvoidingView
-        style={styles.keyboardContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <View style={styles.outerContainer}>
+      <LinearGradient
+        colors={['#0A1E3D', '#0d2440', '#122b4a']}
+        locations={[0, 0.5, 1]}
+        style={styles.gradient}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
-        >
+        <SafeAreaView style={styles.container}>
+          <StatusBar style="light" />
+
+          <KeyboardAvoidingView
+            style={styles.keyboardContainer}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          >
+            <ScrollView
+              contentContainerStyle={styles.scrollContainer}
+              keyboardShouldPersistTaps="handled"
+            >
           {/* Header Section */}
-          <View style={styles.header}>
+          <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
             <View style={styles.logoContainer}>
               <Image
                 source={require('../../../assets/dragon-logo.png')}
@@ -253,14 +262,22 @@ export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+        </SafeAreaView>
+      </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  outerContainer: {
+    flex: 1,
+  },
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: 'transparent',
   },
   keyboardContainer: {
     flex: 1,
@@ -285,18 +302,18 @@ const styles = StyleSheet.create({
   logo: {
     width: 36,
     height: 36,
-    tintColor: colors.background,
+    tintColor: '#FFFFFF', // White logo on dark navy gradient
   },
   appName: {
     ...typography.h3,
-    color: colors.background,
+    color: '#FFFFFF', // White text on dark navy gradient
     textAlign: 'center',
     marginBottom: 2,
     fontWeight: '700',
   },
   appSubtitle: {
     ...typography.caption,
-    color: colors.background + 'CC',
+    color: 'rgba(255, 255, 255, 0.85)', // Semi-transparent white on dark navy gradient
     textAlign: 'center',
     fontSize: 12,
   },
@@ -357,7 +374,7 @@ const styles = StyleSheet.create({
   },
   forgotPasswordText: {
     ...typography.caption,
-    color: colors.primary,
+    color: '#4A9EFF', // Brighter blue for better visibility on white card
     fontWeight: '500',
     fontSize: 14,
   },
@@ -373,12 +390,12 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textMuted,
     marginRight: spacing.xs,
-    fontSize: 13,
+    fontSize: 14, // Fixed: Changed from 13px to 14px
   },
   registerLink: {
     ...typography.caption,
-    color: colors.primary,
+    color: '#4A9EFF', // Brighter blue for better visibility
     fontWeight: '600',
-    fontSize: 13,
+    fontSize: 14, // Fixed: Changed from 13px to 14px
   },
 });

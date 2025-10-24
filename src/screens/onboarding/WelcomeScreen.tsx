@@ -12,9 +12,10 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 interface WelcomeScreenProps {
   onContinue: () => void;
   onSkip: () => void;
+  onSignIn?: () => void;
 }
 
-export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSkip }) => {
+export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSkip, onSignIn }) => {
   const logoScale = useRef(new Animated.Value(0.8)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
@@ -75,25 +76,25 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSkip
     {
       icon: Trophy,
       title: 'Live Results',
-      description: 'Real-time race tracking and standings',
+      description: 'Real-time race tracking and championship standings',
       color: colors.warning,
     },
     {
-      icon: Globe,
-      title: 'Global Championship',
-      description: 'World-class Dragon Class racing in Hong Kong',
+      icon: Anchor,
+      title: 'Racing Locations',
+      description: 'Interactive maps of all course areas and marks',
       color: colors.primary,
     },
     {
-      icon: Anchor,
-      title: 'Course Maps',
-      description: 'Interactive sailing maps and weather data',
+      icon: Globe,
+      title: 'Event Schedule',
+      description: 'Detailed race times, briefings, and social events',
       color: colors.accent,
     },
     {
       icon: Users,
-      title: 'Racing Community',
-      description: 'Connect with sailors from around the world',
+      title: 'Official Documents',
+      description: 'Sailing instructions, notices, and race updates',
       color: colors.success,
     },
   ];
@@ -106,11 +107,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSkip
     >
       <LinearGradient
         colors={[
-          'rgba(43, 92, 230, 0.95)', // Primary blue with opacity
-          'rgba(43, 92, 230, 0.85)',
-          'rgba(255, 255, 255, 0.95)', // White fade
+          '#0A1E3D', // Dark navy blue for better text contrast
+          '#0d2440', // Mid-dark navy
+          '#122b4a', // Stays dark at bottom for button visibility
         ]}
-        locations={[0, 0.6, 1]}
+        locations={[0, 0.5, 1]}
         style={styles.gradientOverlay}
       >
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -178,19 +179,32 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSkip
           {/* Action Buttons */}
           <Animated.View style={[styles.buttonContainer, { opacity: buttonsOpacity }]}>
             <IOSButton
-              title="Get Started"
+              title="Sign up"
               onPress={onContinue}
               variant="filled"
               size="large"
               style={styles.primaryButton}
+              textStyle={styles.primaryButtonText}
             />
+
+            {onSignIn && (
+              <IOSButton
+                title="Sign in"
+                onPress={onSignIn}
+                variant="plain"
+                size="large"
+                style={styles.secondaryButton}
+                textStyle={styles.secondaryButtonText}
+              />
+            )}
 
             <IOSButton
               title="Skip for now"
               onPress={onSkip}
               variant="plain"
               size="large"
-              style={styles.secondaryButton}
+              style={styles.tertiaryButton}
+              textStyle={styles.tertiaryButtonText}
             />
           </Animated.View>
 
@@ -221,57 +235,60 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.lg,
+    paddingTop: spacing.md, // Reduced from xl
+    paddingBottom: spacing.sm, // Reduced from lg
   },
   logoContainer: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.sm, // Reduced from lg
     ...shadows.medium,
   },
   logo: {
-    width: 120,
-    height: 120,
+    width: 100, // Reduced from 120
+    height: 100, // Reduced from 120
   },
   title: {
-    color: colors.background,
+    color: '#FFFFFF',
     textAlign: 'center',
-    fontSize: 36,
+    fontSize: 32, // Reduced from 36
     fontWeight: '700',
-    marginBottom: spacing.xs,
+    marginBottom: 4, // Reduced from spacing.xs
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  subtitle: {
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontSize: 22, // Reduced from 24
+    fontWeight: '600',
+    marginBottom: spacing.sm, // Reduced from lg
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  description: {
+    textAlign: 'center',
+    fontSize: 14, // Reduced from 16
+    lineHeight: 20, // Reduced from 24
+    color: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: spacing.md,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-  subtitle: {
-    color: colors.background,
-    textAlign: 'center',
-    fontSize: 24,
-    fontWeight: '600',
-    marginBottom: spacing.lg,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
-  },
-  description: {
-    textAlign: 'center',
-    fontSize: 16,
-    lineHeight: 24,
-    color: 'rgba(255, 255, 255, 0.9)',
-    paddingHorizontal: spacing.md,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
-  },
   featuresContainer: {
-    flex: 1,
-    paddingVertical: spacing.xl,
+    paddingVertical: spacing.xs, // Reduced from md
+    marginBottom: spacing.xs, // Reduced from md
   },
   featuresTitle: {
     textAlign: 'center',
-    color: colors.text,
-    marginBottom: spacing.lg,
-    fontSize: 20,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: spacing.sm, // Reduced from xl
+    fontSize: 18, // Reduced from 20
+    fontWeight: '700',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   featuresGrid: {
     flexDirection: 'row',
@@ -281,20 +298,21 @@ const styles = StyleSheet.create({
   },
   featureCard: {
     width: '48%',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
     borderRadius: 16,
-    padding: spacing.md,
-    marginBottom: spacing.md,
+    padding: spacing.sm, // Increased for better text visibility
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.xs,
     alignItems: 'center',
     ...shadows.card,
   },
   featureIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40, // Reduced from 48
+    height: 40, // Reduced from 48
+    borderRadius: 20, // Reduced from 24
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs, // Reduced from sm
   },
   featureTitle: {
     textAlign: 'center',
@@ -310,24 +328,50 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   buttonContainer: {
-    paddingBottom: spacing.lg,
-    gap: spacing.md,
+    marginTop: spacing.md, // Added to create space above buttons
+    paddingBottom: spacing.sm, // Reduced from lg
+    paddingTop: spacing.sm, // Reduced from md
+    gap: 12, // Fixed: 12px for proper spacing between buttons (requirement: 12-16px)
   },
   primaryButton: {
-    backgroundColor: colors.secondary,
+    backgroundColor: '#FFFFFF',
     borderRadius: 14,
+    minHeight: 50, // Slightly reduced from 52
     ...shadows.button,
+  },
+  primaryButtonText: {
+    color: '#0A1E3D',
+    fontWeight: '700',
+    fontSize: 17,
   },
   secondaryButton: {
     backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    minHeight: 50, // Slightly reduced from 52
+  },
+  secondaryButtonText: {
+    color: 'rgba(255, 255, 255, 0.95)',
+    fontWeight: '600',
+    fontSize: 15, // Slightly reduced from 16
+  },
+  tertiaryButton: {
+    backgroundColor: 'transparent',
+    minHeight: 44,
+  },
+  tertiaryButtonText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '500',
+    fontSize: 14,
   },
   footer: {
     alignItems: 'center',
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.xs, // Reduced from lg
+    paddingTop: spacing.xs, // Reduced from sm
   },
   footerText: {
     fontSize: 11,
-    opacity: 0.7,
+    color: 'rgba(255, 255, 255, 0.6)',
   },
 });
 

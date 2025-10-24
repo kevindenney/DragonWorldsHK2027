@@ -120,11 +120,23 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
    * Initialize authentication state
    */
   useEffect(() => {
+    let safetyTimeoutId: NodeJS.Timeout;
+    let isInitialized = false;
+
     async function initializeAuth() {
       const initStartTime = Date.now();
       console.log('🔐 [AuthProvider] Initializing authentication...');
 
       try {
+        // Safety timeout - force initialization after 3 seconds maximum
+        safetyTimeoutId = setTimeout(() => {
+          if (!isInitialized) {
+            console.warn('⏰ [AuthProvider] Safety timeout triggered - forcing initialization');
+            dispatch({ type: 'SET_INITIALIZED', payload: true });
+            isInitialized = true;
+          }
+        }, 3000);
+
         // Check Firebase configuration with detailed logging
         const firebaseConfigured = isFirebaseConfigured();
         console.log('🔐 [AuthProvider] Firebase configuration check:', {
@@ -138,73 +150,78 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
         if (firebaseConfigured) {
           try {
             console.log('🔐 [AuthProvider] Attempting to use Firebase authentication');
-            console.log('🔐 [AuthProvider] DEBUGGING: Environment variables:', {
-              hasApiKey: !!process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-              hasAppId: !!process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
-              hasProjectId: !!process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-              apiKeyFirst4: process.env.EXPO_PUBLIC_FIREBASE_API_KEY?.substring(0, 4),
-              projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID
-            });
 
             setUseFirebase(true);
 
-            // Add timeout for Firebase service loading
+            // Reduced timeout for Firebase service loading (3 seconds instead of 10)
             const firebaseLoadPromise = getFirebaseAuthService();
             const timeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('Firebase service loading timed out')), 10000);
+              setTimeout(() => reject(new Error('Firebase service loading timed out')), 3000);
             });
 
             console.log('🔐 [AuthProvider] Loading Firebase auth service...');
             const firebaseAuthService = await Promise.race([firebaseLoadPromise, timeoutPromise]);
             firebaseServiceRef.current = firebaseAuthService;
 
-            console.log('🔐 [AuthProvider] DEBUGGING: Firebase service methods:', {
-              hasRegister: typeof firebaseAuthService.register === 'function',
-              hasLogin: typeof firebaseAuthService.login === 'function',
-              hasOnAuthStateChanged: typeof firebaseAuthService.onAuthStateChanged === 'function'
-            });
-
             console.log('🔐 [AuthProvider] Firebase auth service loaded, setting up listener...');
 
-            // Set up Firebase auth state listener
+            // Set up Firebase auth state listener with timeout protection
+            let listenerFired = false;
+            const listenerTimeout = setTimeout(() => {
+              if (!listenerFired && !isInitialized) {
+                console.warn('⏰ [AuthProvider] Auth listener timeout - forcing initialization');
+                dispatch({ type: 'SET_INITIALIZED', payload: true });
+                isInitialized = true;
+              }
+            }, 2000);
+
             const unsubscribe = firebaseAuthService.onAuthStateChanged((user) => {
+              listenerFired = true;
+              clearTimeout(listenerTimeout);
+
               console.log('🔐 [AuthProvider] Firebase auth state changed:', {
                 hasUser: !!user,
                 userId: user?.uid,
-                email: user?.email,
-                emailVerified: user?.emailVerified
+                email: user?.email
               });
               dispatch({ type: 'SET_USER', payload: user });
 
-              if (!state.isInitialized) {
+              if (!isInitialized) {
                 console.log('🔐 [AuthProvider] Marking auth as initialized');
                 dispatch({ type: 'SET_INITIALIZED', payload: true });
+                isInitialized = true;
+                clearTimeout(safetyTimeoutId);
               }
             });
 
             unsubscribeRef.current = unsubscribe;
 
             const initDuration = Date.now() - initStartTime;
-            console.log(`✅ [AuthProvider] Firebase authentication initialized successfully in ${initDuration}ms`);
+            console.log(`✅ [AuthProvider] Firebase authentication initialized in ${initDuration}ms`);
 
           } catch (error) {
             const initDuration = Date.now() - initStartTime;
             console.error(`❌ [AuthProvider] Firebase initialization failed after ${initDuration}ms:`, error);
-            console.error('❌ [AuthProvider] Error details:', {
-              message: error?.message,
-              name: error?.name,
-              stack: error?.stack ? error.stack.substring(0, 300) : undefined
-            });
 
-            // Fall back to mock authentication if Firebase fails to load
+            // Fall back to mock authentication
             console.log('🔄 [AuthProvider] Falling back to mock authentication...');
             setUseFirebase(false);
             await initializeMockAuth();
+            if (!isInitialized) {
+              dispatch({ type: 'SET_INITIALIZED', payload: true });
+              isInitialized = true;
+              clearTimeout(safetyTimeoutId);
+            }
           }
         } else {
           console.log('🔧 [AuthProvider] Firebase not configured, using mock authentication');
           setUseFirebase(false);
           await initializeMockAuth();
+          if (!isInitialized) {
+            dispatch({ type: 'SET_INITIALIZED', payload: true });
+            isInitialized = true;
+            clearTimeout(safetyTimeoutId);
+          }
         }
 
         setAuthServiceReady(true);
@@ -215,15 +232,12 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
         const initDuration = Date.now() - initStartTime;
         console.error(`💥 [AuthProvider] Critical initialization error after ${initDuration}ms:`, error);
 
-        // Last resort: ensure we have some form of auth working
-        try {
-          setUseFirebase(false);
-          await initializeMockAuth();
-          setAuthServiceReady(true);
-          console.log('🆘 [AuthProvider] Emergency mock auth fallback successful');
-        } catch (mockError) {
-          console.error('💀 [AuthProvider] Even mock auth failed:', mockError);
-          throw mockError;
+        // Last resort: ensure app doesn't hang
+        if (!isInitialized) {
+          console.log('🆘 [AuthProvider] Emergency initialization to prevent app hang');
+          dispatch({ type: 'SET_INITIALIZED', payload: true });
+          isInitialized = true;
+          clearTimeout(safetyTimeoutId);
         }
       }
     }
@@ -240,8 +254,11 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
         console.log('🔧 [AuthProvider] Mock auth state changed:', user ? 'User signed in' : 'User signed out');
         dispatch({ type: 'SET_USER', payload: user });
 
-        if (!state.isInitialized) {
+        if (!isInitialized) {
+          console.log('🔧 [AuthProvider] Marking mock auth as initialized');
           dispatch({ type: 'SET_INITIALIZED', payload: true });
+          isInitialized = true;
+          clearTimeout(safetyTimeoutId);
         }
       });
 
@@ -253,6 +270,7 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
 
     // Cleanup on unmount
     return () => {
+      clearTimeout(safetyTimeoutId);
       if (unsubscribeRef.current) {
         unsubscribeRef.current();
       }

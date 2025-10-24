@@ -10,6 +10,7 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -241,48 +242,63 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
     }
   };
 
-  // Simple network connectivity check
+  // Simple network connectivity check with timeout
   const checkConnectivity = async (): Promise<boolean> => {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
       const response = await fetch('https://www.google.com/generate_204', {
         method: 'HEAD',
         cache: 'no-cache',
         headers: { 'Cache-Control': 'no-cache' },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
       return response.ok;
-    } catch {
-      return false;
+    } catch (error) {
+      console.log('🔍 [Register] Connectivity check failed or timed out:', error);
+      // If connectivity check fails or times out, assume we're connected
+      // Firebase will handle the actual network error if there is one
+      return true;
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="light" backgroundColor={colors.primary} />
-
-      <KeyboardAwareScrollView
-        style={styles.keyboardScrollView}
-        contentContainerStyle={[
-          styles.scrollContainer,
-          {
-            paddingBottom: Math.max(insets.bottom + 60, 140), // Extra padding for keyboard
-          }
-        ]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        enableOnAndroid={true}
-        enableAutomaticScroll={true}
-        extraScrollHeight={50}
-        extraHeight={Platform.OS === 'ios' ? 50 : 100}
+    <View style={styles.outerContainer}>
+      <LinearGradient
+        colors={['#0A1E3D', '#0d2440', '#122b4a']}
+        locations={[0, 0.5, 1]}
+        style={styles.gradient}
       >
-          {/* Header Section */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={handleCancel}
-              testID="register-cancel"
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
+        <SafeAreaView style={styles.container}>
+          <StatusBar style="light" />
+
+          <KeyboardAwareScrollView
+            style={styles.keyboardScrollView}
+            contentContainerStyle={[
+              styles.scrollContainer,
+              {
+                paddingBottom: Math.max(insets.bottom + 60, 140), // Extra padding for keyboard
+              }
+            ]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            enableOnAndroid={true}
+            enableAutomaticScroll={true}
+            extraScrollHeight={50}
+            extraHeight={Platform.OS === 'ios' ? 50 : 100}
+          >
+              {/* Header Section */}
+              <View style={[styles.header, { paddingTop: insets.top }]}>
+                <TouchableOpacity
+                  style={[styles.cancelButton, { top: insets.top + 8 }]}
+                  onPress={handleCancel}
+                  testID="register-cancel"
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
             <View style={styles.logoContainer}>
               <Image
                 source={require('../../../assets/dragon-logo.png')}
@@ -301,7 +317,7 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
             <View style={styles.welcomeSection}>
               <Text style={styles.welcomeTitle}>Set Sail with Us</Text>
               <Text style={styles.welcomeSubtitle}>
-                Join thousands of sailing enthusiasts following the Dragon World Championships
+                Be part of the official Dragon World Championships 2027 community
               </Text>
             </View>
 
@@ -358,7 +374,7 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
                 title={isLoading ? 'Creating Account...' : 'Join the Fleet'}
                 onPress={handleRegister}
                 loading={isLoading}
-                variant="primary"
+                variant="inverse"
                 style={styles.registerButton}
                 testID="register-submit"
               />
@@ -401,19 +417,27 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
               </View>
             </View>
           </View>
-      </KeyboardAwareScrollView>
-    </SafeAreaView>
+          </KeyboardAwareScrollView>
+        </SafeAreaView>
+      </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  outerContainer: {
+    flex: 1,
+  },
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: 'transparent',
   },
   keyboardScrollView: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: 'transparent',
   },
   scrollContainer: {
     flexGrow: 1,
@@ -428,15 +452,15 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     position: 'absolute',
-    top: 0,
-    right: 0,
+    top: 0, // Will be overridden by inline style with insets.top + 8
+    left: 16,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
-    zIndex: 1,
+    zIndex: 10,
   },
   cancelButtonText: {
-    color: colors.background,
-    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.9)', // White text to show on dark gradient
+    fontSize: 17,
     fontWeight: '500',
   },
   logoContainer: {
@@ -449,28 +473,33 @@ const styles = StyleSheet.create({
   logo: {
     width: 40, // Reduced from 56
     height: 40, // Reduced from 56
-    tintColor: colors.background,
+    tintColor: '#FFFFFF', // White logo on dark gradient
   },
   appName: {
     ...typography.h1,
-    color: colors.background,
+    color: '#FFFFFF', // White text on dark gradient
     textAlign: 'center',
     marginBottom: spacing.xs,
     fontWeight: '700',
   },
   appSubtitle: {
     ...typography.body1,
-    color: colors.background + 'CC',
+    color: 'rgba(255, 255, 255, 0.85)', // Semi-transparent white
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: spacing.sm,
   },
   formContainer: {
     backgroundColor: colors.background,
-    borderRadius: borderRadius.xl,
+    borderRadius: 16,
     padding: spacing.lg, // Reduced from xl to lg
     marginBottom: spacing.sm, // Reduced from lg to sm
-    ...shadows.large,
+    // Enhanced shadow for dark background
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
   },
   welcomeSection: {
     alignItems: 'center',
@@ -496,6 +525,7 @@ const styles = StyleSheet.create({
   registerButton: {
     marginTop: spacing.md, // Reduced from lg to md
     marginBottom: spacing.sm, // Reduced from lg to sm
+    ...shadows.button,
   },
   socialSection: {
     marginBottom: spacing.sm,

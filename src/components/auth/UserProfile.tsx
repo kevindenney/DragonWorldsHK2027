@@ -36,7 +36,10 @@ import {
   HelpCircle,
   MessageCircle,
   FileText,
-  Star
+  Star,
+  Anchor,
+  Sailboat,
+  ChevronRight
 } from 'lucide-react-native';
 import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
 import { useAuth } from '../../auth/useAuth';
@@ -292,7 +295,44 @@ export function UserProfile({
         isUploadingPhoto={isUploadingPhoto}
         uploadProgress={uploadProgress}
       />
-      
+
+      <ProfileSection title="Sailing Profile">
+        <ProfileField
+          icon={<User size={20} color={colors.textMuted} />}
+          label="Role"
+          value="Sailor"
+        />
+
+        <ProfileField
+          icon={<Sailboat size={20} color={colors.textMuted} />}
+          label="Boat"
+          value="d59 (Dragon Class)"
+        />
+
+        <ProfileField
+          icon={<MapPin size={20} color={colors.textMuted} />}
+          label="Home Club"
+          value="Royal Hong Kong Yacht Club"
+        />
+
+        <TouchableOpacity
+          style={styles.field}
+          activeOpacity={0.7}
+          onPress={() => {
+            Alert.alert('Event Registrations', 'Your registered events will be shown here in a future update.');
+          }}
+        >
+          <View style={styles.fieldLeft}>
+            <Calendar size={20} color={colors.textMuted} />
+            <View style={styles.fieldText}>
+              <Text style={styles.fieldLabel}>Event Registrations</Text>
+              <Text style={styles.fieldValue}>2 active registrations</Text>
+            </View>
+          </View>
+          <ChevronRight size={20} color={colors.textMuted} />
+        </TouchableOpacity>
+      </ProfileSection>
+
       <ProfileSection title="Account Information">
         <ProfileField
           icon={<Mail size={20} color={colors.textMuted} />}

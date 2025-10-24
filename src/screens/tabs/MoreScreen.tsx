@@ -7,7 +7,7 @@ import {
   SafeAreaView,
   ScrollView
 } from 'react-native';
-import { Users, Cloud, ChevronRight, FileText, User, LogIn, LogOut, Trophy, Info, RefreshCw } from 'lucide-react-native';
+import { Users, Cloud, ChevronRight, FileText, User, LogIn, LogOut, Trophy, Info, RefreshCw, Check } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
@@ -38,6 +38,7 @@ interface MoreOption {
   action?: 'navigation' | 'auth';
   navigationTarget?: string;
   accessibilityLabel: string;
+  section?: string;
 }
 
 // Create options based on authentication state
@@ -50,14 +51,7 @@ const getMoreOptions = (isAuthenticated: boolean, user: any): MoreOption[] => {
       icon: Users,
       component: EnhancedContactsScreen,
       accessibilityLabel: 'Contacts, WhatsApp groups, and emergency information',
-    },
-    {
-      id: 'sponsors',
-      title: 'Sponsors',
-      description: 'Championship sponsors, exclusive offers, and Hong Kong activities',
-      icon: Trophy,
-      component: SponsorsScreen,
-      accessibilityLabel: 'Championship sponsors with exclusive offers and Hong Kong activities',
+      section: 'RACING TOOLS',
     },
     {
       id: 'weather',
@@ -66,6 +60,16 @@ const getMoreOptions = (isAuthenticated: boolean, user: any): MoreOption[] => {
       icon: Cloud,
       component: ModernWeatherMapScreen,
       accessibilityLabel: 'Weather maps and nautical charts',
+      section: 'RACING TOOLS',
+    },
+    {
+      id: 'sponsors',
+      title: 'Sponsors',
+      description: 'Championship sponsors, exclusive offers, and Hong Kong activities',
+      icon: Trophy,
+      component: SponsorsScreen,
+      accessibilityLabel: 'Championship sponsors with exclusive offers and Hong Kong activities',
+      section: 'EVENT INFORMATION',
     },
     {
       id: 'data-sources',
@@ -74,6 +78,7 @@ const getMoreOptions = (isAuthenticated: boolean, user: any): MoreOption[] => {
       icon: FileText,
       component: DataSourcesScreen,
       accessibilityLabel: 'Information about live data sources and update schedule',
+      section: 'EVENT INFORMATION',
     },
     {
       id: 'about-regattaflow',
@@ -82,6 +87,7 @@ const getMoreOptions = (isAuthenticated: boolean, user: any): MoreOption[] => {
       icon: Info,
       component: AboutRegattaFlowScreen,
       accessibilityLabel: 'Information about RegattaFlow company and services',
+      section: 'APP',
     },
   ];
 
@@ -94,20 +100,13 @@ const getMoreOptions = (isAuthenticated: boolean, user: any): MoreOption[] => {
       icon: RefreshCw,
       action: 'reset-onboarding' as any,
       accessibilityLabel: 'Reset onboarding flow for testing',
+      section: 'APP',
     });
   }
 
   // Add authentication options
   if (isAuthenticated && user) {
-    baseOptions.push({
-      id: 'profile',
-      title: 'Profile',
-      description: `Signed in as ${user.displayName || user.email}`,
-      icon: User,
-      action: 'navigation',
-      navigationTarget: 'Profile',
-      accessibilityLabel: `User profile for ${user.displayName || user.email}`,
-    });
+    // Profile card is now at top, so we don't need it in the menu
     baseOptions.push({
       id: 'sign-out',
       title: 'Sign Out',
@@ -322,75 +321,104 @@ export function MoreScreen() {
     }
   }
 
+  // Handle profile card press
+  const handleProfilePress = async () => {
+    await Haptics.selectionAsync();
+    (navigation as any).navigate('Profile');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>More</Text>
-        <Text style={styles.headerSubtitle}>Additional features and tools</Text>
-        {/* User Status Indicator */}
-        <View style={styles.userStatusContainer}>
-          {isAuthenticated && user ? (
-            <View style={styles.userStatus}>
-              <User size={16} color={colors.primary} />
-              <View style={styles.userStatusContent}>
-                <Text style={styles.userStatusText}>
-                  Signed in as {user.displayName || user.email}
-                </Text>
-                <Text style={styles.userBenefitsText}>
-                  Personalized features enabled
-                </Text>
-              </View>
-            </View>
-          ) : (
-            <View style={styles.userStatus}>
-              <User size={16} color={colors.textMuted} />
-              <View style={styles.userStatusContent}>
-                <Text style={styles.guestStatusText}>
-                  Using as guest
-                </Text>
-                <Text style={styles.guestBenefitsText}>
-                  Sign in to save preferences and access personalized features
-                </Text>
-              </View>
-            </View>
-          )}
-        </View>
+        <Text style={styles.headerSubtitle}>Account & Settings</Text>
       </View>
-      
+
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        {/* Enhanced Profile Card - Only show if authenticated */}
+        {isAuthenticated && user && (
+          <TouchableOpacity
+            style={styles.profileCard}
+            onPress={handleProfilePress}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="View profile"
+          >
+            {/* Avatar */}
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {(user.displayName || user.email || 'U')[0].toUpperCase()}
+                {(user.displayName || user.email || 'U')[1]?.toUpperCase() || ''}
+              </Text>
+            </View>
+
+            {/* User Info */}
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>
+                {user.displayName || user.email || 'User'}
+              </Text>
+              <Text style={styles.profileRole}>
+                Sailor • Racing on d59
+              </Text>
+              <View style={styles.profileRegistration}>
+                <Check size={14} color="#0066CC" strokeWidth={2.5} />
+                <Text style={styles.profileRegistrationText}>
+                  Registered for 2 events
+                </Text>
+              </View>
+            </View>
+
+            {/* Chevron */}
+            <ChevronRight size={24} color="#CCCCCC" strokeWidth={2} />
+          </TouchableOpacity>
+        )}
+
         <View style={styles.optionsContainer}>
-          {moreOptions.map((option) => {
-            const IconComponent = option.icon;
-            return (
-              <TouchableOpacity
-                key={option.id}
-                style={styles.optionCard}
-                onPress={() => handleOptionPress(option)}
-                accessibilityRole="button"
-                accessibilityLabel={option.accessibilityLabel}
-                activeOpacity={0.7}
-              >
-                <View style={styles.optionIconContainer}>
-                  <IconComponent 
-                    size={28} 
-                    color={colors.primary} 
-                    strokeWidth={2}
-                  />
-                </View>
-                
-                <View style={styles.optionContent}>
-                  <Text style={styles.optionTitle}>{option.title}</Text>
-                  <Text style={styles.optionDescription}>{option.description}</Text>
-                </View>
-                
-                <ChevronRight 
-                  size={20} 
-                  color={colors.textMuted} 
-                  strokeWidth={2}
-                />
-              </TouchableOpacity>
-            );
-          })}
+          {(() => {
+            let lastSection: string | undefined = undefined;
+            return moreOptions.map((option, index) => {
+              const IconComponent = option.icon;
+              const showSectionHeader = option.section && option.section !== lastSection;
+              const isFirstSection = index === 0 || (!moreOptions[index - 1].section && option.section);
+              lastSection = option.section;
+
+              return (
+                <React.Fragment key={option.id}>
+                  {showSectionHeader && (
+                    <Text style={[styles.sectionHeader, isFirstSection && styles.firstSectionHeader]}>
+                      {option.section}
+                    </Text>
+                  )}
+                  <TouchableOpacity
+                    style={styles.optionCard}
+                    onPress={() => handleOptionPress(option)}
+                    accessibilityRole="button"
+                    accessibilityLabel={option.accessibilityLabel}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.optionIconContainer}>
+                      <IconComponent
+                        size={28}
+                        color={colors.primary}
+                        strokeWidth={2}
+                      />
+                    </View>
+
+                    <View style={styles.optionContent}>
+                      <Text style={styles.optionTitle}>{option.title}</Text>
+                      <Text style={styles.optionDescription}>{option.description}</Text>
+                    </View>
+
+                    <ChevronRight
+                      size={20}
+                      color={colors.textMuted}
+                      strokeWidth={2}
+                    />
+                  </TouchableOpacity>
+                </React.Fragment>
+              );
+            });
+          })()}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -477,42 +505,71 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
   },
-  userStatusContainer: {
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-  },
-  userStatus: {
+  // Enhanced Profile Card Styles
+  profileCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: spacing.lg,
+    marginTop: 8,
+    marginBottom: 24,
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  userStatusContent: {
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#0066CC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  avatarText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  profileInfo: {
     flex: 1,
-    marginLeft: spacing.xs,
   },
-  userStatusText: {
-    ...typography.caption,
-    color: colors.primary,
+  profileName: {
+    fontSize: 18,
     fontWeight: '600',
+    color: '#000000',
+    marginBottom: 4,
   },
-  userBenefitsText: {
-    ...typography.caption,
-    color: colors.primary,
-    fontSize: 11,
-    opacity: 0.8,
-    marginTop: 2,
+  profileRole: {
+    fontSize: 14,
+    color: '#666666',
+    marginBottom: 4,
   },
-  guestStatusText: {
-    ...typography.caption,
-    color: colors.textMuted,
-    fontWeight: '500',
+  profileRegistration: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
-  guestBenefitsText: {
-    ...typography.caption,
-    color: colors.textMuted,
-    fontSize: 11,
-    marginTop: 2,
-    lineHeight: 14,
+  profileRegistrationText: {
+    fontSize: 14,
+    color: '#0066CC',
+  },
+  // Section Header Styles
+  sectionHeader: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    color: '#999999',
+    letterSpacing: 0.5,
+    marginTop: 24,
+    marginBottom: 8,
+    marginLeft: 16,
+  },
+  firstSectionHeader: {
+    marginTop: 8, // Less margin for first section
   },
 });

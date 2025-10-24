@@ -369,9 +369,6 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
             setShowDetailModal(false);
             setSelectedLocation(null);
           }}
-          onNavigate={(location) => {
-            console.log('Navigate to location:', location.name);
-          }}
           onScheduleNavigate={(date, eventId) => {
             console.log('Navigate to schedule:', date, eventId);
             // TODO: Implement navigation to schedule screen

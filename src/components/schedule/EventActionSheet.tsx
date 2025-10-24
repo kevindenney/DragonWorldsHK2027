@@ -83,6 +83,7 @@ export const EventActionSheet: React.FC<EventActionSheetProps> = ({
       subtitle: 'See connected events',
       onPress: onShowRelated,
       color: '#7B68EE',
+      disabled: !activity.prerequisites || activity.prerequisites.length === 0,
     },
   ];
 

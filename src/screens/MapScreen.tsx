@@ -1,20 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, Dimensions, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput, ScrollView, Modal } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
-import { Filter } from 'lucide-react-native';
+import { Filter, Info, Crosshair, Search, X } from 'lucide-react-native';
 
 import { SailingLocationMarker } from '../components/maps/SailingLocationMarker';
 import { LocationDetailModal } from '../components/maps/LocationDetailModal';
-import { IOSSegmentedControl } from '../components/ios';
 import {
   sailingLocations,
   locationFilters,
   getLocationsByType,
   getLocationById
 } from '../data/sailingLocations';
-import { 
-  SailingLocation, 
-  SailingLocationFilter 
+import {
+  SailingLocation,
+  SailingLocationFilter
 } from '../types/sailingLocation';
 import { dragonChampionshipsLightTheme } from '../constants/dragonChampionshipsTheme';
 import type { MapScreenProps } from '../types/navigation';
@@ -24,9 +24,14 @@ const { width, height } = Dimensions.get('window');
 
 export const MapScreen: React.FC<MapScreenProps> = ({ navigation, route }) => {
   const mapRef = useRef<MapView>(null);
+  const insets = useSafeAreaInsets();
   const [selectedFilter, setSelectedFilter] = useState<SailingLocationFilter['type']>('all');
   const [selectedLocation, setSelectedLocation] = useState<SailingLocation | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SailingLocation[]>([]);
 
   // Get filtered locations based on current filter
   const filteredLocations = getLocationsByType(selectedFilter);
@@ -106,18 +111,52 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation, route }) => {
     setSelectedLocation(null);
   };
 
-  const getCurrentFilterLabel = () => {
-    const filter = locationFilters.find(f => f.type === selectedFilter);
-    return filter?.label || 'All Locations';
+  // Search functionality
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+
+    if (query.trim() === '') {
+      setSearchResults([]);
+      return;
+    }
+
+    const lowerQuery = query.toLowerCase();
+    const results = sailingLocations.filter(location =>
+      location.name.toLowerCase().includes(lowerQuery) ||
+      location.description?.toLowerCase().includes(lowerQuery) ||
+      location.address?.toLowerCase().includes(lowerQuery)
+    );
+
+    setSearchResults(results);
   };
 
-  const getFilteredLocationCount = () => {
-    return filteredLocations.length;
+  const handleSearchResultPress = (location: SailingLocation) => {
+    setSelectedLocation(location);
+    setSearchQuery('');
+    setShowSearch(false);
+
+    // Center map on selected location
+    mapRef.current?.animateToRegion({
+      ...location.coordinates,
+      latitudeDelta: 0.02,
+      longitudeDelta: 0.02,
+    }, 1000);
+  };
+
+  // Center on user location
+  const handleMyLocationPress = () => {
+    // The MapView component already handles user location with showsUserLocation
+    // This button provides a manual trigger to center on user location
+    if (mapRef.current) {
+      // Note: In a production app, you'd get the actual user coordinates here
+      // For now, we'll zoom to the initial region
+      mapRef.current.animateToRegion(initialRegion, 1000);
+    }
   };
 
   return (
     <View style={styles.container}>
-      {/* Map */}
+      {/* Full-Screen Map */}
       <View style={styles.mapContainer}>
         <MapView
           ref={mapRef}
@@ -126,7 +165,7 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation, route }) => {
           initialRegion={initialRegion}
           mapType="standard"
           showsUserLocation={true}
-          showsMyLocationButton={true}
+          showsMyLocationButton={false}
           showsCompass={true}
           showsScale={true}
           showsBuildings={false}
@@ -158,86 +197,223 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation, route }) => {
           ))}
         </MapView>
 
-        {/* Floating Filter Button */}
-        <TouchableOpacity
-          style={styles.filterButton}
-          onPress={() => setShowFilters(!showFilters)}
-        >
-          <Filter size={20} color={colors.white} />
-        </TouchableOpacity>
+        {/* Top Floating Buttons */}
+        <View style={[styles.topButtonsContainer, { top: insets.top + 8 }]}>
+          {/* Filter Button */}
+          <TouchableOpacity
+            style={styles.topButton}
+            onPress={() => setShowFilters(!showFilters)}
+          >
+            <Filter size={20} color={colors.primary} />
+            <Text style={styles.topButtonText}>
+              {selectedFilter === 'all' ? 'Filters' : locationFilters.find(f => f.type === selectedFilter)?.label}
+            </Text>
+          </TouchableOpacity>
 
-        {/* Filter Controls */}
-        {showFilters && (
-          <View style={styles.filterDropdown}>
-            <IOSSegmentedControl
-              options={locationFilters.map(filter => ({
-                label: filter.label,
-                value: filter.type
-              }))}
-              selectedValue={selectedFilter}
-              onValueChange={handleFilterChange}
-            />
-          </View>
-        )}
-
-        {/* Map Legend */}
-        <View style={styles.legend}>
-          <Text style={styles.legendTitle}>Legend</Text>
-          
-          <View style={styles.legendItem}>
-            <View style={[styles.legendMarker, { backgroundColor: '#DC2626' }]} />
-            <Text style={styles.legendText}>Championship HQ</Text>
-          </View>
-          
-          <View style={styles.legendItem}>
-            <View style={[styles.legendMarker, { backgroundColor: '#2563EB' }]} />
-            <Text style={styles.legendText}>Race Course</Text>
-          </View>
-          
-          <View style={styles.legendItem}>
-            <View style={[styles.legendMarker, { backgroundColor: '#0891B2' }]} />
-            <Text style={styles.legendText}>Marinas</Text>
-          </View>
-          
-          <View style={styles.legendItem}>
-            <View style={[styles.legendMarker, { backgroundColor: '#EA580C' }]} />
-            <Text style={styles.legendText}>Chandleries</Text>
-          </View>
-          
-          <View style={styles.legendItem}>
-            <View style={[styles.legendMarker, { backgroundColor: '#D97706' }]} />
-            <Text style={styles.legendText}>Gear Stores</Text>
-          </View>
-          
-          <View style={styles.legendItem}>
-            <View style={[styles.legendMarker, { backgroundColor: '#7C3AED' }]} />
-            <Text style={styles.legendText}>Hotels</Text>
-          </View>
-
-          <View style={styles.legendDivider} />
-          
-          <View style={styles.legendItem}>
-            <View style={styles.championshipIndicator} />
-            <Text style={styles.legendText}>Championship 2027</Text>
-          </View>
+          {/* Search Button */}
+          <TouchableOpacity
+            style={styles.topButton}
+            onPress={() => setShowSearch(!showSearch)}
+          >
+            <Search size={20} color={colors.primary} />
+          </TouchableOpacity>
         </View>
 
+        {/* My Location Button */}
+        <TouchableOpacity
+          style={styles.myLocationButton}
+          onPress={handleMyLocationPress}
+        >
+          <Crosshair size={24} color={colors.white} />
+        </TouchableOpacity>
+
+        {/* Legend Button (Bottom-left) */}
+        <TouchableOpacity
+          style={styles.legendButton}
+          onPress={() => setShowLegend(true)}
+        >
+          <Info size={18} color={colors.primary} />
+          <Text style={styles.legendButtonText}>Legend</Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Filter Modal */}
+      <Modal
+        visible={showFilters}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowFilters(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowFilters(false)}
+        >
+          <View style={[styles.filterModal, { top: insets.top + 60 }]} onStartShouldSetResponder={() => true}>
+            <Text style={styles.filterModalTitle}>Filter Locations</Text>
+
+            <ScrollView style={styles.filterOptions}>
+              {locationFilters.map((filter) => (
+                <TouchableOpacity
+                  key={filter.type}
+                  style={[
+                    styles.filterOption,
+                    selectedFilter === filter.type && styles.filterOptionSelected
+                  ]}
+                  onPress={() => {
+                    handleFilterChange(filter.type);
+                    setShowFilters(false);
+                  }}
+                >
+                  <View style={styles.filterOptionContent}>
+                    <Text style={[
+                      styles.filterOptionLabel,
+                      selectedFilter === filter.type && styles.filterOptionLabelSelected
+                    ]}>
+                      {filter.label}
+                    </Text>
+                    <Text style={styles.filterOptionDescription}>
+                      {filter.description}
+                    </Text>
+                  </View>
+                  {selectedFilter === filter.type && (
+                    <View style={styles.filterCheckmark} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Search Modal */}
+      <Modal
+        visible={showSearch}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowSearch(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowSearch(false)}
+        >
+          <View style={[styles.searchModal, { top: insets.top + 60 }]} onStartShouldSetResponder={() => true}>
+            <View style={styles.searchBar}>
+              <Search size={18} color={colors.textSecondary} style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search venues, locations..."
+                placeholderTextColor={colors.textSecondary}
+                value={searchQuery}
+                onChangeText={handleSearch}
+                returnKeyType="search"
+                autoFocus
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => handleSearch('')}>
+                  <X size={18} color={colors.textSecondary} />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Search Results */}
+            {searchQuery.length > 0 && searchResults.length > 0 && (
+              <ScrollView style={styles.searchResultsScroll}>
+                {searchResults.map((location) => (
+                  <TouchableOpacity
+                    key={location.id}
+                    style={styles.searchResultItem}
+                    onPress={() => handleSearchResultPress(location)}
+                  >
+                    <Text style={styles.searchResultName}>{location.name}</Text>
+                    <Text style={styles.searchResultType} numberOfLines={1}>
+                      {location.description}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+
+            {searchQuery.length > 0 && searchResults.length === 0 && (
+              <View style={styles.noResults}>
+                <Text style={styles.noResultsText}>No venues found</Text>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Legend Modal */}
+      <Modal
+        visible={showLegend}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowLegend(false)}
+      >
+        <TouchableOpacity
+          style={styles.legendModalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowLegend(false)}
+        >
+          <View style={styles.legendModal}>
+            <View style={styles.legendHeader}>
+              <Text style={styles.legendTitle}>Map Legend</Text>
+              <TouchableOpacity onPress={() => setShowLegend(false)}>
+                <X size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.legendItem}>
+              <View style={[styles.legendMarker, { backgroundColor: '#DC2626' }]} />
+              <Text style={styles.legendText}>Championship HQ</Text>
+            </View>
+
+            <View style={styles.legendItem}>
+              <View style={[styles.legendMarker, { backgroundColor: '#2563EB' }]} />
+              <Text style={styles.legendText}>Race Course</Text>
+            </View>
+
+            <View style={styles.legendItem}>
+              <View style={[styles.legendMarker, { backgroundColor: '#0891B2' }]} />
+              <Text style={styles.legendText}>Marinas</Text>
+            </View>
+
+            <View style={styles.legendItem}>
+              <View style={[styles.legendMarker, { backgroundColor: '#EA580C' }]} />
+              <Text style={styles.legendText}>Chandleries</Text>
+            </View>
+
+            <View style={styles.legendItem}>
+              <View style={[styles.legendMarker, { backgroundColor: '#D97706' }]} />
+              <Text style={styles.legendText}>Gear Stores</Text>
+            </View>
+
+            <View style={styles.legendItem}>
+              <View style={[styles.legendMarker, { backgroundColor: '#7C3AED' }]} />
+              <Text style={styles.legendText}>Hotels</Text>
+            </View>
+
+            <View style={styles.legendDivider} />
+
+            <View style={styles.legendItem}>
+              <View style={styles.championshipIndicator} />
+              <Text style={styles.legendText}>Championship 2027</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Location Detail Modal */}
       {selectedLocation && (
         <LocationDetailModal
           location={selectedLocation}
           onClose={handleCloseModal}
-          onNavigate={(location) => {
-            // Could integrate with external navigation apps here
-            console.log('Navigate to:', location.name);
-          }}
           onScheduleNavigate={(date, event) => {
             // Navigate to schedule screen with specific event
             navigation.navigate('Schedule', {
-              highlightDate: date,
-              highlightEvent: event
+              date: date,
+              eventId: event
             });
             setSelectedLocation(null); // Close modal after navigation
           }}
@@ -250,7 +426,10 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
   },
+
+  // Map (Full-screen)
   mapContainer: {
     flex: 1,
     position: 'relative',
@@ -258,75 +437,245 @@ const styles = StyleSheet.create({
   map: {
     ...StyleSheet.absoluteFillObject,
   },
-  filterButton: {
+
+  // Top Floating Buttons
+  topButtonsContainer: {
     position: 'absolute',
-    top: 50,
+    left: spacing.md,
+    right: spacing.md,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    zIndex: 100,
+  },
+  topButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    ...shadows.cardMedium,
+    elevation: 8,
+    gap: 6,
+  },
+  topButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.primary,
+  },
+
+  // Modal Overlay
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+
+  // Filter Modal
+  filterModal: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    maxHeight: height * 0.7,
+    ...shadows.cardLarge,
+  },
+  filterModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: spacing.md,
+  },
+  filterOptions: {
+    maxHeight: height * 0.6,
+  },
+  filterOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.xs,
+    backgroundColor: colors.background,
+  },
+  filterOptionSelected: {
+    backgroundColor: colors.primaryLight || '#E3F2FD',
+  },
+  filterOptionContent: {
+    flex: 1,
+  },
+  filterOptionLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.text,
+    marginBottom: 2,
+  },
+  filterOptionLabelSelected: {
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  filterOptionDescription: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  filterCheckmark: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.primary,
+    marginLeft: spacing.sm,
+  },
+
+  // Search Modal
+  searchModal: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    maxHeight: height * 0.7,
+    ...shadows.cardLarge,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: spacing.sm,
+  },
+  searchIcon: {
+    marginRight: spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: colors.text,
+    padding: 0,
+  },
+  searchResultsScroll: {
+    maxHeight: height * 0.5,
+  },
+  searchResultItem: {
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.xs,
+    backgroundColor: colors.background,
+  },
+  searchResultName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  searchResultType: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  noResults: {
+    padding: spacing.xl,
+    alignItems: 'center',
+  },
+  noResultsText: {
+    fontSize: 15,
+    color: colors.textSecondary,
+  },
+
+  // My Location Button (Bottom-right)
+  myLocationButton: {
+    position: 'absolute',
+    bottom: spacing.lg,
     right: spacing.lg,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.cardMedium,
     elevation: 8,
   },
-  filterDropdown: {
-    position: 'absolute',
-    top: 100,
-    left: spacing.lg,
-    right: spacing.lg,
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    ...shadows.cardMedium,
-    elevation: 8,
-  },
-  legend: {
+
+  // Legend Button (Bottom-left)
+  legendButton: {
     position: 'absolute',
     bottom: spacing.lg,
     left: spacing.lg,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    minWidth: 160,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     ...shadows.cardMedium,
+    elevation: 5,
+  },
+  legendButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.primary,
+    marginLeft: 6,
+  },
+
+  // Legend Modal
+  legendModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  legendModal: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    minWidth: 280,
+    maxWidth: 340,
+    ...shadows.cardLarge,
+  },
+  legendHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
   },
   legendTitle: {
-    ...typography.bodyMedium,
-    color: colors.text,
+    fontSize: 18,
     fontWeight: '600',
-    marginBottom: spacing.sm,
+    color: colors.text,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
   legendMarker: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: spacing.sm,
-    borderWidth: 1,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    marginRight: spacing.md,
+    borderWidth: 1.5,
     borderColor: '#FFFFFF',
   },
   legendText: {
-    ...typography.caption,
+    fontSize: 14,
     color: colors.text,
   },
   legendDivider: {
     height: 1,
     backgroundColor: colors.borderLight,
-    marginVertical: spacing.xs,
+    marginVertical: spacing.md,
   },
   championshipIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     backgroundColor: '#FFD700',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#FFFFFF',
-    marginRight: spacing.sm,
+    marginRight: spacing.md,
   },
 });

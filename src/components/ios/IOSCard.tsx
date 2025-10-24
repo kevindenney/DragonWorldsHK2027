@@ -46,7 +46,7 @@ export const IOSCard: React.FC<IOSCardProps> = ({
     <View
       style={cardStyle}
       testID={testID}
-      accessibilityRole="region"
+      accessibilityRole={Platform.OS === 'ios' ? 'region' : 'none'}
     >
       {children}
     </View>

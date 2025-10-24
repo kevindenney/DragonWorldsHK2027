@@ -104,41 +104,17 @@ export default function App() {
         // Calendar module test removed from startup to prevent app hanging
         // Test will be performed when user attempts to use calendar feature
 
-        // Only show splash screen delay for first-time users
-        if (needsOnboarding) {
-          console.log('⏱️ [App.tsx] First-time user detected, showing splash screen for 2 seconds...');
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          console.log('✅ [App.tsx] Splash screen delay complete');
-        } else {
-          console.log('🚀 [App.tsx] Returning user detected, skipping splash screen delay');
-        }
-
+        console.log('🚀 [App.tsx] Basic app preparation complete');
         setAppIsReady(true);
       } catch (e) {
         console.warn('⚠️ [App.tsx] Error during app preparation:', e);
-        // Even if there's an error, we should hide the splash screen
+        // Even if there's an error, we should continue
         setAppIsReady(true);
       }
     }
 
     prepare();
   }, [needsOnboarding]);
-
-  React.useEffect(() => {
-    async function hideSplash() {
-      if (appIsReady) {
-        console.log('🎯 [App.tsx] App is ready, hiding splash screen...');
-        try {
-          await SplashScreen.hideAsync();
-          console.log('✅ [App.tsx] Splash screen hidden successfully');
-        } catch (error) {
-          console.warn('⚠️ [App.tsx] Error hiding splash screen:', error);
-        }
-      }
-    }
-
-    hideSplash();
-  }, [appIsReady]);
 
   if (!appIsReady) {
     console.log('⏳ [App.tsx] App not ready yet, keeping splash screen visible');

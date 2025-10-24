@@ -31,6 +31,7 @@ export interface EventSchedule {
   dates: string;
   venue: string;
   description: string;
+  clubSpotUrl?: string;
   days: Day[];
 }
 
@@ -41,6 +42,7 @@ export const eventSchedules = {
     dates: "November 21-29, 2026",
     venue: "Royal Hong Kong Yacht Club, Port Shelter",
     description: "The premier international Dragon class sailing world championship",
+    clubSpotUrl: "https://theclubspot.com/regatta/KGHzb6NBqO",
     days: [
       {
         id: 'day-1',
@@ -100,11 +102,12 @@ export const eventSchedules = {
             type: "registration" as const,
             location: "Race Office"
           },
-          { 
-            time: "09:00-12:00", 
+          {
+            time: "09:00-12:00",
             activity: "Boat Measurement & Sail Measurement",
             type: "technical" as const,
-            location: "Measurement Area"
+            location: "Measurement Area",
+            mapLocationId: "rhkyc_kellett"
           },
           {
             time: "10:00-16:00",
@@ -474,6 +477,7 @@ export const eventSchedules = {
     dates: "November 14-17, 2026",
     venue: "Royal Hong Kong Yacht Club, Port Shelter",
     description: "Regional championship for Asia Pacific Dragon sailors",
+    clubSpotUrl: "https://theclubspot.com/regatta/KGHzb6NBqO",
     days: [
       {
         id: 'ap-day-1',

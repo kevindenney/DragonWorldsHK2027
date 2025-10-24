@@ -13,10 +13,10 @@ export const SailingLocationMarker: React.FC<SailingLocationMarkerProps> = ({
   const getMarkerIcon = (type: SailingLocationType) => {
     const iconSize = 20;
     const iconColor = '#FFFFFF';
-    
+
     switch (type) {
       case 'championship_hq':
-        return <Anchor size={iconSize} color={iconColor} strokeWidth={2.5} />;
+        return <Building size={iconSize} color={iconColor} strokeWidth={2.5} />;
       case 'race_course':
         return <MapPin size={iconSize} color={iconColor} strokeWidth={2.5} />;
       case 'venue':

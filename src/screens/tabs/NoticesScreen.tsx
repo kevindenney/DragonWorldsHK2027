@@ -7,13 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 // Animated import removed to fix Hermes property configuration error
 import {
   Bell,
-  Search,
   WifiOff,
-  Settings,
   ChevronLeft,
-  HelpCircle,
-  ChevronDown,
-  ChevronUp,
   Info
 } from 'lucide-react-native';
 
@@ -36,7 +31,6 @@ import { NoticeCard } from '../../components/notices/NoticeCard';
 import { NoticeFilters } from '../../components/notices/NoticeFilters';
 import { NoticeSearchBar } from '../../components/notices/NoticeSearchBar';
 import { CategoryFilterChips, type CategoryCount } from '../../components/notices/CategoryFilterChips';
-import { CollapsibleCategorySection } from '../../components/notices/CollapsibleCategorySection';
 
 import NoticeBoardService from '../../services/noticeBoardService';
 import { useUserStore } from '../../stores/userStore';
@@ -319,7 +313,18 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
     }));
 
     return [...notifications, ...documents].sort((a, b) => {
-      // Sort by priority first, then by date
+      // Sort by: 1) Unread first, 2) Priority (urgent > high > medium > low), 3) Timestamp (newest first)
+
+      // Check unread status
+      const aUnread = 'isRead' in a ? !a.isRead : false;
+      const bUnread = 'isRead' in b ? !b.isRead : false;
+
+      // Unread notices come first
+      if (aUnread !== bUnread) {
+        return aUnread ? -1 : 1;
+      }
+
+      // Then sort by priority
       const priorityOrder = { urgent: 4, high: 3, medium: 2, low: 1 };
       const aPriority = priorityOrder[a.priority || 'medium'] || 2;
       const bPriority = priorityOrder[b.priority || 'medium'] || 2;
@@ -328,6 +333,7 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
         return bPriority - aPriority;
       }
 
+      // Finally sort by date (newest first)
       return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
     });
   }, [event]);
@@ -416,21 +422,6 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
       }))
       .filter(item => item.category && typeof item.category === 'string'); // Final safety check
   }, [allNotices]); // Changed dependency from filteredNotices to allNotices
-
-  // Group notices by category for sectioned view
-  const noticesByCategory = useMemo(() => {
-    const grouped = new Map<RegattaCategory, NoticeItem[]>();
-
-    filteredNotices.forEach(notice => {
-      const category = notice.category || 'administrative';
-      if (!grouped.has(category)) {
-        grouped.set(category, []);
-      }
-      grouped.get(category)!.push(notice);
-    });
-
-    return grouped;
-  }, [filteredNotices]);
 
   // Filter notices by selected category
   const displayedNotices = useMemo(() => {
@@ -635,33 +626,28 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
           />
         </IOSSection>
 
-        {/* Category Filter Chips */}
-        <CategoryFilterChips
-          categoryCounts={categoryCounts}
-          selectedCategory={selectedCategory}
-          onCategoryChange={handleCategoryChange}
-        />
-
-        {/* Help/Legend Section */}
-        <TouchableOpacity
-          style={styles.helpToggleButton}
-          onPress={() => {
-            haptics.selection();
-            setShowHelpLegend(!showHelpLegend);
-          }}
-        >
-          <View style={styles.helpToggleContent}>
-            <HelpCircle size={16} color={colors.primary} />
-            <IOSText textStyle="caption1" color="systemBlue" weight="medium">
-              Understanding Notice Indicators
-            </IOSText>
-            {showHelpLegend ? (
-              <ChevronUp size={16} color={colors.primary} />
-            ) : (
-              <ChevronDown size={16} color={colors.primary} />
-            )}
+        {/* Category Filter Chips with Info Icon */}
+        <View style={styles.filterRow}>
+          <View style={styles.filterChipsContainer}>
+            <CategoryFilterChips
+              categoryCounts={categoryCounts}
+              selectedCategory={selectedCategory}
+              onCategoryChange={handleCategoryChange}
+            />
           </View>
-        </TouchableOpacity>
+
+          {/* Info Icon */}
+          <TouchableOpacity
+            style={styles.infoIconButton}
+            onPress={() => {
+              haptics.selection();
+              setShowHelpLegend(!showHelpLegend);
+            }}
+            accessibilityLabel="Show notice indicator help"
+          >
+            <Info size={20} color="#999999" />
+          </TouchableOpacity>
+        </View>
 
         {showHelpLegend && (
           <View style={styles.helpLegendContainer}>
@@ -751,19 +737,8 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
                 ) ? 'Try adjusting your search or filters' : 'New notices will appear here when published'}
               </IOSText>
             </View>
-          ) : selectedCategory === 'all' && !searchQuery ? (
-            // Show categorized sections when viewing all and not searching
-            Array.from(noticesByCategory.entries()).map(([category, notices]) => (
-              <CollapsibleCategorySection
-                key={category}
-                category={category}
-                notices={notices}
-                onNoticePress={handleNoticePress}
-                initiallyExpanded={true}
-              />
-            ))
           ) : (
-            // Show flat list when filtering by category or searching
+            // Show flat list of all notices
             displayedNotices.map((notice, index) => (
               <NoticeCard
                 key={`${notice.itemType}-${notice.id}`}
@@ -832,6 +807,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: spacing.md,
+  },
+  filterChipsContainer: {
+    flex: 1,
+  },
+  infoIconButton: {
+    padding: spacing.sm,
+    marginLeft: spacing.xs,
+  },
   helpToggleButton: {
     marginHorizontal: spacing.md,
     marginTop: spacing.sm,
@@ -842,6 +829,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
     paddingVertical: spacing.xs,
+  },
+  helpToggleText: {
+    fontSize: 12,
+    color: '#999999',
   },
   helpLegendContainer: {
     marginHorizontal: spacing.md,

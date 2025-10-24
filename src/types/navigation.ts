@@ -21,6 +21,7 @@ export type MainTabParamList = {
   Schedule: { date?: string; eventId?: string } | undefined;
   Results: undefined;
   NoticeBoard: { eventId: string };
+  Entrants: undefined;
   More: undefined;
 };
 
@@ -38,6 +39,7 @@ export type MapScreenProps = MainTabScreenProps<'Map'>;
 export type ScheduleScreenProps = MainTabScreenProps<'Schedule'>;
 export type ResultsScreenProps = MainTabScreenProps<'Results'>;
 export type NoticeBoardScreenProps = MainTabScreenProps<'NoticeBoard'>;
+export type EntrantsScreenProps = MainTabScreenProps<'Entrants'>;
 export type MoreScreenProps = MainTabScreenProps<'More'>;
 
 declare global {

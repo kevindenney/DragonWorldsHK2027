@@ -62,43 +62,46 @@ export const IOSSegmentedControl: React.FC<IOSSegmentedControlProps> = ({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: '#F2F2F7',
+    backgroundColor: 'transparent',
     borderRadius: 12,
-    padding: 4,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    gap: 12, // Space between tabs
   },
   segment: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: 10, // Updated from 12 to 10
+    paddingHorizontal: 16, // Updated from 8 to 16
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 8,
     minHeight: 44,
+    backgroundColor: '#FFFFFF', // Unselected: white background
+    borderWidth: 1,
+    borderColor: '#E0E0E0', // Unselected: light gray border
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   segmentContent: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   selectedSegment: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#007AFF',
+    backgroundColor: '#E3F2FD', // Selected: light blue background
+    borderWidth: 2, // Selected: thicker border
+    borderColor: '#0066CC', // Selected: darker blue border
+    shadowColor: '#0066CC',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.15,
     shadowRadius: 4,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#007AFF',
+    elevation: 3,
   },
   firstSegment: {
     borderTopLeftRadius: 8,
@@ -110,13 +113,13 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#007AFF',
+    fontWeight: '400', // Unselected: normal weight
+    color: '#666666', // Unselected: gray text
     textAlign: 'center',
   },
   selectedSegmentText: {
-    fontWeight: '700',
-    color: '#007AFF',
+    fontWeight: '600', // Selected: semi-bold weight
+    color: '#0066CC', // Selected: darker blue text
     fontSize: 14,
   },
 });

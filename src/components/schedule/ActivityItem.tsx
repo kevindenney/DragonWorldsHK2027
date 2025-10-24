@@ -131,7 +131,7 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDa
               {activity.activity}
             </IOSText>
             {activity.detail && (
-              <IOSText textStyle="caption" color="secondaryLabel" style={styles.activityDetail} numberOfLines={2}>
+              <IOSText textStyle="caption" style={styles.activityDetail} numberOfLines={2}>
                 {activity.detail}
               </IOSText>
             )}
@@ -199,8 +199,10 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDa
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
+    backgroundColor: '#F8F9FA', // Subtle light gray background
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8, // Space between activity cards
   },
   timeSection: {
     minWidth: 72,
@@ -208,9 +210,10 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   timeText: {
-    color: colors.primary,
-    fontSize: 13,
-    lineHeight: 16,
+    color: '#0066CC', // Blue - matches theme
+    fontSize: 16, // More prominent
+    fontWeight: '600', // Semibold
+    lineHeight: 20,
   },
   contentSection: {
     flex: 1,
@@ -236,15 +239,18 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   activityTitle: {
-    color: colors.text,
-    lineHeight: 20,
-    marginBottom: spacing.xs,
+    color: '#1a1a1a', // Dark, not pure black
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 22,
+    marginBottom: 4,
     flexShrink: 1,
     flexWrap: 'wrap',
   },
   activityDetail: {
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 14, // Increased from 12
+    color: '#666666', // Gray text
+    lineHeight: 20, // 1.4 line height ratio
     marginTop: spacing.xs,
     marginBottom: spacing.xs,
     flexShrink: 1,
@@ -255,11 +261,11 @@ const styles = StyleSheet.create({
   },
   badge: {
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
+    paddingVertical: 4, // Increased from 3
+    borderRadius: 4, // More compact, changed from 10
   },
   badgeText: {
-    fontSize: 10,
+    fontSize: 12, // Increased from 10
     fontWeight: '600',
   },
   locationRow: {

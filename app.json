@@ -25,9 +25,9 @@
     ],
     "primaryColor": "#DC2626",
     "splash": {
-      "image": "./assets/dragon-logo-xl.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#DC2626"
+      "image": "./assets/splash-dragon-worlds-fullscreen.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#FFFFFF"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -42,9 +42,9 @@
       "jsEngine": "hermes",
       "hermes": true,
       "splash": {
-        "image": "./assets/dragon-logo-xl.png",
+        "image": "./assets/splash-dragon-worlds-fullscreen.png",
         "resizeMode": "contain",
-        "backgroundColor": "#DC2626"
+        "backgroundColor": "#FFFFFF"
       },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app uses your location to provide accurate local weather conditions and nearby sailing venues.",
@@ -92,14 +92,13 @@
       "compileSdkVersion": 34,
       "targetSdkVersion": 34,
       "splash": {
-        "image": "./assets/dragon-logo-xl.png",
+        "image": "./assets/splash-dragon-worlds-fullscreen.png",
         "resizeMode": "contain",
-        "backgroundColor": "#DC2626"
+        "backgroundColor": "#FFFFFF"
       },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundImage": "./assets/adaptive-background.png",
-        "backgroundColor": "#DC2626"
+        "backgroundColor": "#FFFFFF"
       },
       "permissions": [
         "ACCESS_COARSE_LOCATION",
@@ -213,9 +212,9 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/dragon-logo-xl.png",
+          "image": "./assets/splash-dragon-worlds-fullscreen.png",
           "resizeMode": "contain",
-          "backgroundColor": "#DC2626"
+          "backgroundColor": "#FFFFFF"
         }
       ],
       [

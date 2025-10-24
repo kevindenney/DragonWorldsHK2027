@@ -1,7 +1,8 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Anchor, Calendar, Trophy, FileText, MoreHorizontal } from 'lucide-react-native';
+import { Anchor, Calendar, Trophy, FileText, Users, MoreHorizontal } from 'lucide-react-native';
 import { View, Text, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import type { MainTabParamList } from '../../types/navigation';
 
@@ -12,6 +13,7 @@ import { MapScreen } from '../../screens/MapScreen';
 import { ScheduleScreen } from '../../screens/tabs/ScheduleScreen';
 import { ResultsStackNavigator } from './ResultsStackNavigator';
 import { NoticesScreen } from '../../screens/tabs/NoticesScreen';
+import { EntrantsScreen } from '../../screens/tabs/EntrantsScreen';
 import { MoreStackNavigator } from './MoreStackNavigator';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
 
@@ -22,6 +24,7 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 const { colors, spacing, shadows, borderRadius } = dragonChampionshipsLightTheme;
 
 export function TabNavigator() {
+  const insets = useSafeAreaInsets();
   const renderCountRef = React.useRef(0);
   const lastRenderTime = React.useRef(Date.now());
 
@@ -65,6 +68,9 @@ export function TabNavigator() {
             case 'Results':
               IconComponent = Trophy;
               break;
+            case 'Entrants':
+              IconComponent = Users;
+              break;
             case 'Map':
               IconComponent = Anchor;
               break;
@@ -89,9 +95,9 @@ export function TabNavigator() {
               <View style={{
                 backgroundColor: `${colors.primary}15`,
                 borderRadius: borderRadius.round,
-                paddingHorizontal: 16,
-                paddingVertical: 8,
-                minWidth: 64,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                minWidth: 56,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}>
@@ -108,10 +114,10 @@ export function TabNavigator() {
           backgroundColor: `${colors.surface}F5`,
           borderTopColor: colors.borderLight,
           borderTopWidth: 0.5,
-          height: spacing.tabHeight - 10,
-          paddingBottom: 8,
-          paddingTop: 6,
-          paddingHorizontal: 8,
+          height: 65 + insets.bottom, // Increased height for proper spacing + safe area
+          paddingBottom: insets.bottom, // Dynamic safe area padding
+          paddingTop: 8,
+          paddingHorizontal: 4,
           ...shadows.tabBar,
           elevation: 8,
           shadowOffset: { width: 0, height: -2 },
@@ -119,15 +125,16 @@ export function TabNavigator() {
           shadowRadius: 8,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10, // Slightly smaller to fit better
           fontWeight: '600',
-          marginTop: 2,
+          marginTop: -2, // Bring label closer to icon
+          marginBottom: 2,
         },
         tabBarItemStyle: {
-          paddingVertical: 4,
-          marginHorizontal: 2,
+          paddingVertical: 2,
+          marginHorizontal: 0,
           borderRadius: borderRadius.md,
-          minHeight: 40,
+          minHeight: 48, // Increased min height
         },
         headerShown: false,
         tabBarShowLabel: true,
@@ -181,6 +188,18 @@ export function TabNavigator() {
         listeners={{
           focus: () => console.log('📋 [Tab] Results screen focused'),
           blur: () => console.log('📋 [Tab] Results screen blurred'),
+        }}
+      />
+      <Tab.Screen
+        name="Entrants"
+        component={EntrantsScreen}
+        options={{
+          tabBarLabel: 'Entrants',
+          tabBarAccessibilityLabel: 'Event entrants and competitor registration status',
+        }}
+        listeners={{
+          focus: () => console.log('📋 [Tab] Entrants screen focused'),
+          blur: () => console.log('📋 [Tab] Entrants screen blurred'),
         }}
       />
       <Tab.Screen

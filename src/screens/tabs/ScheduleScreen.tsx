@@ -22,14 +22,20 @@ export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
   useEffect(() => {
     const { date, eventId } = route?.params || {};
     
-    if (date) {
-      // Find the day that matches the date and expand it
-      const matchingDay = currentEvent.days.find(day => 
-        day.date === date || day.activities.some(activity => 
-          activity.title === eventId || activity.subtitle?.includes(eventId || '')
-        )
-      );
-      
+    if (date || eventId) {
+      // Find the day that matches the date or contains the event
+      const matchingDay = currentEvent.days.find(day => {
+        // Match by date (check if day.date contains the date string)
+        const dateMatches = date && (day.date === date || day.date.includes(date));
+
+        // Match by event name
+        const eventMatches = eventId && day.activities.some(activity =>
+          activity.activity.includes(eventId)
+        );
+
+        return dateMatches || eventMatches;
+      });
+
       if (matchingDay) {
         const dayId = matchingDay.date;
         setExpandedDays(new Set([dayId]));
@@ -107,33 +113,38 @@ export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
         <View style={styles.statsContainer}>
           <View style={styles.statsCard}>
             <View style={styles.statsRow}>
+              {/* Total Activities - Blue */}
               <View style={styles.statItem}>
-                <IOSText textStyle="title1" weight="bold" style={styles.statNumber}>
-                  {totalActivities}
-                </IOSText>
-                <IOSText textStyle="caption" color="secondaryLabel" style={styles.statLabel}>
+                <View style={[styles.statCircle, styles.statCircleBlue]}>
+                  <IOSText textStyle="title1" weight="bold" style={[styles.statNumber, styles.statNumberBlue]}>
+                    {totalActivities}
+                  </IOSText>
+                </View>
+                <IOSText textStyle="caption" style={styles.statLabel}>
                   Total Activities
                 </IOSText>
               </View>
-              
-              <View style={styles.statDivider} />
-              
+
+              {/* Event Days - Teal */}
               <View style={styles.statItem}>
-                <IOSText textStyle="title1" weight="bold" style={styles.statNumber}>
-                  {competitionDays}
-                </IOSText>
-                <IOSText textStyle="caption" color="secondaryLabel" style={styles.statLabel}>
+                <View style={[styles.statCircle, styles.statCircleTeal]}>
+                  <IOSText textStyle="title1" weight="bold" style={[styles.statNumber, styles.statNumberTeal]}>
+                    {competitionDays}
+                  </IOSText>
+                </View>
+                <IOSText textStyle="caption" style={styles.statLabel}>
                   Event Days
                 </IOSText>
               </View>
-              
-              <View style={styles.statDivider} />
-              
+
+              {/* Racing Days - Orange */}
               <View style={styles.statItem}>
-                <IOSText textStyle="title1" weight="bold" style={styles.statNumber}>
-                  {racingDays}
-                </IOSText>
-                <IOSText textStyle="caption" color="secondaryLabel" style={styles.statLabel}>
+                <View style={[styles.statCircle, styles.statCircleOrange]}>
+                  <IOSText textStyle="title1" weight="bold" style={[styles.statNumber, styles.statNumberOrange]}>
+                    {racingDays}
+                  </IOSText>
+                </View>
+                <IOSText textStyle="caption" style={styles.statLabel}>
                   Racing Days
                 </IOSText>
               </View>
@@ -203,19 +214,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
+  statCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statCircleBlue: {
+    backgroundColor: '#E3F2FD', // Light blue
+  },
+  statCircleTeal: {
+    backgroundColor: '#E0F7FA', // Light teal
+  },
+  statCircleOrange: {
+    backgroundColor: '#FFF3E0', // Light orange
+  },
   statNumber: {
-    color: colors.primary,
-    marginBottom: 4,
+    fontSize: 34,
+    fontWeight: 'bold',
+  },
+  statNumberBlue: {
+    color: '#0066CC', // Blue
+  },
+  statNumberTeal: {
+    color: '#00ACC1', // Teal
+  },
+  statNumberOrange: {
+    color: '#FF9800', // Orange
   },
   statLabel: {
     textAlign: 'center',
-    fontSize: 11,
-  },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: colors.borderLight,
-    marginHorizontal: spacing.sm,
+    fontSize: 13,
+    color: '#666666',
+    marginTop: 0,
   },
   daysContainer: {
     paddingBottom: spacing.md,

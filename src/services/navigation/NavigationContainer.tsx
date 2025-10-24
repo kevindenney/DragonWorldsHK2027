@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import * as SplashScreen from 'expo-splash-screen';
 import { SimpleLoginScreen } from '../../screens/auth/SimpleLoginScreen';
 import { SimpleRegisterScreen } from '../../screens/auth/SimpleRegisterScreen';
 import { SimplePasswordResetScreen } from '../../screens/auth/SimplePasswordResetScreen';
@@ -75,6 +76,7 @@ const OnboardingNavigator = () => {
         <WelcomeScreen
           onContinue={handleWelcomeContinue}
           onSkip={handleWelcomeSkip}
+          onSignIn={handleNavigateToLogin}
         />
       );
 
@@ -117,6 +119,7 @@ const OnboardingNavigator = () => {
         <WelcomeScreen
           onContinue={handleWelcomeContinue}
           onSkip={handleWelcomeSkip}
+          onSignIn={handleNavigateToLogin}
         />
       );
   }
@@ -261,10 +264,26 @@ const AppContent = () => {
       console.log(`📊 [AppContent] Onboarding state unchanged: needsOnboarding=${needsOnboarding}`);
     }
 
+    // Hide splash screen when auth is initialized
+    React.useEffect(() => {
+      async function hideSplash() {
+        if (isInitialized) {
+          console.log('🎯 [AppContent] Auth initialized, hiding splash screen...');
+          try {
+            await SplashScreen.hideAsync();
+            console.log('✅ [AppContent] Splash screen hidden successfully');
+          } catch (error) {
+            console.warn('⚠️ [AppContent] Error hiding splash screen:', error);
+          }
+        }
+      }
+      hideSplash();
+    }, [isInitialized]);
+
     // Wait for auth initialization
     if (!isInitialized) {
-      console.log('🚀 [NavigationContainer] Auth not yet initialized, showing loading state');
-      return null; // Let native splash screen handle the loading state
+      console.log('🚀 [NavigationContainer] Auth not yet initialized, keeping splash visible');
+      return null; // Splash screen will remain visible until isInitialized is true
     }
 
     // Check if user needs onboarding first
