@@ -193,3 +193,136 @@ If encountering "property is not configurable" errors:
 - The property descriptor error may still appear in logs from these remaining exports
 - However, app functionality is fully restored - the critical shared components fix was sufficient
 - Future optimization: systematically replace all barrel exports with direct imports for complete error elimination
+
+### CRITICAL: Android ScrollView in Modal - Use @gorhom/bottom-sheet Instead
+
+**Issue**: React Native's built-in Modal component has fundamental ScrollView gesture handling issues on Android. ScrollView components inside Modal would not respond to scroll gestures reliably, especially after multiple opens.
+
+**Symptoms**:
+- iOS scrolling works perfectly with standard Modal
+- Android scrolling is unreliable, often breaking after first modal open
+- Various workarounds (nestedScrollEnabled, touch handler removal, etc.) proved insufficient
+- The issue is inherent to React Native's Modal implementation on Android
+
+**Root Cause**:
+React Native's Modal component has well-documented Android scrolling issues that stem from its native implementation. The Android Modal uses a different windowing system than iOS, which causes gesture conflicts with nested ScrollViews.
+
+**Solution**: Replace Modal with @gorhom/bottom-sheet library
+
+**Why @gorhom/bottom-sheet?**
+- Battle-tested library specifically designed for Android/iOS compatibility
+- Handles all gesture conflicts internally
+- Provides better UX with snap points and drag-to-dismiss
+- More reliable than fighting Modal's native implementation
+
+**Implementation**:
+
+**1. Install the library:**
+```bash
+npm install --legacy-peer-deps @gorhom/bottom-sheet
+```
+
+**2. Replace Modal with BottomSheet:**
+
+**Before (Broken on Android):**
+```typescript
+import { Modal, ScrollView } from 'react-native';
+
+<Modal visible={!!location} onRequestClose={onClose}>
+  <View style={styles.container}>
+    <ScrollView
+      nestedScrollEnabled={true}  // Still doesn't work reliably!
+      // ... various Android workarounds
+    >
+      {/* Content */}
+    </ScrollView>
+  </View>
+</Modal>
+```
+
+**After (Works Perfectly):**
+```typescript
+import BottomSheet, { BottomSheetScrollView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
+import { useRef, useMemo, useCallback } from 'react';
+
+const bottomSheetRef = useRef<BottomSheet>(null);
+const snapPoints = useMemo(() => ['25%', '50%', '90%'], []);
+
+useEffect(() => {
+  if (location) {
+    bottomSheetRef.current?.expand();
+  } else {
+    bottomSheetRef.current?.close();
+  }
+}, [location]);
+
+const renderBackdrop = useCallback(
+  (props: any) => (
+    <BottomSheetBackdrop
+      {...props}
+      disappearsOnIndex={-1}
+      appearsOnIndex={0}
+      opacity={0.5}
+    />
+  ),
+  []
+);
+
+if (!location) return null;
+
+return (
+  <BottomSheet
+    ref={bottomSheetRef}
+    index={2}  // Start at 90%
+    snapPoints={snapPoints}
+    enablePanDownToClose={true}
+    onClose={onClose}
+    backdropComponent={renderBackdrop}
+    backgroundStyle={styles.sheetBackground}
+    handleIndicatorStyle={styles.handleIndicator}
+  >
+    <BottomSheetScrollView
+      style={styles.content}
+      contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={true}
+    >
+      {/* Content - scrolls perfectly on Android! */}
+    </BottomSheetScrollView>
+  </BottomSheet>
+);
+```
+
+**3. Add BottomSheet styles:**
+```typescript
+const styles = StyleSheet.create({
+  sheetBackground: {
+    backgroundColor: colors.background,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  handleIndicator: {
+    backgroundColor: colors.textMuted,
+    width: 40,
+    height: 4,
+  },
+  // ... rest of styles
+});
+```
+
+**Files Updated**:
+- `/src/components/maps/LocationDetailModal.tsx` - Replaced Modal with BottomSheet
+  - Removed Modal, ScrollView imports
+  - Added BottomSheet, BottomSheetScrollView, BottomSheetBackdrop imports
+  - Implemented snap points and gesture controls
+  - All scrolling now works perfectly on Android
+
+**Benefits**:
+- ✅ **Reliable scrolling** - Works consistently on Android across all opens
+- ✅ **Better UX** - Drag to resize, swipe to dismiss, snap points
+- ✅ **Cross-platform** - Identical behavior on iOS and Android
+- ✅ **No workarounds** - Library handles all gesture conflicts internally
+
+**Impact**: After multiple failed attempts to fix Modal scrolling with various props and workarounds, replacing with @gorhom/bottom-sheet immediately resolved all Android scrolling issues. The venue detail modal now works perfectly.
+
+**Recommendation**:
+For any complex modal with scrollable content on Android, use @gorhom/bottom-sheet instead of React Native's built-in Modal. The Modal component's Android implementation has fundamental gesture handling limitations that are not easily fixed with props or workarounds.

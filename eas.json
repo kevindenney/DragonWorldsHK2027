@@ -82,7 +82,7 @@
     "production-android": {
       "extends": "production",
       "android": {
-        "resourceClass": "large",
+        "resourceClass": "medium",
         "buildType": "app-bundle",
         "gradleCommand": ":app:bundleRelease"
       },

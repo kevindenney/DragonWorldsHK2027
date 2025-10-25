@@ -1,16 +1,15 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Modal,
-  ScrollView,
   TouchableOpacity,
   Linking,
   Alert,
   Platform,
   StatusBar
 } from 'react-native';
+import BottomSheet, { BottomSheetScrollView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import {
   X,
   MapPin,
@@ -33,24 +32,35 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
   onClose,
   onScheduleNavigate
 }) => {
-  const scrollViewRef = useRef<ScrollView>(null);
-  const scrollViewKey = `${location.name}-${location.coordinates.latitude}-${location.coordinates.longitude}`;
+  const bottomSheetRef = useRef<BottomSheet>(null);
 
-  // Diagnostic logging
+  // Define snap points for the bottom sheet (25%, 50%, 90% of screen)
+  const snapPoints = useMemo(() => ['25%', '50%', '90%'], []);
+
+  // Control bottom sheet based on location visibility
   useEffect(() => {
-    console.log('[LocationDetailModal] Component mounted/updated');
-    console.log('[LocationDetailModal] Location:', location.name);
-    console.log('[LocationDetailModal] ScrollView key:', scrollViewKey);
-    console.log('[LocationDetailModal] Coordinates:', location.coordinates);
-
-    return () => {
-      console.log('[LocationDetailModal] Component unmounting for:', location.name);
-    };
-  }, [location, scrollViewKey]);
-
-  useEffect(() => {
-    console.log('[LocationDetailModal] Modal visibility changed, location:', location.name);
+    if (location) {
+      bottomSheetRef.current?.expand();
+    } else {
+      bottomSheetRef.current?.close();
+    }
   }, [location]);
+
+  // Render backdrop component
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5}
+      />
+    ),
+    []
+  );
+
+  // Don't render if no location
+  if (!location) return null;
   const handleContactPress = async (type: 'phone' | 'email' | 'website', value: string) => {
     try {
       let url = '';
@@ -122,28 +132,18 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
   };
 
   return (
-    <Modal
-      visible={!!location}
-      animationType="slide"
-      transparent={false}
-      presentationStyle={Platform.OS === 'ios' ? 'pageSheet' : 'fullScreen'}
-      onRequestClose={onClose}
-      statusBarTranslucent={false}
+    <BottomSheet
+      ref={bottomSheetRef}
+      index={2}  // Start at 90% (third snap point)
+      snapPoints={snapPoints}
+      enablePanDownToClose={true}
+      onClose={onClose}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={styles.sheetBackground}
+      handleIndicatorStyle={styles.handleIndicator}
     >
-      <View
-        style={styles.modalContainer}
-        onLayout={(e) => console.log('[ModalContainer] Layout:', e.nativeEvent.layout)}
-      >
-        {Platform.OS === 'android' && <StatusBar backgroundColor={colors.surface} barStyle="dark-content" />}
-        <View
-          style={styles.container}
-          onLayout={(e) => console.log('[Container] Layout:', e.nativeEvent.layout)}
-        >
-        {/* Header */}
-        <View
-          style={styles.header}
-          onLayout={(e) => console.log('[Header] Layout:', e.nativeEvent.layout)}
-        >
+      {/* Header */}
+      <View style={styles.header}>
           <View style={styles.headerContent}>
             <View style={styles.titleContainer}>
               {getLocationIcon()}
@@ -164,17 +164,12 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
           )}
         </View>
 
-        {/* Content - Scrollable with bottom padding for button */}
-        <ScrollView
-          key={scrollViewKey}
-          ref={scrollViewRef}
-          style={styles.content}
-          contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={true}
-          nestedScrollEnabled={false}
-          bounces={true}
-          onLayout={(e) => console.log('[ScrollView] Layout:', e.nativeEvent.layout)}
-        >
+      {/* Content - Scrollable with BottomSheetScrollView */}
+      <BottomSheetScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={true}
+      >
           {/* Description */}
           <View style={styles.section}>
             <Text style={styles.description}>{location.description}</Text>
@@ -345,14 +340,23 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
               )}
             </View>
           )}
-        </ScrollView>
-      </View>
-      </View>
-    </Modal>
+      </BottomSheetScrollView>
+    </BottomSheet>
   );
 };
 
 const styles = StyleSheet.create({
+  // BottomSheet styles
+  sheetBackground: {
+    backgroundColor: colors.background,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  handleIndicator: {
+    backgroundColor: colors.textMuted,
+    width: 40,
+    height: 4,
+  },
   modalContainer: {
     flex: 1,
     backgroundColor: colors.background,
