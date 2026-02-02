@@ -557,6 +557,174 @@ export const dragonRacingUtils = {
 };
 
 // Main theme export combining all systems
+// Apple Design Principles - Interactive States
+export const dragonInteractiveStates = {
+  // Button and touch states
+  pressed: {
+    opacity: 0.7,
+    scale: 0.98,
+  },
+  focused: {
+    borderWidth: 2,
+    borderColor: dragonLightColors.primary,
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+  highlighted: {
+    backgroundColor: `${dragonLightColors.primary}10`,
+  },
+
+  // Card interactive states
+  cardPressed: {
+    scale: 0.99,
+    shadowOpacity: 0.05,
+  },
+
+  // List item states
+  listItemPressed: {
+    backgroundColor: dragonLightColors.backgroundSecondary,
+  },
+};
+
+// Apple Design Principles - Haptic Feedback Guidelines
+export const dragonHapticFeedback = {
+  // When to use each haptic type:
+  selection: {
+    // Light tap - use for UI selection changes
+    use: ['Tab switches', 'Segmented control changes', 'Filter selections', 'Checkbox toggles'],
+  },
+  impact: {
+    light: {
+      // Subtle bump - use for minor interactions
+      use: ['Button press', 'Card tap', 'List item tap'],
+    },
+    medium: {
+      // Noticeable bump - use for important actions
+      use: ['Refresh complete', 'Action completion', 'Mode change'],
+    },
+    heavy: {
+      // Strong bump - use for major events
+      use: ['Race start signal', 'Urgent notification arrival'],
+    },
+  },
+  notification: {
+    success: {
+      // Two quick taps - use for successful operations
+      use: ['Form submission success', 'Save complete', 'Login success'],
+    },
+    warning: {
+      // Alert pattern - use for warnings
+      use: ['Invalid input', 'Connection issues', 'Time running out'],
+    },
+    error: {
+      // Error pattern - use for failures
+      use: ['Form validation error', 'Action failed', 'Network error'],
+    },
+  },
+};
+
+// Apple Design Principles - Accessibility Guidelines
+export const dragonAccessibility = {
+  // Minimum touch target sizes (iOS HIG: 44x44 points)
+  minTouchTarget: 44,
+  recommendedTouchTarget: 48,
+
+  // Contrast ratios (WCAG 2.1)
+  contrastRatios: {
+    normal: 4.5,  // Normal text minimum
+    large: 3,     // Large text minimum (18pt+)
+    enhanced: 7,  // Enhanced contrast
+  },
+
+  // Font size scaling support
+  fontScaling: {
+    min: 0.8,
+    max: 1.5,
+  },
+
+  // Focus indicators
+  focusRing: {
+    width: 2,
+    color: dragonLightColors.primary,
+    offset: 2,
+  },
+
+  // Reduced motion preferences
+  reducedMotion: {
+    respectPreference: true,
+    fallbackDuration: 0,
+  },
+};
+
+// Apple Design Principles - Visual Hierarchy
+export const dragonVisualHierarchy = {
+  // Size emphasis (larger = more important)
+  emphasis: {
+    hero: 1.5,      // 50% larger than normal
+    primary: 1.25,  // 25% larger
+    normal: 1,      // Base size
+    secondary: 0.85, // 15% smaller
+    tertiary: 0.75, // 25% smaller
+  },
+
+  // Color emphasis (more saturated/darker = more important)
+  colorWeight: {
+    critical: dragonLightColors.error,
+    important: dragonLightColors.primary,
+    normal: dragonLightColors.text,
+    muted: dragonLightColors.textMuted,
+    disabled: dragonLightColors.textMuted,
+  },
+
+  // Z-index hierarchy
+  zIndex: {
+    background: 0,
+    content: 1,
+    sticky: 10,
+    navigation: 50,
+    header: 100,
+    overlay: 200,
+    modal: 500,
+    toast: 1000,
+    tooltip: 1100,
+  },
+};
+
+// Apple Design Principles - Micro-interactions
+export const dragonMicroInteractions = {
+  // Scale animations
+  tapScale: {
+    value: 0.98,
+    duration: 100,
+  },
+  pressScale: {
+    value: 0.95,
+    duration: 150,
+  },
+
+  // Fade transitions
+  fadeIn: {
+    duration: 200,
+    initialOpacity: 0,
+  },
+  fadeOut: {
+    duration: 150,
+    finalOpacity: 0,
+  },
+
+  // Spring animations (bounce effect)
+  spring: {
+    tension: 200,
+    friction: 20,
+    mass: 1,
+  },
+
+  // Gesture feedback
+  swipeThreshold: 50,
+  velocityThreshold: 500,
+};
+
 export const dragonChampionshipsLightTheme = {
   colors: dragonLightColors,
   gradients: dragonLightGradients,
@@ -567,6 +735,12 @@ export const dragonChampionshipsLightTheme = {
   animations: dragonLightAnimations,
   weatherConditions: dragonWeatherConditions,
   racingUtils: dragonRacingUtils,
+  // Apple Design Principles additions
+  interactiveStates: dragonInteractiveStates,
+  hapticFeedback: dragonHapticFeedback,
+  accessibility: dragonAccessibility,
+  visualHierarchy: dragonVisualHierarchy,
+  microInteractions: dragonMicroInteractions,
 };
 
 export default dragonChampionshipsLightTheme;
