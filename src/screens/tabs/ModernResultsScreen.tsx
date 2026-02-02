@@ -3,7 +3,7 @@
  * Matches the provided design with dual regatta support and realistic sailing data
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,23 +12,28 @@ import {
   TouchableOpacity,
   RefreshControl,
   Dimensions,
-  SafeAreaView,
   Linking,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Trophy,
   Users,
-  Calendar,
   RefreshCw,
   ChevronRight,
   MapPin,
   Play,
   BookOpen,
+  Clock,
+  AlertCircle,
 } from 'lucide-react-native';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
-import { MOCK_CHAMPIONSHIPS, Championship, ChampionshipCompetitor, RACING_CLASS_COLORS } from '../../data/mockChampionshipData';
-import { IOSSegmentedControl, IOSSegmentedControlOption } from '../../components/ios/IOSSegmentedControl';
+import { Championship, ChampionshipCompetitor, RACING_CLASS_COLORS } from '../../data/mockChampionshipData';
+import { resultsService } from '../../services/resultsService';
+import { IOSText } from '../../components/ios/IOSText';
+import { FloatingEventSwitch } from '../../components/navigation/FloatingEventSwitch';
+import { ProfileButton } from '../../components/navigation/ProfileButton';
 import type { ResultsScreenProps } from '../../types/navigation';
 
 const { colors, typography, spacing, shadows, borderRadius } = dragonChampionshipsLightTheme;
@@ -39,17 +44,48 @@ interface ModernResultsScreenProps extends ResultsScreenProps {
 }
 
 export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsScreenProps) {
-  const [selectedChampionship, setSelectedChampionship] = useState<string>('asia-pacific-2026');
+  const [selectedEvent, setSelectedEvent] = useState<'asia-pacific-2026' | 'dragon-worlds-2026'>('asia-pacific-2026');
   const [refreshing, setRefreshing] = useState(false);
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
+  const [championship, setChampionship] = useState<Championship | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const currentChampionship = MOCK_CHAMPIONSHIPS.find(c => c.id === selectedChampionship) || MOCK_CHAMPIONSHIPS[1];
+  // Fetch championship data when event changes
+  useEffect(() => {
+    loadChampionship();
+  }, [selectedEvent]);
+
+  const loadChampionship = async (forceRefresh: boolean = false) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Map selected event to cloud function event ID
+      const eventId = selectedEvent === 'dragon-worlds-2026' ? '13242' : '13241';
+      const result = await resultsService.getChampionship(eventId, forceRefresh);
+      setChampionship(result);
+    } catch (err) {
+      console.error('Error loading championship:', err);
+      setError('Failed to load results. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Use championship from state, or provide a default for loading state
+  const currentChampionship = championship;
+
+  const handleEventChange = (eventId: 'asia-pacific-2026' | 'dragon-worlds-2026') => {
+    setSelectedEvent(eventId);
+  };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    // Simulate API call
-    setTimeout(() => setRefreshing(false), 1000);
-  }, []);
+    // Force refresh from cloud function (bypass cache)
+    await loadChampionship(true);
+    setRefreshing(false);
+  }, [selectedEvent]);
 
   const toggleCard = (sailNumber: string) => {
     setExpandedCard(expandedCard === sailNumber ? null : sailNumber);
@@ -66,40 +102,17 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
     return RACING_CLASS_COLORS[racingClass] || colors.primary;
   };
 
-  // Championship Toggle Component - iOS Style
-  const ChampionshipToggle = () => {
-    console.log('[ModernResultsScreen] 🎯 COMPONENT IDENTIFICATION: Using IOSSegmentedControl from ios/IOSSegmentedControl');
-    const segmentOptions: IOSSegmentedControlOption[] = MOCK_CHAMPIONSHIPS.map(championship => ({
-      label: championship.shortName,
-      value: championship.id
-    }));
-
-    return (
-      <View style={styles.toggleContainer}>
-        <IOSSegmentedControl
-          options={segmentOptions}
-          selectedValue={selectedChampionship}
-          onValueChange={setSelectedChampionship}
-          style={styles.segmentedControl}
-        />
-      </View>
-    );
-  };
 
   // Live Results Controls Component
   const LiveResultsControls = () => {
     const getLiveResultsUrl = () => {
       // Different URLs for each championship on racingrulesofsailing.org
-      switch (selectedChampionship) {
-        case 'asia-pacific-2026':
-          // APAC 2026 - Event #13241
-          return 'https://www.racingrulesofsailing.org/events/13241/event_links?name=2026%2520HONG%2520KONG%2520DRAGON%2520ASIA%2520PACIFIC%2520CHAMPIONSHIP';
-        case 'dragon-world-2026':
-          // Worlds 2027 - Event #13242
-          return 'https://www.racingrulesofsailing.org/events/13242/event_links?name=2027%2520HONG%2520KONG%2520DRAGON%2520WORLD%2520CHAMPIONSHIP';
-        default:
-          return 'https://www.racingrulesofsailing.org/events/13242/event_links?name=2027%2520HONG%2520KONG%2520DRAGON%2520WORLD%2520CHAMPIONSHIP';
+      if (selectedEvent === 'asia-pacific-2026') {
+        // APAC 2026 - Event #13241
+        return 'https://www.racingrulesofsailing.org/events/13241/event_links?name=2026%2520HONG%2520KONG%2520DRAGON%2520ASIA%2520PACIFIC%2520CHAMPIONSHIP';
       }
+      // Worlds 2027 - Event #13242
+      return 'https://www.racingrulesofsailing.org/events/13242/event_links?name=2027%2520HONG%2520KONG%2520DRAGON%2520WORLD%2520CHAMPIONSHIP';
     };
 
     const handleLiveResultsPress = async () => {
@@ -147,27 +160,92 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
   };
 
 
+  // Loading State Component
+  const LoadingState = () => (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color={colors.primary} />
+      <Text style={styles.loadingText}>Loading results...</Text>
+    </View>
+  );
+
+  // Error State Component
+  const ErrorState = () => (
+    <View style={styles.errorContainer}>
+      <View style={styles.errorIconContainer}>
+        <AlertCircle size={48} color={colors.error} strokeWidth={1.5} />
+      </View>
+      <Text style={styles.errorTitle}>Unable to Load Results</Text>
+      <Text style={styles.errorMessage}>{error}</Text>
+      <TouchableOpacity style={styles.retryButton} onPress={() => loadChampionship(true)}>
+        <RefreshCw size={16} color={colors.textInverted} />
+        <Text style={styles.retryButtonText}>Try Again</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   // Championship Info Card Component
-  const ChampionshipInfoCard = () => (
-    <View style={styles.championshipCard}>
-      <View style={styles.championshipHeader}>
-        <View style={styles.championshipInfo}>
-          <Text style={styles.championshipTitle}>{currentChampionship.name}</Text>
-          <View style={styles.championshipMeta}>
-            <MapPin size={14} color={colors.textSecondary} />
-            <Text style={styles.championshipLocation}>{currentChampionship.location}</Text>
-            <Users size={14} color={colors.textSecondary} style={{ marginLeft: 12 }} />
-            <Text style={styles.championshipBoats}>{currentChampionship.totalBoats} boats</Text>
-            <Trophy size={14} color={colors.textSecondary} style={{ marginLeft: 12 }} />
-            <Text style={styles.championshipRaces}>{currentChampionship.totalRaces} races</Text>
+  const ChampionshipInfoCard = () => {
+    if (!currentChampionship) return null;
+
+    const getStatusColor = () => {
+      switch (currentChampionship.status) {
+        case 'ongoing': return '#007AFF';
+        case 'completed': return '#34C759';
+        case 'upcoming': return '#FF9500';
+        default: return colors.textMuted;
+      }
+    };
+
+    const getStatusText = () => {
+      switch (currentChampionship.status) {
+        case 'ongoing': return 'Ongoing';
+        case 'completed': return 'Completed';
+        case 'upcoming': return 'Upcoming';
+        default: return '';
+      }
+    };
+
+    return (
+      <View style={styles.championshipCard}>
+        <View style={styles.championshipHeader}>
+          <View style={styles.championshipInfo}>
+            <Text style={styles.championshipTitle}>{currentChampionship.name}</Text>
+            <View style={styles.championshipMeta}>
+              <MapPin size={14} color={colors.textSecondary} />
+              <Text style={styles.championshipLocation}>{currentChampionship.location}</Text>
+              {currentChampionship.totalBoats > 0 && (
+                <>
+                  <Users size={14} color={colors.textSecondary} style={{ marginLeft: 12 }} />
+                  <Text style={styles.championshipBoats}>{currentChampionship.totalBoats} boats</Text>
+                </>
+              )}
+              <Trophy size={14} color={colors.textSecondary} style={{ marginLeft: 12 }} />
+              <Text style={styles.championshipRaces}>{currentChampionship.totalRaces} races</Text>
+            </View>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
+            <Text style={styles.statusText}>{getStatusText()}</Text>
           </View>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: currentChampionship.status === 'ongoing' ? '#007AFF' : '#34C759' }]}>
-          <Text style={styles.statusText}>
-            {currentChampionship.status === 'ongoing' ? 'Ongoing' : 'Completed'}
-          </Text>
-        </View>
       </View>
+    );
+  };
+
+  // Empty State Component
+  const EmptyState = () => (
+    <View style={styles.emptyStateContainer}>
+      <View style={styles.emptyStateIconContainer}>
+        <Clock size={48} color={colors.textMuted} strokeWidth={1.5} />
+      </View>
+      <Text style={styles.emptyStateTitle}>No Results Yet</Text>
+      <Text style={styles.emptyStateMessage}>
+        Results will appear here once racing begins and scores are posted to racingrulesofsailing.org
+      </Text>
+      {currentChampionship && (
+        <Text style={styles.emptyStateDate}>
+          Racing begins: {currentChampionship.startDate}
+        </Text>
+      )}
     </View>
   );
 
@@ -264,10 +342,26 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header - simplified */}
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Fixed Header with Profile Button */}
       <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <IOSText textStyle="title1" weight="bold" style={styles.headerTitle}>
+            Results
+          </IOSText>
+          <ProfileButton size={36} />
+        </View>
       </View>
+
+      {/* Event Selector */}
+      <FloatingEventSwitch
+        options={[
+          { label: '2026 Asia Pacific Championship', shortLabel: 'APAC 2026', value: 'asia-pacific-2026' },
+          { label: '2027 Dragon World Championship', shortLabel: 'Worlds 2027', value: 'dragon-worlds-2026' }
+        ]}
+        selectedValue={selectedEvent}
+        onValueChange={(eventId) => handleEventChange(eventId as 'asia-pacific-2026' | 'dragon-worlds-2026')}
+      />
 
       <ScrollView
         style={styles.scrollView}
@@ -277,22 +371,33 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
         }
         showsVerticalScrollIndicator={false}
       >
-
-        {/* Championship Toggle */}
-        <ChampionshipToggle />
-
         {/* Live Results Controls */}
         <LiveResultsControls />
 
-        {/* Championship Info */}
-        <ChampionshipInfoCard />
+        {/* Loading State */}
+        {loading && !refreshing && <LoadingState />}
 
-        {/* Competitors List */}
-        <View style={styles.competitorsList}>
-          {currentChampionship.competitors.map((competitor) => (
-            <CompetitorCard key={competitor.sailNumber} competitor={competitor} />
-          ))}
-        </View>
+        {/* Error State */}
+        {!loading && error && <ErrorState />}
+
+        {/* Championship Info and Results */}
+        {!loading && !error && currentChampionship && (
+          <>
+            {/* Championship Info */}
+            <ChampionshipInfoCard />
+
+            {/* Competitors List or Empty State */}
+            {currentChampionship.competitors.length > 0 ? (
+              <View style={styles.competitorsList}>
+                {currentChampionship.competitors.map((competitor) => (
+                  <CompetitorCard key={competitor.sailNumber} competitor={competitor} />
+                ))}
+              </View>
+            ) : (
+              <EmptyState />
+            )}
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -304,11 +409,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
+    backgroundColor: colors.background,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.borderLight,
+    zIndex: 10,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  headerTitle: {
+    color: colors.text,
   },
   liveResultsButton: {
     flexDirection: 'row',
@@ -348,14 +464,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: spacing.xl,
-  },
-  toggleContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    backgroundColor: colors.background,
-  },
-  segmentedControl: {
-    // No additional styling needed - inherits from IOSSegmentedControl
   },
   liveResultsContainer: {
     flexDirection: 'row',
@@ -536,5 +644,108 @@ const styles = StyleSheet.create({
   discardedResultText: {
     color: colors.error,
     textDecorationLine: 'line-through',
+  },
+  emptyStateContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl * 2,
+    paddingHorizontal: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    ...shadows.small,
+  },
+  emptyStateIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.backgroundSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
+  },
+  emptyStateTitle: {
+    ...typography.headlineSmall,
+    color: colors.text,
+    fontWeight: '700',
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  emptyStateMessage: {
+    ...typography.bodyMedium,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  emptyStateDate: {
+    ...typography.labelMedium,
+    color: colors.primary,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl * 2,
+    paddingHorizontal: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+  },
+  loadingText: {
+    ...typography.bodyMedium,
+    color: colors.textSecondary,
+    marginTop: spacing.md,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl * 2,
+    paddingHorizontal: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    ...shadows.small,
+  },
+  errorIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.error + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
+  },
+  errorTitle: {
+    ...typography.headlineSmall,
+    color: colors.text,
+    fontWeight: '700',
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    ...typography.bodyMedium,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.md,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.lg,
+    gap: spacing.xs,
+  },
+  retryButtonText: {
+    ...typography.labelMedium,
+    color: colors.textInverted,
+    fontWeight: '600',
   },
 });

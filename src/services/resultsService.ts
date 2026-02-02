@@ -1,4 +1,48 @@
-import { UserStore } from '../stores/userStore';
+import { useUserStore } from '../stores/userStore';
+import { Championship, ChampionshipCompetitor, MOCK_CHAMPIONSHIPS, COUNTRY_FLAGS } from '../data/mockChampionshipData';
+import { externalUrls } from '../config/externalUrls';
+
+// Type for user store state getter
+type UserStoreType = typeof useUserStore;
+
+// Cloud function response types
+interface CloudFunctionRaceScore {
+  points: number | null;
+  position: number | null;
+  isDiscarded: boolean;
+  status: string;
+}
+
+interface CloudFunctionStanding {
+  position: number;
+  sailNumber: string;
+  helmName: string;
+  crewName: string | null;
+  club: string | null;
+  totalPoints: number | null;
+  netPoints: number | null;
+  raceScores: CloudFunctionRaceScore[];
+}
+
+interface CloudFunctionMetadata {
+  scrapedAt: string;
+  source: string;
+  totalRaces: number;
+  completedRaces: number;
+  totalCompetitors: number;
+  scoringSystem: string;
+  lastRaceDate: string | null;
+}
+
+interface CloudFunctionResponse {
+  eventId: string;
+  eventName: string;
+  lastUpdated: string;
+  races: any[];
+  overallStandings: CloudFunctionStanding[];
+  divisions: any[];
+  metadata: CloudFunctionMetadata;
+}
 
 export interface RaceResult {
   id: string;
@@ -162,13 +206,31 @@ export interface ResultsServiceConfig {
   updateInterval: number; // milliseconds
 }
 
+// Event ID mapping
+const EVENT_ID_MAP: Record<string, string> = {
+  'asia-pacific-2026': '13241',
+  'dragon-world-2026': '13242',
+  'dragon-worlds-2027': '13242',
+};
+
+// Reverse mapping for Championship ID lookup
+const CHAMPIONSHIP_ID_MAP: Record<string, string> = {
+  '13241': 'asia-pacific-2026',
+  '13242': 'dragon-world-2026',
+};
+
 class ResultsService {
   private config: ResultsServiceConfig;
-  private userStore: typeof UserStore;
+  private userStore: UserStoreType;
   private websocket: WebSocket | null = null;
   private listeners: { [event: string]: Function[] } = {};
 
-  constructor(userStore: typeof UserStore) {
+  // Cache for championship data
+  private cache: Map<string, Championship> = new Map();
+  private lastFetchTime: Map<string, number> = new Map();
+  private cacheDuration = 300000; // 5 minutes in milliseconds
+
+  constructor(userStore: UserStoreType) {
     this.userStore = userStore;
     this.config = {
       baseUrl: process.env.EXPO_PUBLIC_RESULTS_API_URL || 'https://api.dragonworlds2027.com',
@@ -176,6 +238,189 @@ class ResultsService {
       websocketUrl: process.env.EXPO_PUBLIC_RESULTS_WS_URL || 'wss://ws.dragonworlds2027.com',
       updateInterval: 5000 // 5 seconds
     };
+  }
+
+  /**
+   * Get championship data with caching and fallback to bundled data
+   * @param eventId - The event ID (e.g., 'asia-pacific-2026' or '13241')
+   * @param forceRefresh - Bypass cache and fetch fresh data
+   */
+  async getChampionship(eventId: string, forceRefresh: boolean = false): Promise<Championship> {
+    // Normalize event ID (support both app event IDs and cloud function event IDs)
+    const cloudEventId = EVENT_ID_MAP[eventId] || eventId;
+    const cacheKey = cloudEventId;
+
+    // Check cache validity
+    if (!forceRefresh && this.isCacheValid(cacheKey)) {
+      const cached = this.cache.get(cacheKey);
+      if (cached) {
+        console.log(`[ResultsService] Returning cached data for event ${cloudEventId}`);
+        return cached;
+      }
+    }
+
+    try {
+      console.log(`[ResultsService] Fetching live data for event ${cloudEventId}`);
+      const championship = await this.fetchLiveResults(cloudEventId);
+
+      // Update cache
+      this.cache.set(cacheKey, championship);
+      this.lastFetchTime.set(cacheKey, Date.now());
+
+      return championship;
+    } catch (error) {
+      console.error('[ResultsService] Error fetching live results:', error);
+
+      // Return cached data if available (even if expired)
+      const cachedData = this.cache.get(cacheKey);
+      if (cachedData) {
+        console.log('[ResultsService] Returning expired cached data due to error');
+        return cachedData;
+      }
+
+      // Fallback to bundled mock data
+      console.log('[ResultsService] Falling back to bundled data');
+      return this.getBundledChampionship(cloudEventId);
+    }
+  }
+
+  /**
+   * Check if cache is still valid
+   */
+  private isCacheValid(eventId: string): boolean {
+    const lastFetch = this.lastFetchTime.get(eventId);
+    if (!lastFetch) return false;
+    return Date.now() - lastFetch < this.cacheDuration;
+  }
+
+  /**
+   * Fetch live results from cloud function
+   */
+  private async fetchLiveResults(eventId: string): Promise<Championship> {
+    const url = `${externalUrls.cloudFunctions.scrapeRaceData}?eventId=${eventId}&type=results&useCache=true`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data: CloudFunctionResponse = await response.json();
+    return this.transformToChampionship(data, eventId);
+  }
+
+  /**
+   * Transform cloud function response to app's Championship type
+   */
+  private transformToChampionship(response: CloudFunctionResponse, eventId: string): Championship {
+    const championshipId = CHAMPIONSHIP_ID_MAP[eventId] || eventId;
+    const bundled = MOCK_CHAMPIONSHIPS.find(c => c.id === championshipId);
+
+    // Extract country code from sail number (e.g., "HKG 59" -> "HKG" -> "HK")
+    const getCountryCode = (sailNumber: string): string => {
+      const match = sailNumber.match(/^([A-Z]{2,3})/);
+      if (!match) return 'XX';
+      const code = match[1];
+      // Convert 3-letter to 2-letter if needed
+      const codeMap: Record<string, string> = {
+        'HKG': 'HK', 'GBR': 'GB', 'AUS': 'AU', 'USA': 'US', 'NZL': 'NZ',
+        'SIN': 'SG', 'JPN': 'JP', 'FRA': 'FR', 'GER': 'DE', 'ITA': 'IT',
+        'ESP': 'ES', 'NED': 'NL', 'DEN': 'DK', 'SWE': 'SE', 'NOR': 'NO',
+      };
+      return codeMap[code] || code.substring(0, 2);
+    };
+
+    const competitors: ChampionshipCompetitor[] = response.overallStandings.map((standing) => {
+      const countryCode = getCountryCode(standing.sailNumber);
+      const countryFlag = COUNTRY_FLAGS[countryCode] || '🏳️';
+
+      // Extract race results (positions)
+      const raceResults = standing.raceScores.map(score =>
+        score.position || score.points || 0
+      );
+
+      // Extract discards (race results that are discarded)
+      const discards = standing.raceScores
+        .filter(score => score.isDiscarded)
+        .map(score => score.position || score.points || 0);
+
+      return {
+        position: standing.position,
+        sailNumber: standing.sailNumber,
+        helmName: standing.helmName,
+        crewName: standing.crewName || undefined,
+        countryCode: countryCode,
+        countryFlag: countryFlag,
+        yachtClub: standing.club || 'Unknown Club',
+        racingClass: 'Dragon', // Default for Dragon class events
+        totalPoints: standing.netPoints || standing.totalPoints || 0,
+        raceResults: raceResults,
+        discards: discards.length > 0 ? discards : undefined,
+      };
+    });
+
+    return {
+      id: championshipId,
+      name: response.eventName || bundled?.name || 'Championship',
+      shortName: bundled?.shortName || response.eventName || 'Championship',
+      startDate: bundled?.startDate || '',
+      endDate: bundled?.endDate || '',
+      location: bundled?.location || 'Hong Kong',
+      status: this.determineStatus(response.metadata),
+      totalRaces: response.metadata.totalRaces || bundled?.totalRaces || 0,
+      completedRaces: response.metadata.completedRaces || 0,
+      totalBoats: competitors.length || response.metadata.totalCompetitors || 0,
+      lastUpdated: response.lastUpdated,
+      competitors: competitors,
+    };
+  }
+
+  /**
+   * Determine championship status from metadata
+   */
+  private determineStatus(metadata: CloudFunctionMetadata): 'upcoming' | 'ongoing' | 'completed' {
+    if (metadata.completedRaces === 0) {
+      return 'upcoming';
+    }
+    if (metadata.completedRaces >= metadata.totalRaces && metadata.totalRaces > 0) {
+      return 'completed';
+    }
+    return 'ongoing';
+  }
+
+  /**
+   * Get bundled championship data (fallback)
+   */
+  private getBundledChampionship(eventId: string): Championship {
+    const championshipId = CHAMPIONSHIP_ID_MAP[eventId] || eventId;
+    const bundled = MOCK_CHAMPIONSHIPS.find(c => c.id === championshipId);
+
+    if (bundled) {
+      return bundled;
+    }
+
+    // Return first championship if no match found
+    return MOCK_CHAMPIONSHIPS[0];
+  }
+
+  /**
+   * Clear cache for a specific event or all events
+   */
+  clearCache(eventId?: string): void {
+    if (eventId) {
+      const cloudEventId = EVENT_ID_MAP[eventId] || eventId;
+      this.cache.delete(cloudEventId);
+      this.lastFetchTime.delete(cloudEventId);
+    } else {
+      this.cache.clear();
+      this.lastFetchTime.clear();
+    }
+    console.log(`[ResultsService] Cache cleared${eventId ? ` for event ${eventId}` : ''}`);
   }
 
   /**
@@ -544,5 +789,8 @@ class ResultsService {
     }));
   }
 }
+
+// Create singleton instance for easy import
+export const resultsService = new ResultsService(useUserStore);
 
 export default ResultsService;
