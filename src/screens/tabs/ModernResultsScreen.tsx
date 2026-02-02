@@ -89,14 +89,16 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
   // Live Results Controls Component
   const LiveResultsControls = () => {
     const getLiveResultsUrl = () => {
-      // Different URLs for each championship on racingrulesofsailing.org for RHKYC
+      // Different URLs for each championship on racingrulesofsailing.org
       switch (selectedChampionship) {
         case 'asia-pacific-2026':
-          return 'https://www.racingrulesofsailing.org/events/3245'; // Asia Pacific Championship 2026
+          // APAC 2026 - Event #13241
+          return 'https://www.racingrulesofsailing.org/events/13241/event_links?name=2026%2520HONG%2520KONG%2520DRAGON%2520ASIA%2520PACIFIC%2520CHAMPIONSHIP';
         case 'dragon-world-2026':
-          return 'https://www.racingrulesofsailing.org/events/3246'; // Dragon World Championship 2026
+          // Worlds 2027 - Event #13242
+          return 'https://www.racingrulesofsailing.org/events/13242/event_links?name=2027%2520HONG%2520KONG%2520DRAGON%2520WORLD%2520CHAMPIONSHIP';
         default:
-          return 'https://www.racingrulesofsailing.org/events/3246';
+          return 'https://www.racingrulesofsailing.org/events/13242/event_links?name=2027%2520HONG%2520KONG%2520DRAGON%2520WORLD%2520CHAMPIONSHIP';
       }
     };
 

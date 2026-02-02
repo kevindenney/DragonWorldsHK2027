@@ -11,32 +11,54 @@ export const externalUrls = {
   /**
    * ClubSpot - Online Entry System
    * Used for competitor registration and entry management
-   * TODO: User to provide the actual ClubSpot URL for Dragon Worlds 2027
    */
   clubSpot: {
-    entrySystem: 'https://clubspot.app', // Placeholder - update with actual event URL
-    baseUrl: 'https://clubspot.app',
+    // Base URLs
+    baseUrl: 'https://theclubspot.com',
+
+    // APAC 2026 Championship
+    apac: {
+      regattaPage: 'https://theclubspot.com/regatta/p75RuY5UZc',
+      entryLink: 'https://theclubspot.com/register/regatta/p75RuY5UZc/class',
+      entryList: 'https://theclubspot.com/regatta/p75RuY5UZc/#entry-list',
+    },
+
+    // Worlds 2027 Championship
+    worlds: {
+      regattaPage: 'https://theclubspot.com/regatta/zyQIfeVjhb',
+      entryLink: 'https://theclubspot.com/register/regatta/zyQIfeVjhb/class',
+      entryList: 'https://theclubspot.com/regatta/zyQIfeVjhb/#entry-list',
+      shop: 'https://theclubspot.com/shop/regatta/zyQIfeVjhb', // Ceremony tickets & merchandise
+    },
   },
 
   /**
-   * Racing Rules of Sailing
-   * Official World Sailing Racing Rules reference
-   * TODO: User to provide preferred Racing Rules URL
+   * Racing Rules of Sailing (RRoS)
+   * Event-specific racing rules pages
    */
   racingRules: {
-    // World Sailing official rules page
+    // General World Sailing rules page
     officialUrl: 'https://www.sailing.org/inside-world-sailing/rules-regulations/racing-rules-of-sailing/',
-    // Alternative: direct PDF link if available
-    pdfUrl: '', // TODO: Add direct PDF link if preferred
+
+    // APAC 2026 - Event #13241
+    apac: {
+      eventNumber: '13241',
+      eventLinks: 'https://www.racingrulesofsailing.org/events/13241/event_links?name=2026%2520HONG%2520KONG%2520DRAGON%2520ASIA%2520PACIFIC%2520CHAMPIONSHIP',
+    },
+
+    // Worlds 2027 - Event #13242
+    worlds: {
+      eventNumber: '13242',
+      eventLinks: 'https://www.racingrulesofsailing.org/events/13242/event_links?name=2027%2520HONG%2520KONG%2520DRAGON%2520WORLD%2520CHAMPIONSHIP',
+    },
   },
 
   /**
    * Dragon Worlds Podcast
    * Official podcast for Dragon World Championships
-   * TODO: User to provide the Spotify podcast URL
    */
   podcast: {
-    spotify: 'https://open.spotify.com/show/', // Placeholder - update with actual podcast URL
+    spotify: 'https://open.spotify.com/episode/22sImt7qEH1E0ldiVmoBQ9',
     // Additional podcast platforms can be added here
     applePodcasts: '',
     googlePodcasts: '',
