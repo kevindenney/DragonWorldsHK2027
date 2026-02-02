@@ -5,6 +5,7 @@ import { LayoutGrid, List } from 'lucide-react-native';
 import { SimplifiedResultsScreen } from '../../screens/tabs/SimplifiedResultsScreen';
 import { ModernResultsScreen } from '../../screens/tabs/ModernResultsScreen';
 import { CompetitorDetailScreen } from '../../screens/CompetitorDetailScreen';
+import { RacingRulesScreen } from '../../screens/RacingRulesScreen';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
 
 const { colors, typography, spacing, borderRadius } = dragonChampionshipsLightTheme;
@@ -16,6 +17,7 @@ type ResultsStackParamList = {
     competitorData: any;
     standings: any;
   };
+  RacingRules: undefined;
 };
 
 const Stack = createStackNavigator<ResultsStackParamList>();
@@ -59,6 +61,7 @@ export function ResultsStackNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ResultsHome" component={ResultsScreenWithToggle} />
       <Stack.Screen name="CompetitorDetail" component={CompetitorDetailScreen} />
+      <Stack.Screen name="RacingRules" component={RacingRulesScreen} />
     </Stack.Navigator>
   );
 }

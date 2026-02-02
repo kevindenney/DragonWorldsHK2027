@@ -24,6 +24,7 @@ import {
   ChevronRight,
   MapPin,
   Play,
+  BookOpen,
 } from 'lucide-react-native';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
 import { MOCK_CHAMPIONSHIPS, Championship, ChampionshipCompetitor, RACING_CLASS_COLORS } from '../../data/mockChampionshipData';
@@ -122,11 +123,19 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
       }
     };
 
+    const handleRacingRulesPress = () => {
+      navigation.navigate('RacingRules');
+    };
+
     return (
       <View style={styles.liveResultsContainer}>
         <TouchableOpacity style={styles.liveResultsButton} onPress={handleLiveResultsPress}>
           <Play size={16} color={colors.textInverted} />
           <Text style={styles.liveResultsText}>Live Results</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.racingRulesButton} onPress={handleRacingRulesPress}>
+          <BookOpen size={16} color={colors.primary} />
+          <Text style={styles.racingRulesText}>Rules</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
           <RefreshCw size={20} color={colors.textSecondary} />
@@ -311,6 +320,22 @@ const styles = StyleSheet.create({
   liveResultsText: {
     ...typography.labelMedium,
     color: colors.textInverted,
+    fontWeight: '600',
+  },
+  racingRulesButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary + '15',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.lg,
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.primary + '30',
+  },
+  racingRulesText: {
+    ...typography.labelMedium,
+    color: colors.primary,
     fontWeight: '600',
   },
   refreshButton: {
