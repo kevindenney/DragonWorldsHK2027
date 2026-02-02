@@ -1,11 +1,13 @@
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Image, Dimensions, ImageBackground } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, StyleSheet, Image, Dimensions, ImageBackground, Platform, Alert, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Anchor, Globe, Trophy, Users } from 'lucide-react-native';
-import { IOSText, IOSButton } from '../../components/ios';
-import { colors, spacing, typography, shadows } from '../../constants/theme';
+import { Mail } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 import Animated from '../../utils/reanimatedWrapper';
+import { SocialLoginButton } from '../../components/auth/SocialLoginButton';
+import { AuthProvider } from '../../auth/authTypes';
+import { useAuth } from '../../auth/useAuth';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -16,88 +18,82 @@ interface WelcomeScreenProps {
 }
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSkip, onSignIn }) => {
+  const { loginWithProvider, isLoading } = useAuth();
+  const [loadingProvider, setLoadingProvider] = useState<'google' | 'apple' | null>(null);
+
+  // Animation values
   const logoScale = useRef(new Animated.Value(0.8)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
-  const titleOpacity = useRef(new Animated.Value(0)).current;
-  const subtitleOpacity = useRef(new Animated.Value(0)).current;
-  const featuresOpacity = useRef(new Animated.Value(0)).current;
+  const contentOpacity = useRef(new Animated.Value(0)).current;
   const buttonsOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Orchestrated animation sequence
-    const logoAnimation = Animated.parallel([
-      Animated.timing(logoScale, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(logoOpacity, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-    ]);
-
-    const titleAnimation = Animated.timing(titleOpacity, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-    });
-
-    const subtitleAnimation = Animated.timing(subtitleOpacity, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-    });
-
-    const featuresAnimation = Animated.timing(featuresOpacity, {
-      toValue: 1,
-      duration: 800,
-      useNativeDriver: true,
-    });
-
-    const buttonsAnimation = Animated.timing(buttonsOpacity, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-    });
-
-    // Sequential animation
+    // Orchestrated animation sequence - faster and cleaner
     Animated.sequence([
-      logoAnimation,
-      titleAnimation,
-      subtitleAnimation,
-      featuresAnimation,
-      buttonsAnimation,
+      // Logo appears first
+      Animated.parallel([
+        Animated.timing(logoScale, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(logoOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Then content
+      Animated.timing(contentOpacity, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      // Finally buttons
+      Animated.timing(buttonsOpacity, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
-  const features = [
-    {
-      icon: Trophy,
-      title: 'Live Results',
-      description: 'Real-time race tracking and championship standings',
-      color: colors.warning,
-    },
-    {
-      icon: Anchor,
-      title: 'Racing Locations',
-      description: 'Interactive maps of all course areas and marks',
-      color: colors.primary,
-    },
-    {
-      icon: Globe,
-      title: 'Event Schedule',
-      description: 'Detailed race times, briefings, and social events',
-      color: colors.accent,
-    },
-    {
-      icon: Users,
-      title: 'Official Documents',
-      description: 'Sailing instructions, notices, and race updates',
-      color: colors.success,
-    },
-  ];
+  const handleGoogleSignIn = async () => {
+    try {
+      await Haptics.selectionAsync();
+      setLoadingProvider('google');
+      await loginWithProvider(AuthProvider.GOOGLE);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // Navigation will happen automatically via auth state change
+    } catch (error: any) {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert(
+        'Sign In Failed',
+        error?.message || 'Failed to sign in with Google. Please try again.'
+      );
+    } finally {
+      setLoadingProvider(null);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    await Haptics.selectionAsync();
+    Alert.alert(
+      'Apple Sign In',
+      'Apple Sign In is coming soon! Please use Google Sign In or Email for now.',
+      [{ text: 'OK', style: 'default' }]
+    );
+  };
+
+  const handleEmailSignUp = async () => {
+    await Haptics.selectionAsync();
+    onContinue();
+  };
+
+  const handleSkip = async () => {
+    await Haptics.selectionAsync();
+    onSkip();
+  };
 
   return (
     <ImageBackground
@@ -107,16 +103,16 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSkip
     >
       <LinearGradient
         colors={[
-          '#0A1E3D', // Dark navy blue for better text contrast
-          '#0d2440', // Mid-dark navy
-          '#122b4a', // Stays dark at bottom for button visibility
+          'rgba(10, 30, 61, 0.85)',
+          'rgba(13, 36, 64, 0.90)',
+          'rgba(18, 43, 74, 0.95)',
         ]}
         locations={[0, 0.5, 1]}
         style={styles.gradientOverlay}
       >
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-          {/* Header Section with Logo */}
-          <View style={styles.header}>
+          {/* Logo Section - Takes up ~40% of screen */}
+          <View style={styles.logoSection}>
             <Animated.View
               style={[
                 styles.logoContainer,
@@ -132,87 +128,84 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSkip
                 resizeMode="contain"
               />
             </Animated.View>
-
-            <Animated.View style={{ opacity: titleOpacity }}>
-              <IOSText style={styles.title} textStyle="largeTitle" weight="bold">
-                Dragon Worlds
-              </IOSText>
-              <IOSText style={styles.subtitle} textStyle="title2" weight="semibold">
-                Hong Kong 2027
-              </IOSText>
-            </Animated.View>
-
-            <Animated.View style={{ opacity: subtitleOpacity }}>
-              <IOSText style={styles.description} textStyle="body" color="secondaryLabel">
-                Welcome to the official app for the Dragon Class World Championships.
-                Follow the world's best sailors as they compete in Hong Kong's legendary waters.
-              </IOSText>
-            </Animated.View>
           </View>
 
-          {/* Features Grid */}
-          <Animated.View style={[styles.featuresContainer, { opacity: featuresOpacity }]}>
-            <IOSText style={styles.featuresTitle} textStyle="headline" weight="semibold">
-              Experience the Championship
-            </IOSText>
-
-            <View style={styles.featuresGrid}>
-              {features.map((feature, index) => {
-                const Icon = feature.icon;
-                return (
-                  <View key={index} style={styles.featureCard}>
-                    <View style={[styles.featureIconContainer, { backgroundColor: `${feature.color}15` }]}>
-                      <Icon size={24} color={feature.color} strokeWidth={2} />
-                    </View>
-                    <IOSText style={styles.featureTitle} textStyle="footnote" weight="semibold">
-                      {feature.title}
-                    </IOSText>
-                    <IOSText style={styles.featureDescription} textStyle="caption2" color="secondaryLabel">
-                      {feature.description}
-                    </IOSText>
-                  </View>
-                );
-              })}
-            </View>
+          {/* Content Section */}
+          <Animated.View style={[styles.contentSection, { opacity: contentOpacity }]}>
+            <Text style={styles.welcomeText}>Welcome to</Text>
+            <Text style={styles.titleText}>Dragon Worlds</Text>
+            <Text style={styles.subtitleText}>Hong Kong 2027</Text>
+            <Text style={styles.descriptionText}>
+              The official app for the Dragon Class World Championships
+            </Text>
           </Animated.View>
 
-          {/* Action Buttons */}
-          <Animated.View style={[styles.buttonContainer, { opacity: buttonsOpacity }]}>
-            <IOSButton
-              title="Sign up"
-              onPress={onContinue}
-              variant="filled"
-              size="large"
-              style={styles.primaryButton}
-              textStyle={styles.primaryButtonText}
-            />
+          {/* Buttons Section */}
+          <Animated.View style={[styles.buttonsSection, { opacity: buttonsOpacity }]}>
+            {/* Primary: Google Sign In */}
+            <TouchableOpacity
+              style={styles.googleButton}
+              onPress={handleGoogleSignIn}
+              disabled={isLoading || loadingProvider !== null}
+              activeOpacity={0.8}
+            >
+              <View style={styles.googleIconContainer}>
+                <Image
+                  source={{ uri: 'https://developers.google.com/identity/images/g-logo.png' }}
+                  style={styles.googleIcon}
+                  defaultSource={require('../../../assets/dragon-logo.png')}
+                />
+              </View>
+              <Text style={styles.googleButtonText}>
+                {loadingProvider === 'google' ? 'Signing in...' : 'Continue with Google'}
+              </Text>
+            </TouchableOpacity>
 
-            {onSignIn && (
-              <IOSButton
-                title="Sign in"
-                onPress={onSignIn}
-                variant="plain"
-                size="large"
-                style={styles.secondaryButton}
-                textStyle={styles.secondaryButtonText}
-              />
+            {/* Secondary: Apple Sign In (iOS only) */}
+            {Platform.OS === 'ios' && (
+              <TouchableOpacity
+                style={styles.appleButton}
+                onPress={handleAppleSignIn}
+                disabled={isLoading || loadingProvider !== null}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.appleIcon}></Text>
+                <Text style={styles.appleButtonText}>
+                  {loadingProvider === 'apple' ? 'Signing in...' : 'Continue with Apple'}
+                </Text>
+              </TouchableOpacity>
             )}
 
-            <IOSButton
-              title="Skip for now"
-              onPress={onSkip}
-              variant="plain"
-              size="large"
-              style={styles.tertiaryButton}
-              textStyle={styles.tertiaryButtonText}
-            />
+            {/* Tertiary: Email Sign Up */}
+            <TouchableOpacity
+              style={styles.emailButton}
+              onPress={handleEmailSignUp}
+              activeOpacity={0.7}
+            >
+              <Mail size={18} color="#FFFFFF" strokeWidth={2} style={styles.emailIcon} />
+              <Text style={styles.emailButtonText}>Sign up with Email</Text>
+            </TouchableOpacity>
+
+            {/* Divider */}
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Skip Option - Always visible */}
+            <TouchableOpacity
+              style={styles.skipButton}
+              onPress={handleSkip}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.skipButtonText}>Skip for now</Text>
+            </TouchableOpacity>
           </Animated.View>
 
           {/* Footer */}
           <View style={styles.footer}>
-            <IOSText style={styles.footerText} textStyle="caption2" color="secondaryLabel">
-              Powered by the Dragon Class International Association
-            </IOSText>
+            <Text style={styles.footerText}>
+              By continuing, you agree to our Terms of Service
+            </Text>
           </View>
         </SafeAreaView>
       </LinearGradient>
@@ -231,147 +224,187 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: 24,
   },
-  header: {
+
+  // Logo Section - ~40% of screen
+  logoSection: {
+    flex: 0.35,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: spacing.md, // Reduced from xl
-    paddingBottom: spacing.sm, // Reduced from lg
   },
   logoContainer: {
-    marginBottom: spacing.sm, // Reduced from lg
-    ...shadows.medium,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   logo: {
-    width: 100, // Reduced from 120
-    height: 100, // Reduced from 120
+    width: 140,
+    height: 140,
   },
-  title: {
+
+  // Content Section
+  contentSection: {
+    alignItems: 'center',
+    paddingBottom: 32,
+  },
+  welcomeText: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.8)',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  titleText: {
+    fontSize: 36,
+    fontWeight: '800',
     color: '#FFFFFF',
     textAlign: 'center',
-    fontSize: 32, // Reduced from 36
-    fontWeight: '700',
-    marginBottom: 4, // Reduced from spacing.xs
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    letterSpacing: -0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
-  subtitle: {
-    color: '#FFFFFF',
-    textAlign: 'center',
-    fontSize: 22, // Reduced from 24
+  subtitleText: {
+    fontSize: 24,
     fontWeight: '600',
-    marginBottom: spacing.sm, // Reduced from lg
-    textShadowColor: 'rgba(0, 0, 0, 0.4)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  description: {
-    textAlign: 'center',
-    fontSize: 14, // Reduced from 16
-    lineHeight: 20, // Reduced from 24
-    color: 'rgba(255, 255, 255, 0.95)',
-    paddingHorizontal: spacing.md,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  featuresContainer: {
-    paddingVertical: spacing.xs, // Reduced from md
-    marginBottom: spacing.xs, // Reduced from md
-  },
-  featuresTitle: {
-    textAlign: 'center',
     color: '#FFFFFF',
-    marginBottom: spacing.sm, // Reduced from xl
-    fontSize: 18, // Reduced from 20
-    fontWeight: '700',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textAlign: 'center',
+    marginBottom: 16,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-  featuresGrid: {
+  descriptionText: {
+    fontSize: 15,
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.85)',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+
+  // Buttons Section
+  buttonsSection: {
+    flex: 0.45,
+    justifyContent: 'flex-start',
+    paddingTop: 8,
+  },
+
+  // Google Button - Primary CTA
+  googleButton: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.sm,
-  },
-  featureCard: {
-    width: '48%',
-    backgroundColor: 'rgba(255, 255, 255, 0.98)',
-    borderRadius: 16,
-    padding: spacing.sm, // Increased for better text visibility
-    paddingVertical: spacing.sm,
-    marginBottom: spacing.xs,
-    alignItems: 'center',
-    ...shadows.card,
-  },
-  featureIconContainer: {
-    width: 40, // Reduced from 48
-    height: 40, // Reduced from 48
-    borderRadius: 20, // Reduced from 24
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.xs, // Reduced from sm
-  },
-  featureTitle: {
-    textAlign: 'center',
-    color: colors.text,
-    marginBottom: spacing.xs,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  featureDescription: {
-    textAlign: 'center',
-    fontSize: 12,
-    lineHeight: 16,
-    color: colors.textSecondary,
-  },
-  buttonContainer: {
-    marginTop: spacing.md, // Added to create space above buttons
-    paddingBottom: spacing.sm, // Reduced from lg
-    paddingTop: spacing.sm, // Reduced from md
-    gap: 12, // Fixed: 12px for proper spacing between buttons (requirement: 12-16px)
-  },
-  primaryButton: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    minHeight: 50, // Slightly reduced from 52
-    ...shadows.button,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  primaryButtonText: {
-    color: '#0A1E3D',
-    fontWeight: '700',
-    fontSize: 17,
-  },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    minHeight: 50, // Slightly reduced from 52
-  },
-  secondaryButtonText: {
-    color: 'rgba(255, 255, 255, 0.95)',
-    fontWeight: '600',
-    fontSize: 15, // Slightly reduced from 16
-  },
-  tertiaryButton: {
-    backgroundColor: 'transparent',
-    minHeight: 44,
-  },
-  tertiaryButtonText: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontWeight: '500',
-    fontSize: 14,
-  },
-  footer: {
+  googleIconContainer: {
+    width: 20,
+    height: 20,
+    marginRight: 12,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingBottom: spacing.xs, // Reduced from lg
-    paddingTop: spacing.xs, // Reduced from sm
+  },
+  googleIcon: {
+    width: 20,
+    height: 20,
+  },
+  googleButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F1F1F',
+  },
+
+  // Apple Button - Secondary
+  appleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000000',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  appleIcon: {
+    fontSize: 20,
+    color: '#FFFFFF',
+    marginRight: 10,
+  },
+  appleButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+
+  // Email Button - Tertiary
+  emailButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    marginBottom: 24,
+  },
+  emailIcon: {
+    marginRight: 10,
+  },
+  emailButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+
+  // Divider
+  divider: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  dividerLine: {
+    width: 60,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+
+  // Skip Button
+  skipButton: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  skipButtonText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+
+  // Footer
+  footer: {
+    paddingBottom: 16,
+    alignItems: 'center',
   },
   footerText: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.5)',
+    textAlign: 'center',
   },
 });
 
