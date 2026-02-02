@@ -17,6 +17,7 @@ const {
   extractSailingInstructionData 
 } = require('./scrapeDocuments');
 const { scrapeCCR2024Results, updateCCR2024Results } = require('./scrapeCCR2024Results');
+const { scrapeClubSpotEntrants } = require('./scrapeClubSpot');
 
 // Initialize Firebase Admin SDK
 if (admin.apps.length === 0) {
@@ -1413,5 +1414,9 @@ exports.scheduledRaceDataSync = onScheduleV2({
 });
 
 // Export CCR 2024 specific functions
-exports.scrapeCCR2024Results = scrapeCCR2024Results;
+// Note: scrapeCCR2024Results is temporarily disabled due to a stuck deployment
+// exports.scrapeCCR2024Results = scrapeCCR2024Results;
 exports.updateCCR2024Results = updateCCR2024Results;
+
+// Export ClubSpot entrant scraping function
+exports.scrapeClubSpotEntrants = scrapeClubSpotEntrants;

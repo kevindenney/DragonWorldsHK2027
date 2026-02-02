@@ -97,7 +97,18 @@
       "Bash(open:*)",
       "Bash(export PATH=$JAVA_HOME/bin:$PATH)",
       "Bash(echo $JAVA_HOME)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(npx expo export:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(npx firebase:*)",
+      "Bash(npx gcloud functions delete:*)",
+      "Bash(curl:*)",
+      "mcp__playwright__playwright_navigate",
+      "Bash(gcloud functions delete:*)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+      "Bash(gcloud functions list:*)",
+      "Bash(firebase functions:list:*)"
     ],
     "deny": [],
     "ask": []

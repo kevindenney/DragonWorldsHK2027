@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, TextInput, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -9,7 +9,10 @@ import {
   X,
   Clock,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Wifi,
+  WifiOff,
+  Radio
 } from 'lucide-react-native';
 
 import { colors, spacing } from '../../constants/theme';
@@ -18,10 +21,11 @@ import { IOSCard, IOSText, IOSBadge, IOSSection, IOSButton } from '../../compone
 import { IOSSegmentedControl } from '../../components/ios/IOSSegmentedControl';
 import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
 import { SimpleError } from '../../components/shared/SimpleError';
-import ClubSpotService from '../../services/clubSpotService';
+import { useClubSpotEntrants, getClubSpotService } from '../../hooks/useClubSpotEntrants';
 import type { Competitor } from '../../types/noticeBoard';
 import type { EntrantsScreenProps } from '../../types/navigation';
 import { eventSchedules } from '../../data/scheduleData';
+import { externalUrls } from '../../config/externalUrls';
 
 const getCountryFlag = (countryCode: string): string => {
   const flagEmojis: { [key: string]: string } = {
@@ -73,59 +77,46 @@ const EVENT_SEGMENT_OPTIONS: Array<{ label: string; value: EventSegment }> = [
 
 export const EntrantsScreen: React.FC<EntrantsScreenProps> = () => {
   const [selectedEvent, setSelectedEvent] = useState<EventSegment>('world');
-  const [entrants, setEntrants] = useState<Competitor[]>([]);
   const [filteredEntrants, setFilteredEntrants] = useState<Competitor[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [searchText, setSearchText] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | Competitor['registrationStatus']>('all');
-  const [clubSpotService] = useState(() => new ClubSpotService());
 
   // Get current event configuration
   const currentEvent = selectedEvent === 'world'
     ? eventSchedules.worldChampionship
     : eventSchedules.asiaPacificChampionships;
 
-  // Extract regatta ID from ClubSpot URL
-  const getRegattaId = (url?: string): string => {
-    if (!url) return 'demo';
-    const match = url.match(/regatta\/([^/?]+)/);
-    return match ? match[1] : 'demo';
-  };
+  // Get regatta ID from config
+  const regattaId = useMemo(() => {
+    return selectedEvent === 'world'
+      ? externalUrls.clubSpot.regattaIds?.worlds || 'zyQIfeVjhb'
+      : externalUrls.clubSpot.regattaIds?.apac || 'p75RuY5UZc';
+  }, [selectedEvent]);
 
-  // Load entrants
+  // Use the ClubSpot entrants hook
+  const {
+    entrants,
+    isLoading,
+    isRefreshing,
+    error: hookError,
+    dataSourceInfo,
+    refresh,
+    isLiveData,
+    lastUpdatedText,
+  } = useClubSpotEntrants(regattaId, currentEvent.id);
+
+  // Convert hook error to string
+  const error = hookError ? hookError.message : null;
+
+  // Handle refresh
   const loadEntrants = useCallback(async (showRefreshing = false) => {
     try {
-      if (showRefreshing) {
-        setIsRefreshing(true);
-      } else {
-        setIsLoading(true);
-      }
-      setError(null);
-
-      const regattaId = getRegattaId(currentEvent.clubSpotUrl);
-      const eventId = currentEvent.id;
-
-      console.log(`[EntrantsScreen] Loading entrants for ${eventId} from regatta ${regattaId}`);
-
-      const data = await clubSpotService.getEntrants(regattaId, eventId);
-      setEntrants(data);
-      setFilteredEntrants(data);
+      await refresh();
     } catch (err) {
-      console.error('[EntrantsScreen] Failed to load entrants:', err);
-      setError('Failed to load entrants. Please try again.');
+      console.error('[EntrantsScreen] Failed to refresh entrants:', err);
       await haptics.errorAction();
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
     }
-  }, [currentEvent, clubSpotService]);
-
-  // Load entrants when event changes
-  useEffect(() => {
-    loadEntrants();
-  }, [selectedEvent]);
+  }, [refresh]);
 
   // Filter and search entrants
   useEffect(() => {
@@ -176,8 +167,26 @@ export const EntrantsScreen: React.FC<EntrantsScreenProps> = () => {
   // Handle refresh
   const handleRefresh = useCallback(async () => {
     await haptics.selection();
-    await loadEntrants(true);
-  }, [loadEntrants]);
+    await refresh();
+  }, [refresh]);
+
+  // Get data source badge info
+  const getDataSourceBadge = useCallback(() => {
+    if (!dataSourceInfo) {
+      return { label: 'Loading', color: 'systemGray' as const, icon: Clock };
+    }
+
+    switch (dataSourceInfo.source) {
+      case 'live':
+        return { label: 'Live Data', color: 'systemGreen' as const, icon: Radio };
+      case 'cache':
+        return { label: 'Cached', color: 'systemOrange' as const, icon: Wifi };
+      case 'demo':
+        return { label: 'Demo Mode', color: 'systemBlue' as const, icon: WifiOff };
+      default:
+        return { label: 'Unknown', color: 'systemGray' as const, icon: AlertCircle };
+    }
+  }, [dataSourceInfo]);
 
   // Render entrant card
   const renderEntrantCard = (entrant: Competitor) => {
@@ -328,12 +337,32 @@ export const EntrantsScreen: React.FC<EntrantsScreenProps> = () => {
       <IOSSection spacing="compact">
         <IOSCard variant="elevated" style={styles.statsCard}>
           <View style={styles.statsHeader}>
-            <IOSText textStyle="subheadline" weight="semibold">
-              {currentEvent.title}
-            </IOSText>
+            <View style={styles.statsHeaderLeft}>
+              <IOSText textStyle="subheadline" weight="semibold">
+                {currentEvent.title}
+              </IOSText>
+              <View style={styles.dataSourceRow}>
+                {(() => {
+                  const badgeInfo = getDataSourceBadge();
+                  const BadgeIcon = badgeInfo.icon;
+                  return (
+                    <>
+                      <View style={styles.dataSourceBadge}>
+                        <IOSBadge color={badgeInfo.color} size="small" variant="filled">
+                          {badgeInfo.label}
+                        </IOSBadge>
+                      </View>
+                      <IOSText textStyle="caption2" color="tertiaryLabel">
+                        Updated {lastUpdatedText}
+                      </IOSText>
+                    </>
+                  );
+                })()}
+              </View>
+            </View>
             <IOSButton
               title=""
-              icon={<RefreshCw size={16} color={colors.primary} />}
+              icon={<RefreshCw size={16} color={isRefreshing ? colors.textSecondary : colors.primary} />}
               variant="plain"
               size="small"
               onPress={handleRefresh}
@@ -494,6 +523,20 @@ const styles = StyleSheet.create({
   statsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  statsHeaderLeft: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  dataSourceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flexWrap: 'wrap',
+  },
+  dataSourceBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
   statsGrid: {

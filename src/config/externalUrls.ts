@@ -9,12 +9,29 @@
 
 export const externalUrls = {
   /**
+   * Firebase Cloud Functions
+   * Backend API endpoints for data scraping and processing
+   */
+  cloudFunctions: {
+    // ClubSpot entrants scraping endpoint (Cloud Run URL for public access)
+    scrapeClubSpot: 'https://scrapeclubspotentrants-3w5luutuya-uc.a.run.app',
+    // Race data scraping endpoint (Cloud Run URL)
+    scrapeRaceData: 'https://scraperacedata-3w5luutuya-uc.a.run.app',
+  },
+
+  /**
    * ClubSpot - Online Entry System
    * Used for competitor registration and entry management
    */
   clubSpot: {
     // Base URLs
     baseUrl: 'https://theclubspot.com',
+
+    // Regatta IDs for API calls
+    regattaIds: {
+      apac: 'p75RuY5UZc',
+      worlds: 'zyQIfeVjhb',
+    },
 
     // APAC 2026 Championship
     apac: {
