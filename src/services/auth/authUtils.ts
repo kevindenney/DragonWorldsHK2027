@@ -1,4 +1,4 @@
-import { User, UserRole, AuthProviderTypeType, UserStatus } from '../../types/auth';
+import { User, UserRole, AuthProviderType, UserStatus } from '../../types/auth';
 
 /**
  * Authentication utilities and helpers

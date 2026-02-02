@@ -214,18 +214,25 @@ export const useAuthStore = create<AuthState>()(
       register: async (credentials: RegisterCredentials) => {
         try {
           set({ isLoading: true, error: null });
-          
+
           const userCredential = await createUserWithEmailAndPassword(
             auth,
             credentials.email,
             credentials.password
           );
-          
+
           // Update display name
           await updateProfile(userCredential.user, {
             displayName: credentials.displayName,
           });
-          
+
+          // Default preferences for new users
+          const defaultPreferences = {
+            notifications: true,
+            newsletter: false,
+            language: 'en',
+          };
+
           // Create user document in Firestore (if available)
           try {
             if (firestore) {
@@ -236,13 +243,9 @@ export const useAuthStore = create<AuthState>()(
                 emailVerified: false,
                 role: 'participant',
                 providers: ['email'],
-                preferences: {
-                  notifications: true,
-                  newsletter: false,
-                  language: 'en',
-                },
+                preferences: defaultPreferences,
               });
-              
+
               await setDoc(getDocRef.user(userCredential.user.uid), userDoc);
               console.log('✅ User document created in Firestore');
             } else {
@@ -251,10 +254,10 @@ export const useAuthStore = create<AuthState>()(
           } catch (error) {
             console.warn('⚠️ Could not create user document in Firestore:', error);
           }
-          
+
           // Send verification email
           await sendEmailVerification(userCredential.user);
-          
+
           const user: User = {
             uid: userCredential.user.uid,
             email: userCredential.user.email || '',
@@ -264,7 +267,7 @@ export const useAuthStore = create<AuthState>()(
             providers: ['email'],
             createdAt: new Date(),
             updatedAt: new Date(),
-            preferences: userDoc.preferences,
+            preferences: defaultPreferences,
           };
           
           set({
