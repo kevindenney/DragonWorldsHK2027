@@ -56,8 +56,9 @@ export function TabNavigator() {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size, focused }) => {
           let IconComponent;
-          const iconSize = focused ? size + 2 : size;
-          
+          // Clean, consistent icon sizing - no size change on focus
+          const iconSize = 24;
+
           switch (route.name) {
             case 'Schedule':
               IconComponent = Calendar;
@@ -80,61 +81,42 @@ export function TabNavigator() {
             default:
               IconComponent = Calendar;
           }
-          
-          const iconElement = (
-            <IconComponent 
-              color={color} 
-              size={iconSize} 
+
+          // Clean icon rendering - color-only state indication (no pill background)
+          return (
+            <IconComponent
+              color={color}
+              size={iconSize}
               strokeWidth={focused ? 2.5 : 2}
-              fill={focused ? color : 'transparent'}
             />
           );
-
-          if (focused) {
-            return (
-              <View style={{
-                backgroundColor: `${colors.primary}15`,
-                borderRadius: borderRadius.round,
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                minWidth: 56,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                {iconElement}
-              </View>
-            );
-          }
-          
-          return iconElement;
         },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
+        // Regatta Flow design: Blue active (#3B82F6), muted gray inactive (#6B7280)
+        tabBarActiveTintColor: '#3B82F6',
+        tabBarInactiveTintColor: '#6B7280',
         tabBarStyle: {
-          backgroundColor: `${colors.surface}F5`,
-          borderTopColor: colors.borderLight,
-          borderTopWidth: 0.5,
-          height: 65 + insets.bottom, // Increased height for proper spacing + safe area
+          backgroundColor: '#FFFFFF', // Clean white background
+          borderTopColor: '#E5E7EB', // Clean border
+          borderTopWidth: 1,
+          height: 56 + insets.bottom, // Cleaner height
           paddingBottom: insets.bottom, // Dynamic safe area padding
-          paddingTop: 8,
-          paddingHorizontal: 4,
-          ...shadows.tabBar,
-          elevation: 8,
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.12,
-          shadowRadius: 8,
+          paddingTop: 6,
+          // Minimal shadow for cleaner look
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: -1 },
+          shadowOpacity: 0.05,
+          shadowRadius: 2,
+          elevation: 4,
         },
         tabBarLabelStyle: {
-          fontSize: 10, // Slightly smaller to fit better
-          fontWeight: '600',
-          marginTop: -2, // Bring label closer to icon
+          fontSize: 12, // Per spec: 12px
+          fontWeight: '600', // Per spec: weight 600
+          marginTop: 2,
           marginBottom: 2,
         },
         tabBarItemStyle: {
-          paddingVertical: 2,
+          paddingVertical: 4,
           marginHorizontal: 0,
-          borderRadius: borderRadius.md,
-          minHeight: 48, // Increased min height
         },
         headerShown: false,
         tabBarShowLabel: true,
