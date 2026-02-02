@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import {
   MapPin,
+  Navigation,
   Info,
   Users,
   Phone,
@@ -23,6 +24,7 @@ interface EventActionSheetProps {
   activity: Activity | null;
   visible: boolean;
   onClose: () => void;
+  onGetDirections: () => void;
   onNavigateToMap: () => void;
   onViewDetails: () => void;
   onShowRelated: () => void;
@@ -35,6 +37,7 @@ export const EventActionSheet: React.FC<EventActionSheetProps> = ({
   activity,
   visible,
   onClose,
+  onGetDirections,
   onNavigateToMap,
   onViewDetails,
   onShowRelated,
@@ -63,9 +66,17 @@ export const EventActionSheet: React.FC<EventActionSheetProps> = ({
 
   const actionItems = [
     {
+      icon: Navigation,
+      title: 'Get Directions',
+      subtitle: `Open Maps to ${activity.location}`,
+      onPress: onGetDirections,
+      color: '#28A745',
+      disabled: !activity.mapLocationId,
+    },
+    {
       icon: MapPin,
-      title: 'Navigate to Location',
-      subtitle: activity.location,
+      title: 'View on Map',
+      subtitle: 'Show location in app',
       onPress: onNavigateToMap,
       color: colors.primary,
       disabled: !activity.mapLocationId,

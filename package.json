@@ -85,6 +85,7 @@
     "expo-notifications": "^0.31.4",
     "expo-splash-screen": "~0.30.10",
     "expo-status-bar": "~2.2.3",
+    "expo-updates": "^0.28.17",
     "expo-web-browser": "~14.2.0",
     "firebase": "^11.0.0",
     "lucide-react-native": "^0.542.0",

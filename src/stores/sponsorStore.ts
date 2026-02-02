@@ -149,11 +149,11 @@ interface SponsorState {
 
 // Default branding configuration
 const defaultBrandingConfig = {
-  primaryColor: '#0066CC',
-  accentColor: '#FF6B35',
+  primaryColor: '#DB0011',
+  accentColor: '#1E3A5F',
   logoPlacement: [
-    { location: 'header' as const, sponsorId: 'rolex', size: 'medium' as const, priority: 1 },
-    { location: 'services' as const, sponsorId: 'hsbc', size: 'small' as const, priority: 2 }
+    { location: 'header' as const, sponsorId: 'hsbc', size: 'medium' as const, priority: 1 },
+    { location: 'services' as const, sponsorId: 'hopewell_hotel', size: 'small' as const, priority: 2 }
   ]
 };
 
@@ -167,14 +167,14 @@ const fetchSponsorsFromAPI = async (): Promise<{
   
   const mockSponsors: Sponsor[] = [
     {
-      id: 'rolex',
-      name: 'Rolex',
-      logo: '/assets/sponsors/rolex-logo.png',
-      website: 'https://rolex.com',
-      description: 'Official timekeeper and title sponsor',
+      id: 'hsbc',
+      name: 'HSBC',
+      logo: '/assets/sponsors/hsbc-logo.png',
+      website: 'https://hsbc.com.hk',
+      description: 'The World\'s Local Bank - Proud Title Sponsor',
       category: 'title-sponsor',
       tier: 'platinum',
-      color: '#006341',
+      color: '#DB0011',
       isActive: true,
       contract: {
         startDate: '2024-01-01',
@@ -182,61 +182,111 @@ const fetchSponsorsFromAPI = async (): Promise<{
       },
       contacts: [
         {
-          id: 'rolex-contact-1',
-          name: 'Sarah Johnson',
-          role: 'Sponsorship Manager',
-          email: 'sarah.johnson@rolex.com',
-          phone: '+41-22-302-2200',
-          isPublic: true
-        }
-      ]
-    },
-    {
-      id: 'hsbc',
-      name: 'HSBC',
-      logo: '/assets/sponsors/hsbc-logo.png',
-      website: 'https://hsbc.com',
-      description: 'Premier banking services provider',
-      category: 'major-sponsor',
-      tier: 'gold',
-      color: '#DB0011',
-      isActive: true,
-      contract: {
-        startDate: '2024-01-01',
-        endDate: '2026-12-31'
-      },
-      contacts: [
-        {
           id: 'hsbc-contact-1',
           name: 'Michael Chen',
-          role: 'Relationship Manager',
+          role: 'Sponsorship Manager',
           email: 'michael.chen@hsbc.com.hk',
-          phone: '+852-2822-1111',
+          phone: '+852-2233-3000',
           isPublic: true
         }
       ]
     },
     {
-      id: 'conrad-hk',
-      name: 'Conrad Hong Kong',
-      logo: '/assets/sponsors/conrad-logo.png',
-      website: 'https://conradhongkong.com',
-      description: 'Official hospitality partner',
-      category: 'service-provider',
+      id: 'hopewell_hotel',
+      name: 'Hopewell Hotel',
+      logo: '/assets/sponsors/hopewell-logo.png',
+      website: 'https://hopewellhotel.com',
+      description: 'Official Accommodation Partner',
+      category: 'major-sponsor',
       tier: 'gold',
-      color: '#8B4513',
+      color: '#1E3A5F',
       isActive: true,
       contract: {
         startDate: '2024-01-01',
-        endDate: '2025-12-31'
+        endDate: '2027-12-31'
       },
       contacts: [
         {
-          id: 'conrad-contact-1',
+          id: 'hopewell-contact-1',
           name: 'Lisa Wong',
           role: 'Events Manager',
-          email: 'lisa.wong@conradhotels.com',
-          phone: '+852-2521-3838',
+          email: 'events@hopewellhotel.com',
+          phone: '+852-2861-1111',
+          isPublic: true
+        }
+      ]
+    },
+    {
+      id: 'hktb',
+      name: 'Hong Kong Tourism Board',
+      logo: '/assets/sponsors/hktb-logo.png',
+      website: 'https://discoverhongkong.com',
+      description: 'Official Tourism Partner',
+      category: 'major-sponsor',
+      tier: 'gold',
+      color: '#E31B23',
+      isActive: true,
+      contract: {
+        startDate: '2024-01-01',
+        endDate: '2027-12-31'
+      },
+      contacts: [
+        {
+          id: 'hktb-contact-1',
+          name: 'Sarah Lam',
+          role: 'Events Coordinator',
+          email: 'events@hktb.com',
+          phone: '+852-2807-6177',
+          isPublic: true
+        }
+      ]
+    },
+    {
+      id: 'yanmar',
+      name: 'Yanmar',
+      logo: '/assets/sponsors/yanmar-logo.png',
+      website: 'https://yanmar.com',
+      description: 'Official Marine Engine Partner',
+      category: 'major-sponsor',
+      tier: 'gold',
+      color: '#E60012',
+      isActive: true,
+      contract: {
+        startDate: '2024-01-01',
+        endDate: '2027-12-31'
+      },
+      contacts: [
+        {
+          id: 'yanmar-contact-1',
+          name: 'Kenji Tanaka',
+          role: 'Marine Division Manager',
+          email: 'marine@yanmar.com.hk',
+          phone: '+852-2833-3133',
+          isPublic: true
+        }
+      ]
+    },
+    {
+      id: 'code_zero',
+      name: 'Code Zero',
+      logo: '/assets/sponsors/codezero-logo.png',
+      website: 'https://codezero.com',
+      description: 'Official Clothing Partner',
+      category: 'major-sponsor',
+      tier: 'gold',
+      color: '#000000',
+      isActive: true,
+      contract: {
+        startDate: '2024-01-01',
+        endDate: '2027-12-31'
+      },
+      contacts: [
+        {
+          id: 'codezero-contact-1',
+          name: 'Emma Nielsen',
+          role: 'Partnerships Manager',
+          email: 'partnerships@codezero.com',
+          phone: '+852-2527-8899',
           isPublic: true
         }
       ]
@@ -247,52 +297,82 @@ const fetchSponsorsFromAPI = async (): Promise<{
     {
       id: 'hsbc-banking',
       name: 'Premier Banking Services',
-      description: 'Currency exchange, transfers, ATM access',
+      description: 'Currency exchange, transfers, ATM access for all participants',
       type: 'banking',
       targetAudience: 'all',
       availability: {
-        startDate: '2024-11-18',
-        endDate: '2024-11-24',
+        startDate: '2027-11-18',
+        endDate: '2027-11-28',
         times: ['09:00-17:00'],
-        locations: ['RHKYC', 'Conrad HK']
+        locations: ['RHKYC', 'Hopewell Hotel']
       },
       bookingRequired: false,
       contactInfo: 'HSBC Premier Hotline: +852-2233-3322'
     },
     {
-      id: 'conrad-dining',
-      name: 'VIP Dining Reservations',
-      description: 'Exclusive restaurant bookings and private dining',
-      type: 'dining',
-      targetAudience: 'vip',
+      id: 'hopewell-accommodation',
+      name: 'Competitor Accommodation',
+      description: 'Exclusive rates and yacht club shuttle service',
+      type: 'accommodation',
+      targetAudience: 'all',
       availability: {
-        startDate: '2024-11-18',
-        endDate: '2024-11-24',
-        times: ['19:00-23:00'],
-        locations: ['Conrad Hong Kong']
+        startDate: '2027-11-15',
+        endDate: '2027-11-30',
+        times: ['24 hours'],
+        locations: ['Hopewell Hotel']
       },
       bookingRequired: true,
-      contactInfo: 'Concierge: +852-2521-3838',
-      terms: 'Advance booking required. Dress code applies.'
+      contactInfo: 'Reservations: +852-2861-1111',
+      terms: 'Use code DRAGON2027 for 35% discount.'
+    },
+    {
+      id: 'yanmar-service',
+      name: 'Marine Engine Support',
+      description: 'Free engine diagnostics and technical support',
+      type: 'marine-services',
+      targetAudience: 'all',
+      availability: {
+        startDate: '2027-11-18',
+        endDate: '2027-11-28',
+        times: ['07:00-19:00'],
+        locations: ['RHKYC Marina']
+      },
+      bookingRequired: false,
+      contactInfo: 'Yanmar Support: +852-2833-3188'
+    },
+    {
+      id: 'codezero-retail',
+      name: 'Sailing Apparel Shop',
+      description: 'Performance gear with 30% competitor discount',
+      type: 'retail',
+      targetAudience: 'all',
+      availability: {
+        startDate: '2027-11-18',
+        endDate: '2027-11-28',
+        times: ['08:00-20:00'],
+        locations: ['RHKYC Pop-up', 'Pacific Place']
+      },
+      bookingRequired: false,
+      contactInfo: 'Code Zero: +852-2527-8899'
     }
   ];
   
   const mockConfigurations: SponsorConfiguration[] = [
     {
       eventId: 'dragon-worlds-2027',
-      titleSponsor: 'rolex',
-      majorSponsors: ['hsbc', 'conrad-hk'],
+      titleSponsor: 'hsbc',
+      majorSponsors: ['hopewell_hotel', 'hktb', 'yanmar', 'code_zero'],
       alignedPartners: [],
       serviceProviders: {
         banking: ['hsbc'],
-        hospitality: ['conrad-hk'],
-        transportation: [],
-        'marine-services': [],
+        hospitality: ['hopewell_hotel'],
+        transportation: ['hktb'],
+        'marine-services': ['yanmar'],
         weather: [],
         technology: [],
-        dining: ['conrad-hk'],
-        accommodation: ['conrad-hk'],
-        retail: [],
+        dining: ['hopewell_hotel'],
+        accommodation: ['hopewell_hotel'],
+        retail: ['code_zero'],
         medical: []
       },
       brandingConfig: defaultBrandingConfig

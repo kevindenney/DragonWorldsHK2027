@@ -422,61 +422,68 @@ export const sailingLocations: SailingLocation[] = [
 
   // === HOTELS ===
   {
-    id: 'conrad_hong_kong',
-    name: 'Conrad Hong Kong',
+    id: 'hopewell_hotel',
+    name: 'Hopewell Hotel',
     type: 'hotel',
     coordinates: {
-      latitude: 22.2772,
-      longitude: 114.1653
+      latitude: 22.2755,
+      longitude: 114.1720
     },
-    description: 'Luxury 5-star hotel in Admiralty with harbor views, walking distance to RHKYC Kellett Island.',
-    championshipRole: 'Premium accommodation for championship participants',
+    description: 'Official Accommodation Partner of Dragon Worlds 2027. Luxury hotel in Wan Chai with stunning harbour views and convenient yacht club access.',
+    championshipRole: 'Official accommodation partner with competitor shuttle service to RHKYC',
     importance: 'primary',
     championshipSpecific: true,
     
-    address: 'Pacific Place, 88 Queensway, Admiralty, Hong Kong',
+    address: '183 Queen\'s Road East, Wan Chai, Hong Kong',
     
     facilities: [
-      '513 luxury rooms and suites',
-      'Harbor view rooms',
-      'Executive lounge',
-      'Fitness center and spa',
-      'Multiple restaurants',
-      'Business center',
-      'Concierge services'
+      '400+ luxury rooms and suites',
+      '360-degree harbour views from Sky Bar',
+      'Rooftop pool and fitness center',
+      'Award-winning restaurants',
+      'Executive spa and wellness center',
+      'Complimentary yacht club shuttle',
+      'Secure equipment storage for competitors'
     ],
     
     contact: {
-      phone: '+852 2521 3838',
-      email: 'info.hongkong@conradhotels.com',
-      website: 'www.conradhongkong.com'
+      phone: '+852 2861 1111',
+      email: 'reservations@hopewellhotel.com',
+      website: 'www.hopewellhotel.com'
     },
     
-    racerInfo: 'Premier accommodation within walking distance of RHKYC. Concierge services familiar with sailing requirements. Secure equipment storage available.',
-    spectatorInfo: 'Luxury harbor view accommodation with easy access to sailing venues. Premium dining and spa facilities.',
+    racerInfo: 'Official Dragon Worlds 2027 accommodation partner. 35% competitor discount with code DRAGON2027. Complimentary shuttle to RHKYC every 30 minutes. Secure gear storage available.',
+    spectatorInfo: 'Premium harbour view accommodation with legendary Sky Bar offering 360-degree views. Award-winning dim sum and Cantonese cuisine.',
     
     championshipEvents: [
       {
         date: '2027-11-20',
         time: '19:00',
         event: 'Welcome Reception',
-        description: 'Championship welcome cocktail reception'
+        description: 'Dragon Worlds 2027 welcome cocktail reception at Sky Bar'
+      },
+      {
+        date: '2027-11-28',
+        time: '19:00',
+        event: 'Prize Giving Dinner',
+        description: 'Championship prize giving gala dinner'
       }
     ],
     
     transportation: [
       {
-        type: 'walking',
+        type: 'shuttle',
         route: 'To RHKYC Kellett Island',
-        cost: 'Free',
-        notes: '8-minute walk through Pacific Place'
+        schedule: 'Every 30 minutes, 06:00-22:00',
+        cost: 'Complimentary for hotel guests',
+        notes: 'Book through hotel concierge'
       },
       {
         type: 'mtr',
-        route: 'Admiralty Station (Direct access)',
+        route: 'Wan Chai Station (10-minute walk)',
         schedule: '05:00-01:00 daily',
-        cost: 'Direct access',
-        notes: 'Connected to Pacific Place'
+        cost: 'HK$5-15',
+        notes: 'Exit A3 then walk up Queen\'s Road East'
       }
     ],
     

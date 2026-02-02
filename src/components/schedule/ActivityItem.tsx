@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Linking, Alert, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
 import { 
@@ -21,6 +21,7 @@ import type { Activity, ActivityType } from '../../data/scheduleData';
 import { activityTypes } from '../../data/scheduleData';
 import { EventActionSheet } from './EventActionSheet';
 import { EventDetailModal } from './EventDetailModal';
+import { getLocationById } from '../../data/sailingLocations';
 
 export interface ActivityItemProps {
   activity: Activity;
@@ -69,6 +70,35 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDa
     }
   };
 
+  const handleGetDirections = () => {
+    setShowActionSheet(false);
+    if (activity.mapLocationId) {
+      const location = getLocationById(activity.mapLocationId);
+      if (location) {
+        const { latitude, longitude } = location.coordinates;
+        const encodedName = encodeURIComponent(location.name);
+        
+        // Use platform-specific URL scheme for native maps
+        const url = Platform.select({
+          ios: `maps://app?daddr=${latitude},${longitude}&q=${encodedName}`,
+          android: `google.navigation:q=${latitude},${longitude}`,
+          default: `https://maps.google.com/maps?daddr=${latitude},${longitude}&q=${encodedName}`,
+        });
+        
+        Linking.canOpenURL(url).then(supported => {
+          if (supported) {
+            Linking.openURL(url);
+          } else {
+            // Fallback to Google Maps web URL
+            const fallbackUrl = `https://maps.google.com/maps?daddr=${latitude},${longitude}&q=${encodedName}`;
+            Linking.openURL(fallbackUrl);
+          }
+        }).catch(() => {
+          Alert.alert('Error', 'Unable to open maps app');
+        });
+      }
+    }
+  };
 
   const handleViewDetails = () => {
     setShowActionSheet(false);
@@ -95,6 +125,33 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDa
     }
   };
 
+  const handleDetailModalGetDirections = () => {
+    setShowDetailModal(false);
+    if (activity.mapLocationId) {
+      const location = getLocationById(activity.mapLocationId);
+      if (location) {
+        const { latitude, longitude } = location.coordinates;
+        const encodedName = encodeURIComponent(location.name);
+        
+        const url = Platform.select({
+          ios: `maps://app?daddr=${latitude},${longitude}&q=${encodedName}`,
+          android: `google.navigation:q=${latitude},${longitude}`,
+          default: `https://maps.google.com/maps?daddr=${latitude},${longitude}&q=${encodedName}`,
+        });
+        
+        Linking.canOpenURL(url).then(supported => {
+          if (supported) {
+            Linking.openURL(url);
+          } else {
+            const fallbackUrl = `https://maps.google.com/maps?daddr=${latitude},${longitude}&q=${encodedName}`;
+            Linking.openURL(fallbackUrl);
+          }
+        }).catch(() => {
+          Alert.alert('Error', 'Unable to open maps app');
+        });
+      }
+    }
+  };
 
   const handleDetailModalShowRelated = () => {
     setShowDetailModal(false);
@@ -177,6 +234,7 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDa
         activity={activity}
         visible={showActionSheet}
         onClose={() => setShowActionSheet(false)}
+        onGetDirections={handleGetDirections}
         onNavigateToMap={handleNavigateToMap}
         onViewDetails={handleViewDetails}
         onShowRelated={handleShowRelated}
@@ -188,6 +246,7 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDa
         activityDate={activityDate}
         visible={showDetailModal}
         onClose={() => setShowDetailModal(false)}
+        onGetDirections={handleDetailModalGetDirections}
         onNavigateToMap={handleDetailModalNavigateToMap}
         onShowRelated={handleDetailModalShowRelated}
         onContact={activity.contactPerson ? handleDetailModalContact : undefined}

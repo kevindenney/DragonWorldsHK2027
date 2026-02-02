@@ -12,6 +12,9 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
+const DATE_SECTION_WIDTH = 96;
+const CONTENT_INDENT = spacing.md + DATE_SECTION_WIDTH + spacing.sm;
+
 export interface DayCardProps {
   day: Day;
   isExpanded?: boolean;
@@ -128,8 +131,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   dateSection: {
-    width: 80,
+    width: DATE_SECTION_WIDTH,
     alignItems: 'flex-start',
+    paddingRight: spacing.sm,
   },
   dayOfWeek: {
     color: colors.primary,
@@ -168,7 +172,7 @@ const styles = StyleSheet.create({
   activityDivider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.borderLight,
-    marginLeft: 112, // Align with content after time section
+    marginLeft: CONTENT_INDENT, // Align with content after time section
     marginRight: spacing.md,
   },
 });

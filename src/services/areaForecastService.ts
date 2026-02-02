@@ -2,6 +2,7 @@ import type {RaceArea} from '../config/raceAreas';
 import {getNearestTideStation} from './tideStationService';
 import {RACE_AREA_TIDE_MAP} from '../config/raceAreaTides';
 import {multiSourceWeather, type ConsensusReading} from './multiSourceWeatherService';
+import {unifiedTideService} from './unifiedTideService';
 
 // Configuration
 export const WEATHER_CONFIG = {
@@ -474,9 +475,11 @@ export async function getAreaBundle(
     let errorDetails = null;
 
     try {
-      console.log(`🔧 [UNIFIED DEBUG] Step 1: Attempting dynamic import of unifiedTideService...`);
-      const { unifiedTideService } = await import('./unifiedTideService');
-      console.log(`🔧 [UNIFIED DEBUG] ✅ Step 1 SUCCESS: unifiedTideService imported successfully`);
+      console.log(`🔧 [UNIFIED DEBUG] Step 1: Verifying unifiedTideService availability...`);
+      if (!unifiedTideService) {
+        throw new Error('Unified tide service is not initialized');
+      }
+      console.log(`🔧 [UNIFIED DEBUG] ✅ Step 1 SUCCESS: unifiedTideService ready`);
 
       console.log(`🔧 [UNIFIED DEBUG] Step 2: Checking service methods...`);
       console.log(`🔧 [UNIFIED DEBUG] - getCurrentTideHeight: ${typeof unifiedTideService.getCurrentTideHeight}`);

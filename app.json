@@ -196,9 +196,7 @@
           "apiKey": "AIzaSyASvagpRFBzK0HhRGqSqeW7W4FiEoFTf1w"
         }
       },
-      "runtimeVersion": {
-        "policy": "appVersion"
-      }
+      "runtimeVersion": "1.0.0"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -244,7 +242,7 @@
     "privacy": "public",
     "githubUrl": "https://github.com/regattaflow/dragonworlds-hk2027",
     "updates": {
-      "enabled": false,
+      "enabled": true,
       "url": "https://u.expo.dev/c1bd372f-8ae3-4a4d-a4d0-d1300ce6e95a"
     }
   }

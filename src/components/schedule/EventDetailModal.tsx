@@ -33,6 +33,7 @@ export interface EventDetailModalProps {
   activityDate: string;
   visible: boolean;
   onClose: () => void;
+  onGetDirections?: () => void;
   onNavigateToMap?: () => void;
   onShowRelated?: () => void;
   onContact?: () => void;
@@ -43,6 +44,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   activityDate,
   visible,
   onClose,
+  onGetDirections,
   onNavigateToMap,
   onShowRelated,
   onContact,
@@ -256,11 +258,19 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
           </View>
 
           <View style={styles.actionsContainer}>
-            {activity.mapLocationId && (
+            {activity.mapLocationId && onGetDirections && (
               <ActionButton
-                title="View Location on Map"
-                onPress={onNavigateToMap!}
+                title="Get Directions"
+                onPress={onGetDirections}
                 variant="primary"
+              />
+            )}
+
+            {activity.mapLocationId && onNavigateToMap && (
+              <ActionButton
+                title="View on Map"
+                onPress={onNavigateToMap}
+                variant="secondary"
               />
             )}
 

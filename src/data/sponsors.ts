@@ -1,645 +1,646 @@
 import { Sponsor, SponsorshipProgram } from '../types/sponsor';
 
 export const dragonWorldsSponsors: Sponsor[] = [
-  // LEAD SPONSOR
+  // TITLE SPONSOR
   {
-    id: 'rolex',
-    name: 'Rolex',
+    id: 'hsbc',
+    name: 'HSBC',
     tier: 'lead',
-    description: 'A Crown for Every Achievement - Official Timekeeper of Dragon Worlds HK 2027',
-    website: 'https://www.rolex.com',
-    primaryColor: '#006A4E',
+    description: 'The World\'s Local Bank - Proud Title Sponsor of Dragon Worlds HK 2027',
+    website: 'https://www.hsbc.com.hk',
+    primaryColor: '#DB0011',
     isTitle: true,
     contact: {
-      phone: '+852 2921 9888',
-      email: 'hongkong@rolex.com',
-      address: 'Rolex Hong Kong, Prince\'s Building, Central'
+      phone: '+852 2233 3000',
+      email: 'premier@hsbc.com.hk',
+      address: 'HSBC Main Building, 1 Queen\'s Road Central, Hong Kong'
     },
     business: {
-      sector: 'Luxury Timepieces',
-      established: 1905,
-      headquarters: 'Geneva, Switzerland',
-      description: 'Rolex has been the official timekeeper of prestigious sailing events worldwide, supporting the pursuit of excellence in competitive sailing.'
+      sector: 'Financial Services',
+      established: 1865,
+      headquarters: 'London, UK (Founded in Hong Kong)',
+      description: 'HSBC is one of the world\'s largest banking and financial services organisations. Founded in Hong Kong in 1865, HSBC has been an integral part of the city\'s development as a global financial center.'
     },
     locations: [
       {
-        name: 'Rolex Boutique Central',
-        address: 'Shop G04-06, Prince\'s Building, 10 Chater Road, Central',
-        phone: '+852 2921 9888',
-        website: 'https://www.rolex.com/rolex-dealers/hong-kong',
+        name: 'HSBC Main Building',
+        address: '1 Queen\'s Road Central, Hong Kong',
+        phone: '+852 2822 1111',
+        website: 'https://www.hsbc.com.hk',
         hours: {
-          'Monday': '10:00 AM - 8:00 PM',
-          'Tuesday': '10:00 AM - 8:00 PM',
-          'Wednesday': '10:00 AM - 8:00 PM',
-          'Thursday': '10:00 AM - 8:00 PM',
-          'Friday': '10:00 AM - 8:00 PM',
-          'Saturday': '10:00 AM - 8:00 PM',
-          'Sunday': '11:00 AM - 7:00 PM'
+          'Monday': '09:00 AM - 5:00 PM',
+          'Tuesday': '09:00 AM - 5:00 PM',
+          'Wednesday': '09:00 AM - 5:00 PM',
+          'Thursday': '09:00 AM - 5:00 PM',
+          'Friday': '09:00 AM - 5:00 PM',
+          'Saturday': '09:00 AM - 1:00 PM',
+          'Sunday': 'Closed'
         }
       },
       {
-        name: 'Rolex Boutique Tsim Sha Tsui',
-        address: 'Shop LG1-28, Harbour City, 3-27 Canton Road, Tsim Sha Tsui',
-        phone: '+852 2375 2828',
+        name: 'HSBC Premier Centre - Causeway Bay',
+        address: 'Times Square, 1 Matheson Street, Causeway Bay',
+        phone: '+852 2233 3322',
         hours: {
-          'Monday': '10:00 AM - 10:00 PM',
-          'Tuesday': '10:00 AM - 10:00 PM',
-          'Wednesday': '10:00 AM - 10:00 PM',
-          'Thursday': '10:00 AM - 10:00 PM',
-          'Friday': '10:00 AM - 10:00 PM',
-          'Saturday': '10:00 AM - 10:00 PM',
-          'Sunday': '10:00 AM - 10:00 PM'
+          'Monday': '09:00 AM - 6:00 PM',
+          'Tuesday': '09:00 AM - 6:00 PM',
+          'Wednesday': '09:00 AM - 6:00 PM',
+          'Thursday': '09:00 AM - 6:00 PM',
+          'Friday': '09:00 AM - 6:00 PM',
+          'Saturday': '09:00 AM - 1:00 PM',
+          'Sunday': 'Closed'
+        }
+      },
+      {
+        name: 'HSBC Regatta Information Desk',
+        address: 'Royal Hong Kong Yacht Club, Kellett Island, Causeway Bay',
+        phone: '+852 2233 3000',
+        hours: {
+          'Monday': '08:00 AM - 6:00 PM',
+          'Tuesday': '08:00 AM - 6:00 PM',
+          'Wednesday': '08:00 AM - 6:00 PM',
+          'Thursday': '08:00 AM - 6:00 PM',
+          'Friday': '08:00 AM - 6:00 PM',
+          'Saturday': '08:00 AM - 4:00 PM',
+          'Sunday': '08:00 AM - 4:00 PM'
         }
       }
     ],
     offers: [
       {
-        id: 'rolex_vip_experience',
-        title: 'Dragon Worlds VIP Watch Experience',
-        description: 'Private viewing of the latest Yacht-Master collection with expert consultation',
-        type: 'experience',
+        id: 'hsbc_premier_sailing',
+        title: 'Premier Sailing Account Package',
+        description: 'Exclusive banking package with zero account fees, free international transfers, and priority currency exchange for all Dragon Worlds participants',
+        type: 'service',
         validUntil: '2027-12-31',
-        howToRedeem: 'Present Dragon Worlds participant credentials at any Rolex boutique',
+        howToRedeem: 'Visit any HSBC Premier Centre with your Dragon Worlds participant credentials',
         termsAndConditions: [
-          'Valid for registered participants and crew only',
-          'Appointment required - call ahead',
-          'Valid ID required'
+          'Valid for Dragon Worlds participants and crew only',
+          'Free currency exchange up to HKD 100,000',
+          'No account maintenance fees during championship period',
+          'Complimentary travel insurance included'
         ]
       },
       {
-        id: 'rolex_sailing_collection',
-        title: 'Complimentary Yacht-Master Servicing',
-        description: 'Free professional servicing for Rolex Yacht-Master timepieces',
+        id: 'hsbc_global_transfers',
+        title: 'Free International Wire Transfers',
+        description: 'Unlimited complimentary wire transfers to over 40 countries during the championship period',
         type: 'service',
         validUntil: '2027-12-31',
-        howToRedeem: 'Visit authorized Rolex service center with proof of participation',
+        howToRedeem: 'Use HSBC mobile app or visit any branch with participant credentials',
         termsAndConditions: [
-          'Valid for genuine Rolex timepieces only',
-          'Standard servicing only',
-          'Excludes major repairs'
+          'Maximum transfer limit of USD 50,000 per transaction',
+          'Available to all registered participants',
+          'Beneficiary bank charges may apply'
+        ]
+      },
+      {
+        id: 'hsbc_lounge_access',
+        title: 'VIP Airport Lounge Access',
+        description: 'Complimentary access to HSBC Premier Lounges at Hong Kong International Airport',
+        type: 'experience',
+        validUntil: '2027-12-31',
+        howToRedeem: 'Present participant badge and boarding pass at lounge entrance',
+        termsAndConditions: [
+          'Valid for up to 4 guests per participant',
+          'Available 3 hours before flight departure',
+          'Food and beverages included'
         ]
       }
     ],
     hongKongActivities: [
       {
-        id: 'rolex_masters_exhibition',
-        title: 'Rolex Masters of Time Exhibition',
-        description: 'Exclusive exhibition showcasing the history of Rolex in sailing and yachting',
+        id: 'hsbc_rooftop_reception',
+        title: 'HSBC Dragon Worlds Welcome Reception',
+        description: 'Exclusive welcome cocktail reception at the iconic HSBC Main Building rooftop with panoramic Victoria Harbour views',
+        type: 'social',
+        sponsorId: 'hsbc',
+        website: 'https://www.hsbc.com.hk/dragonworlds',
+        bookingRequired: true,
+        duration: '3 hours',
+        priceRange: 'free',
+        bestTime: 'Championship opening evening'
+      },
+      {
+        id: 'hsbc_finance_tour',
+        title: 'Hong Kong Financial District Walking Tour',
+        description: 'Guided tour exploring Hong Kong\'s evolution as a global financial hub, including HSBC\'s historic headquarters',
         type: 'cultural',
-        sponsorId: 'rolex',
-        website: 'https://www.rolex.com/events',
+        sponsorId: 'hsbc',
         bookingRequired: true,
         duration: '2 hours',
         priceRange: 'free',
-        bestTime: 'Weekday afternoons'
+        bestTime: 'Weekday mornings'
       }
     ]
   },
 
   // PREMIERE SPONSORS
   {
-    id: 'hsbc',
-    name: 'HSBC',
+    id: 'hopewell_hotel',
+    name: 'Hopewell Hotel',
     tier: 'premiere',
-    description: 'The World\'s Local Bank - Premier Banking Partner for International Sailors',
-    website: 'https://www.hsbc.com.hk',
-    primaryColor: '#DC143C',
+    description: 'Your Home Away From Home - Official Accommodation Partner of Dragon Worlds HK 2027',
+    website: 'https://www.hopewellhotel.com',
+    primaryColor: '#1E3A5F',
     contact: {
-      phone: '+852 2233 3000',
-      email: 'premier@hsbc.com.hk'
-    },
-    business: {
-      sector: 'Financial Services',
-      established: 1865,
-      headquarters: 'London, UK',
-      description: 'HSBC provides comprehensive banking services to international visitors and sailing professionals worldwide.'
-    },
-    offers: [
-      {
-        id: 'hsbc_premier_sailing',
-        title: 'Premier Banking for Sailors',
-        description: 'Exclusive banking package with no minimum balance and complimentary services',
-        type: 'service',
-        validUntil: '2027-12-31',
-        howToRedeem: 'Visit HSBC Premier Centre with sailing credentials',
-        termsAndConditions: [
-          'Valid for Dragon Worlds participants and crew',
-          'Free currency exchange up to HKD 50,000',
-          'No account fees during championship period'
-        ]
-      },
-      {
-        id: 'hsbc_global_transfers',
-        title: 'Free International Transfers',
-        description: 'Complimentary wire transfers to over 40 countries',
-        type: 'service',
-        validUntil: '2027-12-31',
-        howToRedeem: 'Use HSBC mobile app or visit any branch',
-        termsAndConditions: [
-          'Requires HSBC account opening',
-          'Standard transfer limits apply',
-          'Beneficiary charges may apply'
-        ]
-      }
-    ],
-    hongKongActivities: [
-      {
-        id: 'hsbc_vip_banking',
-        title: 'VIP Banking Lounge Access',
-        description: 'Complimentary access to HSBC Premier lounges with refreshments and Wi-Fi',
-        type: 'business',
-        sponsorId: 'hsbc',
-        bookingRequired: false,
-        duration: 'Flexible',
-        priceRange: 'free',
-        bestTime: 'Business hours'
-      }
-    ]
-  },
-
-  {
-    id: 'lee_kum_kee',
-    name: 'Lee Kum Kee',
-    tier: 'premiere',
-    description: 'Sauce Makes the Taste - Authentic Hong Kong Flavors Since 1888',
-    website: 'https://www.lkk.com',
-    primaryColor: '#FF0000',
-    contact: {
-      phone: '+852 2873 8888',
-      email: 'info@lkk.com'
-    },
-    business: {
-      sector: 'Food & Condiments',
-      established: 1888,
-      headquarters: 'Hong Kong',
-      description: 'Lee Kum Kee is a household name globally, bringing authentic Asian flavors to tables worldwide.'
-    },
-    offers: [
-      {
-        id: 'lkk_cooking_class',
-        title: 'Authentic Cantonese Cooking Workshop',
-        description: 'Learn to cook traditional Hong Kong dishes with Lee Kum Kee sauces',
-        type: 'experience',
-        validUntil: '2027-12-31',
-        howToRedeem: 'Book online with participant code DW2027',
-        termsAndConditions: [
-          'Limited to 20 participants per session',
-          'English and Cantonese instruction available',
-          'All ingredients provided'
-        ]
-      },
-      {
-        id: 'lkk_product_gift',
-        title: 'Authentic Sauce Collection',
-        description: 'Complimentary gift set of premium Lee Kum Kee sauces',
-        type: 'product',
-        validUntil: '2027-12-31',
-        howToRedeem: 'Collect at Lee Kum Kee visitor center',
-        termsAndConditions: [
-          'One gift set per participant',
-          'Valid ID required',
-          'Subject to availability'
-        ]
-      }
-    ],
-    hongKongActivities: [
-      {
-        id: 'lkk_heritage_tour',
-        title: 'Lee Kum Kee Heritage Experience',
-        description: 'Interactive tour of Lee Kum Kee\'s history and traditional sauce-making process',
-        type: 'cultural',
-        sponsorId: 'lee_kum_kee',
-        website: 'https://www.lkk.com/heritage',
-        bookingRequired: true,
-        duration: '90 minutes',
-        priceRange: 'free',
-        bestTime: 'Weekday mornings'
-      },
-      {
-        id: 'lkk_dining_recommendations',
-        title: 'Authentic Hong Kong Restaurant Guide',
-        description: 'Curated list of traditional restaurants using Lee Kum Kee products',
-        type: 'dining',
-        sponsorId: 'lee_kum_kee',
-        bookingRequired: false,
-        priceRange: '$$',
-        bestTime: 'Dinner time'
-      }
-    ]
-  },
-
-  // MAJOR SPONSORS
-  {
-    id: 'sino_group',
-    name: 'Sino Group',
-    tier: 'major',
-    description: 'Building Hong Kong\'s Future - Premium Property and Hospitality',
-    website: 'https://www.sino.com',
-    primaryColor: '#1f4788',
-    contact: {
-      phone: '+852 2833 8888',
-      email: 'info@sino.com'
-    },
-    business: {
-      sector: 'Property Development & Hospitality',
-      established: 1971,
-      headquarters: 'Hong Kong',
-      description: 'Sino Group is a leading property developer and hotel operator in Hong Kong and China.'
-    },
-    offers: [
-      {
-        id: 'sino_hotel_discount',
-        title: 'Exclusive Hotel Rates',
-        description: '30% discount at all Sino Group hotels including Conrad Hong Kong',
-        type: 'discount',
-        validUntil: '2027-12-31',
-        howToRedeem: 'Book directly with promo code DRAGONWORLDS2027',
-        termsAndConditions: [
-          'Subject to availability',
-          'Cannot be combined with other offers',
-          'Valid for stays during championship period'
-        ]
-      }
-    ],
-    hongKongActivities: [
-      {
-        id: 'sino_property_tour',
-        title: 'Hong Kong Skyline Architecture Tour',
-        description: 'Guided tour of iconic Sino Group developments and their architectural significance',
-        type: 'sightseeing',
-        sponsorId: 'sino_group',
-        bookingRequired: true,
-        duration: '3 hours',
-        priceRange: 'free',
-        bestTime: 'Weekend afternoons'
-      }
-    ]
-  },
-
-  {
-    id: 'hopewell',
-    name: 'Hopewell Holdings',
-    tier: 'major',
-    description: 'Infrastructure Excellence - Building Hong Kong\'s Connections',
-    website: 'https://www.hopewellhk.com',
-    primaryColor: '#0066CC',
-    contact: {
-      phone: '+852 2862 0123'
-    },
-    business: {
-      sector: 'Infrastructure & Property',
-      established: 1972,
-      headquarters: 'Hong Kong',
-      description: 'Hopewell Holdings is renowned for major infrastructure projects including highways and power plants.'
-    },
-    offers: [
-      {
-        id: 'hopewell_infrastructure_tour',
-        title: 'Hong Kong Infrastructure Heritage Tour',
-        description: 'Behind-the-scenes look at Hong Kong\'s major infrastructure projects',
-        type: 'experience',
-        validUntil: '2027-12-31',
-        howToRedeem: 'Register online with participant credentials',
-        termsAndConditions: [
-          'Safety briefing required',
-          'Hard hats provided',
-          'Age restrictions may apply'
-        ]
-      }
-    ],
-    hongKongActivities: [
-      {
-        id: 'hopewell_bridge_experience',
-        title: 'Hopewell Centre Sky Bridge',
-        description: 'Exclusive access to panoramic views from Hopewell Centre',
-        type: 'sightseeing',
-        sponsorId: 'hopewell',
-        bookingRequired: true,
-        duration: '45 minutes',
-        priceRange: 'free',
-        bestTime: 'Sunset hours'
-      }
-    ]
-  },
-
-  {
-    id: 'conrad_hotels',
-    name: 'Conrad Hotels & Resorts',
-    tier: 'major',
-    description: 'Inspired by Travel - Luxury Hospitality Partner',
-    website: 'https://www.conradhotels.com',
-    primaryColor: '#8B4513',
-    contact: {
-      phone: '+852 2521 3838',
-      email: 'conrad.hongkong@conradhotels.com'
+      phone: '+852 2861 1111',
+      email: 'reservations@hopewellhotel.com',
+      address: '183 Queen\'s Road East, Wan Chai, Hong Kong'
     },
     business: {
       sector: 'Luxury Hospitality',
-      established: 1982,
-      headquarters: 'McLean, Virginia, USA',
-      description: 'Conrad Hotels & Resorts offers luxury accommodations in major business centers worldwide.'
+      established: 1980,
+      headquarters: 'Hong Kong',
+      description: 'Hopewell Hotel offers world-class accommodation in the heart of Hong Kong, with stunning harbour views and convenient access to the yacht club and racing venues.'
     },
+    locations: [
+      {
+        name: 'Hopewell Hotel Hong Kong',
+        address: '183 Queen\'s Road East, Wan Chai, Hong Kong',
+        phone: '+852 2861 1111',
+        website: 'https://www.hopewellhotel.com',
+        hours: {
+          'Monday': '24 hours',
+          'Tuesday': '24 hours',
+          'Wednesday': '24 hours',
+          'Thursday': '24 hours',
+          'Friday': '24 hours',
+          'Saturday': '24 hours',
+          'Sunday': '24 hours'
+        }
+      },
+      {
+        name: 'Hopewell Concierge Desk - RHKYC',
+        address: 'Royal Hong Kong Yacht Club, Kellett Island',
+        phone: '+852 2861 1188',
+        hours: {
+          'Monday': '09:00 AM - 8:00 PM',
+          'Tuesday': '09:00 AM - 8:00 PM',
+          'Wednesday': '09:00 AM - 8:00 PM',
+          'Thursday': '09:00 AM - 8:00 PM',
+          'Friday': '09:00 AM - 8:00 PM',
+          'Saturday': '09:00 AM - 8:00 PM',
+          'Sunday': '09:00 AM - 8:00 PM'
+        }
+      }
+    ],
     offers: [
       {
-        id: 'conrad_spa_package',
-        title: 'Recovery Spa Package',
-        description: 'Post-racing recovery with massage and wellness treatments',
-        type: 'service',
+        id: 'hopewell_competitor_rate',
+        title: 'Dragon Worlds Competitor Rate',
+        description: '35% discount on all room categories with complimentary breakfast and late checkout',
+        type: 'discount',
         validUntil: '2027-12-31',
-        howToRedeem: 'Book spa appointments with sailing credentials',
+        howToRedeem: 'Book directly using promo code DRAGON2027',
         termsAndConditions: [
-          '20% discount on all spa services',
-          'Advance booking required',
-          'Subject to therapist availability'
+          'Valid for registered participants and their guests',
+          'Subject to availability',
+          'Complimentary upgrade subject to availability',
+          'Late checkout until 2:00 PM included'
         ]
       },
       {
-        id: 'conrad_dining_credit',
-        title: 'Dining Experience Credit',
-        description: 'HKD 500 dining credit at Conrad Hong Kong restaurants',
-        type: 'discount',
+        id: 'hopewell_spa_recovery',
+        title: 'Sailor\'s Recovery Spa Package',
+        description: 'Post-racing recovery massage and wellness treatments designed for athletes',
+        type: 'service',
         validUntil: '2027-12-31',
-        howToRedeem: 'Present participant badge when dining',
+        howToRedeem: 'Book through hotel spa with participant credentials',
         termsAndConditions: [
-          'Minimum spend of HKD 800 required',
-          'Valid for dinner only',
-          'Not applicable to room service'
+          '50% discount on all spa treatments',
+          'Includes access to fitness center and pool',
+          'Advance booking recommended'
+        ]
+      },
+      {
+        id: 'hopewell_transfer',
+        title: 'Complimentary Yacht Club Shuttle',
+        description: 'Free shuttle service between hotel and Royal Hong Kong Yacht Club',
+        type: 'service',
+        validUntil: '2027-12-31',
+        howToRedeem: 'Book through hotel concierge',
+        termsAndConditions: [
+          'Available every 30 minutes during championship',
+          'Runs from 6:00 AM to 10:00 PM',
+          'First come, first served basis'
         ]
       }
     ],
     hongKongActivities: [
       {
-        id: 'conrad_afternoon_tea',
-        title: 'Signature Afternoon Tea Experience',
-        description: 'Traditional British afternoon tea with Hong Kong influences',
+        id: 'hopewell_skybar_sunset',
+        title: 'Hopewell Sky Bar Sunset Experience',
+        description: 'Exclusive sunset cocktails at the 62nd floor sky bar with 360-degree views of Hong Kong',
         type: 'dining',
-        sponsorId: 'conrad_hotels',
-        website: 'https://www.conradhotels.com/conrad-hong-kong',
+        sponsorId: 'hopewell_hotel',
+        website: 'https://www.hopewellhotel.com/skybar',
         bookingRequired: true,
         duration: '2 hours',
-        priceRange: '$$$',
-        bestTime: 'Mid-afternoon'
+        priceRange: '$$',
+        bestTime: 'Sunset (5:30 PM - 7:30 PM)'
+      },
+      {
+        id: 'hopewell_cooking_class',
+        title: 'Hong Kong Dim Sum Masterclass',
+        description: 'Learn to make authentic Cantonese dim sum with the hotel\'s executive chef',
+        type: 'cultural',
+        sponsorId: 'hopewell_hotel',
+        bookingRequired: true,
+        duration: '3 hours',
+        priceRange: '$$',
+        bestTime: 'Weekend mornings'
       }
     ]
   },
 
-  // SUPPORTING SPONSORS
   {
     id: 'hktb',
     name: 'Hong Kong Tourism Board',
-    tier: 'supporting',
-    description: 'Discover Hong Kong - Your Gateway to Asia',
+    tier: 'premiere',
+    description: 'Discover Hong Kong - Official Tourism Partner of Dragon Worlds HK 2027',
     website: 'https://www.discoverhongkong.com',
-    primaryColor: '#FF6B35',
+    primaryColor: '#E31B23',
     contact: {
       phone: '+852 2807 6177',
-      email: 'info@hktb.com'
+      email: 'info@hktb.com',
+      address: '11/F, Citicorp Centre, 18 Whitfield Road, North Point'
     },
     business: {
       sector: 'Tourism Promotion',
       established: 2001,
       headquarters: 'Hong Kong',
-      description: 'HKTB promotes Hong Kong as a world-class tourist destination.'
+      description: 'The Hong Kong Tourism Board promotes Hong Kong as a world-class destination, showcasing its unique blend of East and West cultures, stunning natural beauty, and vibrant city life.'
     },
+    locations: [
+      {
+        name: 'HKTB Visitor Centre - Star Ferry',
+        address: 'Star Ferry Pier, Tsim Sha Tsui, Kowloon',
+        phone: '+852 2508 1234',
+        website: 'https://www.discoverhongkong.com',
+        hours: {
+          'Monday': '08:00 AM - 8:00 PM',
+          'Tuesday': '08:00 AM - 8:00 PM',
+          'Wednesday': '08:00 AM - 8:00 PM',
+          'Thursday': '08:00 AM - 8:00 PM',
+          'Friday': '08:00 AM - 8:00 PM',
+          'Saturday': '08:00 AM - 8:00 PM',
+          'Sunday': '08:00 AM - 8:00 PM'
+        }
+      },
+      {
+        name: 'HKTB Information Desk - Airport',
+        address: 'Hong Kong International Airport, Arrivals Hall',
+        phone: '+852 2508 1234',
+        hours: {
+          'Monday': '07:00 AM - 11:00 PM',
+          'Tuesday': '07:00 AM - 11:00 PM',
+          'Wednesday': '07:00 AM - 11:00 PM',
+          'Thursday': '07:00 AM - 11:00 PM',
+          'Friday': '07:00 AM - 11:00 PM',
+          'Saturday': '07:00 AM - 11:00 PM',
+          'Sunday': '07:00 AM - 11:00 PM'
+        }
+      },
+      {
+        name: 'Dragon Worlds Welcome Desk - RHKYC',
+        address: 'Royal Hong Kong Yacht Club, Kellett Island',
+        phone: '+852 2508 1234',
+        hours: {
+          'Monday': '09:00 AM - 6:00 PM',
+          'Tuesday': '09:00 AM - 6:00 PM',
+          'Wednesday': '09:00 AM - 6:00 PM',
+          'Thursday': '09:00 AM - 6:00 PM',
+          'Friday': '09:00 AM - 6:00 PM',
+          'Saturday': '09:00 AM - 6:00 PM',
+          'Sunday': '09:00 AM - 6:00 PM'
+        }
+      }
+    ],
     offers: [
       {
         id: 'hktb_attractions_pass',
-        title: 'Hong Kong Attractions Pass',
-        description: 'Complimentary access to major Hong Kong attractions',
-        type: 'discount',
+        title: 'Dragon Worlds Hong Kong Pass',
+        description: 'Complimentary 7-day attractions pass including Ocean Park, Peak Tram, and Big Buddha cable car',
+        type: 'experience',
         validUntil: '2027-12-31',
-        howToRedeem: 'Collect at HKTB visitor centers with sailing credentials',
+        howToRedeem: 'Collect at HKTB visitor centers with Dragon Worlds credentials',
         termsAndConditions: [
           'Valid for 7 days from first use',
-          'Includes transportation',
-          'Some attractions require advance booking'
+          'Includes unlimited MTR rides',
+          'One pass per registered participant'
+        ]
+      },
+      {
+        id: 'hktb_dining_card',
+        title: 'Hong Kong Dining Privileges Card',
+        description: 'Exclusive discounts at over 200 partner restaurants across Hong Kong',
+        type: 'discount',
+        validUntil: '2027-12-31',
+        howToRedeem: 'Download via Discover Hong Kong app with participant code',
+        termsAndConditions: [
+          '10-25% discount at participating restaurants',
+          'Valid for dine-in only',
+          'Cannot be combined with other promotions'
+        ]
+      },
+      {
+        id: 'hktb_shopping_voucher',
+        title: 'Hong Kong Shopping Rewards',
+        description: 'HKD 500 shopping vouchers for major Hong Kong malls and outlets',
+        type: 'discount',
+        validUntil: '2027-12-31',
+        howToRedeem: 'Collect at HKTB visitor centers',
+        termsAndConditions: [
+          'Minimum spend of HKD 1,000 required',
+          'Valid at participating malls',
+          'One set per participant'
         ]
       }
     ],
     hongKongActivities: [
       {
+        id: 'hktb_harbour_cruise',
+        title: 'Victoria Harbour Sailing Experience',
+        description: 'Private chartered junk boat cruise around Victoria Harbour with local seafood dinner',
+        type: 'sightseeing',
+        sponsorId: 'hktb',
+        website: 'https://www.discoverhongkong.com/harbour',
+        bookingRequired: true,
+        duration: '3 hours',
+        priceRange: 'free',
+        bestTime: 'Evening (7:00 PM departure)'
+      },
+      {
         id: 'hktb_heritage_walk',
         title: 'Hong Kong Heritage Discovery Walk',
-        description: 'Guided walking tours of historic Hong Kong neighborhoods',
+        description: 'Guided walking tours through historic neighborhoods including Sheung Wan, Central, and Tai O',
         type: 'cultural',
         sponsorId: 'hktb',
         website: 'https://www.discoverhongkong.com/heritage',
         bookingRequired: true,
-        duration: '3 hours',
+        duration: '3.5 hours',
         priceRange: 'free',
         bestTime: 'Morning or late afternoon'
       },
       {
-        id: 'hktb_food_tours',
-        title: 'Authentic Hong Kong Food Tours',
-        description: 'Street food and local restaurant tours with expert guides',
+        id: 'hktb_food_tour',
+        title: 'Authentic Hong Kong Street Food Tour',
+        description: 'Explore the best of Hong Kong\'s culinary scene from dai pai dongs to hidden local gems',
         type: 'dining',
         sponsorId: 'hktb',
         bookingRequired: true,
         duration: '4 hours',
-        priceRange: '$$',
+        priceRange: '$',
         bestTime: 'Evening'
       }
     ]
   },
 
   {
-    id: 'gaw_capital',
-    name: 'Gaw Capital Partners',
-    tier: 'supporting',
-    description: 'Gateway Real Estate Investment and Development',
-    website: 'https://www.gaw.com',
-    primaryColor: '#2C5F2D',
+    id: 'yanmar',
+    name: 'Yanmar',
+    tier: 'premiere',
+    description: 'A Sustainable Future - Official Marine Engine Partner of Dragon Worlds HK 2027',
+    website: 'https://www.yanmar.com',
+    primaryColor: '#E60012',
     contact: {
-      phone: '+852 2847 7200',
-      email: 'info@gaw.com'
+      phone: '+852 2833 3133',
+      email: 'marine@yanmar.com.hk',
+      address: 'Yanmar Hong Kong, 18/F, Tower 2, Admiralty Centre, 18 Harcourt Road'
     },
     business: {
-      sector: 'Real Estate Investment',
-      established: 2005,
-      headquarters: 'Hong Kong',
-      description: 'Gaw Capital Partners is a leading real estate private equity firm focused on the Asia Pacific region.'
+      sector: 'Marine Engines & Equipment',
+      established: 1912,
+      headquarters: 'Osaka, Japan',
+      description: 'Yanmar is a global leader in marine diesel engines, committed to sustainable solutions for the marine industry. Their cutting-edge technology powers vessels worldwide, from recreational boats to commercial fishing fleets.'
     },
-    offers: [
+    locations: [
       {
-        id: 'gaw_property_insights',
-        title: 'Hong Kong Real Estate Market Briefing',
-        description: 'Exclusive market insights session for international visitors',
-        type: 'experience',
-        validUntil: '2027-12-31',
-        howToRedeem: 'Register online for quarterly briefing sessions',
-        termsAndConditions: [
-          'Limited to 30 participants',
-          'Professional networking event',
-          'Light refreshments provided'
-        ]
+        name: 'Yanmar Marine Service Centre',
+        address: 'Aberdeen Marina Club, 8 Shum Wan Road, Aberdeen',
+        phone: '+852 2833 3133',
+        website: 'https://www.yanmar.com/marine',
+        hours: {
+          'Monday': '08:00 AM - 6:00 PM',
+          'Tuesday': '08:00 AM - 6:00 PM',
+          'Wednesday': '08:00 AM - 6:00 PM',
+          'Thursday': '08:00 AM - 6:00 PM',
+          'Friday': '08:00 AM - 6:00 PM',
+          'Saturday': '08:00 AM - 1:00 PM',
+          'Sunday': 'Emergency only'
+        }
+      },
+      {
+        name: 'Yanmar Technical Support - RHKYC',
+        address: 'Royal Hong Kong Yacht Club, Kellett Island',
+        phone: '+852 2833 3188',
+        hours: {
+          'Monday': '07:00 AM - 7:00 PM',
+          'Tuesday': '07:00 AM - 7:00 PM',
+          'Wednesday': '07:00 AM - 7:00 PM',
+          'Thursday': '07:00 AM - 7:00 PM',
+          'Friday': '07:00 AM - 7:00 PM',
+          'Saturday': '07:00 AM - 7:00 PM',
+          'Sunday': '07:00 AM - 7:00 PM'
+        }
       }
     ],
-    hongKongActivities: [
-      {
-        id: 'gaw_skyline_tour',
-        title: 'Hong Kong Skyline Development Tour',
-        description: 'Architectural tour of major developments and urban planning innovations',
-        type: 'sightseeing',
-        sponsorId: 'gaw_capital',
-        bookingRequired: true,
-        duration: '2.5 hours',
-        priceRange: 'free',
-        bestTime: 'Weekend mornings'
-      }
-    ]
-  },
-
-  {
-    id: 'sun_hung_kai',
-    name: 'Sun Hung Kai Finance',
-    tier: 'supporting',
-    description: 'Financial Excellence - Investment and Advisory Services',
-    website: 'https://www.shkf.com',
-    primaryColor: '#003366',
-    contact: {
-      phone: '+852 2533 4455',
-      email: 'info@shkf.com'
-    },
-    business: {
-      sector: 'Financial Services',
-      established: 1969,
-      headquarters: 'Hong Kong',
-      description: 'Sun Hung Kai Finance provides comprehensive financial services including investment banking and asset management.'
-    },
     offers: [
       {
-        id: 'shkf_investment_consultation',
-        title: 'Complimentary Investment Consultation',
-        description: 'Professional financial planning and investment advice session',
+        id: 'yanmar_engine_service',
+        title: 'Free Engine Health Check',
+        description: 'Complimentary engine diagnostic and health check for all competing vessels',
         type: 'service',
         validUntil: '2027-12-31',
-        howToRedeem: 'Schedule appointment with wealth management team',
+        howToRedeem: 'Schedule appointment at Yanmar service center or on-site at RHKYC',
         termsAndConditions: [
-          'Minimum portfolio requirement waived',
-          '60-minute consultation',
-          'No obligation to invest'
-        ]
-      }
-    ],
-    hongKongActivities: [
-      {
-        id: 'shkf_finance_seminar',
-        title: 'Hong Kong Financial Market Seminar',
-        description: 'Educational seminar on Hong Kong\'s role as an international financial center',
-        type: 'business',
-        sponsorId: 'sun_hung_kai',
-        bookingRequired: true,
-        duration: '2 hours',
-        priceRange: 'free',
-        bestTime: 'Weekday evenings'
-      }
-    ]
-  },
-
-  {
-    id: 'kee_wah',
-    name: 'Kee Wah Bakery',
-    tier: 'supporting',
-    description: 'Traditional Hong Kong Confectionery Since 1938',
-    website: 'https://www.keewah.com',
-    primaryColor: '#DC143C',
-    contact: {
-      phone: '+852 2572 0828',
-      email: 'enquiry@keewah.com'
-    },
-    business: {
-      sector: 'Food & Confectionery',
-      established: 1938,
-      headquarters: 'Hong Kong',
-      description: 'Kee Wah Bakery is famous for traditional Hong Kong pastries, mooncakes, and gift items.'
-    },
-    offers: [
-      {
-        id: 'kee_wah_gift_box',
-        title: 'Traditional Hong Kong Pastry Gift Box',
-        description: 'Complimentary selection of traditional Hong Kong cookies and pastries',
-        type: 'product',
-        validUntil: '2027-12-31',
-        howToRedeem: 'Visit any Kee Wah store with participant credentials',
-        termsAndConditions: [
-          'One gift box per participant',
-          'While supplies last',
-          'Cannot be exchanged for cash'
+          'Available for Yanmar and other major engine brands',
+          'Includes written report and recommendations',
+          'Parts and labor for repairs quoted separately'
         ]
       },
       {
-        id: 'kee_wah_discount',
-        title: '20% Store Discount',
-        description: 'Discount on all Kee Wah products including seasonal specialties',
+        id: 'yanmar_parts_discount',
+        title: '25% Discount on Genuine Parts',
+        description: 'Special discount on all genuine Yanmar parts and accessories',
         type: 'discount',
         validUntil: '2027-12-31',
-        howToRedeem: 'Show sailing credentials at checkout',
+        howToRedeem: 'Present Dragon Worlds credentials at service center',
         termsAndConditions: [
-          'Cannot be combined with other offers',
-          'Valid on regular-priced items only',
-          'Excluding limited edition items'
+          'Valid for genuine Yanmar parts only',
+          'Includes filters, belts, and impellers',
+          'Cannot be combined with other offers'
+        ]
+      },
+      {
+        id: 'yanmar_training',
+        title: 'Marine Diesel Maintenance Workshop',
+        description: 'Hands-on workshop teaching essential diesel engine maintenance for sailors',
+        type: 'experience',
+        validUntil: '2027-12-31',
+        howToRedeem: 'Register online at Yanmar Dragon Worlds page',
+        termsAndConditions: [
+          'Limited to 20 participants per session',
+          'Certificate of completion provided',
+          'Tools and materials included'
         ]
       }
     ],
     hongKongActivities: [
       {
-        id: 'kee_wah_workshop',
-        title: 'Traditional Pastry Making Workshop',
-        description: 'Learn to make authentic Hong Kong-style egg rolls and cookies',
+        id: 'yanmar_factory_tour',
+        title: 'Yanmar Technology Showcase',
+        description: 'Interactive exhibition featuring the latest in sustainable marine propulsion technology',
         type: 'cultural',
-        sponsorId: 'kee_wah',
+        sponsorId: 'yanmar',
+        website: 'https://www.yanmar.com/dragonworlds',
+        bookingRequired: false,
+        duration: '1 hour',
+        priceRange: 'free',
+        bestTime: 'Any time during championship week'
+      },
+      {
+        id: 'yanmar_captain_talk',
+        title: 'Captain\'s Technical Seminar',
+        description: 'Expert-led seminar on optimizing marine engine performance for racing conditions',
+        type: 'business',
+        sponsorId: 'yanmar',
         bookingRequired: true,
         duration: '2 hours',
-        priceRange: '$',
-        bestTime: 'Weekend mornings'
+        priceRange: 'free',
+        bestTime: 'Championship rest day'
       }
     ]
   },
 
   {
-    id: 'tng_watches',
-    name: 'TNG Watches',
-    tier: 'supporting',
-    description: 'Precision Timepieces for Modern Sailors',
-    website: 'https://www.tngwatches.com',
-    primaryColor: '#2F4F4F',
+    id: 'code_zero',
+    name: 'Code Zero',
+    tier: 'premiere',
+    description: 'Performance Sailing Apparel - Official Clothing Partner of Dragon Worlds HK 2027',
+    website: 'https://www.codezero.com',
+    primaryColor: '#000000',
     contact: {
-      phone: '+852 2234 5678',
-      email: 'info@tngwatches.com'
+      phone: '+852 2527 8899',
+      email: 'hk@codezero.com',
+      address: 'Code Zero Flagship Store, Pacific Place, Admiralty'
     },
     business: {
-      sector: 'Timepieces & Accessories',
-      established: 1995,
-      headquarters: 'Hong Kong',
-      description: 'TNG Watches specializes in marine chronometers and sailing timepieces.'
+      sector: 'Technical Sailing Apparel',
+      established: 2008,
+      headquarters: 'Denmark',
+      description: 'Code Zero creates premium technical sailing apparel designed for performance and style. Our gear is worn by professional sailors and weekend warriors alike, combining cutting-edge fabrics with contemporary design.'
     },
+    locations: [
+      {
+        name: 'Code Zero Flagship Store',
+        address: 'Shop 331, Pacific Place, 88 Queensway, Admiralty',
+        phone: '+852 2527 8899',
+        website: 'https://www.codezero.com',
+        hours: {
+          'Monday': '10:00 AM - 8:00 PM',
+          'Tuesday': '10:00 AM - 8:00 PM',
+          'Wednesday': '10:00 AM - 8:00 PM',
+          'Thursday': '10:00 AM - 8:00 PM',
+          'Friday': '10:00 AM - 9:00 PM',
+          'Saturday': '10:00 AM - 9:00 PM',
+          'Sunday': '11:00 AM - 7:00 PM'
+        }
+      },
+      {
+        name: 'Code Zero Pop-Up - RHKYC',
+        address: 'Royal Hong Kong Yacht Club, Kellett Island',
+        phone: '+852 2527 8899',
+        hours: {
+          'Monday': '08:00 AM - 8:00 PM',
+          'Tuesday': '08:00 AM - 8:00 PM',
+          'Wednesday': '08:00 AM - 8:00 PM',
+          'Thursday': '08:00 AM - 8:00 PM',
+          'Friday': '08:00 AM - 8:00 PM',
+          'Saturday': '08:00 AM - 8:00 PM',
+          'Sunday': '08:00 AM - 8:00 PM'
+        }
+      },
+      {
+        name: 'Code Zero Outlet - Stanley',
+        address: 'Murray House, Stanley Plaza',
+        phone: '+852 2813 2288',
+        hours: {
+          'Monday': '10:00 AM - 7:00 PM',
+          'Tuesday': '10:00 AM - 7:00 PM',
+          'Wednesday': '10:00 AM - 7:00 PM',
+          'Thursday': '10:00 AM - 7:00 PM',
+          'Friday': '10:00 AM - 7:00 PM',
+          'Saturday': '10:00 AM - 8:00 PM',
+          'Sunday': '10:00 AM - 8:00 PM'
+        }
+      }
+    ],
     offers: [
       {
-        id: 'tng_sailing_watch_discount',
-        title: 'Sailing Watch Collection Discount',
-        description: '25% discount on marine chronometers and sailing watches',
+        id: 'code_zero_team_discount',
+        title: '30% Team Apparel Discount',
+        description: 'Exclusive discount on all Code Zero sailing gear including foul weather gear, base layers, and accessories',
         type: 'discount',
         validUntil: '2027-12-31',
-        howToRedeem: 'Visit TNG showroom with sailing credentials',
+        howToRedeem: 'Show Dragon Worlds credentials at any Code Zero store',
         termsAndConditions: [
-          'Valid on sailing collection only',
-          'Includes complimentary engraving',
-          'Full warranty included'
+          'Valid on full-priced items only',
+          'Includes custom team embroidery options',
+          'Cannot be combined with other promotions'
+        ]
+      },
+      {
+        id: 'code_zero_limited_edition',
+        title: 'Dragon Worlds 2027 Limited Edition Collection',
+        description: 'Exclusive access to the limited edition Dragon Worlds HK 2027 apparel collection',
+        type: 'product',
+        validUntil: '2027-12-31',
+        howToRedeem: 'Pre-order at Code Zero stores or Dragon Worlds registration',
+        termsAndConditions: [
+          'Limited quantities available',
+          'Pre-orders receive priority',
+          'Includes commemorative packaging'
+        ]
+      },
+      {
+        id: 'code_zero_repair',
+        title: 'Free Gear Repair Service',
+        description: 'Complimentary repair service for Code Zero gear during championship week',
+        type: 'service',
+        validUntil: '2027-12-31',
+        howToRedeem: 'Bring gear to Code Zero pop-up at RHKYC',
+        termsAndConditions: [
+          'Valid for Code Zero branded items only',
+          'Minor repairs completed same day',
+          'Major repairs subject to parts availability'
         ]
       }
     ],
     hongKongActivities: [
       {
-        id: 'tng_watchmaking_demo',
-        title: 'Precision Watchmaking Demonstration',
-        description: 'Behind-the-scenes look at Swiss and Japanese watchmaking techniques',
-        type: 'cultural',
-        sponsorId: 'tng_watches',
+        id: 'code_zero_fashion_show',
+        title: 'Code Zero Sailing Fashion Show',
+        description: 'Preview the latest Code Zero collection with professional sailors as models',
+        type: 'social',
+        sponsorId: 'code_zero',
+        website: 'https://www.codezero.com/dragonworlds',
         bookingRequired: true,
-        duration: '90 minutes',
+        duration: '2 hours',
         priceRange: 'free',
-        bestTime: 'Weekday afternoons'
+        bestTime: 'Championship opening night'
+      },
+      {
+        id: 'code_zero_design_tour',
+        title: 'Sailing Apparel Design Workshop',
+        description: 'Behind-the-scenes look at technical sailing apparel design with Code Zero designers',
+        type: 'cultural',
+        sponsorId: 'code_zero',
+        bookingRequired: true,
+        duration: '1.5 hours',
+        priceRange: 'free',
+        bestTime: 'Championship rest day afternoon'
       }
     ]
   }
@@ -648,7 +649,7 @@ export const dragonWorldsSponsors: Sponsor[] = [
 export const dragonWorldsSponsorshipProgram: SponsorshipProgram = {
   eventId: 'dragon-worlds-2027',
   title: 'Dragon World Championships Hong Kong 2027 - Sponsorship Program',
-  description: 'Celebrating excellence in international dragon boat racing with world-class partners',
+  description: 'Celebrating excellence in international Dragon class sailing with world-class partners',
   startDate: '2027-01-01',
   endDate: '2027-12-31',
   sponsors: dragonWorldsSponsors

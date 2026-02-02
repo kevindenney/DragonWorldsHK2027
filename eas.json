@@ -62,7 +62,8 @@
         "WEATHER_API_URL": "https://weather-api.dragonworlds.com",
         "ANALYTICS_ENABLED": "true",
         "SENTRY_ENABLED": "true"
-      }
+      },
+      "channel": "production"
     },
     "production-ios": {
       "extends": "production",
@@ -77,7 +78,8 @@
         "WEATHER_API_URL": "https://weather-api.dragonworlds.com",
         "ANALYTICS_ENABLED": "true",
         "SENTRY_ENABLED": "true"
-      }
+      },
+      "channel": "production-ios"
     },
     "production-android": {
       "extends": "production",
@@ -91,7 +93,8 @@
         "WEATHER_API_URL": "https://weather-api.dragonworlds.com",
         "ANALYTICS_ENABLED": "true",
         "SENTRY_ENABLED": "true"
-      }
+      },
+      "channel": "production-android"
     },
     "jsc-test": {
       "distribution": "internal",

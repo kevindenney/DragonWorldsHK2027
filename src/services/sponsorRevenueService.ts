@@ -487,9 +487,9 @@ export class SponsorRevenueService {
         },
         contractDetails: {
           sponsorId: 'gold_sponsor',
-          sponsorName: 'Rolex',
-          contactPerson: 'Michael Chen',
-          email: 'michael.chen@rolex.com',
+          sponsorName: 'Hopewell Hotel',
+          contactPerson: 'Lisa Wong',
+          email: 'events@hopewellhotel.com',
           startDate: new Date().toISOString(),
           endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
           paymentTerms: 'quarterly',
@@ -509,8 +509,8 @@ export class SponsorRevenueService {
               description: 'Bonus for 1000+ monthly conversions'
             }
           ],
-          exclusivityRights: ['Luxury timepiece category', 'Premium sailing equipment'],
-          contentGuidelines: ['Luxury positioning', 'Heritage and precision messaging', 'Championship excellence']
+          exclusivityRights: ['Official accommodation partner', 'Hospitality services'],
+          contentGuidelines: ['Luxury hospitality', 'Hong Kong heritage', 'Championship excellence']
         },
         isActive: true
       },
@@ -587,16 +587,16 @@ export class SponsorRevenueService {
   private initializeDynamicContent(): void {
     this.dynamicContent = [
       {
-        id: 'rolex_precision',
-        sponsorId: 'gold_sponsor',
+        id: 'hsbc_sailing_excellence',
+        sponsorId: 'title_sponsor',
         type: 'native_article',
-        title: 'Precision in Every Second',
+        title: 'Banking on Excellence',
         content: {
-          headline: 'Timing Excellence in Dragon Worlds Racing',
-          description: 'Discover how precision timing can make the difference between victory and defeat in championship sailing.',
-          imageUrl: 'rolex-sailing-precision.jpg',
+          headline: 'HSBC: Proud Title Sponsor of Dragon Worlds 2027',
+          description: 'Discover how HSBC supports world-class sailing and the international sailing community in Hong Kong.',
+          imageUrl: 'hsbc-sailing-excellence.jpg',
           callToAction: 'Learn More',
-          landingPageUrl: 'https://rolex.com/sailing',
+          landingPageUrl: 'https://hsbc.com.hk/dragonworlds',
         },
         targeting: {
           subscriptionTiers: ['professional', 'elite'],
@@ -663,10 +663,10 @@ export class SponsorRevenueService {
   private initializePremiumFeatures(): void {
     this.premiumFeatures = [
       {
-        id: 'rolex_timing_integration',
-        name: 'Rolex Precision Timing',
-        description: 'Enhanced race timing with Rolex precision technology',
-        sponsorId: 'gold_sponsor',
+        id: 'hsbc_premier_experience',
+        name: 'HSBC Premier Experience',
+        description: 'VIP banking and hospitality services for competitors',
+        sponsorId: 'title_sponsor',
         featureType: 'race_commentary',
         userAccess: {
           subscriptionTiers: ['professional', 'elite'],
@@ -674,16 +674,16 @@ export class SponsorRevenueService {
           participantTypes: ['competitor', 'coach', 'official']
         },
         integration: {
-          screens: ['live_race', 'race_results', 'timing_display'],
-          components: ['timing_widget', 'race_clock', 'split_times'],
-          triggers: ['race_start', 'mark_rounding', 'race_finish']
+          screens: ['live_race', 'race_results', 'services'],
+          components: ['sponsor_banner', 'service_widget', 'vip_access'],
+          triggers: ['race_start', 'race_finish', 'service_request']
         },
         branding: {
-          logoUrl: 'rolex-crown-logo.svg',
-          colorScheme: '#006039',
+          logoUrl: 'hsbc-logo.svg',
+          colorScheme: '#DB0011',
           customStyling: {
-            fontFamily: 'Rolex-Crown',
-            accentColor: '#FFD700'
+            fontFamily: 'HSBC-Universe',
+            accentColor: '#FFFFFF'
           }
         },
         metrics: {
