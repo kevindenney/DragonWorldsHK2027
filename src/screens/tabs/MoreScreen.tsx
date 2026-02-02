@@ -5,9 +5,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
-  ScrollView
+  ScrollView,
+  Modal,
+  Pressable
 } from 'react-native';
-import { Users, Cloud, ChevronRight, FileText, User, LogIn, LogOut, Trophy, Info, RefreshCw, Check } from 'lucide-react-native';
+import { Users, Cloud, ChevronRight, FileText, User, LogIn, LogOut, Trophy, Info, RefreshCw, Check, Package, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
@@ -133,6 +135,7 @@ const getMoreOptions = (isAuthenticated: boolean, user: any): MoreOption[] => {
 
 export function MoreScreen() {
   const [selectedOption, setSelectedOption] = React.useState<string | null>(null);
+  const [showContainerTrackingModal, setShowContainerTrackingModal] = React.useState(false);
   const navigation = useNavigation();
   const { isAuthenticated, user, logout } = useAuth();
   const { setUserType, completeOnboarding, resetOnboarding } = useUserStore();
@@ -335,6 +338,32 @@ export function MoreScreen() {
       </View>
 
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        {/* Container Tracking Coming Soon Card */}
+        <TouchableOpacity
+          style={styles.comingSoonCard}
+          onPress={async () => {
+            await Haptics.selectionAsync();
+            setShowContainerTrackingModal(true);
+          }}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Container Tracking - Coming Soon"
+        >
+          <View style={styles.comingSoonBadge}>
+            <Text style={styles.comingSoonBadgeText}>COMING SOON</Text>
+          </View>
+          <View style={styles.comingSoonIconContainer}>
+            <Package size={32} color="#3B82F6" strokeWidth={2} />
+          </View>
+          <View style={styles.comingSoonContent}>
+            <Text style={styles.comingSoonTitle}>Container Tracking</Text>
+            <Text style={styles.comingSoonDescription}>
+              Track your sailboat container from home to Hong Kong
+            </Text>
+          </View>
+          <ChevronRight size={20} color="#9CA3AF" strokeWidth={2} />
+        </TouchableOpacity>
+
         {/* Enhanced Profile Card - Only show if authenticated */}
         {isAuthenticated && user && (
           <TouchableOpacity
@@ -421,6 +450,67 @@ export function MoreScreen() {
           })()}
         </View>
       </ScrollView>
+
+      {/* Container Tracking Info Modal */}
+      <Modal
+        visible={showContainerTrackingModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowContainerTrackingModal(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowContainerTrackingModal(false)}
+        >
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowContainerTrackingModal(false)}
+              accessibilityLabel="Close modal"
+            >
+              <X size={24} color="#6B7280" />
+            </TouchableOpacity>
+
+            <View style={styles.modalIconContainer}>
+              <Package size={48} color="#3B82F6" strokeWidth={1.5} />
+            </View>
+
+            <Text style={styles.modalTitle}>Container Tracking</Text>
+            <Text style={styles.modalSubtitle}>Coming Soon!</Text>
+
+            <Text style={styles.modalDescription}>
+              We're working on a feature that will let you track your sailboat container shipment in real-time as it makes its journey from your home port to Hong Kong.
+            </Text>
+
+            <View style={styles.modalFeatureList}>
+              <View style={styles.modalFeatureItem}>
+                <View style={styles.modalFeatureBullet} />
+                <Text style={styles.modalFeatureText}>Real-time GPS tracking</Text>
+              </View>
+              <View style={styles.modalFeatureItem}>
+                <View style={styles.modalFeatureBullet} />
+                <Text style={styles.modalFeatureText}>Estimated arrival updates</Text>
+              </View>
+              <View style={styles.modalFeatureItem}>
+                <View style={styles.modalFeatureBullet} />
+                <Text style={styles.modalFeatureText}>Shipping milestone notifications</Text>
+              </View>
+              <View style={styles.modalFeatureItem}>
+                <View style={styles.modalFeatureBullet} />
+                <Text style={styles.modalFeatureText}>Customs clearance status</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => setShowContainerTrackingModal(false)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.modalButtonText}>Got It</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -571,5 +661,147 @@ const styles = StyleSheet.create({
   },
   firstSectionHeader: {
     marginTop: 8, // Less margin for first section
+  },
+  // Coming Soon Card Styles
+  comingSoonCard: {
+    backgroundColor: '#F0F9FF', // Light blue background
+    borderRadius: 16,
+    padding: 16,
+    marginHorizontal: spacing.lg,
+    marginTop: 8,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  comingSoonBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderBottomLeftRadius: 8,
+  },
+  comingSoonBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  comingSoonIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: '#DBEAFE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  comingSoonContent: {
+    flex: 1,
+  },
+  comingSoonTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E3A5F',
+    marginBottom: 4,
+  },
+  comingSoonDescription: {
+    fontSize: 13,
+    color: '#64748B',
+    lineHeight: 18,
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 360,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    padding: 8,
+    zIndex: 1,
+  },
+  modalIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#EFF6FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#3B82F6',
+    marginBottom: 16,
+  },
+  modalDescription: {
+    fontSize: 15,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  modalFeatureList: {
+    width: '100%',
+    marginBottom: 24,
+  },
+  modalFeatureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  modalFeatureBullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#3B82F6',
+    marginRight: 12,
+  },
+  modalFeatureText: {
+    fontSize: 14,
+    color: '#475569',
+  },
+  modalButton: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 12,
+    width: '100%',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
 });
