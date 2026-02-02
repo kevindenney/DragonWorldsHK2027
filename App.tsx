@@ -2,10 +2,22 @@ import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppNavigationContainer } from './src/services/navigation/NavigationContainer';
 import { Text, View, StyleSheet } from 'react-native';
 import { validateRuntimeConfiguration, logEnvironmentVariables } from './src/utils/configValidator';
 import { useUserStore } from './src/stores/userStore';
+
+// Create a client for React Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+    },
+  },
+});
 
 // Keep the splash screen visible while we fetch resources
 console.log('🚀 [App.tsx] Preventing splash screen auto-hide');
@@ -124,10 +136,12 @@ export default function App() {
   console.log('🚀 [App.tsx] App is ready, rendering main content');
   return (
     <ErrorBoundary>
-      <SafeAreaProvider>
-        <AppNavigationContainer />
-        <StatusBar style="auto" />
-      </SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider>
+          <AppNavigationContainer />
+          <StatusBar style="auto" />
+        </SafeAreaProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 }

@@ -222,6 +222,34 @@ async function fetchClubSpotEntrants(regattaId) {
 }
 
 /**
+ * Check if a string looks like a valid sail number
+ * Valid sail numbers: "AUS 219", "GBR 123", "HKG45", "DEN 89", etc.
+ */
+function looksLikeSailNumber(str) {
+  if (!str || typeof str !== 'string') return false;
+  const trimmed = str.trim();
+  // Match patterns like "AUS 219", "GBR123", "HKG 45", "DEN89"
+  // Also match just numbers like "219", "45"
+  return /^[A-Z]{2,3}\s*\d+$/i.test(trimmed) || /^\d+$/.test(trimmed);
+}
+
+/**
+ * Check if a string looks like a person's name
+ * Names typically have letters, spaces, and common name patterns
+ */
+function looksLikeName(str) {
+  if (!str || typeof str !== 'string') return false;
+  const trimmed = str.trim();
+  // Names: mostly letters, possibly with spaces, hyphens, apostrophes
+  // Should not start with numbers or be all caps abbreviations
+  if (trimmed.length < 2) return false;
+  if (/^\d/.test(trimmed)) return false; // Starts with number
+  if (/^[A-Z]{2,4}$/.test(trimmed)) return false; // Short all-caps (like country codes)
+  // Contains at least one letter and has reasonable name characters
+  return /^[A-Za-zÀ-ÿ\s\-'\.]+$/.test(trimmed) && /[a-z]/i.test(trimmed);
+}
+
+/**
  * Scrape entry list from rendered HTML
  * Based on ClubSpot's table structure: SAILORS, CLASS, SAIL NUMBER, BOAT NAME, CLUB / ORG
  */
@@ -268,35 +296,89 @@ function scrapeRenderedEntryList($, regattaId) {
 
       if (cells.length < 3) return; // Skip rows with too few cells
 
-      // Extract data based on column mapping
-      const sailorsCell = colMap.sailors >= 0 ? cells.eq(colMap.sailors).text().trim() : '';
-      const classCell = colMap.class >= 0 ? cells.eq(colMap.class).text().trim() : '';
-      const sailNumberCell = colMap.sailNumber >= 0 ? cells.eq(colMap.sailNumber).text().trim() : '';
-      const boatNameCell = colMap.boatName >= 0 ? cells.eq(colMap.boatName).text().trim() : '';
-      const clubCell = colMap.club >= 0 ? cells.eq(colMap.club).text().trim() : '';
+      // Extract all cell values for intelligent parsing
+      const cellValues = [];
+      cells.each((i, cell) => {
+        cellValues.push($(cell).text().trim());
+      });
 
-      // Parse sailors - typically "Name1, Name2, Name3" or multiline
-      const sailorNames = sailorsCell
-        .split(/[,\n]/)
-        .map(n => n.trim())
-        .filter(n => n && n.length > 0);
+      // Extract data based on column mapping
+      let sailorsCell = colMap.sailors >= 0 ? cellValues[colMap.sailors] || '' : '';
+      let classCell = colMap.class >= 0 ? cellValues[colMap.class] || '' : '';
+      let sailNumberCell = colMap.sailNumber >= 0 ? cellValues[colMap.sailNumber] || '' : '';
+      let boatNameCell = colMap.boatName >= 0 ? cellValues[colMap.boatName] || '' : '';
+      let clubCell = colMap.club >= 0 ? cellValues[colMap.club] || '' : '';
+
+      // VALIDATION: Check if sailNumber actually looks like a sail number
+      // If not, try to intelligently re-map the data
+      if (!looksLikeSailNumber(sailNumberCell) && looksLikeName(sailNumberCell)) {
+        logger.info(`[ClubSpot] Detected misaligned columns - sailNumber "${sailNumberCell}" looks like a name`);
+
+        // Try to find the actual sail number in other cells
+        let foundSailNumber = '';
+        let sailNumberIdx = -1;
+
+        for (let i = 0; i < cellValues.length; i++) {
+          if (looksLikeSailNumber(cellValues[i])) {
+            foundSailNumber = cellValues[i];
+            sailNumberIdx = i;
+            break;
+          }
+        }
+
+        // Re-map based on what we found
+        // Common ClubSpot layout seems to be:
+        // Col 0: Index/Date, Col 1: Sailors, Col 2: Class, Col 3: Sail#, Col 4: Boat Name, Col 5: Club
+        if (cellValues.length >= 6) {
+          // Assume extended layout
+          sailorsCell = cellValues[1] || '';
+          classCell = cellValues[2] || '';
+          sailNumberCell = foundSailNumber || cellValues[3] || '';
+          boatNameCell = cellValues[4] || '';
+          clubCell = cellValues[5] || '';
+        } else if (foundSailNumber) {
+          // Use found sail number, treat current sailNumberCell as sailors
+          sailorsCell = sailNumberCell;
+          sailNumberCell = foundSailNumber;
+        }
+      }
+
+      // Parse sailors - typically "Name1, Name2, Name3" or multiline or concatenated
+      let sailorNames = [];
+      if (sailorsCell) {
+        // Try to split concatenated names (look for capital letters starting new names)
+        // e.g., "Sandy AndersonSusan ParkerCaroline Gibson" -> ["Sandy Anderson", "Susan Parker", "Caroline Gibson"]
+        const maybeConcatenated = sailorsCell.match(/[A-Z][a-zÀ-ÿ']+\s+[A-Z][a-zÀ-ÿ']+/g);
+        if (maybeConcatenated && maybeConcatenated.length > 1) {
+          sailorNames = maybeConcatenated;
+        } else {
+          // Standard split by comma or newline
+          sailorNames = sailorsCell
+            .split(/[,\n]/)
+            .map(n => n.trim())
+            .filter(n => n && n.length > 0);
+        }
+      }
 
       // Skip if no meaningful data
-      if (sailorNames.length === 0 && !sailNumberCell) return;
+      if (sailorNames.length === 0 && !sailNumberCell && !boatNameCell) return;
+
+      // Final validation - if sailNumber still looks like names, mark as TBD
+      const finalSailNumber = looksLikeSailNumber(sailNumberCell) ? sailNumberCell : 'TBD';
 
       const registration = {
         id: `clubspot_${regattaId}_${registrations.length + 1}`,
         helmName: sailorNames[0] || '',
         crewNames: sailorNames.slice(1),
         boatClass: classCell || 'Dragon',
-        sailNumber: sailNumberCell,
+        sailNumber: finalSailNumber,
         boatName: boatNameCell,
         club: clubCell,
-        country: extractCountryFromSailNumber(sailNumberCell),
+        country: extractCountryFromSailNumber(finalSailNumber),
         status: 'confirmed'
       };
 
-      logger.info(`[ClubSpot] Found entry: ${registration.sailNumber} - ${registration.helmName}`);
+      logger.info(`[ClubSpot] Found entry: ${registration.sailNumber} - ${registration.helmName} (${registration.boatName})`);
       registrations.push(registration);
     });
   });
