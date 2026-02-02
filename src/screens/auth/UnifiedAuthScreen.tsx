@@ -344,8 +344,7 @@ export const UnifiedAuthScreen: React.FC<UnifiedAuthScreenProps> = ({ navigation
               </View>
 
 
-              {/* Social Authentication - Temporarily hidden for future implementation */}
-              {/*
+              {/* Social Authentication */}
               <View style={styles.socialSection}>
                 <Text style={styles.sectionTitle}>
                   {mode === 'signin' ? 'Quick Sign In' : 'Quick Sign Up'}
@@ -377,7 +376,6 @@ export const UnifiedAuthScreen: React.FC<UnifiedAuthScreenProps> = ({ navigation
                 <Text style={styles.dividerText}>or {mode === 'signin' ? 'sign in' : 'create account'} with email</Text>
                 <View style={styles.dividerLine} />
               </View>
-              */}
 
               {/* Email Form */}
               <View style={styles.formSection}>
