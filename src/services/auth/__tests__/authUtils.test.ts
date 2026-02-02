@@ -23,6 +23,9 @@ import {
   generateSecurePassword,
   sanitizeInput,
   formatValidationErrors,
+  getPrimaryProvider,
+  canUnlinkProvider,
+  getTimeSinceLastLogin,
 } from '../authUtils';
 import { UserRole, UserStatus, AuthProviderType } from '../../../types/auth';
 
@@ -420,6 +423,184 @@ describe('authUtils', () => {
       const errors = ['Error 1', 'Error 2', 'Error 3'];
       const formatted = formatValidationErrors(errors);
       expect(formatted).toBe('• Error 1\n• Error 2\n• Error 3');
+    });
+  });
+
+  describe('getPrimaryProvider', () => {
+    it('should return null for null user', () => {
+      expect(getPrimaryProvider(null)).toBeNull();
+    });
+
+    it('should return null for user with no linked providers', () => {
+      const user = createMockUser({ linkedProviders: [] });
+      expect(getPrimaryProvider(user)).toBeNull();
+    });
+
+    it('should return primary provider when marked', () => {
+      const user = createMockUser({
+        linkedProviders: [
+          { provider: AuthProviderType.EMAIL, isPrimary: false, linkedAt: new Date().toISOString() },
+          { provider: AuthProviderType.GOOGLE, isPrimary: true, linkedAt: new Date().toISOString() },
+        ],
+        providers: [AuthProviderType.EMAIL, AuthProviderType.GOOGLE],
+      });
+      expect(getPrimaryProvider(user)).toBe(AuthProviderType.GOOGLE);
+    });
+
+    it('should fallback to first provider if no primary is marked', () => {
+      const user = createMockUser({
+        linkedProviders: [
+          { provider: AuthProviderType.EMAIL, isPrimary: false, linkedAt: new Date().toISOString() },
+          { provider: AuthProviderType.GOOGLE, isPrimary: false, linkedAt: new Date().toISOString() },
+        ],
+        providers: [AuthProviderType.EMAIL, AuthProviderType.GOOGLE],
+      });
+      expect(getPrimaryProvider(user)).toBe(AuthProviderType.EMAIL);
+    });
+  });
+
+  describe('canUnlinkProvider', () => {
+    it('should return false for null user', () => {
+      expect(canUnlinkProvider(null, AuthProviderType.GOOGLE)).toBe(false);
+    });
+
+    it('should return true if user has password auth', () => {
+      const user = createMockUser({
+        providers: [AuthProviderType.EMAIL, AuthProviderType.GOOGLE],
+        linkedProviders: [
+          { provider: AuthProviderType.EMAIL, isPrimary: true, linkedAt: new Date().toISOString() },
+          { provider: AuthProviderType.GOOGLE, isPrimary: false, linkedAt: new Date().toISOString() },
+        ],
+      });
+      expect(canUnlinkProvider(user, AuthProviderType.GOOGLE)).toBe(true);
+    });
+
+    it('should return true if user has other providers', () => {
+      const user = createMockUser({
+        providers: [AuthProviderType.GOOGLE, AuthProviderType.APPLE],
+        linkedProviders: [
+          { provider: AuthProviderType.GOOGLE, isPrimary: true, linkedAt: new Date().toISOString() },
+          { provider: AuthProviderType.APPLE, isPrimary: false, linkedAt: new Date().toISOString() },
+        ],
+      });
+      expect(canUnlinkProvider(user, AuthProviderType.GOOGLE)).toBe(true);
+    });
+
+    it('should return false if provider is only auth method', () => {
+      const user = createMockUser({
+        providers: [AuthProviderType.GOOGLE],
+        linkedProviders: [
+          { provider: AuthProviderType.GOOGLE, isPrimary: true, linkedAt: new Date().toISOString() },
+        ],
+      });
+      expect(canUnlinkProvider(user, AuthProviderType.GOOGLE)).toBe(false);
+    });
+  });
+
+  describe('getTimeSinceLastLogin', () => {
+    it('should return "Never" for null user', () => {
+      expect(getTimeSinceLastLogin(null)).toBe('Never');
+    });
+
+    it('should return "Never" if no lastLoginAt', () => {
+      const user = createMockUser({
+        metadata: {
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          loginCount: 0,
+        },
+      });
+      expect(getTimeSinceLastLogin(user)).toBe('Never');
+    });
+
+    it('should return "Just now" for recent login', () => {
+      const user = createMockUser({
+        metadata: {
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
+          loginCount: 1,
+        },
+      });
+      expect(getTimeSinceLastLogin(user)).toBe('Just now');
+    });
+
+    it('should return minutes ago for login within an hour', () => {
+      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+      const user = createMockUser({
+        metadata: {
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastLoginAt: thirtyMinutesAgo.toISOString(),
+          loginCount: 1,
+        },
+      });
+      expect(getTimeSinceLastLogin(user)).toBe('30 minutes ago');
+    });
+
+    it('should return hours ago for login within a day', () => {
+      const fiveHoursAgo = new Date(Date.now() - 5 * 60 * 60 * 1000);
+      const user = createMockUser({
+        metadata: {
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastLoginAt: fiveHoursAgo.toISOString(),
+          loginCount: 1,
+        },
+      });
+      expect(getTimeSinceLastLogin(user)).toBe('5 hours ago');
+    });
+
+    it('should return days ago for older logins', () => {
+      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+      const user = createMockUser({
+        metadata: {
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastLoginAt: threeDaysAgo.toISOString(),
+          loginCount: 1,
+        },
+      });
+      expect(getTimeSinceLastLogin(user)).toBe('3 days ago');
+    });
+
+    it('should use singular form for 1 day', () => {
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const user = createMockUser({
+        metadata: {
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastLoginAt: oneDayAgo.toISOString(),
+          loginCount: 1,
+        },
+      });
+      expect(getTimeSinceLastLogin(user)).toBe('1 day ago');
+    });
+
+    it('should use singular form for 1 hour', () => {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      const user = createMockUser({
+        metadata: {
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastLoginAt: oneHourAgo.toISOString(),
+          loginCount: 1,
+        },
+      });
+      expect(getTimeSinceLastLogin(user)).toBe('1 hour ago');
+    });
+
+    it('should use singular form for 1 minute', () => {
+      const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+      const user = createMockUser({
+        metadata: {
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastLoginAt: oneMinuteAgo.toISOString(),
+          loginCount: 1,
+        },
+      });
+      expect(getTimeSinceLastLogin(user)).toBe('1 minute ago');
     });
   });
 });

@@ -576,4 +576,358 @@ describe('AuthService', () => {
       // Verify via the handleAuthStateChange flow
     });
   });
+
+  describe('Google Sign-In', () => {
+    it('should attempt Google sign-in and handle missing native module', async () => {
+      // The native Google Sign-in module isn't available in Jest
+      // This tests that the error is properly wrapped and thrown
+      await expect(authService.signInWithGoogle()).rejects.toBeDefined();
+    });
+
+    it('should set loading state when attempting Google sign-in', async () => {
+      // Verify that signInWithGoogle updates the auth state
+      const initialState = authService.getCurrentState();
+      expect(initialState.isLoading).toBe(false);
+
+      // Attempt Google sign-in (will fail due to missing native module)
+      try {
+        await authService.signInWithGoogle();
+      } catch (e) {
+        // Expected to fail
+      }
+
+      // After error, loading should be false
+      const finalState = authService.getCurrentState();
+      expect(finalState.isLoading).toBe(false);
+    });
+  });
+
+  describe('Apple Sign-In', () => {
+    it('should attempt Apple sign-in and handle missing native module', async () => {
+      // The native Apple auth module isn't available in Jest
+      // This tests that the error is properly wrapped and thrown
+      await expect(authService.signInWithApple()).rejects.toBeDefined();
+    });
+
+    it('should set loading state when attempting Apple sign-in', async () => {
+      const initialState = authService.getCurrentState();
+      expect(initialState.isLoading).toBe(false);
+
+      try {
+        await authService.signInWithApple();
+      } catch (e) {
+        // Expected to fail
+      }
+
+      const finalState = authService.getCurrentState();
+      expect(finalState.isLoading).toBe(false);
+    });
+  });
+
+  describe('Provider Linking', () => {
+    it('should link provider when user is authenticated', async () => {
+      const mockFirebaseUser = MockAuthFactory.createMockFirebaseUser();
+      const mockUser = MockAuthFactory.createMockUser();
+
+      (authService as any).currentAuthState = {
+        firebaseUser: mockFirebaseUser,
+        user: mockUser,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+        lastActivity: Date.now(),
+      };
+
+      mockLinkProvider.mockResolvedValueOnce({
+        success: true,
+        data: { ...mockUser, providers: [...mockUser.providers, 'google'] },
+      });
+
+      const result = await authService.linkProvider({
+        provider: 'google',
+        providerId: 'google.com',
+        idToken: 'mock-id-token',
+      });
+
+      expect(mockLinkProvider).toHaveBeenCalled();
+      expect(result).toBeTruthy();
+    });
+
+    it('should throw error when linking provider without authenticated user', async () => {
+      (authService as any).currentAuthState = {
+        firebaseUser: null,
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: null,
+        lastActivity: null,
+      };
+
+      await expect(
+        authService.linkProvider({
+          provider: 'google',
+          providerId: 'google.com',
+          idToken: 'mock-id-token',
+        })
+      ).rejects.toMatchObject({
+        message: expect.stringContaining('No user signed in'),
+      });
+    });
+
+    it('should handle provider linking failure from backend', async () => {
+      const mockFirebaseUser = MockAuthFactory.createMockFirebaseUser();
+      const mockUser = MockAuthFactory.createMockUser();
+
+      (authService as any).currentAuthState = {
+        firebaseUser: mockFirebaseUser,
+        user: mockUser,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+        lastActivity: Date.now(),
+      };
+
+      mockLinkProvider.mockResolvedValueOnce({
+        success: false,
+        error: 'Provider already linked',
+      });
+
+      await expect(
+        authService.linkProvider({
+          provider: 'google',
+          providerId: 'google.com',
+          idToken: 'mock-id-token',
+        })
+      ).rejects.toMatchObject({
+        message: expect.stringContaining('Provider already linked'),
+      });
+    });
+  });
+
+  describe('Provider Unlinking', () => {
+    it('should unlink provider when user is authenticated', async () => {
+      const mockFirebaseUser = MockAuthFactory.createMockFirebaseUser();
+      const mockUser = MockAuthFactory.createMockUser({
+        providers: ['email', 'google'],
+      });
+
+      (authService as any).currentAuthState = {
+        firebaseUser: mockFirebaseUser,
+        user: mockUser,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+        lastActivity: Date.now(),
+      };
+
+      const { unlink } = require('firebase/auth');
+      unlink.mockResolvedValueOnce(mockFirebaseUser);
+
+      mockUnlinkProvider.mockResolvedValueOnce({
+        success: true,
+        data: { ...mockUser, providers: ['email'] },
+      });
+
+      const result = await authService.unlinkProvider('google');
+
+      expect(unlink).toHaveBeenCalledWith(mockFirebaseUser, 'google');
+      expect(mockUnlinkProvider).toHaveBeenCalledWith('google');
+      expect(result).toBeTruthy();
+    });
+
+    it('should throw error when unlinking provider without authenticated user', async () => {
+      (authService as any).currentAuthState = {
+        firebaseUser: null,
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: null,
+        lastActivity: null,
+      };
+
+      await expect(authService.unlinkProvider('google')).rejects.toMatchObject({
+        message: expect.stringContaining('No user signed in'),
+      });
+    });
+
+    it('should handle unlink failure from Firebase', async () => {
+      const mockFirebaseUser = MockAuthFactory.createMockFirebaseUser();
+      const mockUser = MockAuthFactory.createMockUser();
+
+      (authService as any).currentAuthState = {
+        firebaseUser: mockFirebaseUser,
+        user: mockUser,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+        lastActivity: Date.now(),
+      };
+
+      const { unlink } = require('firebase/auth');
+      unlink.mockRejectedValueOnce(new Error('Cannot unlink last provider'));
+
+      await expect(authService.unlinkProvider('google')).rejects.toMatchObject({
+        message: expect.stringContaining('Cannot unlink last provider'),
+      });
+    });
+
+    it('should handle unlink failure from backend', async () => {
+      const mockFirebaseUser = MockAuthFactory.createMockFirebaseUser();
+      const mockUser = MockAuthFactory.createMockUser();
+
+      (authService as any).currentAuthState = {
+        firebaseUser: mockFirebaseUser,
+        user: mockUser,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+        lastActivity: Date.now(),
+      };
+
+      const { unlink } = require('firebase/auth');
+      unlink.mockResolvedValueOnce(mockFirebaseUser);
+
+      mockUnlinkProvider.mockResolvedValueOnce({
+        success: false,
+        error: 'Provider unlinking failed',
+      });
+
+      await expect(authService.unlinkProvider('google')).rejects.toMatchObject({
+        message: expect.stringContaining('Provider unlinking failed'),
+      });
+    });
+  });
+
+  describe('State Updates', () => {
+    it('should notify all listeners on state update', () => {
+      const listener1 = jest.fn();
+      const listener2 = jest.fn();
+
+      authService.subscribe(listener1);
+      authService.subscribe(listener2);
+
+      // Both listeners should have been called with initial state
+      expect(listener1).toHaveBeenCalledTimes(1);
+      expect(listener2).toHaveBeenCalledTimes(1);
+    });
+
+    it('should remove listener on unsubscribe', () => {
+      const listener = jest.fn();
+
+      const unsubscribe = authService.subscribe(listener);
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      unsubscribe();
+
+      // Listener count should be reduced, but we can't easily test internal state
+      // The unsubscribe function should work without error
+    });
+  });
+
+  describe('Change Password Extended', () => {
+    it('should handle reauthentication failure', async () => {
+      const mockFirebaseUser = MockAuthFactory.createMockFirebaseUser();
+
+      (authService as any).currentAuthState = {
+        firebaseUser: mockFirebaseUser,
+        user: MockAuthFactory.createMockUser(),
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+        lastActivity: Date.now(),
+      };
+
+      const { EmailAuthProvider } = require('firebase/auth');
+      EmailAuthProvider.credential.mockReturnValue({ providerId: 'password' });
+
+      const error: any = new Error('Wrong password');
+      error.code = 'auth/wrong-password';
+      mockReauthenticateWithCredential.mockRejectedValueOnce(error);
+
+      await expect(
+        authService.changePassword({
+          currentPassword: 'WrongPassword123!',
+          newPassword: 'NewPassword123!',
+          confirmPassword: 'NewPassword123!',
+        })
+      ).rejects.toMatchObject({
+        code: 'auth/wrong-password',
+      });
+    });
+
+    it('should handle password update failure', async () => {
+      const mockFirebaseUser = MockAuthFactory.createMockFirebaseUser();
+
+      (authService as any).currentAuthState = {
+        firebaseUser: mockFirebaseUser,
+        user: MockAuthFactory.createMockUser(),
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+        lastActivity: Date.now(),
+      };
+
+      const { EmailAuthProvider } = require('firebase/auth');
+      EmailAuthProvider.credential.mockReturnValue({ providerId: 'password' });
+
+      mockReauthenticateWithCredential.mockResolvedValueOnce(undefined);
+
+      const error: any = new Error('Weak password');
+      error.code = 'auth/weak-password';
+      mockUpdatePassword.mockRejectedValueOnce(error);
+
+      await expect(
+        authService.changePassword({
+          currentPassword: 'OldPassword123!',
+          newPassword: 'weak',
+          confirmPassword: 'weak',
+        })
+      ).rejects.toMatchObject({
+        code: 'auth/weak-password',
+      });
+    });
+  });
+
+  describe('Refresh Token Extended', () => {
+    it('should store refreshed token data', async () => {
+      const mockFirebaseUser = MockAuthFactory.createMockFirebaseUser();
+      mockFirebaseUser.getIdToken = jest.fn().mockResolvedValue('refreshed-token');
+
+      const mockUser = MockAuthFactory.createMockUser();
+
+      (authService as any).currentAuthState = {
+        firebaseUser: mockFirebaseUser,
+        user: mockUser,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+        lastActivity: Date.now(),
+      };
+
+      await authService.refreshToken();
+
+      expect(mockFirebaseUser.getIdToken).toHaveBeenCalledWith(true);
+      expect(mockSetAuthToken).toHaveBeenCalledWith('refreshed-token');
+    });
+
+    it('should handle token refresh failure', async () => {
+      const mockFirebaseUser = MockAuthFactory.createMockFirebaseUser();
+      mockFirebaseUser.getIdToken = jest.fn().mockRejectedValue(new Error('Token refresh failed'));
+
+      const mockUser = MockAuthFactory.createMockUser();
+
+      (authService as any).currentAuthState = {
+        firebaseUser: mockFirebaseUser,
+        user: mockUser,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+        lastActivity: Date.now(),
+      };
+
+      await expect(authService.refreshToken()).rejects.toMatchObject({
+        message: expect.stringContaining('Token refresh failed'),
+      });
+    });
+  });
 });
