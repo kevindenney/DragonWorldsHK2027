@@ -31,6 +31,7 @@ import { NoticeCard } from '../../components/notices/NoticeCard';
 import { NoticeFilters } from '../../components/notices/NoticeFilters';
 import { NoticeSearchBar } from '../../components/notices/NoticeSearchBar';
 import { CategoryFilterChips, type CategoryCount } from '../../components/notices/CategoryFilterChips';
+import { PodcastSection } from '../../components/podcast/PodcastSection';
 
 import NoticeBoardService from '../../services/noticeBoardService';
 import { useUserStore } from '../../stores/userStore';
@@ -722,6 +723,9 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
             />
           }
         >
+          {/* Podcast Section */}
+          <PodcastSection style={styles.podcastSection} />
+
           {displayedNotices.length === 0 ? (
             <View style={styles.emptyState}>
               <Bell size={48} color={colors.textMuted} />
@@ -784,6 +788,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: spacing.xl,
+  },
+  podcastSection: {
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
   },
   emptyState: {
     alignItems: 'center',
