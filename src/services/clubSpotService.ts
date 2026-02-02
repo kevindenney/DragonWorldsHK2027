@@ -279,6 +279,7 @@ export class ClubSpotService {
       country: entrant.country || '',
       club: entrant.club || '',
       className: entrant.className || 'Dragon',
+      boatName: entrant.boatName || '',
       registrationStatus: this.normalizeRegistrationStatus(entrant.registrationStatus),
       entryDate: entrant.entryDate || new Date().toISOString(),
       paymentStatus: this.normalizePaymentStatus(entrant.paymentStatus),
