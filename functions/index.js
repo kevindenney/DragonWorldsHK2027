@@ -9,15 +9,22 @@ const { logger } = require('firebase-functions');
 const admin = require('firebase-admin');
 const cheerio = require('cheerio');
 const fetch = require('node-fetch');
-const { scrapeRaceResults, extractOverallStandings } = require('./scrapeRaceResults');
+const { scrapeRaceResults, extractOverallStandings, EVENT_CONFIG: RACE_EVENT_CONFIG } = require('./scrapeRaceResults');
 const { scrapeCompetitorList, scrapeCompetitorDetails } = require('./scrapeCompetitors');
-const { 
-  scrapeAllDocuments, 
-  downloadAndParsePDF, 
-  extractSailingInstructionData 
+const {
+  scrapeAllDocuments,
+  downloadAndParsePDF,
+  extractSailingInstructionData
 } = require('./scrapeDocuments');
 const { scrapeCCR2024Results, updateCCR2024Results } = require('./scrapeCCR2024Results');
 const { scrapeClubSpotEntrants } = require('./scrapeClubSpot');
+const {
+  scrapeEventDocuments,
+  scrapeDecisions,
+  scrapeSchedule,
+  scrapeAllEventData,
+  EVENT_CONFIG: DOCS_EVENT_CONFIG
+} = require('./scrapeEventDocuments');
 
 // Initialize Firebase Admin SDK
 if (admin.apps.length === 0) {
@@ -1413,6 +1420,78 @@ exports.scheduledRaceDataSync = onScheduleV2({
   }
 });
 
+/**
+ * HTTP function to scrape event documents from racingrulesofsailing.org
+ * Supports APAC 2026 (13241) and Worlds 2027 (13242)
+ */
+exports.scrapeRacingRulesDocuments = onRequest({
+  cors: true,
+  maxInstances: 5,
+  timeoutSeconds: 60,
+  memory: '512MiB'
+}, async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).send('OK');
+    return;
+  }
+
+  try {
+    const { eventId, type = 'all' } = req.query;
+
+    if (!eventId) {
+      res.status(400).json({
+        error: 'eventId parameter is required',
+        usage: 'GET /scrapeRacingRulesDocuments?eventId=13241&type=all',
+        availableEventIds: Object.keys(DOCS_EVENT_CONFIG),
+        availableTypes: ['documents', 'schedule', 'decisions', 'all']
+      });
+      return;
+    }
+
+    logger.info(`Scraping ${type} for event ${eventId} from racingrulesofsailing.org`);
+
+    let result;
+    switch (type) {
+      case 'documents':
+        result = await scrapeEventDocuments(eventId);
+        break;
+      case 'schedule':
+        result = await scrapeSchedule(eventId);
+        break;
+      case 'decisions':
+        result = await scrapeDecisions(eventId);
+        break;
+      case 'all':
+      default:
+        result = await scrapeAllEventData(eventId);
+        break;
+    }
+
+    res.status(200).json({
+      success: true,
+      ...result,
+      _metadata: {
+        eventId,
+        type,
+        source: 'racingrulesofsailing.org',
+        scrapedAt: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    logger.error('Racing rules document scraping failed:', error);
+    res.status(500).json({
+      error: 'Scraping failed',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Export CCR 2024 specific functions
 // Note: scrapeCCR2024Results is temporarily disabled due to a stuck deployment
 // exports.scrapeCCR2024Results = scrapeCCR2024Results;
@@ -1420,3 +1499,125 @@ exports.updateCCR2024Results = updateCCR2024Results;
 
 // Export ClubSpot entrant scraping function
 exports.scrapeClubSpotEntrants = scrapeClubSpotEntrants;
+
+/**
+ * HTTP function to create a test user account
+ * Usage: POST /createTestUser with body { email, password, displayName }
+ */
+exports.createTestUser = onRequest({
+  cors: true,
+  maxInstances: 5,
+  timeoutSeconds: 30,
+  memory: '256MiB'
+}, async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).send('OK');
+    return;
+  }
+
+  // Only allow POST requests
+  if (req.method !== 'POST' && req.method !== 'GET') {
+    res.status(405).json({ error: 'Method not allowed. Use POST.' });
+    return;
+  }
+
+  try {
+    // Get params from query string (GET) or body (POST)
+    const email = req.query.email || req.body?.email || 'kdenney@me.com';
+    const password = req.query.password || req.body?.password || 'testpassword123';
+    const displayName = req.query.displayName || req.body?.displayName || 'Test User';
+
+    logger.info(`Creating test user: ${email}`);
+
+    // Check if user already exists
+    let existingUser = null;
+    try {
+      existingUser = await admin.auth().getUserByEmail(email);
+    } catch (error) {
+      // User doesn't exist, which is fine
+    }
+
+    if (existingUser) {
+      // Update password for existing user
+      await admin.auth().updateUser(existingUser.uid, {
+        password: password,
+        displayName: displayName,
+      });
+
+      logger.info(`Updated existing test user: ${email}`);
+
+      res.status(200).json({
+        success: true,
+        message: 'Test user already existed - password updated',
+        user: {
+          uid: existingUser.uid,
+          email: email,
+          displayName: displayName,
+        },
+        credentials: {
+          email: email,
+          password: password
+        }
+      });
+      return;
+    }
+
+    // Create new user
+    const userRecord = await admin.auth().createUser({
+      email: email,
+      password: password,
+      displayName: displayName,
+      emailVerified: true, // Auto-verify for test account
+    });
+
+    // Create user document in Firestore
+    try {
+      await db.collection('users').doc(userRecord.uid).set({
+        uid: userRecord.uid,
+        email: email,
+        displayName: displayName,
+        emailVerified: true,
+        role: 'participant',
+        providers: ['email'],
+        preferences: {
+          notifications: true,
+          newsletter: false,
+          language: 'en',
+        },
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      logger.info(`Created Firestore document for test user: ${email}`);
+    } catch (firestoreError) {
+      logger.warn('Could not create Firestore document:', firestoreError);
+    }
+
+    logger.info(`Successfully created test user: ${email}`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Test user created successfully',
+      user: {
+        uid: userRecord.uid,
+        email: email,
+        displayName: displayName,
+      },
+      credentials: {
+        email: email,
+        password: password
+      }
+    });
+
+  } catch (error) {
+    logger.error('Failed to create test user:', error);
+    res.status(500).json({
+      error: 'Failed to create test user',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});

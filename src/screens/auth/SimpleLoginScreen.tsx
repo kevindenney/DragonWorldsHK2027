@@ -5,7 +5,6 @@ import {
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
-  Alert,
   Image,
   ScrollView,
   KeyboardAvoidingView,
@@ -25,6 +24,62 @@ interface SimpleLoginScreenProps {
   navigation: any;
 }
 
+// User-friendly error messages for Firebase auth error codes
+const getLoginErrorMessage = (error: any): { title: string; message: string } => {
+  const errorCode = error?.code || '';
+  const errorMessage = error?.message || '';
+
+  // Map Firebase error codes to user-friendly messages
+  if (errorCode === 'auth/invalid-credential' || errorCode === 'auth/wrong-password') {
+    return {
+      title: 'Incorrect Email or Password',
+      message: 'The email or password you entered is incorrect. Please check your credentials and try again.',
+    };
+  }
+  if (errorCode === 'auth/user-not-found') {
+    return {
+      title: 'Account Not Found',
+      message: 'No account exists with this email address. Please check your email or create a new account.',
+    };
+  }
+  if (errorCode === 'auth/invalid-email') {
+    return {
+      title: 'Invalid Email',
+      message: 'Please enter a valid email address.',
+    };
+  }
+  if (errorCode === 'auth/user-disabled') {
+    return {
+      title: 'Account Disabled',
+      message: 'This account has been disabled. Please contact support for assistance.',
+    };
+  }
+  if (errorCode === 'auth/too-many-requests') {
+    return {
+      title: 'Too Many Attempts',
+      message: 'Access to this account has been temporarily disabled due to many failed login attempts. Please try again later or reset your password.',
+    };
+  }
+  if (errorCode === 'auth/network-request-failed' || errorMessage.includes('network') || errorMessage.includes('connection')) {
+    return {
+      title: 'Connection Problem',
+      message: 'Unable to connect to the server. Please check your internet connection and try again.',
+    };
+  }
+  if (errorMessage.includes('timeout')) {
+    return {
+      title: 'Connection Timeout',
+      message: 'The request timed out. Please check your connection and try again.',
+    };
+  }
+
+  // Default error
+  return {
+    title: 'Sign In Failed',
+    message: 'Unable to sign in. Please check your credentials and try again.',
+  };
+};
+
 export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
   const { login, loginWithProvider, isLoading, register, isAuthenticated, user } = useAuth();
   const insets = useSafeAreaInsets();
@@ -32,6 +87,7 @@ export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [loginError, setLoginError] = useState<{ title: string; message: string } | null>(null);
 
   // Monitor authentication state and navigate away when login succeeds
   useEffect(() => {
@@ -50,7 +106,6 @@ export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
             });
           }
         } catch (navError) {
-          console.error('[SimpleLoginScreen] Navigation failed:', navError);
           // If navigation fails, user can still access the app via tabs
         }
       }, 500);
@@ -79,9 +134,11 @@ export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
   };
 
   const handleLogin = async () => {
+    // Clear previous login error
+    setLoginError(null);
+
     // Check if login function is available
     if (!login) {
-      console.error('[SimpleLoginScreen] login function not available');
       return;
     }
 
@@ -98,34 +155,10 @@ export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
     try {
       await login({ email, password });
     } catch (error: any) {
-      console.error('[SimpleLoginScreen] Login failed:', error);
 
-      // Provide specific error messages based on error type
-      let title = 'Unable to Sign In';
-      let message = 'Please check your credentials and try again.';
-
-      if (error?.message) {
-        if (error.message.includes('timeout')) {
-          title = 'Connection Timeout';
-          message = 'The login request timed out. Please check your internet connection and try again.';
-        } else if (error.message.includes('network') || error.message.includes('connection')) {
-          title = 'Connection Problem';
-          message = 'Unable to connect to the authentication service. Please check your internet connection.';
-        } else if (error.message.includes('user-not-found')) {
-          title = 'Account Not Found';
-          message = 'No account found with this email address. Please check your email or sign up.';
-        } else if (error.message.includes('wrong-password')) {
-          title = 'Incorrect Password';
-          message = 'The password is incorrect. Please try again or reset your password.';
-        } else if (error.message.includes('too-many-requests')) {
-          title = 'Too Many Attempts';
-          message = 'Too many failed login attempts. Please wait a few minutes and try again.';
-        } else {
-          message = error.message;
-        }
-      }
-
-      Alert.alert(title, message);
+      // Get user-friendly error message and display inline
+      const errorInfo = getLoginErrorMessage(error);
+      setLoginError(errorInfo);
     }
   };
 
@@ -133,18 +166,19 @@ export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
     try {
       navigation.navigate('Register');
     } catch (error) {
-      console.error('[SimpleLoginScreen] Navigation to Register failed:', error);
     }
   };
 
   const handleSocialLogin = async (provider: AuthProviderType) => {
+    setLoginError(null);
     try {
       await loginWithProvider(provider);
     } catch (error: any) {
-      Alert.alert(
-        'Unable to Sign In',
-        error.message || `${provider} sign-in failed. Please try again.`
-      );
+      const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+      setLoginError({
+        title: `${providerName} Sign In Failed`,
+        message: error.message || `Unable to sign in with ${providerName}. Please try again.`,
+      });
     }
   };
 
@@ -192,6 +226,26 @@ export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
               </Text>
             </View>
 
+            {/* Inline Error Banner */}
+            {loginError && (
+              <View style={styles.errorBanner}>
+                <View style={styles.errorIconContainer}>
+                  <Text style={styles.errorIcon}>!</Text>
+                </View>
+                <View style={styles.errorTextContainer}>
+                  <Text style={styles.errorTitle}>{loginError.title}</Text>
+                  <Text style={styles.errorMessage}>{loginError.message}</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setLoginError(null)}
+                  style={styles.errorDismiss}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Text style={styles.errorDismissText}>×</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             <View style={styles.formFields}>
               <SimpleAuthInput
                 label="Email Address"
@@ -200,6 +254,7 @@ export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
                 onChangeText={(text) => {
                   setEmail(text);
                   if (emailError) setEmailError('');
+                  if (loginError) setLoginError(null);
                 }}
                 error={emailError}
                 testID="login-email"
@@ -212,6 +267,7 @@ export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
                 onChangeText={(text) => {
                   setPassword(text);
                   if (passwordError) setPasswordError('');
+                  if (loginError) setLoginError(null);
                 }}
                 error={passwordError}
                 testID="login-password"
@@ -322,6 +378,57 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xl,
     padding: spacing.md,
     ...shadows.large,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    backgroundColor: '#FEF2F2',
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
+    marginBottom: spacing.md,
+    borderLeftWidth: 4,
+    borderLeftColor: '#DC2626',
+    alignItems: 'flex-start',
+  },
+  errorIconContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#DC2626',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.sm,
+    marginTop: 2,
+  },
+  errorIcon: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  errorTextContainer: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  errorTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#991B1B',
+    marginBottom: 2,
+  },
+  errorMessage: {
+    fontSize: 13,
+    color: '#B91C1C',
+    lineHeight: 18,
+  },
+  errorDismiss: {
+    padding: 4,
+    marginTop: -4,
+    marginRight: -4,
+  },
+  errorDismissText: {
+    fontSize: 20,
+    color: '#B91C1C',
+    fontWeight: '300',
+    lineHeight: 20,
   },
   welcomeSection: {
     alignItems: 'center',
