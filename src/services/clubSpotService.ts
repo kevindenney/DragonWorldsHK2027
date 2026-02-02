@@ -6,6 +6,7 @@
  */
 
 import type { Competitor } from '../types/noticeBoard';
+import { externalUrls } from '../config/externalUrls';
 
 export interface ClubSpotConfig {
   baseUrl: string;
@@ -35,7 +36,7 @@ export class ClubSpotService {
 
   constructor(config?: Partial<ClubSpotConfig>) {
     this.config = {
-      baseUrl: 'https://theclubspot.com',
+      baseUrl: externalUrls.clubSpot.baseUrl || 'https://theclubspot.com',
       cacheDuration: 300000, // 5 minutes
       useDemoData: true,
       ...config
