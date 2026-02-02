@@ -16,31 +16,81 @@ export const sailingLocations: SailingLocation[] = [
     spectatorInfo: 'Best viewing from charter boats or Clearwater Bay shoreline. Public ferry charters available during major race days. Bring binoculars for distant racing action.',
     
     championshipEvents: [
+      // APAC Racing Days (Nov 19-21) - 7 races total
       {
-        date: '2027-11-22',
+        date: '2026-11-19',
         time: '11:00',
-        event: 'Practice Race 1',
-        description: 'First practice race on championship course'
+        event: 'APAC Racing Day 1',
+        description: 'First racing day of APAC Championship - 2 races scheduled'
       },
       {
-        date: '2027-11-24',
+        date: '2026-11-20',
         time: '11:00',
-        event: 'Qualifying Series Races 1-3',
-        description: 'Opening races of championship series'
+        event: 'APAC Racing Day 2',
+        description: 'Second racing day - 3 races scheduled'
+      },
+      {
+        date: '2026-11-21',
+        time: '11:00',
+        event: 'APAC Final Racing Day',
+        description: 'Final racing day of APAC Championship - 2 races scheduled'
+      },
+      // Worlds Racing Days (Nov 23-29 with Lay Day on 26) - 10 races total
+      {
+        date: '2026-11-23',
+        time: '11:00',
+        event: 'Worlds Racing Day 1',
+        description: 'First racing day of World Championship - 1 race scheduled'
+      },
+      {
+        date: '2026-11-24',
+        time: '11:00',
+        event: 'Worlds Racing Day 2',
+        description: 'Second racing day - 2 races scheduled'
+      },
+      {
+        date: '2026-11-25',
+        time: '11:00',
+        event: 'Worlds Racing Day 3',
+        description: 'Third racing day - 2 races scheduled'
+      },
+      {
+        date: '2026-11-26',
+        time: 'TBC',
+        event: 'Lay Day',
+        description: 'Lay Day - Race Committee will notify if there is racing'
+      },
+      {
+        date: '2026-11-27',
+        time: '11:00',
+        event: 'Worlds Racing Day 4',
+        description: 'Fourth racing day - 2 races scheduled'
+      },
+      {
+        date: '2026-11-28',
+        time: '11:00',
+        event: 'Worlds Racing Day 5',
+        description: 'Fifth racing day - 2 races scheduled'
+      },
+      {
+        date: '2026-11-29',
+        time: '11:00',
+        event: 'Worlds Final Racing Day',
+        description: 'Final racing day - 1 race scheduled'
       }
     ],
-    
+
     transportation: [
       {
         type: 'ferry',
-        route: 'Charter boats from Clearwater Bay Marina',
-        schedule: 'Race days: 09:30, 10:00, 10:30 departures',
-        cost: 'HK$200 per person',
-        notes: 'Advance booking required'
+        route: 'Spectator boat charters',
+        schedule: 'Coming soon',
+        cost: 'TBC',
+        notes: 'Details will be announced closer to the event'
       }
     ]
   },
-  
+
   {
     id: 'rhkyc_kellett',
     name: 'Royal Hong Kong Yacht Club - Kellett Island',
@@ -74,24 +124,60 @@ export const sailingLocations: SailingLocation[] = [
       website: 'www.rhkyc.org.hk'
     },
     
-    racerInfo: 'All competitors must complete registration and boat measurement here. Daily skippers\' briefings at 09:30. Secure boat storage available. Professional marine services on-site.',
+    racerInfo: 'All competitors must complete registration and boat measurement here. Mandatory Skippers Briefing at 10:00-11:00 (APAC: Nov 18, Worlds: Nov 22). Secure boat storage available. Professional marine services on-site.',
     spectatorInfo: 'Clubhouse terrace offers excellent views of racing action. Restaurant open to guests. Historic club with maritime artifacts and racing memorabilia.',
     
     championshipEvents: [
       {
-        date: '2027-11-21',
-        time: '09:00',
-        event: 'Registration Opens',
-        description: 'Competitor registration and boat measurement begins'
+        date: '2026-11-17',
+        time: '10:00-18:00',
+        event: 'APAC Registration & Measurement Day 1',
+        description: 'Asia Pacific Championship registration and measurement begins'
       },
       {
-        date: '2027-11-22',
-        time: '09:30',
-        event: 'Daily Briefings',
-        description: 'Daily skippers\' briefings throughout championship week'
+        date: '2026-11-18',
+        time: '10:00-18:00',
+        event: 'APAC Registration & Measurement Day 2',
+        description: 'Continuing registration and measurement'
+      },
+      {
+        date: '2026-11-18',
+        time: '10:00-11:00',
+        event: 'APAC Skippers Briefing',
+        description: 'Mandatory briefing covering race format and local conditions'
+      },
+      {
+        date: '2026-11-18',
+        time: '18:00-20:00',
+        event: 'APAC Opening Cocktails',
+        description: 'Welcome reception for APAC competitors'
+      },
+      {
+        date: '2026-11-21',
+        time: '10:00-18:00',
+        event: 'Worlds Registration & Measurement Day 1',
+        description: 'World Championship official registration and measurement begins'
+      },
+      {
+        date: '2026-11-22',
+        time: '10:00-18:00',
+        event: 'Worlds Registration & Measurement Day 2',
+        description: 'Final measurement and registration day'
+      },
+      {
+        date: '2026-11-22',
+        time: '10:00-11:00',
+        event: 'Worlds Skippers Briefing',
+        description: 'Mandatory briefing covering race format, safety procedures, and local conditions'
+      },
+      {
+        date: '2026-11-22',
+        time: '18:00-20:00',
+        event: 'Worlds Opening Cocktails',
+        description: 'Official World Championship opening reception'
       }
     ],
-    
+
     transportation: [
       {
         type: 'mtr',
@@ -222,7 +308,7 @@ export const sailingLocations: SailingLocation[] = [
       longitude: 114.30269259475433
     },
     description: 'Hong Kong\'s most scenic marina with crystal clear waters. Championship venue providing direct access to Ninepins racing area.',
-    championshipRole: 'Primary marina venue for boat storage, launching, and race area access',
+    championshipRole: 'Primary marina venue for boat storage, launching, and direct access to race area (8nm to Ninepins)',
     importance: 'primary',
     championshipSpecific: true,
     
@@ -245,19 +331,19 @@ export const sailingLocations: SailingLocation[] = [
     
     championshipEvents: [
       {
-        date: '2027-11-21',
+        date: '2026-11-17',
         time: '08:00',
-        event: 'Boat Arrival & Storage',
-        description: 'Container unloading and boat setup begins'
+        event: 'APAC Boat Setup',
+        description: 'Container unloading and boat setup for APAC Championship'
       },
       {
-        date: '2027-11-24',
-        time: '10:00',
-        event: 'Race Start Sequence',
-        description: 'Boats depart for Ninepins race course'
+        date: '2026-11-19',
+        time: '08:00',
+        event: 'Worlds Boat Setup',
+        description: 'Container unloading and boat setup for World Championship'
       }
     ],
-    
+
     transportation: [
       {
         type: 'bus',
@@ -429,13 +515,16 @@ export const sailingLocations: SailingLocation[] = [
       latitude: 22.2755,
       longitude: 114.1720
     },
-    description: 'Official Accommodation Partner of Dragon Worlds 2027. Luxury hotel in Wan Chai with stunning harbour views and convenient yacht club access.',
-    championshipRole: 'Official accommodation partner with competitor shuttle service to RHKYC',
+    description: 'Official Hospitality Partner for the 2027 Hong Kong Dragon World Championship. This prestigious event marks a historic milestone as the first Dragon World Championship to be held in Asia.',
+    championshipRole: 'Official hospitality partner with exclusive championship rates and competitor shuttle service to RHKYC',
     importance: 'primary',
     championshipSpecific: true,
-    
+
     address: '183 Queen\'s Road East, Wan Chai, Hong Kong',
-    
+
+    bookingUrl: 'https://www.secure-hotel-booking.com/d-edge/Hopewell-Hotel/J16P/en-US/RoomSelection?arrivalDate=2026-11-17&departureDate=2026-11-18&SelectedAdultCount=1&rateAction=highlight&rateId=700116&promoCode=MGDWC',
+    bookingPromoCode: 'MGDWC',
+
     facilities: [
       '400+ luxury rooms and suites',
       '360-degree harbour views from Sky Bar',
@@ -445,25 +534,31 @@ export const sailingLocations: SailingLocation[] = [
       'Complimentary yacht club shuttle',
       'Secure equipment storage for competitors'
     ],
-    
+
     contact: {
       phone: '+852 2861 1111',
       email: 'reservations@hopewellhotel.com',
       website: 'www.hopewellhotel.com'
     },
-    
-    racerInfo: 'Official Dragon Worlds 2027 accommodation partner. 35% competitor discount with code DRAGON2027. Complimentary shuttle to RHKYC every 30 minutes. Secure gear storage available.',
-    spectatorInfo: 'Premium harbour view accommodation with legendary Sky Bar offering 360-degree views. Award-winning dim sum and Cantonese cuisine.',
+
+    racerInfo: 'Official Dragon Worlds 2027 hospitality partner. Exclusive championship rate with promo code MGDWC. Complimentary shuttle to RHKYC every 30 minutes. Secure gear storage available. Book directly at hopewellhotel.com or use the app booking link.',
+    spectatorInfo: 'Premium harbour view accommodation with legendary Sky Bar offering 360-degree views. Award-winning dim sum and Cantonese cuisine. Official championship partner hotel.',
     
     championshipEvents: [
       {
-        date: '2027-11-20',
+        date: '2026-11-18',
         time: '19:00',
-        event: 'Welcome Reception',
-        description: 'Dragon Worlds 2027 welcome cocktail reception at Sky Bar'
+        event: 'APAC Welcome Reception',
+        description: 'Asia Pacific Championship welcome cocktail reception'
       },
       {
-        date: '2027-11-28',
+        date: '2026-11-22',
+        time: '19:00',
+        event: 'Worlds Welcome Reception',
+        description: 'World Championship welcome cocktail reception at Sky Bar'
+      },
+      {
+        date: '2026-11-29',
         time: '19:00',
         event: 'Prize Giving Dinner',
         description: 'Championship prize giving gala dinner'
@@ -572,10 +667,10 @@ export const sailingLocations: SailingLocation[] = [
 
     championshipEvents: [
       {
-        date: '2027-11-20',
+        date: '2026-11-22',
         time: '18:30',
         event: 'VIP Welcome Cocktails',
-        description: 'Exclusive championship welcome reception for VIP guests'
+        description: 'Exclusive World Championship welcome reception for VIP guests'
       }
     ],
 

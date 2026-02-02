@@ -106,9 +106,9 @@ export const eventSchedules = {
             time: "10:00-11:00",
             activity: "Skippers Briefing",
             type: "meeting" as const,
-            location: "Clearwater Bay Golf & Country Club",
+            location: "RHKYC Kellett Island",
             detail: "Mandatory briefing covering race format, safety procedures, and local conditions.",
-            mapLocationId: "clearwater_bay_marina"
+            mapLocationId: "rhkyc_kellett"
           },
           {
             time: "18:00-20:00",
@@ -132,6 +132,14 @@ export const eventSchedules = {
             location: "Race Course",
             detail: "First race day. One race scheduled.",
             mapLocationId: "ninepins_race_course"
+          },
+          {
+            time: "17:00",
+            activity: "After Sailing Social Debrief",
+            type: "social" as const,
+            location: "RHKYC Kellett Island",
+            detail: "Post-racing social debrief available after sailing.",
+            mapLocationId: "rhkyc_kellett"
           }
         ]
       },
@@ -147,6 +155,14 @@ export const eventSchedules = {
             location: "Race Course",
             detail: "Two races scheduled.",
             mapLocationId: "ninepins_race_course"
+          },
+          {
+            time: "17:00",
+            activity: "After Sailing Social Debrief",
+            type: "social" as const,
+            location: "RHKYC Kellett Island",
+            detail: "Post-racing social debrief available after sailing.",
+            mapLocationId: "rhkyc_kellett"
           }
         ]
       },
@@ -164,12 +180,19 @@ export const eventSchedules = {
             mapLocationId: "ninepins_race_course"
           },
           {
+            time: "17:00",
+            activity: "After Sailing Social Debrief",
+            type: "social" as const,
+            location: "RHKYC Kellett Island",
+            detail: "Post-racing social debrief available after sailing.",
+            mapLocationId: "rhkyc_kellett"
+          },
+          {
             time: "TBC",
             activity: "Official World Championship Dinner",
             type: "social" as const,
             location: "TBC",
-            detail: "Venue and time to be confirmed.",
-            mapLocationId: "rhkyc_kellett"
+            detail: "Venue and time to be confirmed."
           }
         ]
       },
@@ -199,6 +222,14 @@ export const eventSchedules = {
             location: "Race Course",
             detail: "Two races scheduled.",
             mapLocationId: "ninepins_race_course"
+          },
+          {
+            time: "17:00",
+            activity: "After Sailing Social Debrief",
+            type: "social" as const,
+            location: "RHKYC Kellett Island",
+            detail: "Post-racing social debrief available after sailing.",
+            mapLocationId: "rhkyc_kellett"
           }
         ]
       },
@@ -214,6 +245,14 @@ export const eventSchedules = {
             location: "Race Course",
             detail: "Two races scheduled.",
             mapLocationId: "ninepins_race_course"
+          },
+          {
+            time: "17:00",
+            activity: "After Sailing Social Debrief",
+            type: "social" as const,
+            location: "RHKYC Kellett Island",
+            detail: "Post-racing social debrief available after sailing.",
+            mapLocationId: "rhkyc_kellett"
           }
         ]
       },
@@ -227,8 +266,16 @@ export const eventSchedules = {
             activity: "Racing - First Warning Signal",
             type: "racing" as const,
             location: "Race Course",
-            detail: "Final race day. One race scheduled. No warning signal after 1500hrs.",
+            detail: "Final race day. One race scheduled.",
             mapLocationId: "ninepins_race_course"
+          },
+          {
+            time: "17:00",
+            activity: "After Sailing Social Debrief",
+            type: "social" as const,
+            location: "RHKYC Kellett Island",
+            detail: "Post-racing social debrief available after sailing.",
+            mapLocationId: "rhkyc_kellett"
           },
           {
             time: "TBC",
@@ -304,9 +351,9 @@ export const eventSchedules = {
             time: "10:00-11:00",
             activity: "Skippers Briefing",
             type: "meeting" as const,
-            location: "Clearwater Bay Golf & Country Club",
+            location: "RHKYC Kellett Island",
             detail: "Mandatory briefing covering race format and local conditions.",
-            mapLocationId: "clearwater_bay_marina"
+            mapLocationId: "rhkyc_kellett"
           },
           {
             time: "18:00-20:00",
@@ -328,8 +375,16 @@ export const eventSchedules = {
             activity: "Racing - First Warning Signal",
             type: "racing" as const,
             location: "Race Course",
-            detail: "First racing day of the APAC Championship.",
+            detail: "First racing day of the APAC Championship. Two races scheduled.",
             mapLocationId: "ninepins_race_course"
+          },
+          {
+            time: "18:00",
+            activity: "After Sailing Social Debrief",
+            type: "social" as const,
+            location: "RHKYC Kellett Island",
+            detail: "Post-racing social debrief available after sailing.",
+            mapLocationId: "rhkyc_kellett"
           }
         ]
       },
@@ -343,8 +398,16 @@ export const eventSchedules = {
             activity: "Racing - First Warning Signal",
             type: "racing" as const,
             location: "Race Course",
-            detail: "Second racing day.",
+            detail: "Second racing day. Three races scheduled.",
             mapLocationId: "ninepins_race_course"
+          },
+          {
+            time: "18:00",
+            activity: "After Sailing Social Debrief",
+            type: "social" as const,
+            location: "RHKYC Kellett Island",
+            detail: "Post-racing social debrief available after sailing.",
+            mapLocationId: "rhkyc_kellett"
           }
         ]
       },
@@ -358,16 +421,30 @@ export const eventSchedules = {
             activity: "Racing - First Warning Signal",
             type: "racing" as const,
             location: "Race Course",
-            detail: "Final racing day of APAC Championship.",
+            detail: "Final racing day of APAC Championship. Two races scheduled.",
             mapLocationId: "ninepins_race_course"
+          },
+          {
+            time: "18:00",
+            activity: "After Sailing Social Debrief",
+            type: "social" as const,
+            location: "RHKYC Kellett Island",
+            detail: "Post-racing social debrief available after sailing.",
+            mapLocationId: "rhkyc_kellett"
           },
           {
             time: "TBC",
             activity: "Prizegiving Ceremony",
             type: "social" as const,
-            location: "RHKYC Kellett Island",
-            detail: "Awards ceremony for APAC Championship. Time to be confirmed.",
-            mapLocationId: "rhkyc_kellett"
+            location: "TBC",
+            detail: "Awards ceremony for APAC Championship. Venue and time to be confirmed."
+          },
+          {
+            time: "TBC",
+            activity: "Closing Ceremony Dinner",
+            type: "social" as const,
+            location: "TBC",
+            detail: "To be confirmed."
           }
         ]
       }
