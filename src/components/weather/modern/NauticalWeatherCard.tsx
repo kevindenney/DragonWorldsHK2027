@@ -281,11 +281,10 @@ export const NauticalWeatherCard: React.FC<NauticalWeatherCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     marginVertical: 8,
-    backdropFilter: 'blur(20px)',
     ...Platform.select({
       ios: {
         shadowColor: '#000',

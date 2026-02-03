@@ -285,8 +285,7 @@ const styles = StyleSheet.create({
     left: 16,
     right: 16,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    backdropFilter: 'blur(20px)',
+    backgroundColor: '#FFFFFF',
     overflow: 'hidden',
     ...Platform.select({
       ios: {

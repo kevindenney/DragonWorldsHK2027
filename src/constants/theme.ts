@@ -304,6 +304,7 @@ export const borderRadius: BorderRadius = {
 };
 
 // Shadow styles for different platforms
+// Note: iOS shadows require backgroundColor to render efficiently
 export const shadows: Shadows = {
   small: Platform.select({
     ios: {
@@ -311,6 +312,7 @@ export const shadows: Shadows = {
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.1,
       shadowRadius: 2,
+      backgroundColor: colors.surface,
     },
     android: {
       elevation: 2,
@@ -323,6 +325,7 @@ export const shadows: Shadows = {
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.15,
       shadowRadius: 4,
+      backgroundColor: colors.surface,
     },
     android: {
       elevation: 4,
@@ -335,6 +338,7 @@ export const shadows: Shadows = {
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.2,
       shadowRadius: 8,
+      backgroundColor: colors.surface,
     },
     android: {
       elevation: 8,
@@ -347,6 +351,7 @@ export const shadows: Shadows = {
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
       shadowRadius: 3,
+      backgroundColor: colors.surface,
     },
     android: {
       elevation: 3,
@@ -359,6 +364,7 @@ export const shadows: Shadows = {
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.2,
       shadowRadius: 2,
+      backgroundColor: colors.surface,
     },
     android: {
       elevation: 2,
@@ -371,6 +377,7 @@ export const shadows: Shadows = {
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.25,
       shadowRadius: 16,
+      backgroundColor: colors.surface,
     },
     android: {
       elevation: 16,

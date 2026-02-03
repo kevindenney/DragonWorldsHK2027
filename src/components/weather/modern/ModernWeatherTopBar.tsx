@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: '#FFFFFF',
     gap: 6,
     ...Platform.select({
       ios: {
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     color: '#1C1C1E',
     flex: 1,
     textAlign: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: '#FFFFFF',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   moreButton: {
     padding: 12,
     borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: '#FFFFFF',
     ...Platform.select({
       ios: {
         shadowColor: '#000',

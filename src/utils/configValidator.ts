@@ -68,14 +68,10 @@ export function validateRuntimeConfiguration(): ConfigValidationResult {
   Object.entries(result.debugInfo.google).forEach(([key, value]) => {
   });
 
-  // Validate Google Client ID format and consistency
+  // Validate Google Client ID format
   if (!googleConfig.webClientId?.includes('.apps.googleusercontent.com')) {
     result.errors.push('Google Web Client ID format is invalid');
     result.isValid = false;
-  }
-
-  if (googleConfig.webClientId && !googleConfig.webClientId.includes('839737857128')) {
-    result.warnings.push('Google Web Client ID does not contain expected prefix 839737857128');
   }
 
   // Environment Information
@@ -91,9 +87,8 @@ export function validateRuntimeConfiguration(): ConfigValidationResult {
 
   // URL Schemes (from app.json via Metro bundler)
   result.debugInfo.urlSchemes = {
-    expectedOAuthScheme: 'com.googleusercontent.apps.839737857128-qvdva2jrauf49erhratq7ri72d9hfjbb',
     expectedAppScheme: 'dragonworlds',
-    note: 'URL schemes are not accessible via environment variables at runtime'
+    note: 'OAuth URL schemes are configured in app.json CFBundleURLTypes'
   };
 
   // Summary
