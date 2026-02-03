@@ -25,29 +25,29 @@ export class GoogleSignInService {
     }
 
     try {
-
       const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
       const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 
-
       if (!webClientId) {
-        throw new Error('Google Web Client ID not configured');
+        throw new Error('Google Web Client ID not configured. Please set EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID');
+      }
+
+      // Validate iOS Client ID on iOS platform
+      if (Platform.OS === 'ios' && !iosClientId) {
+        throw new Error('Google iOS Client ID not configured. Please set EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID');
       }
 
       // Validate client ID format
       if (!webClientId.includes('.apps.googleusercontent.com')) {
+        throw new Error('Invalid Google Web Client ID format');
       }
 
-
+      // Configure without empty strings that cause issues on iOS
       const configOptions = {
         webClientId: webClientId,
         iosClientId: Platform.OS === 'ios' ? iosClientId : undefined,
         offlineAccess: true,
-        hostedDomain: '', // Use empty string for any domain
         forceCodeForRefreshToken: true,
-        accountName: '',
-        googleServicePlistPath: '',
-        openIdConnect: true,
         profileImageSize: 120,
       };
 

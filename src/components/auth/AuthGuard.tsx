@@ -36,7 +36,8 @@ export function AuthGuard({
   testID,
 }: AuthGuardProps) {
   const { user, isLoading, isAuthenticated } = useAuth();
-  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
+  // Initialize based on current isLoading state to prevent remount issues
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(!isLoading);
 
   useEffect(() => {
     if (!isLoading) {

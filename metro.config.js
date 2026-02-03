@@ -84,13 +84,28 @@ config.resolver = {
   resolverMainFields: ['react-native', 'main', 'browser'],
 };
 
-// Simple custom resolver - only handle essential cases
+// Custom resolver - handle special cases and ESM package issues
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   // Handle idb package - prevent it from being resolved in React Native
   if (moduleName === 'idb') {
     return {
       type: 'empty',
     };
+  }
+
+  // Handle google-signin ESM imports that don't have file extensions
+  // The google-signin package uses ESM-style imports without .js extensions
+  if (context.originModulePath &&
+      context.originModulePath.includes('@react-native-google-signin/google-signin') &&
+      moduleName.startsWith('./') &&
+      !moduleName.endsWith('.js')) {
+    // Try to resolve with .js extension first
+    try {
+      return context.resolveRequest(context, moduleName + '.js', platform);
+    } catch (e) {
+      // If that fails, try the original
+      return context.resolveRequest(context, moduleName, platform);
+    }
   }
 
   // Use default resolution for everything else

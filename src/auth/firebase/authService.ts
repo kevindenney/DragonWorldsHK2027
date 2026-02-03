@@ -17,8 +17,11 @@ import {
   User as FirebaseUser,
   UserCredential,
   GoogleAuthProvider,
+  OAuthProvider,
   signInWithCredential,
 } from 'firebase/auth';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 import { auth, firestore } from '../../config/firebase';
 import { LoginCredentials, RegisterCredentials, User, AuthProviderType, UserStatus } from '../authTypes';
 import { setDoc, getDoc, doc } from 'firebase/firestore';
@@ -216,6 +219,8 @@ export class FirebaseAuthService {
 
       if (provider === 'google') {
         return await this.loginWithGoogle();
+      } else if (provider === 'apple') {
+        return await this.loginWithApple();
       } else {
         throw new Error(`${provider} login not yet configured. Please use email/password authentication.`);
       }
@@ -262,6 +267,7 @@ export class FirebaseAuthService {
             photoURL: firebaseUser.photoURL || googleResult.user.photo,
             providers: ['google'],
             role: 'participant',
+            status: 'active',
             createdAt: new Date(),
             updatedAt: new Date(),
             preferences: {
@@ -284,6 +290,99 @@ export class FirebaseAuthService {
         role: 'participant',
       });
     } catch (error: any) {
+      throw error;
+    }
+  }
+
+  /**
+   * Login with Apple
+   */
+  private async loginWithApple(): Promise<User> {
+    try {
+      // Check if Apple Authentication is available
+      const isAvailable = await AppleAuthentication.isAvailableAsync();
+      if (!isAvailable) {
+        throw new Error('Apple Sign In is not available on this device');
+      }
+
+      // Generate a random nonce for security
+      const rawNonce = Math.random().toString(36).substring(2, 15) +
+                       Math.random().toString(36).substring(2, 15);
+      const hashedNonce = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        rawNonce
+      );
+
+      // Request Apple Sign In
+      const appleCredential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+        nonce: hashedNonce,
+      });
+
+      if (!appleCredential.identityToken) {
+        throw new Error('Apple Sign In did not return an identity token');
+      }
+
+      // Create Firebase credential from Apple credentials
+      const provider = new OAuthProvider('apple.com');
+      const credential = provider.credential({
+        idToken: appleCredential.identityToken,
+        rawNonce: rawNonce,
+      });
+
+      // Sign in to Firebase with the credential
+      const userCredential = await signInWithCredential(auth, credential);
+      const firebaseUser = userCredential.user;
+
+      // Build display name from Apple credential (only provided on first sign in)
+      let displayName = firebaseUser.displayName;
+      if (!displayName && appleCredential.fullName) {
+        const { givenName, familyName } = appleCredential.fullName;
+        if (givenName || familyName) {
+          displayName = [givenName, familyName].filter(Boolean).join(' ');
+        }
+      }
+
+      // Save/update user data in Firestore
+      if (firestore) {
+        try {
+          const userData = {
+            email: firebaseUser.email || appleCredential.email,
+            displayName: displayName,
+            photoURL: firebaseUser.photoURL,
+            providers: ['apple'],
+            role: 'participant',
+            status: 'active',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            preferences: {
+              notifications: true,
+              newsletter: false,
+              language: 'en',
+            },
+          };
+
+          await setDoc(doc(firestore, 'users', firebaseUser.uid), userData, { merge: true });
+        } catch (error) {
+          // Silently fail on Firestore write - user is still authenticated
+        }
+      }
+
+      // Return converted user
+      return convertFirebaseUser(firebaseUser, {
+        displayName: displayName,
+        photoURL: firebaseUser.photoURL,
+        providers: ['apple'],
+        role: 'participant',
+      });
+    } catch (error: any) {
+      // Handle Apple Sign In specific errors
+      if (error.code === 'ERR_REQUEST_CANCELED') {
+        throw new Error('Apple Sign In was cancelled');
+      }
       throw error;
     }
   }
