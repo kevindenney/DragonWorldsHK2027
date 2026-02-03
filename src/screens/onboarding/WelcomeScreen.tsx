@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Image, Dimensions, ImageBackground, Platform, Alert, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, Image, Dimensions, Platform, Alert, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Mail } from 'lucide-react-native';
@@ -104,20 +104,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSign
   };
 
   return (
-    <ImageBackground
-      source={require('../../../assets/adaptive-background.png')}
-      style={styles.backgroundImage}
-      resizeMode="cover"
+    <LinearGradient
+      colors={['#0A1E3D', '#0D2440', '#122B4A']}
+      locations={[0, 0.5, 1]}
+      style={styles.gradientOverlay}
     >
-      <LinearGradient
-        colors={[
-          'rgba(10, 30, 61, 0.85)',
-          'rgba(13, 36, 64, 0.90)',
-          'rgba(18, 43, 74, 0.95)',
-        ]}
-        locations={[0, 0.5, 1]}
-        style={styles.gradientOverlay}
-      >
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
           {/* Logo Section - Takes up ~40% of screen */}
           <View style={styles.logoSection}>
@@ -211,17 +202,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSign
             </Text>
           </View>
         </SafeAreaView>
-      </LinearGradient>
-    </ImageBackground>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
   gradientOverlay: {
     flex: 1,
   },

@@ -25,7 +25,7 @@
     ],
     "primaryColor": "#DC2626",
     "splash": {
-      "image": "./assets/splash-portrait.png",
+      "image": "./assets/splash-portrait-centered.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },
@@ -36,14 +36,14 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.denneyke.dragonworldshk2027",
       "usesAppleSignIn": true,
-      "buildNumber": "5",
+      "buildNumber": "13",
       "deploymentTarget": "15.0",
       "requireFullScreen": false,
       "userInterfaceStyle": "light",
       "jsEngine": "hermes",
       "hermes": true,
       "splash": {
-        "image": "./assets/splash-portrait.png",
+        "image": "./assets/splash-portrait-centered.png",
         "resizeMode": "contain",
         "backgroundColor": "#FFFFFF"
       },
@@ -91,7 +91,7 @@
       "compileSdkVersion": 34,
       "targetSdkVersion": 34,
       "splash": {
-        "image": "./assets/splash-portrait.png",
+        "image": "./assets/splash-portrait-centered.png",
         "resizeMode": "contain",
         "backgroundColor": "#FFFFFF"
       },
@@ -141,7 +141,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash-portrait.png",
+          "image": "./assets/splash-portrait-centered.png",
           "resizeMode": "contain",
           "backgroundColor": "#FFFFFF"
         }
