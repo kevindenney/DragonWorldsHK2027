@@ -21,14 +21,7 @@
         "API_URL": "https://dev-api.dragonworlds.com",
         "WEATHER_API_URL": "https://dev-weather-api.dragonworlds.com",
         "ANALYTICS_ENABLED": "true",
-        "SENTRY_ENABLED": "false",
-        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyDE_R9qmxZ7NNtNsYc045HvkszrB0_bg9s",
-        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "dragonworldshk2027.firebaseapp.com",
-        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "dragonworldshk2027",
-        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "dragonworldshk2027.appspot.com",
-        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "272884873953",
-        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:272884873953:web:ceb7584d1f28f8d6f7d5a0",
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "272884873953-q9bnuce7mrdm47iiqo28uhous2mgicfa.apps.googleusercontent.com"
+        "SENTRY_ENABLED": "false"
       }
     },
     "preview": {
@@ -81,6 +74,7 @@
         "autoIncrement": "buildNumber"
       },
       "env": {
+        "NODE_ENV": "production",
         "API_URL": "https://api.dragonworlds.com",
         "WEATHER_API_URL": "https://weather-api.dragonworlds.com",
         "ANALYTICS_ENABLED": "true",
@@ -126,8 +120,8 @@
     "production": {
       "ios": {
         "appleId": "kevin@regattaflow.com",
-        "ascAppId": "YOUR_ASC_APP_ID",
-        "appleTeamId": "YOUR_TEAM_ID"
+        "ascAppId": "6746410528",
+        "appleTeamId": "77SKA6MV9Y"
       },
       "android": {
         "serviceAccountKeyPath": "./google-service-account.json",
@@ -138,8 +132,8 @@
     "preview": {
       "ios": {
         "appleId": "kevin@regattaflow.com",
-        "ascAppId": "YOUR_ASC_APP_ID",
-        "appleTeamId": "YOUR_TEAM_ID"
+        "ascAppId": "6746410528",
+        "appleTeamId": "77SKA6MV9Y"
       },
       "android": {
         "serviceAccountKeyPath": "./google-service-account.json",
