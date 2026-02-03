@@ -74,7 +74,7 @@
     },
     "android": {
       "package": "com.dragonworlds.hk2027",
-      "versionCode": 2,
+      "versionCode": 3,
       "splash": {
         "image": "./assets/splash-portrait-centered.png",
         "resizeMode": "contain",
