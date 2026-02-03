@@ -4,6 +4,8 @@
   <dict>
     <key>CADisableMinimumFrameDurationOnPhone</key>
     <true/>
+    <key>CFBundleAllowMixedLocalizations</key>
+    <true/>
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
@@ -37,7 +39,7 @@
         <string>google-signin</string>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>com.googleusercontent.apps.272884873953-q9bnuce7mrdm47iiqo28uhous2mgicfa</string>
+          <string>com.googleusercontent.apps.272884873953-6jn6rf4a5fk1d4hk2pejf9duqpbjldeu</string>
         </array>
       </dict>
       <dict>
@@ -48,9 +50,9 @@
       </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>5</string>
+    <string>32</string>
     <key>GMSApiKey</key>
-    <string>AIzaSyASvagpRFBzK0HhRGqSqeW7W4FiEoFTf1w</string>
+    <string>AIzaSyC6fMo9bHpu41fIWKAPchSubNwuR_0s3eM</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>LSMinimumSystemVersion</key>
@@ -78,8 +80,6 @@
     <string>This app uses your location to provide accurate local weather conditions and nearby sailing venues.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>This app uses your location to provide accurate local weather conditions and nearby sailing venues.</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your microphone</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>This app accesses your photo library to let you share sailing photos and memories.</string>
     <key>UILaunchStoryboardName</key>

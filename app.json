@@ -3,26 +3,16 @@
     "name": "Dragon Worlds HK 2027",
     "slug": "dragonworldshk2027",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": false,
     "jsEngine": "hermes",
-    "hermes": true,
     "scheme": "dragonworlds",
     "description": "Official app for the Dragon World Championships 2027 in Hong Kong. Developed by RegattaFlow - specialists in sailing technology solutions. Features real-time weather data, race schedules, results, and sailor connectivity.",
-    "keywords": [
-      "sailing",
-      "dragon class",
-      "regatta",
-      "weather",
-      "racing",
-      "hong kong",
-      "yachting",
-      "regattaflow",
-      "sailing technology",
-      "yacht club apps"
-    ],
     "primaryColor": "#DC2626",
     "splash": {
       "image": "./assets/splash-portrait-centered.png",
@@ -36,12 +26,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.denneyke.dragonworldshk2027",
       "usesAppleSignIn": true,
-      "buildNumber": "13",
-      "deploymentTarget": "15.0",
+      "buildNumber": "32",
       "requireFullScreen": false,
       "userInterfaceStyle": "light",
       "jsEngine": "hermes",
-      "hermes": true,
       "splash": {
         "image": "./assets/splash-portrait-centered.png",
         "resizeMode": "contain",
@@ -62,7 +50,7 @@
           {
             "CFBundleURLName": "google-signin",
             "CFBundleURLSchemes": [
-              "com.googleusercontent.apps.272884873953-q9bnuce7mrdm47iiqo28uhous2mgicfa"
+              "com.googleusercontent.apps.272884873953-6jn6rf4a5fk1d4hk2pejf9duqpbjldeu"
             ]
           }
         ],
@@ -82,14 +70,11 @@
       ],
       "config": {
         "usesNonExemptEncryption": false
-      },
-      "runtimeVersion": "1.0.0"
+      }
     },
     "android": {
       "package": "com.dragonworlds.hk2027",
-      "versionCode": 1,
-      "compileSdkVersion": 34,
-      "targetSdkVersion": 34,
+      "versionCode": 2,
       "splash": {
         "image": "./assets/splash-portrait-centered.png",
         "resizeMode": "contain",
@@ -126,8 +111,7 @@
             "DEFAULT"
           ]
         }
-      ],
-      "runtimeVersion": "1.0.0"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -160,6 +144,10 @@
     "experiments": {
       "typedRoutes": false
     },
+    "updates": {
+      "enabled": true,
+      "url": "https://u.expo.dev/c1bd372f-8ae3-4a4d-a4d0-d1300ce6e95a"
+    },
     "extra": {
       "eas": {
         "projectId": "c1bd372f-8ae3-4a4d-a4d0-d1300ce6e95a"
@@ -171,11 +159,6 @@
       "enableDeveloperMenu": false
     },
     "owner": "denneyke",
-    "privacy": "public",
-    "githubUrl": "https://github.com/regattaflow/dragonworlds-hk2027",
-    "updates": {
-      "enabled": true,
-      "url": "https://u.expo.dev/c1bd372f-8ae3-4a4d-a4d0-d1300ce6e95a"
-    }
+    "githubUrl": "https://github.com/regattaflow/dragonworlds-hk2027"
   }
 }

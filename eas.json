@@ -57,7 +57,6 @@
         "gradleCommand": ":app:bundleRelease"
       },
       "env": {
-        "NODE_ENV": "production",
         "API_URL": "https://api.dragonworlds.com",
         "WEATHER_API_URL": "https://weather-api.dragonworlds.com",
         "ANALYTICS_ENABLED": "true",
@@ -127,6 +126,20 @@
         "serviceAccountKeyPath": "./google-service-account.json",
         "track": "production",
         "releaseStatus": "completed"
+      }
+    },
+    "production-ios": {
+      "ios": {
+        "appleId": "kevin@regattaflow.com",
+        "ascAppId": "6746410528",
+        "appleTeamId": "77SKA6MV9Y"
+      }
+    },
+    "internal": {
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal",
+        "releaseStatus": "draft"
       }
     },
     "preview": {

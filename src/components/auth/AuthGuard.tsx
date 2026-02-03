@@ -35,15 +35,16 @@ export function AuthGuard({
   onBackToApp,
   testID,
 }: AuthGuardProps) {
-  const { user, isLoading, isAuthenticated } = useAuth();
-  // Initialize based on current isLoading state to prevent remount issues
-  const [hasCheckedAuth, setHasCheckedAuth] = useState(!isLoading);
+  const { user, isLoading, isAuthenticated, isInitialized } = useAuth();
+  // Track if we've completed initial auth check - use isInitialized as primary indicator
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(isInitialized);
 
   useEffect(() => {
-    if (!isLoading) {
+    // Once auth is initialized, we've checked auth
+    if (isInitialized) {
       setHasCheckedAuth(true);
     }
-  }, [isLoading]);
+  }, [isInitialized]);
 
   useEffect(() => {
     if (hasCheckedAuth && requireAuth && !isAuthenticated) {
@@ -59,14 +60,15 @@ export function AuthGuard({
     }
   }, [hasCheckedAuth, isAuthenticated, user, requiredRoles, onInsufficientPermissions]);
 
-  // Show loading while authentication state is being determined
-  if (isLoading || !hasCheckedAuth) {
+  // Show loading only during initial auth check, not during subsequent operations
+  // Once isInitialized is true, auth is ready - don't show loading for other operations
+  if (!isInitialized || (!hasCheckedAuth && isLoading)) {
     if (LoadingComponent) {
       return <LoadingComponent />;
     }
     return (
-      <LoadingScreen 
-        message="Authenticating..." 
+      <LoadingScreen
+        message="Authenticating..."
         testID={`${testID}-loading`}
       />
     );
@@ -200,9 +202,10 @@ export interface GuestOnlyProps {
 }
 
 export function GuestOnly({ children, redirectTo, testID }: GuestOnlyProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isInitialized } = useAuth();
 
-  if (isLoading) {
+  // Only show loading during initial auth check
+  if (!isInitialized) {
     return <LoadingScreen message="Loading..." testID={`${testID}-loading`} />;
   }
 
@@ -447,7 +450,7 @@ function PermissionDenied({ userRole, requiredRoles, testID }: PermissionDeniedP
 
 // Hook for conditional rendering based on authentication state
 export function useAuthGuard() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, isInitialized } = useAuth();
 
   const hasRole = (roles: UserRole | UserRole[]): boolean => {
     if (!isAuthenticated || !user) return false;
@@ -466,14 +469,15 @@ export function useAuthGuard() {
   };
 
   const canAccess = (requiredRoles?: UserRole[], requiredAuth: boolean = true): boolean => {
-    if (isLoading) return false;
-    
+    // Use isInitialized as the primary check for auth readiness
+    if (!isInitialized) return false;
+
     if (requiredAuth && !isAuthenticated) return false;
-    
+
     if (requiredRoles && requiredRoles.length > 0) {
       return hasRole(requiredRoles);
     }
-    
+
     return true;
   };
 
@@ -481,6 +485,7 @@ export function useAuthGuard() {
     user,
     isAuthenticated,
     isLoading,
+    isInitialized,
     hasRole,
     hasPermission,
     isAdmin,

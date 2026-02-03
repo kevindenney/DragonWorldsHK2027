@@ -1,60 +1,28 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
-
 // Production-ready configuration with Hermes engine
+// Expo automatically passes app.json's "expo" content via the config parameter
 export default ({ config }) => {
-  // If config is empty or missing expo, load from app.json
-  if (!config.expo || Object.keys(config).length === 0) {
-    try {
-      const appJsonPath = join(process.cwd(), 'app.json');
-      const appJsonContent = JSON.parse(readFileSync(appJsonPath, 'utf8'));
-      config = appJsonContent;
-    } catch (error) {
-      config = { expo: {} };
-    }
-  }
-
-  // Ensure config.expo exists
-  if (!config.expo) {
-    config.expo = {};
-  }
-
-  // Ensure nested objects exist
-  if (!config.expo.extra) {
-    config.expo.extra = {};
-  }
-  if (!config.expo.ios) {
-    config.expo.ios = {};
-  }
-  if (!config.expo.ios.config) {
-    config.expo.ios.config = {};
-  }
-  if (!config.expo.android) {
-    config.expo.android = {};
-  }
-  if (!config.expo.android.config) {
-    config.expo.android.config = {};
-  }
+  // Ensure nested objects exist (config is already the expo content)
+  config.extra = config.extra || {};
+  config.ios = config.ios || {};
+  config.ios.config = config.ios.config || {};
+  config.android = config.android || {};
+  config.android.config = config.android.config || {};
+  config.plugins = config.plugins || [];
 
   // Use Hermes for optimal performance in production
-  config.expo.jsEngine = 'hermes';
-  config.expo.hermes = true;
+  config.jsEngine = 'hermes';
 
-  // Add Google Sign-In plugin
-  if (!config.expo.plugins) {
-    config.expo.plugins = [];
-  }
-  // Add @react-native-google-signin/google-signin plugin if not already present
+  // Add Google Sign-In plugin if not already present
   const googleSignInPlugin = '@react-native-google-signin/google-signin';
-  if (!config.expo.plugins.some(p => p === googleSignInPlugin || (Array.isArray(p) && p[0] === googleSignInPlugin))) {
-    config.expo.plugins.push(googleSignInPlugin);
+  if (!config.plugins.some(p => p === googleSignInPlugin || (Array.isArray(p) && p[0] === googleSignInPlugin))) {
+    config.plugins.push(googleSignInPlugin);
   }
 
   // Inject Google Maps API key from environment variable
   const googleMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   if (googleMapsApiKey) {
-    config.expo.ios.config.googleMapsApiKey = googleMapsApiKey;
-    config.expo.android.config.googleMaps = {
+    config.ios.config.googleMapsApiKey = googleMapsApiKey;
+    config.android.config.googleMaps = {
       apiKey: googleMapsApiKey,
     };
   }

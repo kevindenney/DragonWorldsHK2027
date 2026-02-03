@@ -254,26 +254,15 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
 
-
-      // Add timeout for authentication requests
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Authentication request timed out after 15 seconds')), 15000);
-      });
-
-      let authPromise: Promise<any>;
+      // Note: Removed artificial 15-second timeout that was causing premature failures on slow simulators.
+      // Firebase Auth has built-in network error handling and returns auth/network-request-failed for real issues.
+      // The timeout was racing against Firebase and showing errors while auth was still in progress.
 
       if (useFirebase && firebaseServiceRef.current) {
-
-
-        authPromise = firebaseServiceRef.current.login(credentials);
+        await firebaseServiceRef.current.login(credentials);
       } else {
-
-
-        authPromise = mockAuthService.login(credentials);
+        await mockAuthService.login(credentials);
       }
-
-      // Race between auth request and timeout
-      await Promise.race([authPromise, timeoutPromise]);
 
       const loginDuration = Date.now() - loginStartTime;
 
