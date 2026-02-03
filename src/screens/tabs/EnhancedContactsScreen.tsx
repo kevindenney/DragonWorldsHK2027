@@ -378,7 +378,7 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
       {/* Content ScrollView - scrolls behind header */}
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={{ paddingTop: insets.top + HEADER_HEIGHT + 8 }}
+        contentContainerStyle={{ paddingTop: insets.top + HEADER_HEIGHT + 8, paddingBottom: 120 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

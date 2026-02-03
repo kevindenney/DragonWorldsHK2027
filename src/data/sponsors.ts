@@ -603,11 +603,11 @@ export const dragonWorldsSponsors: Sponsor[] = [
     name: 'Code Zero',
     tier: 'supporting',
     description: 'Performance Sailing Apparel - Official Clothing Partner of Dragon Worlds HK 2027',
-    website: 'https://www.codezero.com',
+    website: 'https://www.code-zero.com',
     primaryColor: '#000000',
     contact: {
       phone: '+852 2527 8899',
-      email: 'hk@codezero.com',
+      email: 'ahoy@code-zero.com',
       address: 'Code Zero Flagship Store, Pacific Place, Admiralty'
     },
     business: {
@@ -621,7 +621,7 @@ export const dragonWorldsSponsors: Sponsor[] = [
         name: 'Code Zero Flagship Store',
         address: 'Shop 331, Pacific Place, 88 Queensway, Admiralty',
         phone: '+852 2527 8899',
-        website: 'https://www.codezero.com',
+        website: 'https://www.code-zero.com',
         hours: {
           'Monday': '10:00 AM - 8:00 PM',
           'Tuesday': '10:00 AM - 8:00 PM',
@@ -709,7 +709,7 @@ export const dragonWorldsSponsors: Sponsor[] = [
         description: 'Preview the latest Code Zero collection with professional sailors as models',
         type: 'social',
         sponsorId: 'code_zero',
-        website: 'https://www.codezero.com/dragonworlds',
+        website: 'https://www.code-zero.com/dragonworlds',
         bookingRequired: true,
         duration: '2 hours',
         priceRange: 'free',

@@ -323,7 +323,7 @@ export function SponsorsScreen() {
       {/* ScrollView - scrolls behind the tab navigation */}
       <ScrollView
         style={styles.content}
-        contentContainerStyle={{ paddingTop: insets.top + HEADER_HEIGHT + 8 }}
+        contentContainerStyle={{ paddingTop: insets.top + HEADER_HEIGHT + 8, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={scrollHandler.onScroll}
