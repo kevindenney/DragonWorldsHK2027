@@ -3,7 +3,7 @@
 ## Your API Key Status
 
 Your OpenWeatherMap API key has been configured:
-- **API Key**: `6e0536f7e1f58b0bae02b8d1b207487f`
+- **API Key**: `YOUR_OPENWEATHER_API_KEY`
 - **Status**: Currently showing "Invalid API key" (may take 2-3 hours to activate)
 - **Location**: Configured in `src/services/areaForecastService.ts`
 
@@ -14,7 +14,7 @@ OpenWeatherMap API keys typically take 2-3 hours to activate after registration.
 
 Test if your key is active:
 ```bash
-curl "https://api.openweathermap.org/data/2.5/weather?lat=22.285&lon=114.175&appid=6e0536f7e1f58b0bae02b8d1b207487f&units=metric"
+curl "https://api.openweathermap.org/data/2.5/weather?lat=22.285&lon=114.175&appid=YOUR_OPENWEATHER_API_KEY&units=metric"
 ```
 
 When active, you'll see weather data instead of an error.
@@ -28,7 +28,7 @@ export const WEATHER_CONFIG = {
   useMultiSource: true,  // ← CHANGE THIS TO TRUE
   showConfidence: true,
   fallbackToOpenMeteo: true,
-  openWeatherMapApiKey: '6e0536f7e1f58b0bae02b8d1b207487f'
+  openWeatherMapApiKey: 'YOUR_OPENWEATHER_API_KEY'
 };
 ```
 

@@ -9,7 +9,7 @@ export const WEATHER_CONFIG = {
   useOpenWeatherMap: true, // Use OpenWeatherMap as primary source
   useOpenMeteo: false, // DISABLED - Open-Meteo shows unrealistic wind speeds
   showConfidence: false,  // No confidence needed with single source
-  openWeatherMapApiKey: '6e0536f7e1f58b0bae02b8d1b207487f' // HKDW API key (Active)
+  openWeatherMapApiKey: process.env.EXPO_PUBLIC_OPENWEATHER_API_KEY || '' // Set in .env file
 };
 
 // Helper functions
