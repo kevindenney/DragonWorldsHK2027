@@ -50,6 +50,7 @@ ui-debug.log
 service-account-key.json
 *-service-account-key.json
 firebase-adminsdk-*.json
+google-service-account.json
 
 # IDE
 .vscode/
