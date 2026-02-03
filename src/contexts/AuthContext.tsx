@@ -67,9 +67,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     if (!isInitialized && !initializationAttempted.current) {
       initializationAttempted.current = true;
-      console.log('🚀 Initializing auth store...');
       initialize().catch(error => {
-        console.error('Auth initialization error:', error);
       });
     }
   }, [isInitialized]);

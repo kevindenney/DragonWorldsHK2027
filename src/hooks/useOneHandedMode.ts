@@ -34,7 +34,6 @@ export function useOneHandedMode() {
         setSettings(JSON.parse(stored));
       }
     } catch (error) {
-      console.warn('Failed to load one-handed mode settings:', error);
     }
   };
 
@@ -45,7 +44,6 @@ export function useOneHandedMode() {
     try {
       await AsyncStorage.setItem('oneHandedMode', JSON.stringify(updated));
     } catch (error) {
-      console.warn('Failed to save one-handed mode settings:', error);
     }
   };
 

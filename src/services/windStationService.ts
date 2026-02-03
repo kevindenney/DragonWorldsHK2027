@@ -221,10 +221,8 @@ class WindStationService {
         if (station && this.validateWindStation(station)) {
           stations.push(station);
         } else if (station) {
-          console.warn(`Invalid HKO station data for ${coord.latitude}, ${coord.longitude}`);
         }
       } catch (error) {
-        console.warn(`Failed to get HKO wind data for ${coord.latitude}, ${coord.longitude}:`, error);
       }
     }
 
@@ -235,10 +233,8 @@ class WindStationService {
         if (station && this.validateWindStation(station)) {
           stations.push(station);
         } else if (station) {
-          console.warn(`Invalid marine station data for ${coord.latitude}, ${coord.longitude}`);
         }
       } catch (error) {
-        console.warn(`Failed to get marine wind data for ${coord.latitude}, ${coord.longitude}:`, error);
       }
     }
 
@@ -258,7 +254,6 @@ class WindStationService {
     const catalogWeatherBuoys = stationCatalogService.getWeatherBuoys();
     const allCatalogStations = [...catalogWeatherStations, ...catalogWeatherBuoys];
 
-    console.log(`🌬️ [WIND CATALOG] Processing ${allCatalogStations.length} stations from catalog`);
 
     for (const catalogStation of allCatalogStations) {
       try {
@@ -277,16 +272,12 @@ class WindStationService {
           station.description = catalogStation.notes || station.description;
           stations.push(station);
 
-          console.log(`🌬️ [WIND CATALOG] ✓ ${catalogStation.name} (${catalogStation.priority} priority)`);
         } else {
-          console.warn(`🌬️ [WIND CATALOG] ✗ Failed to get valid data for ${catalogStation.name}`);
         }
       } catch (error) {
-        console.warn(`🌬️ [WIND CATALOG] ✗ Error processing ${catalogStation.name}:`, error);
       }
     }
 
-    console.log(`🌬️ [WIND CATALOG] Successfully loaded ${stations.length} wind stations from catalog`);
     return stations;
   }
 
@@ -297,7 +288,6 @@ class WindStationService {
     const racingStations = stationCatalogService.getNinePinsRacingStations();
     const stations: WindStation[] = [];
 
-    console.log(`🌬️ [RACING] Processing ${racingStations.length} stations for Nine Pins racing area`);
 
     for (const catalogStation of racingStations) {
       try {
@@ -316,10 +306,8 @@ class WindStationService {
           station.description = `${catalogStation.notes || station.description} (${catalogStation.distanceKm.toFixed(1)}km from racing area)`;
           stations.push(station);
 
-          console.log(`🌬️ [RACING] ✓ ${catalogStation.name} - ${catalogStation.distanceKm.toFixed(1)}km (${catalogStation.priority})`);
         }
       } catch (error) {
-        console.warn(`🌬️ [RACING] ✗ Error processing ${catalogStation.name}:`, error);
       }
     }
 
@@ -330,7 +318,6 @@ class WindStationService {
       return (stationA?.distanceKm || 999) - (stationB?.distanceKm || 999);
     });
 
-    console.log(`🌬️ [RACING] Successfully loaded ${stations.length} racing area wind stations`);
     return stations;
   }
 
@@ -373,12 +360,10 @@ class WindStationService {
           visibility: currentWind.visibility
         };
         dataQuality = 'high';
-        console.log(`🌬️ [WIND] Using Open-Meteo Weather data for ${coordinate.latitude.toFixed(3)}, ${coordinate.longitude.toFixed(3)}`);
       } else {
         // Use fallback data
         windData = this.generateFallbackWindData(coordinate);
         dataQuality = 'low';
-        console.log(`🌬️ [WIND] Using fallback data for ${coordinate.latitude.toFixed(3)}, ${coordinate.longitude.toFixed(3)}`);
       }
 
       const windSpeed = windData.wind_speed || windData.windSpeed || 0;
@@ -412,7 +397,6 @@ class WindStationService {
       // Handle weather API errors with silent flag support
       const errorMessage = handleWeatherAPIError(error, 'windStationService.getWindStationAtCoordinate');
       if (!(error && typeof error === 'object' && error.silent === true)) {
-        console.error(`Failed to fetch wind data for ${coordinate.latitude}, ${coordinate.longitude}:`, errorMessage);
       }
       
       // Return fallback data
@@ -614,7 +598,6 @@ class WindStationService {
 
     // For marine stations, check if they're over water
     if (station.type === 'marine' && !this.isOverWater(station.coordinate.latitude, station.coordinate.longitude)) {
-      console.warn(`Marine station ${station.name} is not over water`);
       return false;
     }
 

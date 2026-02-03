@@ -27,11 +27,6 @@ import Svg, {
 import { IOSText } from '../../ios';
 
 // Debug logging
-console.log('WindSpeedTrendChart - Imports loaded');
-console.log('PanGestureHandler available:', !!PanGestureHandler);
-console.log('Svg available:', !!Svg);
-console.log('Path available:', !!Path);
-console.log('Animated available:', !!Animated);
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_PADDING = 40;
@@ -101,14 +96,6 @@ export const WindSpeedTrendChart: React.FC<WindSpeedTrendChartProps> = ({
   title = '🌊 Wind Speed Trend',
   nowIndex,
 }) => {
-  console.log('WindSpeedTrendChart - Component rendering');
-  console.log('Data length:', data?.length);
-  console.log('Components check:', {
-    PanGestureHandler: !!PanGestureHandler,
-    Animated: !!Animated,
-    Svg: !!Svg,
-    View: !!View,
-  });
   const panX = useSharedValue(0);
   const isDragging = useSharedValue(false);
 

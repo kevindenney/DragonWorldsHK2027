@@ -88,10 +88,13 @@ export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [loginError, setLoginError] = useState<{ title: string; message: string } | null>(null);
+  // Track if login was attempted - only navigate after successful login action
+  const [loginAttempted, setLoginAttempted] = useState(false);
 
-  // Monitor authentication state and navigate away when login succeeds
+  // Monitor authentication state and navigate away ONLY after a successful login attempt
   useEffect(() => {
-    if (isAuthenticated && user) {
+    // Only navigate if user explicitly attempted login and it succeeded
+    if (loginAttempted && isAuthenticated && user) {
       // Add a small delay to show success before navigating
       setTimeout(() => {
         try {
@@ -110,7 +113,7 @@ export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
         }
       }, 500);
     }
-  }, [isAuthenticated, user, navigation]);
+  }, [loginAttempted, isAuthenticated, user, navigation]);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -153,9 +156,13 @@ export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
     }
 
     try {
+      // Mark that login was attempted - will enable navigation on success
+      setLoginAttempted(true);
       await login({ email, password });
+      // If we get here, login succeeded - useEffect will handle navigation
     } catch (error: any) {
-
+      // Login failed - reset the flag so we don't navigate on stale auth state
+      setLoginAttempted(false);
       // Get user-friendly error message and display inline
       const errorInfo = getLoginErrorMessage(error);
       setLoginError(errorInfo);
@@ -172,8 +179,13 @@ export function SimpleLoginScreen({ navigation }: SimpleLoginScreenProps) {
   const handleSocialLogin = async (provider: AuthProviderType) => {
     setLoginError(null);
     try {
+      // Mark that login was attempted - will enable navigation on success
+      setLoginAttempted(true);
       await loginWithProvider(provider);
+      // If we get here, login succeeded - useEffect will handle navigation
     } catch (error: any) {
+      // Login failed - reset the flag so we don't navigate on stale auth state
+      setLoginAttempted(false);
       const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
       setLoginError({
         title: `${providerName} Sign In Failed`,

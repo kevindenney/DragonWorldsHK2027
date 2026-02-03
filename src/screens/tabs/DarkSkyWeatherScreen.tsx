@@ -46,7 +46,6 @@ export const DarkSkyWeatherScreen: React.FC<DarkSkyWeatherScreenProps> = ({ navi
     try {
       await refreshWeather();
     } catch (error) {
-      console.error('Weather refresh failed:', error);
     } finally {
       setRefreshing(false);
     }

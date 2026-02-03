@@ -71,8 +71,6 @@ export const CategoryFilterChips: React.FC<CategoryFilterChipsProps> = ({
   selectedCategory,
   onCategoryChange
 }) => {
-  console.log('[CategoryFilterChips] Rendering with counts:', categoryCounts);
-  console.log('[CategoryFilterChips] Selected category:', selectedCategory);
 
   const handleCategoryPress = async (category: RegattaCategory | 'all') => {
     await haptics.selection();
@@ -81,29 +79,24 @@ export const CategoryFilterChips: React.FC<CategoryFilterChipsProps> = ({
 
   // Robust data validation
   if (!categoryCounts || !Array.isArray(categoryCounts) || categoryCounts.length === 0) {
-    console.log('[CategoryFilterChips] Invalid or empty category counts, returning null');
     return null;
   }
 
   // Validate each category count item - keep all categories including those with 0 count
   const validCategoryCounts = categoryCounts.filter(item => {
     if (!item || typeof item !== 'object') {
-      console.warn('[CategoryFilterChips] Invalid category count item:', item);
       return false;
     }
     if (!item.category || typeof item.category !== 'string') {
-      console.warn('[CategoryFilterChips] Invalid category:', item.category);
       return false;
     }
     if (typeof item.count !== 'number' || item.count < 0) {
-      console.warn('[CategoryFilterChips] Invalid count:', item.count);
       return false;
     }
     return true; // Keep all valid categories, even with count 0
   });
 
   if (validCategoryCounts.length === 0) {
-    console.log('[CategoryFilterChips] No valid category counts after validation');
     return null;
   }
 
@@ -115,11 +108,9 @@ export const CategoryFilterChips: React.FC<CategoryFilterChipsProps> = ({
         contentContainerStyle={styles.scrollContent}
       >
         {validCategoryCounts.map(({ category, count, unreadCount }) => {
-          console.log('[CategoryFilterChips] Processing category:', category, 'count:', count);
 
           const categoryInfo = CATEGORY_INFO[category];
           if (!categoryInfo) {
-            console.log('[CategoryFilterChips] No category info for:', category);
             // Return empty fragment instead of null to avoid React Native text rendering issues
             return <Fragment key={`missing-${category}`} />;
           }

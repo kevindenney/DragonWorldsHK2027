@@ -45,7 +45,6 @@ export class NotificationService {
     // Set up notification listeners
     this.setupNotificationListeners();
 
-    console.log('📱 Notification service initialized');
   }
 
   /**
@@ -55,7 +54,6 @@ export class NotificationService {
     try {
       // Check if device supports notifications
       if (!Device.isDevice) {
-        console.warn('⚠️ Push notifications only work on physical devices');
         return null;
       }
 
@@ -70,7 +68,6 @@ export class NotificationService {
       }
 
       if (finalStatus !== 'granted') {
-        console.warn('⚠️ Notification permission not granted');
         return null;
       }
 
@@ -80,7 +77,6 @@ export class NotificationService {
       });
 
       this.expoPushToken = token.data;
-      console.log('✅ Got Expo push token:', token.data);
 
       // Store token in Firestore for the user
       if (userId) {
@@ -90,7 +86,6 @@ export class NotificationService {
       return token.data;
 
     } catch (error) {
-      console.error('❌ Error registering for push notifications:', error);
       return null;
     }
   }
@@ -107,9 +102,7 @@ export class NotificationService {
         notificationsEnabled: true
       });
       
-      console.log('✅ Updated user push token in Firestore');
     } catch (error) {
-      console.error('❌ Error updating user push token:', error);
     }
   }
 
@@ -140,7 +133,6 @@ export class NotificationService {
       sound: 'default',
     });
 
-    console.log('📢 Created Android notification channels');
   }
 
   /**
@@ -149,7 +141,6 @@ export class NotificationService {
   private setupNotificationListeners(): void {
     // Listener for notifications received while app is running
     this.notificationListener = Notifications.addNotificationReceivedListener(notification => {
-      console.log('📨 Notification received:', notification);
       
       const data = notification.request.content.data;
       
@@ -159,7 +150,6 @@ export class NotificationService {
 
     // Listener for when user taps a notification
     this.responseListener = Notifications.addNotificationResponseReceivedListener(response => {
-      console.log('👆 Notification tapped:', response);
       
       const data = response.notification.request.content.data;
       
@@ -175,7 +165,6 @@ export class NotificationService {
     // You could show an in-app banner or update badge count here
     if (data?.priority === 'emergency') {
       // For emergency notices, we might want to show a modal or sound an alarm
-      console.log('🚨 Emergency notice received!');
     }
   }
 
@@ -185,7 +174,6 @@ export class NotificationService {
   private handleNotificationTapped(data: any): void {
     if (data?.noticeId && data?.eventId) {
       // Navigate to notice detail screen
-      console.log(`🔔 Opening notice ${data.noticeId} for event ${data.eventId}`);
       
       // You would implement navigation here, for example:
       // NavigationService.navigate('NoticeDetail', { noticeId: data.noticeId });
@@ -212,7 +200,6 @@ export class NotificationService {
    */
   async clearAllNotifications(): Promise<void> {
     await Notifications.dismissAllNotificationsAsync();
-    console.log('🧹 Cleared all notifications');
   }
 
   /**
@@ -234,9 +221,7 @@ export class NotificationService {
         notificationSettingsUpdatedAt: new Date().toISOString()
       });
       
-      console.log(`${enabled ? '🔔' : '🔕'} Notifications ${enabled ? 'enabled' : 'disabled'} for user`);
     } catch (error) {
-      console.error('❌ Error updating notification settings:', error);
       throw error;
     }
   }
@@ -258,9 +243,7 @@ export class NotificationService {
         notificationSettingsUpdatedAt: new Date().toISOString()
       });
       
-      console.log('⚙️ Updated notification preferences for user');
     } catch (error) {
-      console.error('❌ Error updating notification preferences:', error);
       throw error;
     }
   }
@@ -283,7 +266,6 @@ export class NotificationService {
       Notifications.removeNotificationSubscription(this.responseListener);
     }
     
-    console.log('🧹 Notification service cleaned up');
   }
 }
 

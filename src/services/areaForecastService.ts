@@ -93,7 +93,6 @@ async function getWindData(area: RaceArea): Promise<{
   omTimes: string[];
 }> {
   if (WEATHER_CONFIG.useOpenWeatherMap && WEATHER_CONFIG.openWeatherMapApiKey) {
-    console.log(`🌊 [OPENWEATHERMAP] Fetching wind data for ${area.key}`);
 
     try {
       // Fetch current weather from OpenWeatherMap
@@ -157,7 +156,6 @@ async function getWindData(area: RaceArea): Promise<{
         sources: ['OpenWeatherMap']
       };
 
-      console.log(`🌊 [OPENWEATHERMAP] Current wind for ${area.key}: ${currentWind.speedKts.toFixed(1)}kt @ ${currentWind.dirDeg}°`);
 
       return {
         windSpeedKts,
@@ -170,7 +168,6 @@ async function getWindData(area: RaceArea): Promise<{
       };
 
     } catch (error) {
-      console.error(`🌊 [OPENWEATHERMAP] Failed for ${area.key}:`, error);
 
       // If OpenWeatherMap fails and Open-Meteo is disabled, throw error
       if (!WEATHER_CONFIG.useOpenMeteo) {
@@ -181,7 +178,6 @@ async function getWindData(area: RaceArea): Promise<{
 
   // Fallback to Open-Meteo if configured (but it's disabled by default now)
   if (WEATHER_CONFIG.useOpenMeteo) {
-    console.log(`🔍 [FALLBACK] Using Open-Meteo for ${area.key}`);
     const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${area.lat}&longitude=${area.lon}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,cloud_cover&timezone=Asia%2FHong_Kong&forecast_days=7`);
     const weatherData = await weatherRes.json();
     const omTimes = weatherData.hourly.time || buildHKHourlyKeys(72);
@@ -244,7 +240,6 @@ function generateSyntheticTideData(stationCode: string, times: string[]): HKOTid
     const date = new Date(timeStr);
     const hours = date.getTime() / (1000 * 60 * 60);
 
-    console.log(`🌊 [TIDE CALC] Time: ${timeStr}, Hours since epoch: ${hours}`);
 
     // M2 tidal component
     const m2Phase = (2 * Math.PI * hours / M2_PERIOD) + config.phase;
@@ -281,21 +276,17 @@ async function fetchHkoPredictedTide(): Promise<Record<string, HKOTidePoint[]>> 
         if (response.ok) {
           const json = await response.json();
           if (json && typeof json === 'object') {
-            console.log('✅ HKO tide data fetched successfully');
             // Process real HKO data if available
             return {};
           }
         }
       } catch (e) {
-        console.log('⚠️ HKO endpoint failed, trying next...', e.message);
         continue;
       }
     }
 
-    console.log('⚠️ HKO tide API unavailable, returning empty for synthetic fallback');
     return {};
   } catch (error) {
-    console.log('⚠️ HKO tide fetch error, returning empty for synthetic fallback:', error.message);
     return {};
   }
 }
@@ -306,20 +297,12 @@ function getTideSeriesAlignedToOM(
   omHourlyTimes: string[],
   hkoData: Record<string, HKOTidePoint[]>
 ): (number | null)[] {
-  console.log(`🔍 [TIDE DEBUG] getTideSeriesAlignedToOM called for station: ${stationCode}`);
-  console.log(`🔍 [TIDE DEBUG] HKO data keys:`, Object.keys(hkoData));
-  console.log(`🔍 [TIDE DEBUG] OM times count:`, omHourlyTimes.length);
 
   const stationData = hkoData[stationCode];
-  console.log(`🔍 [TIDE DEBUG] Station data exists:`, !!stationData);
-  console.log(`🔍 [TIDE DEBUG] Station data length:`, stationData?.length || 0);
 
   if (!stationData || stationData.length === 0) {
     // Use synthetic tide model when real data is unavailable
-    console.log(`🌊 Using synthetic tide model for ${stationCode}`);
     const syntheticData = generateSyntheticTideData(stationCode, omHourlyTimes);
-    console.log(`🌊 Generated ${syntheticData.length} synthetic tide points`);
-    console.log(`🌊 First few tide heights:`, syntheticData.slice(0, 3).map(d => d.height));
     return syntheticData.map(d => d.height);
   }
 
@@ -390,7 +373,6 @@ export async function getAreaBundle(
   mapped?: {code: string; name: string},
   nearestFallback: boolean = true
 ): Promise<AreaBundle> {
-  console.log(`🔍 [BUNDLE DEBUG] Starting getAreaBundle for ${area.key}`);
   try {
     // 1. Fetch wind data from OpenWeatherMap
     const windDataResult = await getWindData(area);
@@ -405,10 +387,8 @@ export async function getAreaBundle(
     } = windDataResult;
 
     // 2. Fetch marine data in parallel with wind data processing
-    console.log(`🔍 [BUNDLE DEBUG] Fetching marine data for ${area.key}`);
     const marineRes = await fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${area.lat}&longitude=${area.lon}&hourly=wave_height,wave_direction,wave_period&timezone=Asia%2FHong_Kong&forecast_days=7`);
     const marineData = await marineRes.json();
-    console.log(`🔍 [BUNDLE DEBUG] Marine data parsed for ${area.key}`);
 
     // 3. Determine tide station
     const mappedStation = mapped || RACE_AREA_TIDE_MAP[area.key];
@@ -424,15 +404,11 @@ export async function getAreaBundle(
     }
 
     // 4. Fetch HKO tide data and align (TEMPORARY: Skip HKO API and force synthetic)
-    console.log(`🔍 [BUNDLE DEBUG] FORCE SYNTHETIC - Skipping HKO API for ${area.key}`);
     const hkoData = {}; // Force empty to trigger synthetic model
-    console.log(`🔍 [BUNDLE DEBUG] Using empty HKO data to force synthetic for ${area.key}`);
 
-    console.log(`🔍 [BUNDLE DEBUG] Tide station for ${area.key}:`, tideStation);
     const tideHeights = tideStation
       ? getTideSeriesAlignedToOM(tideStation.code, omTimes, hkoData)
       : omTimes.map(() => null);
-    console.log(`🔍 [BUNDLE DEBUG] Final tide heights for ${area.key}:`, tideHeights.slice(0, 3));
 
     // 3. Use temperature and cloud data from OpenWeatherMap
     const temperatureC = tempFromOWM || [];
@@ -444,19 +420,10 @@ export async function getAreaBundle(
     const waveDirDeg = marineData.hourly?.wave_direction || omTimes.map(() => null);
 
     // DEBUG: Log wind data processing
-    console.log(`🌪️ [WIND DEBUG] === WIND DATA INTEGRATION FOR ${area.key} ===`);
-    console.log(`🌪️ [WIND DEBUG] Using ${WEATHER_CONFIG.useMultiSource ? 'MULTI-SOURCE' : 'SINGLE-SOURCE'} wind data`);
-    console.log(`🌪️ [WIND DEBUG] Current wind speed: ${currentWind.speedKts.toFixed(1)} kt`);
-    console.log(`🌪️ [WIND DEBUG] Current wind gust: ${currentWind.gustKts?.toFixed(1)} kt`);
-    console.log(`🌪️ [WIND DEBUG] Current wind direction: ${currentWind.dirDeg}°`);
     if (currentWind.confidence) {
-      console.log(`🌪️ [WIND DEBUG] Consensus confidence: ${(currentWind.confidence * 100).toFixed(0)}%`);
-      console.log(`🌪️ [WIND DEBUG] Source agreement: ${currentWind.variance?.agreement}`);
-      console.log(`🌪️ [WIND DEBUG] Sources used: ${currentWind.sources?.join(', ')}`);
     }
     if (currentWind.gustKts && currentWind.speedKts) {
       const gustFactor = currentWind.gustKts / currentWind.speedKts;
-      console.log(`🌪️ [WIND DEBUG] Gust factor: ${gustFactor.toFixed(2)} (${((gustFactor - 1) * 100).toFixed(0)}% stronger)`);
     }
 
     const currentWave = {
@@ -467,7 +434,6 @@ export async function getAreaBundle(
     };
 
     // === DEBUGGING: UNIFIED TIDE SERVICE INTEGRATION ===
-    console.log(`🔧 [UNIFIED DEBUG] === STARTING UNIFIED TIDE SERVICE INTEGRATION FOR ${area.key} ===`);
 
     let unifiedHeight = 1.5; // fallback
     let unifiedTrend: 'up' | 'down' | 'flat' = 'flat';
@@ -475,67 +441,42 @@ export async function getAreaBundle(
     let errorDetails = null;
 
     try {
-      console.log(`🔧 [UNIFIED DEBUG] Step 1: Verifying unifiedTideService availability...`);
       if (!unifiedTideService) {
         throw new Error('Unified tide service is not initialized');
       }
-      console.log(`🔧 [UNIFIED DEBUG] ✅ Step 1 SUCCESS: unifiedTideService ready`);
 
-      console.log(`🔧 [UNIFIED DEBUG] Step 2: Checking service methods...`);
-      console.log(`🔧 [UNIFIED DEBUG] - getCurrentTideHeight: ${typeof unifiedTideService.getCurrentTideHeight}`);
-      console.log(`🔧 [UNIFIED DEBUG] - synchronizeTime: ${typeof unifiedTideService.synchronizeTime}`);
 
       const areaCoordinate = { latitude: area.lat, longitude: area.lon };
       const now = new Date();
 
-      console.log(`🔧 [UNIFIED DEBUG] Step 3: Synchronizing time...`);
-      console.log(`🔧 [UNIFIED DEBUG] - Coordinate: ${areaCoordinate.latitude}, ${areaCoordinate.longitude}`);
-      console.log(`🔧 [UNIFIED DEBUG] - Time: ${now.toISOString()}`);
 
       unifiedTideService.synchronizeTime(now);
-      console.log(`🔧 [UNIFIED DEBUG] ✅ Step 3 SUCCESS: Time synchronized`);
 
-      console.log(`🔧 [UNIFIED DEBUG] Step 4: Getting current tide height...`);
       unifiedHeight = unifiedTideService.getCurrentTideHeight(areaCoordinate, now);
-      console.log(`🔧 [UNIFIED DEBUG] ✅ Step 4 SUCCESS: Current height = ${unifiedHeight.toFixed(3)}m`);
 
-      console.log(`🔧 [UNIFIED DEBUG] Step 5: Calculating trend...`);
       const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
       const nextHeight = unifiedTideService.getCurrentTideHeight(areaCoordinate, nextHour);
       const heightDiff = nextHeight - unifiedHeight;
       unifiedTrend = heightDiff > 0.05 ? 'up' : heightDiff < -0.05 ? 'down' : 'flat';
 
-      console.log(`🔧 [UNIFIED DEBUG] ✅ Step 5 SUCCESS: Trend calculation complete`);
-      console.log(`🔧 [UNIFIED DEBUG] - Next hour height: ${nextHeight.toFixed(3)}m`);
-      console.log(`🔧 [UNIFIED DEBUG] - Height difference: ${heightDiff.toFixed(3)}m`);
-      console.log(`🔧 [UNIFIED DEBUG] - Calculated trend: ${unifiedTrend}`);
 
       serviceStatus = 'success';
 
     } catch (error) {
-      console.error(`🔧 [UNIFIED DEBUG] ❌ UNIFIED SERVICE FAILED:`, error);
       errorDetails = error instanceof Error ? error.message : String(error);
       serviceStatus = 'failed';
 
       // Fallback to old method
-      console.log(`🔧 [UNIFIED DEBUG] 🔄 Falling back to old tide calculation method...`);
       const fallbackHeight = coalesceCurrent(tideHeights, omTimes);
       unifiedHeight = fallbackHeight || 1.5;
       unifiedTrend = trend3(tideHeights, 3, 0.1) as 'up' | 'down' | 'flat' || 'flat';
-      console.log(`🔧 [UNIFIED DEBUG] 🔄 Fallback result: ${unifiedHeight.toFixed(1)}m, trend: ${unifiedTrend}`);
     }
 
     // Compare with old method for debugging
     const oldMethodHeight = coalesceCurrent(tideHeights, omTimes) || 1.5;
     const oldMethodTrend = trend3(tideHeights, 3, 0.1) as 'up' | 'down' | 'flat' || 'flat';
 
-    console.log(`🔧 [UNIFIED DEBUG] === FINAL COMPARISON FOR ${area.key} ===`);
-    console.log(`🔧 [UNIFIED DEBUG] Service Status: ${serviceStatus}`);
-    console.log(`🔧 [UNIFIED DEBUG] Unified Method: ${unifiedHeight.toFixed(1)}m, ${unifiedTrend}`);
-    console.log(`🔧 [UNIFIED DEBUG] Old Method: ${oldMethodHeight.toFixed(1)}m, ${oldMethodTrend}`);
-    console.log(`🔧 [UNIFIED DEBUG] Difference: ${Math.abs(unifiedHeight - oldMethodHeight).toFixed(3)}m`);
     if (errorDetails) {
-      console.log(`🔧 [UNIFIED DEBUG] Error Details: ${errorDetails}`);
     }
 
     const currentTide = {
@@ -575,9 +516,6 @@ export async function getAreaBundle(
       }
     };
   } catch (error) {
-    console.error(`🔍 [BUNDLE DEBUG] Failed to get area bundle for ${area.key}:`, error);
-    console.error(`🔍 [BUNDLE DEBUG] Error type:`, typeof error);
-    console.error(`🔍 [BUNDLE DEBUG] Error message:`, error instanceof Error ? error.message : String(error));
     throw error;
   }
 }

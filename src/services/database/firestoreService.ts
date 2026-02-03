@@ -113,7 +113,6 @@ export class FirestoreService {
         try {
           return validator(data);
         } catch (validationError) {
-          console.error('Document validation failed:', validationError);
           throw new FirestoreServiceError(
             'validation_error',
             `Document validation failed: ${validationError instanceof Error ? validationError.message : 'Unknown validation error'}`,
@@ -170,7 +169,6 @@ export class FirestoreService {
           try {
             return validator(data);
           } catch (validationError) {
-            console.error(`Document validation failed for ID ${doc.id}:`, validationError);
             return null;
           }
         }
@@ -308,14 +306,12 @@ export class FirestoreService {
         try {
           callback(validator(data));
         } catch (validationError) {
-          console.error('Document validation failed in subscription:', validationError);
           callback(null);
         }
       } else {
         callback(data as T);
       }
     }, (error) => {
-      console.error('Document subscription error:', error);
       callback(null);
     });
   }
@@ -355,7 +351,6 @@ export class FirestoreService {
           try {
             return validator(data);
           } catch (validationError) {
-            console.error(`Document validation failed for ID ${doc.id}:`, validationError);
             return null;
           }
         }
@@ -364,7 +359,6 @@ export class FirestoreService {
 
       callback(docs);
     }, (error) => {
-      console.error('Collection subscription error:', error);
       callback([]);
     });
   }
@@ -445,7 +439,6 @@ export class FirestoreService {
       
       return snapshot.size;
     } catch (error) {
-      console.error('Failed to get collection size:', error);
       return 0;
     }
   }
@@ -459,7 +452,6 @@ export class FirestoreService {
       const docSnap = await getDoc(docRef);
       return docSnap.exists();
     } catch (error) {
-      console.error('Failed to check document existence:', error);
       return false;
     }
   }

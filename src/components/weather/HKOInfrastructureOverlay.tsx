@@ -106,9 +106,7 @@ export const HKOInfrastructureOverlay: React.FC<HKOInfrastructureOverlayProps> =
     const loadStationData = async () => {
       try {
         // This could be expanded to show detailed station information
-        console.log('🏗️ [HKO OVERLAY] Loading infrastructure data...');
       } catch (error) {
-        console.error('🏗️ [HKO OVERLAY] Failed to load infrastructure data:', error);
       }
     };
 
@@ -119,7 +117,6 @@ export const HKOInfrastructureOverlay: React.FC<HKOInfrastructureOverlayProps> =
 
   const handleStationPress = (stationId: string, stationType: string) => {
     setSelectedStation(stationId);
-    console.log(`📍 Selected ${stationType} station: ${stationId}`);
   };
 
   return (

@@ -92,7 +92,6 @@ export const InteractiveRaceMap: React.FC<InteractiveRaceMapProps> = ({
         error: null
       });
     } catch (error) {
-      console.error('Failed to load map data:', error);
       setMapState(prev => ({
         ...prev,
         isLoading: false,

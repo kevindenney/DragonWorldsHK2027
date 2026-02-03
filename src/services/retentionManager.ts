@@ -164,9 +164,7 @@ export class RetentionManager {
     try {
       await this.loadRetentionData();
       await this.scheduleEngagementTasks();
-      console.log('Retention manager initialized');
     } catch (error) {
-      console.error('Failed to initialize retention manager:', error);
     }
   }
 
@@ -314,7 +312,6 @@ export class RetentionManager {
       }
 
     } catch (error) {
-      console.error('Weather check failed for event:', error);
     }
   }
 
@@ -883,7 +880,6 @@ export class RetentionManager {
         }
       }
     } catch (error) {
-      console.warn('Failed to load retention data:', error);
     }
   }
 
@@ -900,7 +896,6 @@ export class RetentionManager {
       
       await AsyncStorage.setItem('retention_data', JSON.stringify(data));
     } catch (error) {
-      console.warn('Failed to save retention data:', error);
     }
   }
 

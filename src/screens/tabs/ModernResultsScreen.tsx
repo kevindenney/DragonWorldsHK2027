@@ -34,6 +34,8 @@ import { resultsService } from '../../services/resultsService';
 import { IOSText } from '../../components/ios/IOSText';
 import { FloatingEventSwitch } from '../../components/navigation/FloatingEventSwitch';
 import { ProfileButton } from '../../components/navigation/ProfileButton';
+import { useSelectedEvent, useSetSelectedEvent } from '../../stores/eventStore';
+import { EVENTS } from '../../constants/events';
 import type { ResultsScreenProps } from '../../types/navigation';
 
 const { colors, typography, spacing, shadows, borderRadius } = dragonChampionshipsLightTheme;
@@ -44,7 +46,8 @@ interface ModernResultsScreenProps extends ResultsScreenProps {
 }
 
 export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsScreenProps) {
-  const [selectedEvent, setSelectedEvent] = useState<'asia-pacific-2026' | 'dragon-worlds-2026'>('asia-pacific-2026');
+  const selectedEvent = useSelectedEvent();
+  const setSelectedEvent = useSetSelectedEvent();
   const [refreshing, setRefreshing] = useState(false);
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [championship, setChampionship] = useState<Championship | null>(null);
@@ -62,11 +65,10 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
 
     try {
       // Map selected event to cloud function event ID
-      const eventId = selectedEvent === 'dragon-worlds-2026' ? '13242' : '13241';
+      const eventId = selectedEvent === EVENTS.WORLDS_2027.id ? '13242' : '13241';
       const result = await resultsService.getChampionship(eventId, forceRefresh);
       setChampionship(result);
     } catch (err) {
-      console.error('Error loading championship:', err);
       setError('Failed to load results. Please try again.');
     } finally {
       setLoading(false);
@@ -75,10 +77,6 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
 
   // Use championship from state, or provide a default for loading state
   const currentChampionship = championship;
-
-  const handleEventChange = (eventId: 'asia-pacific-2026' | 'dragon-worlds-2026') => {
-    setSelectedEvent(eventId);
-  };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -107,7 +105,7 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
   const LiveResultsControls = () => {
     const getLiveResultsUrl = () => {
       // Different URLs for each championship on racingrulesofsailing.org
-      if (selectedEvent === 'asia-pacific-2026') {
+      if (selectedEvent === EVENTS.APAC_2026.id) {
         // APAC 2026 - Event #13241
         return 'https://www.racingrulesofsailing.org/events/13241/event_links?name=2026%2520HONG%2520KONG%2520DRAGON%2520ASIA%2520PACIFIC%2520CHAMPIONSHIP';
       }
@@ -129,7 +127,6 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
           );
         }
       } catch (error) {
-        console.error('Error opening live results:', error);
         Alert.alert(
           'Error',
           'There was an error opening the live results page.',
@@ -351,17 +348,15 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
           </IOSText>
           <ProfileButton size={36} />
         </View>
+        <FloatingEventSwitch
+          options={[
+            { label: 'APAC 2026', shortLabel: 'APAC 2026', value: EVENTS.APAC_2026.id },
+            { label: 'Worlds 2027', shortLabel: 'Worlds 2027', value: EVENTS.WORLDS_2027.id }
+          ]}
+          selectedValue={selectedEvent}
+          onValueChange={setSelectedEvent}
+        />
       </View>
-
-      {/* Event Selector */}
-      <FloatingEventSwitch
-        options={[
-          { label: '2026 Asia Pacific Championship', shortLabel: 'APAC 2026', value: 'asia-pacific-2026' },
-          { label: '2027 Dragon World Championship', shortLabel: 'Worlds 2027', value: 'dragon-worlds-2026' }
-        ]}
-        selectedValue={selectedEvent}
-        onValueChange={(eventId) => handleEventChange(eventId as 'asia-pacific-2026' | 'dragon-worlds-2026')}
-      />
 
       <ScrollView
         style={styles.scrollView}
@@ -421,7 +416,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
   },
   headerTitle: {
     color: colors.text,

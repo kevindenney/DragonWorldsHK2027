@@ -763,7 +763,6 @@ export class SponsorRevenueService {
       }
 
     } catch (error) {
-      console.error('Failed to track sponsor impression:', error);
     }
   }
 
@@ -811,7 +810,6 @@ export class SponsorRevenueService {
       );
 
     } catch (error) {
-      console.error('Failed to track sponsor click:', error);
     }
   }
 
@@ -863,7 +861,6 @@ export class SponsorRevenueService {
       );
 
     } catch (error) {
-      console.error('Failed to track sponsor conversion:', error);
     }
   }
 
@@ -902,7 +899,6 @@ export class SponsorRevenueService {
       return selectedContent;
 
     } catch (error) {
-      console.error('Failed to get optimal sponsor content:', error);
       return null;
     }
   }
@@ -1190,7 +1186,6 @@ export class SponsorRevenueService {
         }
       }
     } catch (error) {
-      console.warn('Failed to load sponsor revenue data:', error);
     }
   }
 
@@ -1204,7 +1199,6 @@ export class SponsorRevenueService {
       
       await AsyncStorage.setItem('sponsor_revenue_data', JSON.stringify(data));
     } catch (error) {
-      console.warn('Failed to save sponsor revenue data:', error);
     }
   }
 }

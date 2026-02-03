@@ -176,7 +176,6 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
         setFavoriteLocations(JSON.parse(favoriteData));
       }
     } catch (error) {
-      console.warn('Failed to load stored locations:', error);
     }
   };
 
@@ -194,7 +193,6 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
       setRecentLocations(updatedRecent);
       await AsyncStorage.setItem('weather_recent_locations', JSON.stringify(updatedRecent));
     } catch (error) {
-      console.warn('Failed to save recent location:', error);
     }
   };
 
@@ -215,7 +213,6 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
       setFavoriteLocations(updatedFavorites);
       await AsyncStorage.setItem('weather_favorite_locations', JSON.stringify(updatedFavorites));
     } catch (error) {
-      console.warn('Failed to update favorite locations:', error);
     }
   };
 
@@ -263,7 +260,6 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
 
       setSearchResults([...filteredDefaults, ...simulatedResults]);
     } catch (error) {
-      console.warn('Search failed:', error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);

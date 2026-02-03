@@ -41,7 +41,6 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
         isNavigating: false
       });
     } catch (error) {
-      console.error('Error selecting location:', error);
       Alert.alert('Error', 'Failed to select location');
     }
   };
@@ -76,7 +75,6 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
         [{ text: 'OK' }]
       );
     } catch (error) {
-      console.error('Error starting navigation:', error);
       Alert.alert('Navigation Error', 'Failed to calculate route');
     } finally {
       setIsLoading(false);

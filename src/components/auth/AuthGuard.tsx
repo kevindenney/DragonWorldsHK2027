@@ -248,7 +248,6 @@ function AccountStatusGuard({ user, testID, onBackToApp }: AccountStatusGuardPro
         );
       }
     } catch (error) {
-      console.error('Error opening mail client:', error);
       Alert.alert('Error', 'Unable to open email client. Please contact support@regattaflow.com directly.');
     }
   };
@@ -268,7 +267,6 @@ function AccountStatusGuard({ user, testID, onBackToApp }: AccountStatusGuardPro
         [{ text: 'OK' }]
       );
     } catch (error) {
-      console.error('Error resending verification:', error);
       Alert.alert(
         'Error',
         'Failed to send verification email. Please try again or contact support.',

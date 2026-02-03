@@ -88,7 +88,6 @@ export const TideCurrentOverlay: React.FC<TideCurrentOverlayProps> = ({
     setTideError(null);
 
     try {
-      console.log('🌊 TideCurrentOverlay: Loading unified tide stations...');
 
       // Synchronize time to ensure consistency with forecast data
       const now = new Date();
@@ -97,11 +96,9 @@ export const TideCurrentOverlay: React.FC<TideCurrentOverlayProps> = ({
       // Test data consistency
       const testCoordinate = { latitude: 22.225, longitude: 114.125 };
       const consistencyCheck = unifiedTideService.verifyDataConsistency(testCoordinate, now);
-      console.log('🌊 [DATA CONSISTENCY CHECK]', consistencyCheck);
 
       // Use unified tide service for consistent data
       const unifiedStations = await unifiedTideService.getUnifiedTideStations();
-      console.log('🌊 TideCurrentOverlay: Loaded unified stations:', unifiedStations.length);
 
       // Convert to component interface with real-time current heights
       const convertedStations: TideStation[] = unifiedStations.map(station => {
@@ -114,7 +111,6 @@ export const TideCurrentOverlay: React.FC<TideCurrentOverlayProps> = ({
         const heightDiff = nextHeight - currentHeight;
         const trend = heightDiff > 0.05 ? 'rising' : heightDiff < -0.05 ? 'falling' : 'stable';
 
-        console.log(`🌊 TideCurrentOverlay: ${station.name} - Current: ${currentHeight.toFixed(1)}m, Trend: ${trend}`);
 
         return {
           coordinate: station.coordinate,
@@ -127,7 +123,6 @@ export const TideCurrentOverlay: React.FC<TideCurrentOverlayProps> = ({
 
       setTideStations(convertedStations);
     } catch (error) {
-      console.error('❌ TideCurrentOverlay: Failed to load unified tide data:', error);
       setTideError('Failed to load tide data');
 
       // Use unified service fallback data

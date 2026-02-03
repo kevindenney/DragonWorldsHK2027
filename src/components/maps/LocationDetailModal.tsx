@@ -34,8 +34,9 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
 }) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
 
-  // Define snap points for the bottom sheet (25%, 50%, 90% of screen)
-  const snapPoints = useMemo(() => ['25%', '50%', '90%'], []);
+  // Define snap points for the bottom sheet
+  // Starts at 35% to show header + description without covering the map
+  const snapPoints = useMemo(() => ['35%', '60%', '90%'], []);
 
   // Control bottom sheet based on location visibility
   useEffect(() => {
@@ -134,7 +135,7 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      index={2}  // Start at 90% (third snap point)
+      index={0}  // Start at 35% to show name/description without covering map
       snapPoints={snapPoints}
       enablePanDownToClose={true}
       onClose={onClose}
@@ -420,7 +421,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: spacing.lg,
-    paddingBottom: spacing.xl,
+    paddingBottom: 120, // Extra padding for floating tab bar
   },
   section: {
     marginBottom: spacing.lg,

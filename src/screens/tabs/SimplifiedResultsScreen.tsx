@@ -31,25 +31,22 @@ import {
   ChevronRight
 } from 'lucide-react-native';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
-import { IOSSegmentedControl } from '../../components/ios/IOSSegmentedControl';
+import { FloatingEventSwitch } from '../../components/navigation/FloatingEventSwitch';
+import { EVENTS } from '../../constants/events';
 import firebaseRaceDataService, {
   Standing,
   EventData,
   Competitor
 } from '../../services/firebaseRaceDataService';
 import type { ResultsScreenProps } from '../../types/navigation';
+import { useSelectedEvent, useSetSelectedEvent } from '../../stores/eventStore';
 
 const { colors, typography, spacing, shadows, borderRadius } = dragonChampionshipsLightTheme;
 const { width } = Dimensions.get('window');
 
-// Available event IDs
-const EVENT_IDS = {
-  ASIA_PACIFIC: 'asia-pacific-2026',
-  DRAGON_WORLDS: 'dragon-worlds-2027'
-};
-
 export function SimplifiedResultsScreen({ navigation }: ResultsScreenProps) {
-  const [selectedEventId, setSelectedEventId] = useState<string>(EVENT_IDS.DRAGON_WORLDS);
+  const selectedEventId = useSelectedEvent();
+  const setSelectedEvent = useSetSelectedEvent();
   const [eventData, setEventData] = useState<EventData | null>(null);
   const [standings, setStandings] = useState<Standing[]>([]);
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
@@ -77,7 +74,6 @@ export function SimplifiedResultsScreen({ navigation }: ResultsScreenProps) {
   // Load event data - now with CCR 2024 scraping support
   const loadEventData = async () => {
     try {
-      console.log('🏁 Starting enhanced loadEventData with CCR 2024 scraping...');
       setLoading(true);
 
       // Try loading data in this order:
@@ -86,124 +82,82 @@ export function SimplifiedResultsScreen({ navigation }: ResultsScreenProps) {
       // 3. Use mock data as final fallback
       
       try {
-        console.log('🔥 Attempting to load CCR 2024 from Firestore...');
         const firestoreData = await firebaseRaceDataService.fetchCCR2024FromFirestore();
         
-        console.log('🔥 CCR 2024 Firestore data loaded:', { 
-          eventName: firestoreData.eventData?.name,
-          standings: firestoreData.standings?.length, 
-          competitors: firestoreData.competitors?.length 
-        });
         
         if (firestoreData.eventData) setEventData(firestoreData.eventData);
         setStandings(firestoreData.standings);
         setCompetitors(firestoreData.competitors);
         setLastUpdated(new Date());
         
-        console.log('✅ CCR 2024 Firestore data loaded successfully!');
         return; // Success - exit early
         
       } catch (firestoreError) {
-        console.log(
-          '🔧 Firestore failed, trying CCR scraping...',
-          firestoreError instanceof Error ? firestoreError.message : firestoreError
-        );
         
         try {
-          console.log('🏁 Attempting CCR 2024 scraping...');
           const scrapedData = await firebaseRaceDataService.scrapeCCR2024Results();
           
-          console.log('🏁 CCR 2024 data scraped successfully:', { 
-            eventName: scrapedData.eventData?.name,
-            standings: scrapedData.standings?.length, 
-            competitors: scrapedData.competitors?.length 
-          });
           
           if (scrapedData.eventData) setEventData(scrapedData.eventData);
           setStandings(scrapedData.standings);
           setCompetitors(scrapedData.competitors);
           setLastUpdated(new Date());
           
-          console.log('✅ CCR 2024 data loaded successfully!');
           return; // Success - exit early
           
         } catch (scrapingError) {
-          console.log(
-            '🔧 CCR scraping failed, trying Firestore...',
-            scrapingError instanceof Error ? scrapingError.message : scrapingError
-          );
           
           try {
-            console.log('🔥 Trying to load Firestore data...');
             const [event, standingsData, competitorsData] = await Promise.all([
               firebaseRaceDataService.getEvent(selectedEventId),
               firebaseRaceDataService.getStandings(selectedEventId),
               firebaseRaceDataService.getCompetitors(selectedEventId)
             ]);
 
-            console.log('🔥 Firestore data loaded:', { event, standingsData: standingsData?.length, competitorsData: competitorsData?.length });
             if (event) setEventData(event);
             if (standingsData) setStandings(standingsData);
             if (competitorsData) setCompetitors(competitorsData);
             setLastUpdated(new Date());
             
-            console.log('✅ Firestore data loaded successfully!');
             return; // Success - exit early
             
           } catch (firestoreError) {
-            console.log(
-              '🔧 Firestore failed, using mock data...',
-              firestoreError instanceof Error ? firestoreError.message : firestoreError
-            );
             
             // Final fallback to mock data
             const mockData = firebaseRaceDataService.generateMockRaceData();
-            console.log('🔧 Mock data generated:', { 
-              eventData: mockData.eventData?.name, 
-              standings: mockData.standings?.length, 
-              competitors: mockData.competitors?.length 
-            });
             
             setEventData(mockData.eventData);
             setStandings(mockData.standings);
             setCompetitors(mockData.competitors);
             setLastUpdated(new Date());
             
-            console.log('✅ Mock data loaded successfully!');
           }
         }
       }
       
     } catch (error) {
-      console.error('🚨 Error loading event data:', error);
       Alert.alert('Error', 'Failed to load race results');
     } finally {
       setLoading(false);
-      console.log('✅ loadEventData completed');
     }
   };
 
   // Pull to refresh
   const onRefresh = useCallback(async () => {
-    console.log('🔄 Starting refresh...');
     setRefreshing(true);
     
     try {
       // Trigger Firebase Function to scrape latest data
-      console.log('🔄 Attempting data sync...');
       const syncSuccess = await firebaseRaceDataService.triggerDataSync(selectedEventId);
       
       if (syncSuccess) {
-        console.log('🔄 Sync successful, reloading data...');
         await loadEventData();
       } else {
-        console.log('🔄 Sync failed, falling back to existing data load...');
         // Always try to load data (including mock) even if sync fails
         await loadEventData();
         Alert.alert('Sync Failed', 'Unable to fetch latest results, showing available data');
       }
     } catch (error) {
-      console.log('🔄 Refresh error, falling back to data load...', error);
       // Always try to load data (including mock) even if there's an error
       try {
         await loadEventData();
@@ -214,7 +168,6 @@ export function SimplifiedResultsScreen({ navigation }: ResultsScreenProps) {
     }
     
     setRefreshing(false);
-    console.log('✅ Refresh completed');
   }, []);
 
   // Get racing class color
@@ -430,32 +383,22 @@ export function SimplifiedResultsScreen({ navigation }: ResultsScreenProps) {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.titleSection}>
-          <Text style={styles.title}>Championship Standings</Text>
-          {eventData && (
-            <Text style={styles.eventName}>{eventData.name}</Text>
-          )}
-        </View>
-        <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
-          <RefreshCw color={colors.primary} size={22} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Event Toggle */}
-      {(() => {
-        console.log('[SimplifiedResultsScreen] 🎯 COMPONENT IDENTIFICATION: Using IOSSegmentedControl from ios/IOSSegmentedControl');
-        return (
-          <View style={styles.eventToggleContainer}>
-            <IOSSegmentedControl
-              options={[
-                { label: '2026 Asia Pacific Championship', value: EVENT_IDS.ASIA_PACIFIC },
-                { label: '2027 Dragon World Championship', value: EVENT_IDS.DRAGON_WORLDS }
-              ]}
-              selectedValue={selectedEventId}
-              onValueChange={setSelectedEventId}
-            />
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>Standings</Text>
+            <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
+              <RefreshCw color={colors.primary} size={22} />
+            </TouchableOpacity>
           </View>
-        );
-      })()}
+          <FloatingEventSwitch
+            options={[
+              { label: 'APAC 2026', shortLabel: 'APAC 2026', value: EVENTS.APAC_2026.id },
+              { label: 'Worlds 2027', shortLabel: 'Worlds 2027', value: EVENTS.WORLDS_2027.id }
+            ]}
+            selectedValue={selectedEventId}
+            onValueChange={setSelectedEvent}
+          />
+        </View>
+      </View>
 
       {/* Series Header + Stats */}
       <View style={styles.seriesHeaderSection}>
@@ -535,18 +478,19 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
     ...shadows.cardSmall,
   },
   titleSection: {
-    flex: 1,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   title: {
     ...typography.headlineMedium,

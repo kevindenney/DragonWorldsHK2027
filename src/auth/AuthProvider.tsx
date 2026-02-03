@@ -91,12 +91,9 @@ function isFirebaseConfigured(): boolean {
  */
 async function getFirebaseAuthService() {
   try {
-    console.log('🔐 [AuthProvider] Lazy loading Firebase auth service...');
     const { authService } = await import('./firebase/authService');
-    console.log('✅ [AuthProvider] Firebase auth service loaded successfully');
     return authService;
   } catch (error) {
-    console.error('❌ [AuthProvider] Failed to load Firebase auth service:', error);
     throw new Error('Firebase authentication service unavailable');
   }
 }
@@ -105,7 +102,6 @@ async function getFirebaseAuthService() {
  * Clean Authentication Provider
  */
 export function AuthenticationProvider({ children }: AuthProviderProps) {
-  console.log('🔐 [AuthProvider] Creating AuthenticationProvider component');
 
   try {
     const [state, dispatch] = useReducer(authReducer, initialState);
@@ -114,7 +110,6 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
     const [authServiceReady, setAuthServiceReady] = React.useState(false);
     const firebaseServiceRef = useRef<any>(null);
 
-    console.log('🔐 [AuthProvider] State and refs initialized successfully');
 
   /**
    * Initialize authentication state
@@ -125,13 +120,11 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
 
     async function initializeAuth() {
       const initStartTime = Date.now();
-      console.log('🔐 [AuthProvider] Initializing authentication...');
 
       try {
         // Safety timeout - force initialization after 3 seconds maximum
         safetyTimeoutId = setTimeout(() => {
           if (!isInitialized) {
-            console.warn('⏰ [AuthProvider] Safety timeout triggered - forcing initialization');
             dispatch({ type: 'SET_INITIALIZED', payload: true });
             isInitialized = true;
           }
@@ -139,37 +132,26 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
 
         // Check Firebase configuration with detailed logging
         const firebaseConfigured = isFirebaseConfigured();
-        console.log('🔐 [AuthProvider] Firebase configuration check:', {
-          isConfigured: firebaseConfigured,
-          hasApiKey: !!process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-          hasAppId: !!process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
-          nodeEnv: process.env.EXPO_PUBLIC_NODE_ENV,
-          isDev: __DEV__
-        });
 
         if (firebaseConfigured) {
           try {
-            console.log('🔐 [AuthProvider] Attempting to use Firebase authentication');
 
             setUseFirebase(true);
 
-            // Reduced timeout for Firebase service loading (3 seconds instead of 10)
+            // Timeout for Firebase service loading (5 seconds to allow for cold start)
             const firebaseLoadPromise = getFirebaseAuthService();
             const timeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('Firebase service loading timed out')), 3000);
+              setTimeout(() => reject(new Error('Firebase service loading timed out')), 5000);
             });
 
-            console.log('🔐 [AuthProvider] Loading Firebase auth service...');
             const firebaseAuthService = await Promise.race([firebaseLoadPromise, timeoutPromise]);
             firebaseServiceRef.current = firebaseAuthService;
 
-            console.log('🔐 [AuthProvider] Firebase auth service loaded, setting up listener...');
 
             // Set up Firebase auth state listener with timeout protection
             let listenerFired = false;
             const listenerTimeout = setTimeout(() => {
               if (!listenerFired && !isInitialized) {
-                console.warn('⏰ [AuthProvider] Auth listener timeout - forcing initialization');
                 dispatch({ type: 'SET_INITIALIZED', payload: true });
                 isInitialized = true;
               }
@@ -179,15 +161,9 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
               listenerFired = true;
               clearTimeout(listenerTimeout);
 
-              console.log('🔐 [AuthProvider] Firebase auth state changed:', {
-                hasUser: !!user,
-                userId: user?.uid,
-                email: user?.email
-              });
               dispatch({ type: 'SET_USER', payload: user });
 
               if (!isInitialized) {
-                console.log('🔐 [AuthProvider] Marking auth as initialized');
                 dispatch({ type: 'SET_INITIALIZED', payload: true });
                 isInitialized = true;
                 clearTimeout(safetyTimeoutId);
@@ -197,14 +173,12 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
             unsubscribeRef.current = unsubscribe;
 
             const initDuration = Date.now() - initStartTime;
-            console.log(`✅ [AuthProvider] Firebase authentication initialized in ${initDuration}ms`);
 
           } catch (error) {
             const initDuration = Date.now() - initStartTime;
-            console.error(`❌ [AuthProvider] Firebase initialization failed after ${initDuration}ms:`, error);
+            // Use console.warn instead of console.error since we handle this gracefully with fallback
 
-            // Fall back to mock authentication
-            console.log('🔄 [AuthProvider] Falling back to mock authentication...');
+            // Fall back to mock authentication (this is expected in dev or when Firebase is slow)
             setUseFirebase(false);
             await initializeMockAuth();
             if (!isInitialized) {
@@ -214,7 +188,6 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
             }
           }
         } else {
-          console.log('🔧 [AuthProvider] Firebase not configured, using mock authentication');
           setUseFirebase(false);
           await initializeMockAuth();
           if (!isInitialized) {
@@ -226,15 +199,12 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
 
         setAuthServiceReady(true);
         const totalDuration = Date.now() - initStartTime;
-        console.log(`🎉 [AuthProvider] Authentication initialization completed in ${totalDuration}ms`);
 
       } catch (error) {
         const initDuration = Date.now() - initStartTime;
-        console.error(`💥 [AuthProvider] Critical initialization error after ${initDuration}ms:`, error);
 
         // Last resort: ensure app doesn't hang
         if (!isInitialized) {
-          console.log('🆘 [AuthProvider] Emergency initialization to prevent app hang');
           dispatch({ type: 'SET_INITIALIZED', payload: true });
           isInitialized = true;
           clearTimeout(safetyTimeoutId);
@@ -244,18 +214,15 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
 
 
     async function initializeMockAuth() {
-      console.log('🔧 [AuthProvider] Initializing mock authentication service');
 
       // Initialize mock auth service
       await mockAuthService.initialize();
 
       // Set up mock auth state listener
       const unsubscribe = mockAuthService.onAuthStateChanged((user) => {
-        console.log('🔧 [AuthProvider] Mock auth state changed:', user ? 'User signed in' : 'User signed out');
         dispatch({ type: 'SET_USER', payload: user });
 
         if (!isInitialized) {
-          console.log('🔧 [AuthProvider] Marking mock auth as initialized');
           dispatch({ type: 'SET_INITIALIZED', payload: true });
           isInitialized = true;
           clearTimeout(safetyTimeoutId);
@@ -263,7 +230,6 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       });
 
       unsubscribeRef.current = unsubscribe;
-      console.log('✅ [AuthProvider] Mock authentication initialized successfully');
     }
 
     initializeAuth();
@@ -288,14 +254,6 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
 
-      console.log('🔐 [AuthProvider] Starting login process...');
-      console.log('🔐 [AuthProvider] DEBUGGING: AuthProvider login method called successfully');
-      console.log('🔐 [AuthProvider] Service status:', {
-        useFirebase,
-        authServiceReady,
-        firebaseServiceReady: !!firebaseServiceRef.current,
-        credentials: { email: credentials.email, hasPassword: !!credentials.password }
-      });
 
       // Add timeout for authentication requests
       const timeoutPromise = new Promise((_, reject) => {
@@ -305,17 +263,10 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       let authPromise: Promise<any>;
 
       if (useFirebase && firebaseServiceRef.current) {
-        console.log('🔐 [AuthProvider] Using Firebase for login');
-        console.log('🔐 [AuthProvider] Firebase service type:', typeof firebaseServiceRef.current.login);
 
 
         authPromise = firebaseServiceRef.current.login(credentials);
       } else {
-        console.log('🔧 [AuthProvider] Using mock service for login');
-        console.log('🔧 [AuthProvider] Mock service status:', {
-          initialized: !!mockAuthService,
-          hasLoginMethod: typeof mockAuthService.login === 'function'
-        });
 
 
         authPromise = mockAuthService.login(credentials);
@@ -325,12 +276,10 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       await Promise.race([authPromise, timeoutPromise]);
 
       const loginDuration = Date.now() - loginStartTime;
-      console.log(`✅ [AuthProvider] Login completed successfully in ${loginDuration}ms`);
 
       // User state will be updated via onAuthStateChanged listener
     } catch (error) {
       const loginDuration = Date.now() - loginStartTime;
-      console.error(`❌ [AuthProvider] Login failed after ${loginDuration}ms:`, error);
 
       // Ultra-safe error logging - completely bulletproof
       try {
@@ -355,9 +304,7 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
           name: errorName,
           stack: errorStack
         };
-        console.error('❌ [AuthProvider] Error details:', errorDetails);
       } catch (logError) {
-        console.error('❌ [AuthProvider] Error occurred while logging error details:', String(error));
       }
 
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Login failed' });
@@ -377,42 +324,20 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
 
-      console.log('🔐 [AuthProvider] Starting registration process...');
-      console.log('🔐 [AuthProvider] DEBUGGING: Registration credentials:', {
-        email: credentials.email,
-        displayName: credentials.displayName,
-        hasPassword: !!credentials.password,
-        passwordLength: credentials.password?.length || 0
-      });
-      console.log('🔐 [AuthProvider] DEBUGGING: Auth service status:', {
-        useFirebase,
-        authServiceReady,
-        firebaseServiceReady: !!firebaseServiceRef.current,
-        mockServiceReady: !!mockAuthService
-      });
 
       if (useFirebase && firebaseServiceRef.current) {
-        console.log('🔐 [AuthProvider] Using Firebase for registration');
-        console.log('🔐 [AuthProvider] DEBUGGING: Firebase service type:', typeof firebaseServiceRef.current.register);
 
         await firebaseServiceRef.current.register(credentials);
       } else {
-        console.log('🔧 [AuthProvider] Using mock service for registration');
-        console.log('🔧 [AuthProvider] DEBUGGING: Mock service status:', {
-          initialized: !!mockAuthService,
-          hasRegisterMethod: typeof mockAuthService.register === 'function'
-        });
 
         await mockAuthService.register(credentials);
       }
 
       const regDuration = Date.now() - regStartTime;
-      console.log(`✅ [AuthProvider] Registration completed successfully in ${regDuration}ms`);
 
       // User state will be updated via onAuthStateChanged listener
     } catch (error) {
       const regDuration = Date.now() - regStartTime;
-      console.error(`❌ [AuthProvider] Registration failed after ${regDuration}ms:`, error);
 
       // Ultra-safe error logging - completely bulletproof
       try {
@@ -437,9 +362,7 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
           name: errorName,
           stack: errorStack
         };
-        console.error('❌ [AuthProvider] Error details:', errorDetails);
       } catch (logError) {
-        console.error('❌ [AuthProvider] Error occurred while logging error details:', String(error));
       }
 
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Registration failed' });
@@ -457,18 +380,14 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
 
-      console.log('🔐 [AuthProvider] Starting OAuth login process...');
 
       if (useFirebase && firebaseServiceRef.current) {
-        console.log('🔐 [AuthProvider] Using Firebase for OAuth login');
         await firebaseServiceRef.current.loginWithProvider(provider);
       } else {
-        console.log('⚠️ [AuthProvider] OAuth not supported in mock mode');
         throw new Error('OAuth login not available in mock mode. Please use email/password registration.');
       }
       // User state will be updated via onAuthStateChanged listener
     } catch (error) {
-      console.error('❌ [AuthProvider] OAuth login failed:', error);
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'OAuth login failed' });
       throw error;
     } finally {
@@ -484,18 +403,14 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
 
-      console.log('🔐 [AuthProvider] Starting logout process...');
 
       if (useFirebase && firebaseServiceRef.current) {
-        console.log('🔐 [AuthProvider] Using Firebase for logout');
         await firebaseServiceRef.current.logout();
       } else {
-        console.log('🔧 [AuthProvider] Using mock service for logout');
         await mockAuthService.logout();
       }
       // User state will be updated via onAuthStateChanged listener
     } catch (error) {
-      console.error('❌ [AuthProvider] Logout failed:', error);
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Logout failed' });
       // Even if logout fails, reset local state
       dispatch({ type: 'RESET' });
@@ -512,17 +427,13 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
 
-      console.log('🔐 [AuthProvider] Starting password reset process...');
 
       if (useFirebase && firebaseServiceRef.current) {
-        console.log('🔐 [AuthProvider] Using Firebase for password reset');
         await firebaseServiceRef.current.resetPassword(email);
       } else {
-        console.log('🔧 [AuthProvider] Using mock service for password reset');
         await mockAuthService.resetPassword(email);
       }
     } catch (error) {
-      console.error('❌ [AuthProvider] Password reset failed:', error);
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Password reset failed' });
       throw error;
     } finally {
@@ -538,14 +449,11 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
 
-      console.log('🔐 [AuthProvider] Starting profile update process...');
 
       if (useFirebase && firebaseServiceRef.current) {
-        console.log('🔐 [AuthProvider] Using Firebase for profile update');
         const updatedUser = await firebaseServiceRef.current.updateUserProfile(updates);
         dispatch({ type: 'SET_USER', payload: updatedUser });
       } else {
-        console.log('🔧 [AuthProvider] Using mock service for profile update (local only)');
         // Mock service doesn't support profile updates yet - just update locally
         const currentUser = state.user;
         if (currentUser) {
@@ -554,7 +462,6 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
         }
       }
     } catch (error) {
-      console.error('❌ [AuthProvider] Profile update failed:', error);
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Profile update failed' });
       throw error;
     } finally {
@@ -570,17 +477,13 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
 
-      console.log('🔐 [AuthProvider] Starting email verification resend...');
 
       if (useFirebase && firebaseServiceRef.current) {
-        console.log('🔐 [AuthProvider] Using Firebase for email verification');
         await firebaseServiceRef.current.resendEmailVerification();
       } else {
-        console.log('⚠️ [AuthProvider] Email verification not supported in mock mode');
         throw new Error('Email verification not available in mock mode.');
       }
     } catch (error) {
-      console.error('❌ [AuthProvider] Email verification resend failed:', error);
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to send verification email' });
       throw error;
     } finally {
@@ -617,7 +520,6 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
     clearError,
   };
 
-    console.log('🔐 [AuthProvider] About to render AuthContext.Provider');
 
     return (
       <AuthContext.Provider value={contextValue}>
@@ -625,13 +527,9 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       </AuthContext.Provider>
     );
   } catch (error) {
-    console.error('💥 [AuthProvider] AuthenticationProvider error:', error);
-    console.error('💥 [AuthProvider] Error stack:', error.stack);
 
     // Check if this is the Hermes property error
     if (error.message?.includes('property is not configurable')) {
-      console.error('🎯 [AuthProvider] FOUND HERMES PROPERTY ERROR IN AUTH PROVIDER!');
-      console.error('🎯 [AuthProvider] This suggests the error occurs during auth initialization');
     }
 
     throw error;

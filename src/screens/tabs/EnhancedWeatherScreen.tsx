@@ -66,7 +66,6 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
     try {
       await refreshWeather();
     } catch (error) {
-      console.error('Failed to load weather data:', error);
       Alert.alert('Error', 'Failed to load weather data. Please try again.');
     }
   };

@@ -1,27 +1,30 @@
-// Regatta Category System - 6 main categories as per requirements
+// Regatta Category System - 7 main categories (including media)
 export enum RegattaCategory {
   PRE_EVENT = 'pre_event',
   DAILY_OPERATIONS = 'daily_operations',
   COMPETITION_MANAGEMENT = 'competition_management',
   PROTESTS_HEARINGS = 'protests_hearings',
   SAFETY_REGULATORY = 'safety_regulatory',
-  ADMINISTRATIVE = 'administrative'
+  ADMINISTRATIVE = 'administrative',
+  MEDIA_ANNOUNCEMENTS = 'media_announcements'
 }
 
 // Enhanced document type system
-export type DocumentType = 
+export type DocumentType =
   // Pre-event documents
   | 'notice_of_race' | 'sailing_instructions' | 'entry_form' | 'measurement_requirements'
   // Daily operations
   | 'race_schedule' | 'course_info' | 'weather_forecast' | 'daily_briefing'
-  // Competition management  
+  // Competition management
   | 'live_scoring' | 'results' | 'boat_rotations' | 'equipment_assignments'
   // Protests & hearings
   | 'protest_info' | 'hearing_schedule' | 'decisions' | 'appeals'
   // Safety & regulatory
   | 'safety_notice' | 'rule_amendments' | 'equipment_regulations' | 'emergency_procedures'
   // Administrative
-  | 'general_notices' | 'contact_info' | 'venue_info' | 'other';
+  | 'general_notices' | 'contact_info' | 'venue_info' | 'other'
+  // Media & announcements
+  | 'podcast' | 'video' | 'press_release' | 'media_advisory';
 
 // Document key data extraction structure
 export interface DocumentKeyData {
@@ -67,10 +70,10 @@ export interface EventDocument {
 }
 
 // Enhanced notification types aligned with regatta categories
-export type NotificationType = 
+export type NotificationType =
   // Pre-event
   | 'entry_update' | 'measurement_reminder' | 'registration_deadline'
-  // Daily operations  
+  // Daily operations
   | 'weather' | 'course_change' | 'schedule_update' | 'daily_briefing'
   // Competition management
   | 'results' | 'scoring_update' | 'equipment_change' | 'boat_rotation'
@@ -79,7 +82,9 @@ export type NotificationType =
   // Safety & regulatory
   | 'emergency' | 'safety_warning' | 'rule_change' | 'equipment_inspection'
   // Administrative
-  | 'announcement' | 'venue_info' | 'contact_update' | 'general';
+  | 'announcement' | 'venue_info' | 'contact_update' | 'general'
+  // Media & announcements
+  | 'podcast_episode' | 'video_release' | 'press_release' | 'media_interview';
 
 // Enhanced notification metadata
 export interface NotificationMetadata {
@@ -187,6 +192,7 @@ export interface Competitor {
   country: string;
   club: string;
   className: string;
+  boatName?: string;
   registrationStatus: 'pending' | 'confirmed' | 'paid' | 'incomplete';
   entryDate: string;
   paymentStatus: 'pending' | 'paid' | 'overdue';
@@ -334,6 +340,24 @@ export interface WeatherNotice {
   severity: 'info' | 'advisory' | 'warning' | 'emergency';
 }
 
+// Media item for podcasts, videos, and other media content
+export interface MediaItem {
+  id: string;
+  type: 'podcast' | 'video' | 'press_release' | 'interview' | 'gallery';
+  title: string;
+  description: string;
+  url: string;
+  thumbnailUrl?: string;
+  duration?: number; // in seconds for audio/video
+  publishedAt: string;
+  author?: string;
+  platform?: 'spotify' | 'youtube' | 'apple_podcasts' | 'vimeo' | 'external';
+  tags: string[];
+  isNew: boolean;
+  episodeNumber?: number;
+  seriesName?: string;
+}
+
 export interface NoticeBoardEvent {
   id: string;
   name: string;
@@ -357,6 +381,7 @@ export interface NoticeBoardEvent {
     penalties: OnWaterPenalty[];
     courseChanges: CourseChange[];
     weatherNotices: WeatherNotice[];
+    mediaItems: MediaItem[];
   };
 }
 

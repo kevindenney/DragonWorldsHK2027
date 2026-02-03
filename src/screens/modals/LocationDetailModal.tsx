@@ -81,11 +81,6 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
   // DEBUG: Log layout info
   React.useEffect(() => {
     if (visible) {
-      console.log('🔍 [ANDROID DEBUG] Modal opened');
-      console.log('  Screen height:', screenHeight);
-      console.log('  Max height (90%):', screenHeight * 0.9);
-      console.log('  Bottom inset:', insets.bottom);
-      console.log('  Platform:', Platform.OS);
     }
   }, [visible, screenHeight, insets.bottom]);
 
@@ -125,7 +120,6 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
       <View
         style={styles.modalOverlay}
         onStartShouldSetResponder={() => {
-          console.log('🔍 [ANDROID DEBUG] Touch on modal overlay');
           return false; // Don't intercept
         }}
       >
@@ -139,7 +133,6 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
           ]}
           onLayout={(event) => {
             const { height } = event.nativeEvent.layout;
-            console.log('🔍 [ANDROID DEBUG] Modal container height:', height);
           }}
         >
           {/* FIXED HEADER */}
@@ -170,10 +163,8 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
             scrollEventThrottle={16}
             onLayout={(event) => {
               const { height } = event.nativeEvent.layout;
-              console.log('🔍 [ANDROID DEBUG] ScrollView height:', height);
             }}
             onContentSizeChange={(width, height) => {
-              console.log('🔍 [ANDROID DEBUG] Content size:', { width, height });
             }}
             onTouchStart={() => console.log('🔍 [ANDROID DEBUG] Touch START on ScrollView')}
             onTouchEnd={() => console.log('🔍 [ANDROID DEBUG] Touch END on ScrollView')}

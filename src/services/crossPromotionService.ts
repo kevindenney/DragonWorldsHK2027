@@ -94,9 +94,7 @@ export class CrossPromotionService {
     try {
       await this.loadCrossPromotionData();
       await this.syncUserSegments();
-      console.log('Cross-promotion service initialized');
     } catch (error) {
-      console.error('Failed to initialize cross-promotion service:', error);
     }
   }
 
@@ -379,7 +377,6 @@ export class CrossPromotionService {
         this.tacticalWindUsers.set(dragonWorldsUserId, tacticalWindUser);
         await this.saveCrossPromotionData();
         
-        console.log('User account synced with TacticalWind');
         return true;
       }
 
@@ -430,10 +427,8 @@ export class CrossPromotionService {
         }
       });
 
-      console.log('Cross-promotion analytics tracked:', analyticsEvent);
 
     } catch (error) {
-      console.warn('Failed to track cross-promotion analytics:', error);
     }
   }
 
@@ -603,7 +598,6 @@ export class CrossPromotionService {
         }
       }
     } catch (error) {
-      console.warn('Failed to load cross-promotion data:', error);
     }
   }
 
@@ -616,13 +610,11 @@ export class CrossPromotionService {
       
       await AsyncStorage.setItem('cross_promotion_data', JSON.stringify(data));
     } catch (error) {
-      console.warn('Failed to save cross-promotion data:', error);
     }
   }
 
   private async syncUserSegments(): Promise<void> {
     // Refresh user segments based on current behavior
-    console.log('User segments synced');
   }
 
   // Public utility methods

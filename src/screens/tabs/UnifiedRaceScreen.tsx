@@ -35,9 +35,11 @@ import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
 import { SkeletonLoader } from '../../components/shared/SkeletonLoader';
 import { SimpleError } from '../../components/shared/SimpleError';
 import { OfflineError } from '../../components/shared/OfflineError';
-import { IOSSegmentedControl } from '../../components/ios/IOSSegmentedControl';
 import { haptics } from '../../utils/haptics';
 import { offlineManager } from '../../services/offlineManager';
+import { useSelectedEvent, useSetSelectedEvent } from '../../stores/eventStore';
+import { EVENTS } from '../../constants/events';
+import { FloatingEventSwitch } from '../../components/navigation/FloatingEventSwitch';
 import {
   IOSNavigationBar,
   IOSCard,
@@ -94,7 +96,8 @@ interface NoticeItem {
 export function UnifiedRaceScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<'asia-pacific-2026' | 'dragon-worlds-2026'>('dragon-worlds-2026');
+  const selectedEvent = useSelectedEvent();
+  const setSelectedEvent = useSetSelectedEvent();
   const userType = useUserType();
 
   // Live context state
@@ -176,7 +179,6 @@ export function UnifiedRaceScreen() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
     } catch (error) {
-      console.error('Refresh error:', error);
     } finally {
       setRefreshing(false);
     }
@@ -253,18 +255,17 @@ export function UnifiedRaceScreen() {
     </Animated.View>
   );
 
-  const renderEventToggle = () => {
-    console.log('[UnifiedRaceScreen] 🎯 COMPONENT IDENTIFICATION: Using IOSSegmentedControl from ios/IOSSegmentedControl');
-    console.log('[UnifiedRaceScreen] Rendering IOSSegmentedControl with selectedEvent:', selectedEvent);
+  const renderEventHeader = () => {
     return (
-      <View style={styles.eventToggleContainer}>
-        <IOSSegmentedControl
+      <View style={styles.eventHeaderContainer}>
+        <IOSText variant="title1" style={styles.screenTitle}>Race Day</IOSText>
+        <FloatingEventSwitch
           options={[
-            { label: '2026 Asia Pacific Championship', value: 'asia-pacific-2026' },
-            { label: '2027 Dragon World Championship', value: 'dragon-worlds-2026' }
+            { label: 'APAC 2026', shortLabel: 'APAC 2026', value: EVENTS.APAC_2026.id },
+            { label: 'Worlds 2027', shortLabel: 'Worlds 2027', value: EVENTS.WORLDS_2027.id }
           ]}
           selectedValue={selectedEvent}
-          onValueChange={(eventId) => setSelectedEvent(eventId as 'asia-pacific-2026' | 'dragon-worlds-2026')}
+          onValueChange={setSelectedEvent}
         />
       </View>
     );
@@ -357,7 +358,7 @@ export function UnifiedRaceScreen() {
           }
           showsVerticalScrollIndicator={false}
         >
-          {renderEventToggle()}
+          {renderEventHeader()}
           {renderLiveStatus()}
           {renderNoticeBoard()}
           {renderRaceEvents()}
@@ -467,11 +468,10 @@ const styles = StyleSheet.create({
   eventAction: {
     alignSelf: 'flex-start',
   },
-  eventToggleContainer: {
-    paddingHorizontal: spacing.md,
+  eventHeaderContainer: {
     paddingVertical: spacing.md,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+  },
+  screenTitle: {
+    fontWeight: '700',
   },
 });

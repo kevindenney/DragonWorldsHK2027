@@ -73,7 +73,6 @@ class PaymentGatewayService {
       }
       this.isInitialized = true;
     } catch (error) {
-      console.error('Failed to initialize payment gateway:', error);
       throw error;
     }
   }
@@ -108,7 +107,6 @@ class PaymentGatewayService {
         urlScheme: 'dragonworldshk2027',
       });
     } catch (error) {
-      console.error('Stripe React Native not available:', error);
     }
   }
 
@@ -117,7 +115,6 @@ class PaymentGatewayService {
       const stored = await AsyncStorage.getItem(`payment_methods_${userId}`);
       return stored ? JSON.parse(stored) : [];
     } catch (error) {
-      console.error('Error getting payment methods:', error);
       return [];
     }
   }
@@ -146,7 +143,6 @@ class PaymentGatewayService {
       
       return paymentMethod;
     } catch (error) {
-      console.error('Error adding payment method:', error);
       throw error;
     }
   }
@@ -161,7 +157,6 @@ class PaymentGatewayService {
       
       await AsyncStorage.setItem(`payment_methods_${userId}`, JSON.stringify(paymentMethods));
     } catch (error) {
-      console.error('Error setting default payment method:', error);
       throw error;
     }
   }
@@ -173,7 +168,6 @@ class PaymentGatewayService {
       
       await AsyncStorage.setItem(`payment_methods_${userId}`, JSON.stringify(filteredMethods));
     } catch (error) {
-      console.error('Error removing payment method:', error);
       throw error;
     }
   }
@@ -193,7 +187,6 @@ class PaymentGatewayService {
       await AsyncStorage.setItem(`payment_intent_${paymentIntent.id}`, JSON.stringify(paymentIntent));
       return paymentIntent;
     } catch (error) {
-      console.error('Error creating payment intent:', error);
       throw error;
     }
   }
@@ -215,7 +208,6 @@ class PaymentGatewayService {
         return await this.confirmStripeNative(paymentIntent, paymentMethodId);
       }
     } catch (error) {
-      console.error('Error confirming Stripe payment:', error);
       return { success: false, error: 'Payment confirmation failed' };
     }
   }
@@ -242,7 +234,6 @@ class PaymentGatewayService {
 
       return { success: false, error: 'Payment not completed' };
     } catch (error) {
-      console.error('Stripe web payment error:', error);
       return { success: false, error: 'Payment processing failed' };
     }
   }
@@ -270,7 +261,6 @@ class PaymentGatewayService {
 
       return { success: false, error: 'Payment not completed' };
     } catch (error) {
-      console.error('Stripe native payment error:', error);
       return { success: false, error: 'Payment processing failed' };
     }
   }
@@ -311,7 +301,6 @@ class PaymentGatewayService {
 
       return { success: true, paymentId: paymentIntent.id };
     } catch (error) {
-      console.error('Apple Pay error:', error);
       return { success: false, error: 'Apple Pay processing failed' };
     }
   }
@@ -359,7 +348,6 @@ class PaymentGatewayService {
 
       return { success: true, paymentId: paymentIntent.id };
     } catch (error) {
-      console.error('Google Pay error:', error);
       return { success: false, error: 'Google Pay processing failed' };
     }
   }
@@ -381,7 +369,6 @@ class PaymentGatewayService {
       
       return { success: true, paymentId: refundId };
     } catch (error) {
-      console.error('Error processing refund:', error);
       return { success: false, error: 'Refund processing failed' };
     }
   }
@@ -407,7 +394,6 @@ class PaymentGatewayService {
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, limit);
     } catch (error) {
-      console.error('Error getting payment history:', error);
       return [];
     }
   }
@@ -428,7 +414,6 @@ class PaymentGatewayService {
       const payment: PaymentIntent = JSON.parse(paymentData);
       return payment.status === 'succeeded';
     } catch (error) {
-      console.error('Error validating payment:', error);
       return false;
     }
   }
@@ -443,7 +428,6 @@ class PaymentGatewayService {
           methods.push('apple_pay');
         }
       } catch (error) {
-        console.log('Apple Pay not available');
       }
     }
     
@@ -454,7 +438,6 @@ class PaymentGatewayService {
           methods.push('google_pay');
         }
       } catch (error) {
-        console.log('Google Pay not available');
       }
     }
     

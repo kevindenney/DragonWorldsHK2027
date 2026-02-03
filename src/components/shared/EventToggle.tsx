@@ -30,8 +30,6 @@ export const EventToggle: React.FC<EventToggleProps> = ({
   badgeCounts = {},
   style
 }) => {
-  console.log('[EventToggle] Component rendered with options:', options.map(o => o.fullLabel));
-  console.log('[EventToggle] Selected event ID:', selectedEventId);
   const animatedValue = useSharedValue(
     options.findIndex(option => option.id === selectedEventId)
   );

@@ -298,7 +298,6 @@ export class HKOAPI {
       this.setCache(cacheKey, data);
       return data;
     } catch (error) {
-      console.error('Failed to fetch HKO current weather:', error);
       throw error;
     }
   }
@@ -319,7 +318,6 @@ export class HKOAPI {
       this.setCache(cacheKey, data);
       return data;
     } catch (error) {
-      console.error('Failed to fetch HKO marine weather:', error);
       throw error;
     }
   }
@@ -340,7 +338,6 @@ export class HKOAPI {
       this.setCache(cacheKey, data, 60 * 1000); // Cache for 1 minute
       return data;
     } catch (error) {
-      console.error('Failed to fetch HKO tide predictions:', error);
       throw error;
     }
   }
@@ -350,7 +347,6 @@ export class HKOAPI {
    */
   async getWeatherWarnings(): Promise<HKOMarineWarning[]> {
     try {
-      console.log('⚠️ [HKO API] Fetching weather warnings...');
 
       // For development/testing, return simulated warnings
       const now = new Date();
@@ -381,11 +377,9 @@ export class HKOAPI {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      console.log(`✅ [HKO API] Retrieved ${warnings.length} weather warnings (simulated data)`);
       return warnings;
 
     } catch (error) {
-      console.error('❌ [HKO API] Failed to fetch weather warnings:', error);
       return []; // Return empty array instead of throwing
     }
   }
@@ -399,7 +393,6 @@ export class HKOAPI {
    */
   async getWeatherBuoys(): Promise<HKOWeatherBuoy[]> {
     try {
-      console.log('🌊 [HKO API] Fetching weather buoys...');
 
       // For development/testing, return simulated data instead of making real API calls
       // In production, this would fetch from actual HKO endpoints
@@ -424,11 +417,9 @@ export class HKOAPI {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      console.log(`✅ [HKO API] Retrieved ${simulatedBuoys.length} weather buoys (simulated data)`);
       return simulatedBuoys;
 
     } catch (error) {
-      console.error('❌ [HKO API] Failed to fetch weather buoys:', error);
       throw new Error(`HKO API unavailable: ${error}`);
     }
   }
@@ -438,7 +429,6 @@ export class HKOAPI {
    */
   async getTideStations(): Promise<HKOTideStation[]> {
     try {
-      console.log('🌊 [HKO API] Fetching tide stations...');
 
       // For development/testing, return simulated data instead of making real API calls
       // In production, this would fetch from actual HKO endpoints
@@ -484,11 +474,9 @@ export class HKOAPI {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      console.log(`✅ [HKO API] Retrieved ${simulatedStations.length} tide stations (simulated data)`);
       return simulatedStations;
 
     } catch (error) {
-      console.error('❌ [HKO API] Failed to fetch tide stations:', error);
       throw new Error(`HKO API unavailable: ${error}`);
     }
   }
@@ -498,7 +486,6 @@ export class HKOAPI {
    */
   async getMarineForecastAreas(): Promise<HKOMarineForecastArea[]> {
     try {
-      console.log('🌊 [HKO API] Fetching marine forecast areas...');
 
       // For development/testing, return simulated marine forecast areas
       const now = new Date();
@@ -528,11 +515,9 @@ export class HKOAPI {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      console.log(`✅ [HKO API] Retrieved ${simulatedAreas.length} marine forecast areas (simulated data)`);
       return simulatedAreas;
 
     } catch (error) {
-      console.error('❌ [HKO API] Failed to fetch marine forecast areas:', error);
       return []; // Return empty array instead of throwing
     }
   }
@@ -543,7 +528,6 @@ export class HKOAPI {
    */
   async getDriftingBuoys(): Promise<HKODriftingBuoy[]> {
     try {
-      console.log('🌊 [HKO API] Fetching drifting buoys...');
 
       // For development/testing, return simulated drifting buoys
       const updateTime = new Date().toISOString();
@@ -573,11 +557,9 @@ export class HKOAPI {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      console.log(`✅ [HKO API] Retrieved ${driftingBuoys.length} drifting buoys (simulated data)`);
       return driftingBuoys;
 
     } catch (error) {
-      console.error('❌ [HKO API] Failed to fetch drifting buoys:', error);
       return []; // Return empty array instead of throwing
     }
   }
@@ -616,7 +598,6 @@ export class HKOAPI {
         }
         callback(data);
       } catch (error) {
-        console.error(`Polling error for ${dataType}:`, error);
       }
     };
 
@@ -713,7 +694,6 @@ export class HKOAPI {
         this.cache = new Map(Object.entries(parsedCache));
       }
     } catch (error) {
-      console.warn('Failed to load HKO cache:', error);
     }
   }
 
@@ -722,7 +702,6 @@ export class HKOAPI {
       const cacheObject = Object.fromEntries(this.cache);
       await AsyncStorage.setItem('hko_cache', JSON.stringify(cacheObject));
     } catch (error) {
-      console.warn('Failed to save HKO cache:', error);
     }
   }
 

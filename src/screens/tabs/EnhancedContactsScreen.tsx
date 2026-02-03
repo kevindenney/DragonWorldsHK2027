@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert, Image, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
-  MessageCircle, 
-  Users, 
+import { View, StyleSheet, ScrollView, RefreshControl, Alert, Image, TextInput, Animated } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useToolbarVisibility } from '../../contexts/TabBarVisibilityContext';
+import {
+  MessageCircle,
+  Users,
   Search,
   Filter,
   Phone,
@@ -12,7 +13,8 @@ import {
   Star,
   Bell,
   Settings,
-  X
+  X,
+  Clock
 } from 'lucide-react-native';
 
 import { WhatsAppGroupCard } from '../../components/social/WhatsAppGroupCard';
@@ -45,47 +47,42 @@ const LiveCommentary: React.FC<LiveCommentaryProps> = ({
   recentMessages,
   onJoin
 }) => {
-  if (!isActive) return null;
-
+  // Show "Coming Soon" state for WhatsApp groups
   return (
     <IOSCard style={styles.liveCard}>
       <View style={styles.liveHeader}>
-        <View style={styles.liveIndicator}>
-          <View style={styles.liveIcon} />
-          <IOSText style={styles.liveTitle}>LIVE RACE COMMENTARY</IOSText>
+        <View style={styles.comingSoonIndicator}>
+          <Clock size={14} color="#8E8E93" style={{ marginRight: 6 }} />
+          <IOSText style={styles.comingSoonTitle}>WHATSAPP GROUP LINKS</IOSText>
         </View>
-        <View style={styles.whatsappBranding}>
+        <View style={styles.whatsappBrandingDisabled}>
           <MessageCircle size={14} color="#FFFFFF" style={styles.whatsappIcon} />
           <IOSText style={styles.whatsappText}>WhatsApp Group</IOSText>
         </View>
-        <IOSText style={styles.liveParticipants}>
-          {participantCount} participants
+      </View>
+
+      <View style={styles.comingSoonMessage}>
+        <IOSText style={styles.comingSoonText}>
+          Official WhatsApp group links for race commentary and competitor updates will be available closer to the event.
         </IOSText>
       </View>
-      
-      <View style={styles.messagePreview}>
-        {recentMessages.slice(0, 3).map((msg, index) => (
-          <View key={index} style={styles.messageRow}>
-            <IOSText style={styles.messageAuthor}>{msg.author}:</IOSText>
-            <IOSText style={styles.messageText}>{msg.message}</IOSText>
-          </View>
-        ))}
+
+      <View style={styles.disabledButton}>
+        <MessageCircle size={16} color="#8E8E93" />
+        <IOSText style={styles.disabledButtonText}>Coming Soon</IOSText>
       </View>
-      
-      <IOSButton
-        title="Join WhatsApp Group"
-        onPress={onJoin}
-        variant="filled"
-        style={styles.joinLiveButton}
-        icon={<MessageCircle size={16} color="#FFFFFF" />}
-      />
     </IOSCard>
   );
 };
 
 export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation = null }) => {
   const userType = useUserType();
-  
+  const insets = useSafeAreaInsets();
+
+  // Toolbar auto-hide on scroll
+  const { toolbarTranslateY, createScrollHandler } = useToolbarVisibility();
+  const scrollHandler = useMemo(() => createScrollHandler(), [createScrollHandler]);
+
   // Use single store subscriptions to prevent cascading re-renders
   const socialStore = useSocialStore();
   const contactsStore = useContactsStore();
@@ -132,21 +129,16 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
       try {
         // Only initialize once to prevent infinite loops
         if (!isInitialized.current) {
-          console.log('🔄 Initializing EnhancedContactsScreen data...');
           
           // Always initialize default contacts on first load
-          console.log('📞 Initializing default contacts...');
           useContactsStore.getState().initializeDefaultContacts();
           
           // Load social data
-          console.log('👥 Refreshing social groups...');
           await useSocialStore.getState().refreshGroups();
           
           isInitialized.current = true;
-          console.log('✅ EnhancedContactsScreen initialization complete');
         }
       } catch (error) {
-        console.error('❌ Error loading data:', error);
       }
     };
 
@@ -161,7 +153,6 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
         contactsStore.refreshContacts()
       ]);
     } catch (error) {
-      console.error('Error refreshing data:', error);
     } finally {
       setRefreshing(false);
     }
@@ -216,7 +207,6 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Open WhatsApp', onPress: () => {
-          console.log('Opening WhatsApp group:', groupId);
         }}
       ]
     );
@@ -380,28 +370,28 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
     }
   };
 
-  return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Image
-            source={require('../../../assets/dragon-logo.png')}
-            style={styles.dragonLogo}
-            resizeMode="contain"
-          />
-          <IOSText style={styles.headerTitle}>Contacts & Groups</IOSText>
-        </View>
-      </View>
+  // Header height for content padding (safe area + back button space + header content)
+  const HEADER_HEIGHT = 56;
 
+  return (
+    <View style={styles.container}>
+      {/* Content ScrollView - scrolls behind header */}
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={{ paddingTop: insets.top + HEADER_HEIGHT + 8 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
+            progressViewOffset={insets.top + HEADER_HEIGHT + 8}
           />
         }
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={scrollHandler.onScroll}
+        onScrollBeginDrag={scrollHandler.onScrollBeginDrag}
+        onScrollEndDrag={scrollHandler.onScrollEndDrag}
+        onMomentumScrollEnd={scrollHandler.onMomentumScrollEnd}
       >
         {/* Live Commentary Section */}
         {liveDiscussion && (
@@ -492,6 +482,27 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
           </IOSCard>
         </IOSSection>
       </ScrollView>
+
+      {/* Floating Header - positioned absolute, hides on scroll */}
+      <Animated.View
+        style={[
+          styles.header,
+          {
+            paddingTop: insets.top,
+            paddingLeft: 56, // Make room for FloatingBackButton from MoreScreen
+            transform: [{ translateY: toolbarTranslateY }],
+          },
+        ]}
+      >
+        <View style={styles.titleRow}>
+          <Image
+            source={require('../../../assets/dragon-logo.png')}
+            style={styles.dragonLogo}
+            resizeMode="contain"
+          />
+          <IOSText style={styles.headerTitle}>Contacts & Groups</IOSText>
+        </View>
+      </Animated.View>
 
       {/* Search Modal */}
       <IOSModal
@@ -609,7 +620,7 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
           </View>
         </View>
       </IOSModal>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -619,16 +630,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F2F7',
   },
   header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingLeft: 20,
     paddingRight: 24,
-    paddingTop: 8,
     paddingBottom: 12,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 0.5,
     borderBottomColor: '#C6C6C8',
+    zIndex: 10,
   },
   titleRow: {
     flexDirection: 'row',
@@ -667,41 +681,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   
-  // Live Commentary
+  // Live Commentary / WhatsApp Coming Soon
   liveCard: {
     marginHorizontal: 16,
     padding: 16,
     backgroundColor: '#FFFFFF',
+    opacity: 0.85,
   },
   liveHeader: {
     marginBottom: 16,
   },
-  liveIndicator: {
+  comingSoonIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 4,
   },
-  liveIcon: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FF3B30',
-    marginRight: 8,
-  },
-  liveTitle: {
+  comingSoonTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#FF3B30',
+    color: '#8E8E93',
     letterSpacing: 0.5,
   },
-  whatsappBranding: {
+  whatsappBrandingDisabled: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#25D366',
+    backgroundColor: '#AEAEB2',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
     marginTop: 4,
+    alignSelf: 'flex-start',
   },
   whatsappIcon: {
     marginRight: 4,
@@ -711,33 +720,31 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
-  liveParticipants: {
-    fontSize: 13,
-    color: '#8E8E93',
-  },
-  messagePreview: {
+  comingSoonMessage: {
     backgroundColor: '#F2F2F7',
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
   },
-  messageRow: {
+  comingSoonText: {
+    fontSize: 13,
+    color: '#8E8E93',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  disabledButton: {
     flexDirection: 'row',
-    marginBottom: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E5E5EA',
+    paddingVertical: 14,
+    borderRadius: 10,
+    gap: 8,
   },
-  messageAuthor: {
-    fontSize: 13,
+  disabledButtonText: {
+    fontSize: 17,
     fontWeight: '600',
-    color: '#007AFF',
-    marginRight: 6,
-  },
-  messageText: {
-    fontSize: 13,
-    color: '#3C3C43',
-    flex: 1,
-  },
-  joinLiveButton: {
-    alignSelf: 'stretch',
+    color: '#8E8E93',
   },
 
   // Quick Emergency Access

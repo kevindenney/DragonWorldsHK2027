@@ -370,7 +370,6 @@ export class PredictiveAnalyticsService {
       return churnProfile;
 
     } catch (error) {
-      console.error('Failed to analyze churn risk:', error);
       throw new Error('Churn risk analysis failed');
     }
   }
@@ -412,7 +411,6 @@ export class PredictiveAnalyticsService {
       return prediction;
 
     } catch (error) {
-      console.error('Failed to predict user engagement:', error);
       throw new Error('Engagement prediction failed');
     }
   }
@@ -472,7 +470,6 @@ export class PredictiveAnalyticsService {
       return valueModel;
 
     } catch (error) {
-      console.error('Failed to analyze subscription value:', error);
       throw new Error('Subscription value analysis failed');
     }
   }
@@ -518,7 +515,6 @@ export class PredictiveAnalyticsService {
       });
 
     } catch (error) {
-      console.error('Failed to trigger churn intervention:', error);
     }
   }
 
@@ -925,7 +921,6 @@ export class PredictiveAnalyticsService {
         break;
 
       default:
-        console.log(`Executing intervention: ${intervention.type}`);
     }
   }
 
@@ -1092,17 +1087,14 @@ export class PredictiveAnalyticsService {
 
   private async updateChurnRiskProfiles(): Promise<void> {
     // Update profiles for all users (would be done server-side)
-    console.log('Updating churn risk profiles...');
   }
 
   private async updateEngagementPredictions(): Promise<void> {
     // Update engagement predictions
-    console.log('Updating engagement predictions...');
   }
 
   private async processInterventionOutcomes(): Promise<void> {
     // Analyze intervention effectiveness
-    console.log('Processing intervention outcomes...');
   }
 
   // Data persistence
@@ -1126,7 +1118,6 @@ export class PredictiveAnalyticsService {
         }
       }
     } catch (error) {
-      console.warn('Failed to load predictive analytics data:', error);
     }
   }
 
@@ -1141,7 +1132,6 @@ export class PredictiveAnalyticsService {
       
       await AsyncStorage.setItem('predictive_analytics_data', JSON.stringify(data));
     } catch (error) {
-      console.warn('Failed to save predictive analytics data:', error);
     }
   }
 

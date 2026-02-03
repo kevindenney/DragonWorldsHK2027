@@ -121,7 +121,6 @@ class OpenMeteoSource {
         model: 'ICON'
       };
     } catch (error) {
-      console.error('Open-Meteo fetch failed:', error);
       return null;
     }
   }
@@ -132,7 +131,6 @@ class OpenWeatherMapSource {
 
   async getWeather(lat: number, lon: number): Promise<WeatherReading | null> {
     if (!this.apiKey || this.apiKey === 'YOUR_API_KEY_HERE') {
-      console.log('OpenWeatherMap: API key not provided');
       return null;
     }
 
@@ -153,7 +151,6 @@ class OpenWeatherMapSource {
         model: 'Multiple'
       };
     } catch (error) {
-      console.error('OpenWeatherMap fetch failed:', error);
       return null;
     }
   }
@@ -186,14 +183,12 @@ export class MultiSourceWeatherService {
    * Get weather readings from all enabled sources
    */
   async getAllReadings(lat: number, lon: number): Promise<WeatherReading[]> {
-    console.log('🌐 [MULTI-SOURCE] Fetching from all enabled sources...');
 
     const promises: Promise<WeatherReading | null>[] = [];
 
     // Fetch from all enabled sources
     Object.entries(this.config).forEach(([key, config]) => {
       if (config.enabled && this.sources[key]) {
-        console.log(`🌐 [MULTI-SOURCE] Querying ${config.name}...`);
         promises.push(this.sources[key].getWeather(lat, lon));
       }
     });
@@ -201,9 +196,7 @@ export class MultiSourceWeatherService {
     const results = await Promise.all(promises);
     const validReadings = results.filter((r): r is WeatherReading => r !== null);
 
-    console.log(`🌐 [MULTI-SOURCE] Got ${validReadings.length} valid readings from ${promises.length} sources`);
     validReadings.forEach(reading => {
-      console.log(`🌐 [MULTI-SOURCE] ${reading.source}: ${reading.windSpeedKts.toFixed(1)}kt @ ${reading.windDirectionDeg}°`);
     });
 
     return validReadings;
@@ -274,7 +267,6 @@ export class MultiSourceWeatherService {
     const agreementBonus = agreement === 'high' ? 0.2 : agreement === 'medium' ? 0.1 : 0;
     const finalConfidence = Math.min(1, avgConfidence + agreementBonus);
 
-    console.log(`🌐 [CONSENSUS] Speed: ${consensusSpeed.toFixed(1)}kt (${speedVariance.toFixed(1)}kt variance, ${agreement} agreement)`);
 
     return {
       windSpeedKts: consensusSpeed,

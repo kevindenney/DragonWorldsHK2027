@@ -58,7 +58,6 @@ class UnifiedTideService {
   private pollingInterval: NodeJS.Timeout | null = null;
 
   constructor() {
-    console.log('🌊 [UNIFIED TIDE] Initializing unified tide service...');
     this.startPolling();
   }
 
@@ -136,12 +135,10 @@ class UnifiedTideService {
       });
 
       this.lastUpdate = new Date();
-      console.log(`🌊 [UNIFIED TIDE] Updated ${unifiedStations.length} unified stations`);
 
       return unifiedStations;
 
     } catch (error) {
-      console.error('🌊 [UNIFIED TIDE] Failed to create unified stations:', error);
       return this.createFallbackStations();
     }
   }
@@ -293,7 +290,6 @@ class UnifiedTideService {
       const hkoStations = await hkoAPI.getTideStations();
 
       if (hkoStations.length > 0) {
-        console.log('🌊 [UNIFIED TIDE] Using HKO API tide stations');
         return hkoStations.map(station => ({
           id: station.id || station.code,
           name: station.name,
@@ -314,7 +310,6 @@ class UnifiedTideService {
 
       return this.createFallbackStations();
     } catch (error) {
-      console.warn('🌊 [UNIFIED TIDE] HKO API unavailable, using fallback stations');
       return this.createFallbackStations();
     }
   }
@@ -361,7 +356,6 @@ class UnifiedTideService {
    * Start polling for real-time updates
    */
   private startPolling(): void {
-    console.log('🌊 [UNIFIED TIDE] Starting polling for unified tide data');
 
     // Initial load
     this.getUnifiedTideStations();
@@ -380,7 +374,6 @@ class UnifiedTideService {
       clearInterval(this.pollingInterval);
       this.pollingInterval = null;
     }
-    console.log('🌊 [UNIFIED TIDE] Stopped polling');
   }
 
   /**
@@ -420,7 +413,6 @@ class UnifiedTideService {
    * Forces a fresh calculation for a specific time to ensure consistency
    */
   synchronizeTime(time: Date = new Date()): void {
-    console.log(`🕐 [UNIFIED TIDE] Synchronizing time: ${time.toISOString()}`);
 
     // Update all station current heights to this specific time
     this.tideStations.forEach((station, stationId) => {
@@ -435,7 +427,6 @@ class UnifiedTideService {
       station.trend = trend;
       station.lastUpdated = time.toISOString();
 
-      console.log(`🕐 [UNIFIED TIDE] ${station.name}: ${height.toFixed(1)}m (${trend})`);
     });
 
     this.lastUpdate = time;

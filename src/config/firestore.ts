@@ -119,13 +119,10 @@ export const initializeFirestore = async () => {
   try {
     // Enable offline persistence for mobile
     if (typeof window !== 'undefined' && 'navigator' in window && 'onLine' in navigator) {
-      console.log('🔥 Firestore initialized with offline persistence');
     }
     
-    console.log('✅ Firestore collections configured:', Object.keys(COLLECTIONS));
     return true;
   } catch (error) {
-    console.error('❌ Failed to initialize Firestore:', error);
     return false;
   }
 };

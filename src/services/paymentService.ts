@@ -659,7 +659,6 @@ export class PaymentService {
       return transaction;
 
     } catch (error) {
-      console.error('Payment processing error:', error);
       
       const failedTransaction: PurchaseTransaction = {
         id: `txn_failed_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -885,7 +884,6 @@ export class PaymentService {
         isValid: true // Gateway service validates methods
       }));
     } catch (error) {
-      console.error('Error getting payment methods:', error);
       return [];
     }
   }
@@ -923,7 +921,6 @@ export class PaymentService {
         isValid: true
       };
     } catch (error) {
-      console.error('Error adding payment method:', error);
       return null;
     }
   }
@@ -933,7 +930,6 @@ export class PaymentService {
       await paymentGatewayService.setDefaultPaymentMethod(userId, paymentMethodId);
       return true;
     } catch (error) {
-      console.error('Error setting default payment method:', error);
       return false;
     }
   }
@@ -943,7 +939,6 @@ export class PaymentService {
       await paymentGatewayService.removePaymentMethod(userId, paymentMethodId);
       return true;
     } catch (error) {
-      console.error('Error removing payment method:', error);
       return false;
     }
   }
@@ -952,7 +947,6 @@ export class PaymentService {
     try {
       return await paymentGatewayService.getAvailablePaymentMethods();
     } catch (error) {
-      console.error('Error getting available payment methods:', error);
       return ['card']; // Fallback to card only
     }
   }
@@ -995,7 +989,6 @@ export class PaymentService {
         error: result.error
       };
     } catch (error) {
-      console.error('Error processing refund:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Refund processing failed'

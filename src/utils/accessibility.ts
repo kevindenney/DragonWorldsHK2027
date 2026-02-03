@@ -45,22 +45,17 @@ export class AccessibilityManager {
         // Listen for accessibility changes
         AccessibilityInfo.addEventListener('screenReaderChanged', this.handleScreenReaderChange.bind(this));
         AccessibilityInfo.addEventListener('reduceMotionChanged', this.handleReduceMotionChange.bind(this));
-        console.log('✅ [AccessibilityManager] Event listeners attached successfully');
       } catch (eventListenerError) {
-        console.warn('⚠️ [AccessibilityManager] Event listeners failed (Hermes compatibility issue):', eventListenerError);
 
         // Check if this is the specific Hermes property error
         if (eventListenerError.message?.includes('getter') || eventListenerError.message?.includes('unconfigurable')) {
-          console.log('🎯 [AccessibilityManager] HERMES PROPERTY ERROR - Using polling fallback');
           this.eventListenersSupported = false;
           this.setupPollingFallback();
         }
       }
 
       this.isInitialized = true;
-      console.log(`✅ [AccessibilityManager] Initialized - Screen reader: ${this.screenReaderEnabled}, Reduce motion: ${this.reduceMotionEnabled}`);
     } catch (error) {
-      console.warn('❌ [AccessibilityManager] Failed to initialize accessibility:', error);
 
       // Even if initialization fails, mark as initialized to prevent hanging
       this.isInitialized = true;
@@ -72,7 +67,6 @@ export class AccessibilityManager {
    * This periodically checks accessibility settings instead of listening to events
    */
   private setupPollingFallback(): void {
-    console.log('🔄 [AccessibilityManager] Setting up polling fallback for Hermes compatibility');
 
     // Poll every 5 seconds for accessibility changes
     this.pollingInterval = setInterval(async () => {
@@ -88,21 +82,17 @@ export class AccessibilityManager {
           this.handleReduceMotionChange(newReduceMotionState);
         }
       } catch (error) {
-        console.warn('⚠️ [AccessibilityManager] Polling check failed:', error);
       }
     }, 5000); // Check every 5 seconds
 
-    console.log('✅ [AccessibilityManager] Polling fallback active');
   }
 
   private handleScreenReaderChange(isEnabled: boolean): void {
     this.screenReaderEnabled = isEnabled;
-    console.log(`Screen reader changed: ${isEnabled}`);
   }
 
   private handleReduceMotionChange(isEnabled: boolean): void {
     this.reduceMotionEnabled = isEnabled;
-    console.log(`Reduce motion changed: ${isEnabled}`);
   }
 
   // Public getters
@@ -301,7 +291,6 @@ export class AccessibilityManager {
     try {
       await AccessibilityInfo.announceForAccessibility(message);
     } catch (error) {
-      console.warn('Failed to announce for accessibility:', error);
     }
   }
 
@@ -323,7 +312,6 @@ export class AccessibilityManager {
     if (this.pollingInterval) {
       clearInterval(this.pollingInterval);
       this.pollingInterval = null;
-      console.log('🧹 [AccessibilityManager] Polling interval cleared');
     }
 
     // Clean up event listeners if supported
@@ -331,9 +319,7 @@ export class AccessibilityManager {
       try {
         AccessibilityInfo.removeEventListener('screenReaderChanged', this.handleScreenReaderChange);
         AccessibilityInfo.removeEventListener('reduceMotionChanged', this.handleReduceMotionChange);
-        console.log('🧹 [AccessibilityManager] Event listeners removed');
       } catch (error) {
-        console.warn('⚠️ [AccessibilityManager] Failed to remove event listeners:', error);
       }
     }
   }

@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 
-console.log('[NoticesScreen] Module loading...');
-import { View, StyleSheet, FlatList, RefreshControl, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-// Animated import removed to fix Hermes property configuration error
+import { View, StyleSheet, FlatList, RefreshControl, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Bell,
   WifiOff,
@@ -18,7 +16,7 @@ import { ErrorBoundary } from '../../components/shared/ErrorBoundary';
 import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
 import { SimpleError } from '../../components/shared/SimpleError';
 import { OfflineError } from '../../components/shared/OfflineError';
-import { IOSSegmentedControl } from '../../components/ios/IOSSegmentedControl';
+import { FloatingEventSwitch } from '../../components/navigation/FloatingEventSwitch';
 import { haptics } from '../../utils/haptics';
 import { offlineManager } from '../../services/offlineManager';
 import {
@@ -29,14 +27,17 @@ import {
 
 import { NoticeCard } from '../../components/notices/NoticeCard';
 import { NoticeFilters } from '../../components/notices/NoticeFilters';
-import { NoticeSearchBar } from '../../components/notices/NoticeSearchBar';
 import { CategoryFilterChips, type CategoryCount } from '../../components/notices/CategoryFilterChips';
-import { PodcastSection } from '../../components/podcast/PodcastSection';
+import { ProfileButton } from '../../components/navigation/ProfileButton';
+import { useToolbarVisibility } from '../../contexts/TabBarVisibilityContext';
+
+const HEADER_HEIGHT = 60; // Height of header section for content padding
 
 import NoticeBoardService from '../../services/noticeBoardService';
 import { useUserStore } from '../../stores/userStore';
 import { useAuth } from '../../hooks/useAuth';
-import { useSelectedEventId, useNoticesStore, useNoticesPreferences, useNoticesStoreHydrated } from '../../stores/noticesStore';
+import { useSelectedEvent, useSetSelectedEvent, useEventStoreHydrated } from '../../stores/eventStore';
+import { EVENTS } from '../../constants/events';
 
 import type {
   NoticeBoardEvent,
@@ -66,76 +67,29 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
   navigation,
   route
 }) => {
-  console.log('[NoticesScreen] Component initializing...', { routeParams: route.params });
   const userStore = useUserStore();
   const { user } = useAuth();
-  const [noticeBoardService] = useState(() => new NoticeBoardService(userStore));
+  const [noticeBoardService] = useState(() => new NoticeBoardService(userStore, true, 'demo'));
+  const insets = useSafeAreaInsets();
 
-  // Use persistent store for selected event ID
-  const persistentSelectedEventId = useSelectedEventId();
-  const { setSelectedEventId } = useNoticesStore();
-  const noticesPreferences = useNoticesPreferences();
-  const storeHydrated = useNoticesStoreHydrated();
+  // Toolbar auto-hide
+  const { toolbarTranslateY, createScrollHandler } = useToolbarVisibility();
+  const scrollHandler = useMemo(() => createScrollHandler(), [createScrollHandler]);
 
-  console.log('[NoticesScreen] Store state:', {
-    persistentSelectedEventId,
-    storeHydrated,
-    noticesPreferences
-  });
+  // Use global event store
+  const selectedEventId = useSelectedEvent();
+  const setSelectedEvent = useSetSelectedEvent();
+  const storeHydrated = useEventStoreHydrated();
 
-  // Use local state that syncs with persistent store
-  const [selectedEventId, setLocalSelectedEventId] = useState(
-    persistentSelectedEventId || 'asia-pacific-2026'
-  );
-
-  console.log('[NoticesScreen] Initial selectedEventId:', selectedEventId);
-
-  // Sync local state with persistent store and provide fallback
-  useEffect(() => {
-    console.log('[NoticesScreen] Sync effect triggered:', {
-      storeHydrated,
-      persistentSelectedEventId,
-      currentSelectedEventId: selectedEventId
-    });
-
-    if (storeHydrated) {
-      // Ensure we have a valid event ID
-      const validEventIds = ['asia-pacific-2026', 'dragon-worlds-2026'];
-      const eventIdToUse = validEventIds.includes(persistentSelectedEventId)
-        ? persistentSelectedEventId
-        : 'asia-pacific-2026';
-
-      console.log('[NoticesScreen] Computed eventIdToUse:', eventIdToUse);
-
-      if (eventIdToUse !== selectedEventId) {
-        console.log('[NoticesScreen] Updating local selectedEventId from', selectedEventId, 'to', eventIdToUse);
-        setLocalSelectedEventId(eventIdToUse);
-      }
-    }
-  }, [persistentSelectedEventId, storeHydrated]);
 
   // Initial load effect - triggers when store is first hydrated
   useEffect(() => {
-    console.log('[NoticesScreen] Initial load effect triggered:', {
-      storeHydrated,
-      hasEvent: !!event,
-      selectedEventId
-    });
 
     // If store just became hydrated and we don't have event data, load it immediately
     if (storeHydrated && !event && selectedEventId) {
-      console.log('[NoticesScreen] Store hydrated, triggering initial data load');
       loadEventData();
     }
   }, [storeHydrated]);
-
-  // If route has eventId parameter, use it and update both states
-  useEffect(() => {
-    if (route.params?.eventId && route.params.eventId !== selectedEventId) {
-      setLocalSelectedEventId(route.params.eventId);
-      setSelectedEventId(route.params.eventId);
-    }
-  }, [route.params?.eventId]);
 
   const [event, setEvent] = useState<NoticeBoardEvent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -144,7 +98,6 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   // UI State
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<RegattaCategory | 'all'>('all');
   const [showHelpLegend, setShowHelpLegend] = useState(false);
   const [activeFilters, setActiveFilters] = useState<SearchFilters>({
@@ -175,15 +128,9 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
 
   // Load event data
   const loadEventData = useCallback(async (showLoader: boolean = true) => {
-    console.log('[NoticesScreen] loadEventData called:', {
-      selectedEventId,
-      isAlreadyLoading: loadingRef.current,
-      showLoader
-    });
 
     // Prevent multiple simultaneous loads
     if (loadingRef.current) {
-      console.log('[NoticesScreen] Already loading, skipping duplicate call');
       return;
     }
 
@@ -193,21 +140,18 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
       if (showLoader) setIsLoading(true);
       setError(null);
 
-      console.log('[NoticesScreen] Starting to load event:', selectedEventId);
 
-      // Add timeout to prevent infinite loading
+      // Add timeout to prevent infinite loading (increased to 15 seconds)
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => {
-          console.log('[NoticesScreen] Loading timeout triggered after 5 seconds');
           reject(new Error('Loading timeout'));
-        }, 5000)
+        }, 15000)
       );
 
       const eventDataPromise = noticeBoardService.getEvent(selectedEventId);
 
       const eventData = await Promise.race([eventDataPromise, timeoutPromise]) as NoticeBoardEvent;
 
-      console.log('[NoticesScreen] Event data loaded:', { eventId: eventData?.id, hasData: !!eventData });
 
       if (eventData) {
         setEvent(eventData);
@@ -218,76 +162,43 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
           expiresIn: 1440 // 24 hours
         });
       } else {
-        // If no data, fallback to Asia Pacific
-        if (selectedEventId === 'dragon-worlds-2026') {
-          console.log('World Championships data not available, falling back to Asia Pacific');
-          setLocalSelectedEventId('asia-pacific-2026');
-          setSelectedEventId('asia-pacific-2026');
-        } else {
-          setError('Event not found');
-        }
+        setError('Event not found');
       }
     } catch (err) {
-      console.error('[NoticesScreen] Failed to load event data:', err);
-
-      // If World Championships fails, fallback to Asia Pacific
-      if (selectedEventId === 'dragon-worlds-2026') {
-        console.log('[NoticesScreen] Failed to load World Championships, falling back to Asia Pacific');
-        setLocalSelectedEventId('asia-pacific-2026');
-        setSelectedEventId('asia-pacific-2026');
-        loadingRef.current = false;
-        return; // Will trigger re-load with Asia Pacific
-      }
-
       setError('Failed to load event data');
       await haptics.errorAction();
 
       // Try to load from cache if offline
       if (isOffline) {
         try {
-          console.log('[NoticesScreen] Attempting to load from cache...');
           const cachedData = await offlineManager.getCriticalScheduleData();
           if (cachedData) {
             setEvent(cachedData as NoticeBoardEvent);
             setError(null);
-            console.log('[NoticesScreen] Loaded from cache successfully');
           }
         } catch (cacheError) {
-          console.error('[NoticesScreen] Failed to load from cache:', cacheError);
         }
       }
     } finally {
-      console.log('[NoticesScreen] loadEventData completed');
       setIsLoading(false);
       setRefreshing(false);
       loadingRef.current = false;
     }
-  }, [selectedEventId, isOffline, noticeBoardService, setSelectedEventId]);
+  }, [selectedEventId, isOffline, noticeBoardService]);
 
   // Load event data when selectedEventId changes
   useEffect(() => {
-    console.log('[NoticesScreen] Load effect triggered:', {
-      selectedEventId,
-      storeHydrated,
-      hasSelectedEventId: !!selectedEventId
-    });
 
     if (selectedEventId && storeHydrated) {
-      console.log('[NoticesScreen] Calling loadEventData from useEffect');
       loadEventData();
     } else {
-      console.log('[NoticesScreen] Skipping loadEventData:', {
-        reason: !selectedEventId ? 'No selectedEventId' : 'Store not hydrated'
-      });
     }
   }, [selectedEventId, storeHydrated]); // Remove loadEventData from dependencies to prevent loops
 
   // Refresh data when returning to the screen
   useFocusEffect(
     useCallback(() => {
-      console.log('[NoticesScreen] useFocusEffect triggered - screen focused');
       if (selectedEventId && storeHydrated && event) {
-        console.log('[NoticesScreen] Refreshing data on screen focus');
         loadEventData(false); // Don't show loading spinner for focus refresh
       }
     }, [selectedEventId, storeHydrated, event, loadEventData])
@@ -296,16 +207,16 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
 
   // Combine and process notices
   const allNotices = useMemo((): NoticeItem[] => {
-    if (!event) return [];
+    if (!event || !event.noticeBoard) return [];
 
-    const notifications: NoticeItem[] = event.noticeBoard.notifications.map(notification => ({
+    const notifications: NoticeItem[] = (event.noticeBoard.notifications || []).map(notification => ({
       ...notification,
       itemType: 'notification' as const,
       priority: notification.priority || 'medium',
       category: notification.metadata?.category
     }));
 
-    const documents: NoticeItem[] = event.noticeBoard.documents.map(document => ({
+    const documents: NoticeItem[] = (event.noticeBoard.documents || []).map(document => ({
       ...document,
       itemType: 'document' as const,
       priority: (document.priority as NoticeItem['priority']) || 'medium',
@@ -339,19 +250,9 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
     });
   }, [event]);
 
-  // Filter notices based on search and filters
+  // Filter notices based on filters
   const filteredNotices = useMemo(() => {
     let filtered = allNotices;
-
-    // Apply search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(notice =>
-        notice.title.toLowerCase().includes(query) ||
-        ('content' in notice && notice.content.toLowerCase().includes(query)) ||
-        ('description' in notice && notice.description?.toLowerCase().includes(query))
-      );
-    }
 
     // Apply filters
     if (activeFilters.priorities.length > 0) {
@@ -377,7 +278,7 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
     }
 
     return filtered;
-  }, [allNotices, searchQuery, activeFilters]);
+  }, [allNotices, activeFilters]);
 
   // Category counts for filter chips - based on all notices (not filtered) to show total counts
   const categoryCounts = useMemo((): CategoryCount[] => {
@@ -441,32 +342,18 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
     await loadEventData(false);
   }, [loadEventData]);
 
-  // Handle event change
-  const handleEventChange = useCallback(async (eventId: string) => {
-    await haptics.selection();
-    setLocalSelectedEventId(eventId);  // Update local state immediately
-    setSelectedEventId(eventId);  // Update persistent store
-  }, [setSelectedEventId]);
-
   // Handle notice press
   const handleNoticePress = useCallback(async (notice: NoticeItem) => {
-    console.log('[NoticesScreen] handleNoticePress called with notice:', {
-      id: notice.id,
-      title: notice.title,
-      itemType: notice.itemType
-    });
 
     await haptics.buttonPress();
 
     if (notice.itemType === 'notification') {
-      console.log('[NoticesScreen] Navigating to NotificationDetail');
       navigation.navigate('NotificationDetail', {
         notificationId: notice.id,
         eventId: selectedEventId,
         notification: notice
       });
     } else {
-      console.log('[NoticesScreen] Navigating to DocumentViewer');
       // Cast to EventDocument and ensure proper structure for DocumentViewer
       const document = notice as EventDocument;
       const documentForViewer = {
@@ -478,22 +365,15 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
         type: document.type || 'notice_of_race',
         category: document.category || 'administrative'
       };
-      console.log('[NoticesScreen] Document for viewer:', documentForViewer);
 
       try {
         navigation.navigate('DocumentViewer', {
           document: documentForViewer
         });
       } catch (error) {
-        console.error('[NoticesScreen] Navigation error:', error);
       }
     }
   }, [navigation, selectedEventId]);
-
-  // Handle search
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query);
-  }, []);
 
   // Handle filters
   const handleFiltersChange = useCallback((filters: SearchFilters) => {
@@ -575,144 +455,20 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
   return (
     <ErrorBoundary
       onError={(error, errorInfo) => {
-        console.error('Notices screen error:', error, errorInfo);
         haptics.errorAction();
       }}
     >
-      <SafeAreaView style={styles.container} edges={['top']}>
-        {/* Event Selector */}
-        {(() => {
-          console.log('[NoticesScreen] 🎯 COMPONENT IDENTIFICATION: Using IOSSegmentedControl from ios/IOSSegmentedControl');
-          console.log('[NoticesScreen] Rendering IOSSegmentedControl with selectedEventId:', selectedEventId);
-          return (
-            <View style={styles.eventToggleContainer}>
-              <IOSSegmentedControl
-                options={[
-                  {
-                    label: '2026 Asia Pacific Championship',
-                    value: 'asia-pacific-2026',
-                    badge: selectedEventId === 'asia-pacific-2026' && allNotices.filter(n => 'isRead' in n ? !n.isRead : false).length > 0 ?
-                      allNotices.filter(n => 'isRead' in n ? !n.isRead : false).length.toString() : undefined
-                  },
-                  {
-                    label: '2027 Dragon World Championship',
-                    value: 'dragon-worlds-2026',
-                    badge: selectedEventId === 'dragon-worlds-2026' && allNotices.filter(n => 'isRead' in n ? !n.isRead : false).length > 0 ?
-                      allNotices.filter(n => 'isRead' in n ? !n.isRead : false).length.toString() : undefined
-                  }
-                ]}
-                selectedValue={selectedEventId}
-                onValueChange={handleEventChange}
-              />
-            </View>
-          );
-        })()}
-
-        {/* Offline indicator */}
-        {isOffline && (
-          <View style={styles.offlineIndicator}>
-            <WifiOff color={colors.warning} size={16} />
-            <IOSText textStyle="caption1" color="systemOrange">
-              Offline - showing cached data
-            </IOSText>
-          </View>
-        )}
-
-        {/* Search Bar */}
-        <IOSSection spacing="compact">
-          <NoticeSearchBar
-            value={searchQuery}
-            onSearch={handleSearch}
-            placeholder="Search notices and documents..."
-          />
-        </IOSSection>
-
-        {/* Category Filter Chips with Info Icon */}
-        <View style={styles.filterRow}>
-          <View style={styles.filterChipsContainer}>
-            <CategoryFilterChips
-              categoryCounts={categoryCounts}
-              selectedCategory={selectedCategory}
-              onCategoryChange={handleCategoryChange}
-            />
-          </View>
-
-          {/* Info Icon */}
-          <TouchableOpacity
-            style={styles.infoIconButton}
-            onPress={() => {
-              haptics.selection();
-              setShowHelpLegend(!showHelpLegend);
-            }}
-            accessibilityLabel="Show notice indicator help"
-          >
-            <Info size={20} color="#999999" />
-          </TouchableOpacity>
-        </View>
-
-        {showHelpLegend && (
-          <View style={styles.helpLegendContainer}>
-            <View style={styles.helpSection}>
-              <IOSText textStyle="caption1" weight="semibold" style={styles.helpSectionTitle}>
-                Notice Status
-              </IOSText>
-              <View style={styles.helpItem}>
-                <View style={[styles.helpIndicator, styles.unreadIndicator]} />
-                <IOSText textStyle="caption2" color="secondaryLabel">
-                  Blue border on left = Unread notice
-                </IOSText>
-              </View>
-              <View style={styles.helpItem}>
-                <View style={styles.helpBadgeExample}>
-                  <View style={[styles.helpBadge, { backgroundColor: colors.primary }]}>
-                    <IOSText textStyle="caption2" color="white" weight="medium">
-                      UNREAD
-                    </IOSText>
-                  </View>
-                </View>
-                <IOSText textStyle="caption2" color="secondaryLabel">
-                  Unread label badge
-                </IOSText>
-              </View>
-            </View>
-
-            <View style={styles.helpSection}>
-              <IOSText textStyle="caption1" weight="semibold" style={styles.helpSectionTitle}>
-                Priority Colors
-              </IOSText>
-              <View style={styles.helpItem}>
-                <View style={[styles.helpDot, { backgroundColor: colors.error }]} />
-                <IOSText textStyle="caption2" color="secondaryLabel">
-                  Red = Urgent priority
-                </IOSText>
-              </View>
-              <View style={styles.helpItem}>
-                <View style={[styles.helpDot, { backgroundColor: colors.warning }]} />
-                <IOSText textStyle="caption2" color="secondaryLabel">
-                  Yellow = High priority
-                </IOSText>
-              </View>
-              <View style={styles.helpItem}>
-                <View style={[styles.helpDot, { backgroundColor: colors.primary }]} />
-                <IOSText textStyle="caption2" color="secondaryLabel">
-                  Blue = Medium priority
-                </IOSText>
-              </View>
-              <View style={styles.helpItem}>
-                <View style={[styles.helpDot, { backgroundColor: colors.textSecondary }]} />
-                <IOSText textStyle="caption2" color="secondaryLabel">
-                  Gray = Low priority
-                </IOSText>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* Notices Content */}
+      <View style={styles.container}>
+        {/* Notices Content - Scrolls under the header */}
         <ScrollView
           style={styles.scrollContainer}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: HEADER_HEIGHT + insets.top + 60 }]}
           showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={scrollHandler.onScroll}
+          onScrollBeginDrag={scrollHandler.onScrollBeginDrag}
+          onScrollEndDrag={scrollHandler.onScrollEndDrag}
+          onMomentumScrollEnd={scrollHandler.onMomentumScrollEnd}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -720,25 +476,91 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
               tintColor={colors.primary}
               colors={[colors.primary]}
               progressBackgroundColor={colors.surface}
+              progressViewOffset={HEADER_HEIGHT + insets.top + 60}
             />
           }
         >
-          {/* Podcast Section */}
-          <PodcastSection style={styles.podcastSection} />
+          {/* Offline indicator */}
+          {isOffline && (
+            <View style={styles.offlineIndicator}>
+              <WifiOff color={colors.warning} size={16} />
+              <IOSText textStyle="caption1" color="systemOrange">
+                Offline - showing cached data
+              </IOSText>
+            </View>
+          )}
+
+          {showHelpLegend && (
+            <View style={styles.helpLegendContainer}>
+              <View style={styles.helpSection}>
+                <IOSText textStyle="caption1" weight="semibold" style={styles.helpSectionTitle}>
+                  Notice Status
+                </IOSText>
+                <View style={styles.helpItem}>
+                  <View style={[styles.helpIndicator, styles.unreadIndicator]} />
+                  <IOSText textStyle="caption2" color="secondaryLabel">
+                    Blue border on left = Unread notice
+                  </IOSText>
+                </View>
+                <View style={styles.helpItem}>
+                  <View style={styles.helpBadgeExample}>
+                    <View style={[styles.helpBadge, { backgroundColor: colors.primary }]}>
+                      <IOSText textStyle="caption2" color="white" weight="medium">
+                        UNREAD
+                      </IOSText>
+                    </View>
+                  </View>
+                  <IOSText textStyle="caption2" color="secondaryLabel">
+                    Unread label badge
+                  </IOSText>
+                </View>
+              </View>
+
+              <View style={styles.helpSection}>
+                <IOSText textStyle="caption1" weight="semibold" style={styles.helpSectionTitle}>
+                  Priority Colors
+                </IOSText>
+                <View style={styles.helpItem}>
+                  <View style={[styles.helpDot, { backgroundColor: colors.error }]} />
+                  <IOSText textStyle="caption2" color="secondaryLabel">
+                    Red = Urgent priority
+                  </IOSText>
+                </View>
+                <View style={styles.helpItem}>
+                  <View style={[styles.helpDot, { backgroundColor: colors.warning }]} />
+                  <IOSText textStyle="caption2" color="secondaryLabel">
+                    Yellow = High priority
+                  </IOSText>
+                </View>
+                <View style={styles.helpItem}>
+                  <View style={[styles.helpDot, { backgroundColor: colors.primary }]} />
+                  <IOSText textStyle="caption2" color="secondaryLabel">
+                    Blue = Medium priority
+                  </IOSText>
+                </View>
+                <View style={styles.helpItem}>
+                  <View style={[styles.helpDot, { backgroundColor: colors.textSecondary }]} />
+                  <IOSText textStyle="caption2" color="secondaryLabel">
+                    Gray = Low priority
+                  </IOSText>
+                </View>
+              </View>
+            </View>
+          )}
 
           {displayedNotices.length === 0 ? (
             <View style={styles.emptyState}>
               <Bell size={48} color={colors.textMuted} />
               <IOSText textStyle="title3" weight="medium" style={styles.emptyTitle}>
-                No notices found
+                No notices available
               </IOSText>
               <IOSText textStyle="callout" color="secondaryLabel" style={styles.emptyDescription}>
-                {searchQuery || Object.values(activeFilters).some(filter =>
+                {Object.values(activeFilters).some(filter =>
                   Array.isArray(filter) ? filter.length > 0 :
                   typeof filter === 'boolean' ? filter :
                   typeof filter === 'object' && filter !== null ? Object.keys(filter).length > 0 :
                   filter !== 'all'
-                ) ? 'Try adjusting your search or filters' : 'New notices will appear here when published'}
+                ) ? 'Try adjusting your filters' : 'Official notices will appear here once published on racingrulesofsailing.org'}
               </IOSText>
             </View>
           ) : (
@@ -753,7 +575,56 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
             ))
           )}
         </ScrollView>
-      </SafeAreaView>
+
+        {/* Floating Header Section - Positioned above content */}
+        <Animated.View
+          style={[
+            styles.headerSection,
+            {
+              paddingTop: insets.top,
+              transform: [{ translateY: toolbarTranslateY }]
+            }
+          ]}
+        >
+          <View style={styles.headerContainer}>
+            <IOSText textStyle="title1" weight="bold" style={styles.headerTitle}>
+              Notices
+            </IOSText>
+            <ProfileButton size={36} />
+          </View>
+          <FloatingEventSwitch
+            options={[
+              { label: 'APAC 2026', shortLabel: 'APAC 2026', value: EVENTS.APAC_2026.id },
+              { label: 'Worlds 2027', shortLabel: 'Worlds 2027', value: EVENTS.WORLDS_2027.id }
+            ]}
+            selectedValue={selectedEventId}
+            onValueChange={setSelectedEvent}
+          />
+
+          {/* Category Filter Chips with Info Icon */}
+          <View style={styles.filterRow}>
+            <View style={styles.filterChipsContainer}>
+              <CategoryFilterChips
+                categoryCounts={categoryCounts}
+                selectedCategory={selectedCategory}
+                onCategoryChange={handleCategoryChange}
+              />
+            </View>
+
+            {/* Info Icon */}
+            <TouchableOpacity
+              style={styles.infoIconButton}
+              onPress={() => {
+                haptics.selection();
+                setShowHelpLegend(!showHelpLegend);
+              }}
+              accessibilityLabel="Show notice indicator help"
+            >
+              <Info size={20} color="#999999" />
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      </View>
     </ErrorBoundary>
   );
 };
@@ -762,6 +633,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  headerSection: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.surface,
+    zIndex: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
+  },
+  headerTitle: {
+    color: colors.text,
   },
   loadingContainer: {
     flex: 1,
@@ -789,10 +681,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: spacing.xl,
   },
-  podcastSection: {
-    marginTop: spacing.sm,
-    marginBottom: spacing.md,
-  },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -807,13 +695,6 @@ const styles = StyleSheet.create({
   emptyDescription: {
     textAlign: 'center',
     maxWidth: 280,
-  },
-  eventToggleContainer: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   filterRow: {
     flexDirection: 'row',

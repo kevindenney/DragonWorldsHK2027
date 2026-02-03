@@ -25,7 +25,6 @@ import WeatherConditionsOverlay from '../components/weather/WeatherConditionsOve
 const { colors, spacing, typography, shadows, borderRadius } = dragonChampionshipsLightTheme;
 const { width, height } = Dimensions.get('window');
 
-console.log('🗺️ [MapScreenSafe] Loading safe WebView-based map implementation...');
 
 export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
   const [selectedFilter, setSelectedFilter] = useState<SailingLocationFilter['type']>('all');
@@ -133,8 +132,6 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
             // Add sailing locations as markers
             const locations = ${JSON.stringify(filteredLocations)};
 
-            console.log('===== MAP MARKERS DEBUG =====');
-            console.log('Total locations to display:', locations.length);
 
             // Helper function to create SVG circle marker
             function createSVGCircle(color) {
@@ -158,10 +155,6 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
                 'tourism': '#EC4899'              // Pink - Tourism Attractions
               }[location.type] || '#6B7280';
 
-              console.log('Marker ' + (index + 1) + ':', location.name);
-              console.log('  Type:', location.type, '| Color:', markerColor);
-              console.log('  Position:', location.coordinates.latitude + ', ' + location.coordinates.longitude);
-              console.log('  Importance:', location.importance || 'not set');
 
               // Create marker with SVG icon instead of SymbolPath
               const markerOptions = {
@@ -189,7 +182,6 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
               }
 
               const marker = new google.maps.Marker(markerOptions);
-              console.log('  Marker created successfully');
 
               marker.addListener('click', () => {
                 showLocationInfo(location);
@@ -199,10 +191,6 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
               markers.push(marker);
             });
 
-            console.log('===== MARKERS SUMMARY =====');
-            console.log('Total markers created:', markers.length);
-            console.log('Map should now display colored circle markers');
-            console.log('===========================');
 
             // Fit bounds to show all markers
             if (locations.length > 0) {
@@ -240,7 +228,7 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
 
         </script>
         <script async defer
-          src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASvagpRFBzK0HhRGqSqeW7W4FiEoFTf1w&callback=initMap">
+          src="https://maps.googleapis.com/maps/api/js?key=${process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || ''}&callback=initMap">
         </script>
       </body>
       </html>
@@ -260,13 +248,11 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
               if (data.type === 'locationSelected') {
                 setSelectedLocation(data.location);
                 setShowDetailModal(true);
-                console.log('Location selected:', data.location.name);
               } else if (data.type === 'locationDeselected') {
                 setSelectedLocation(null);
                 setShowDetailModal(false);
               }
             } catch (error) {
-              console.log('WebView message parsing error:', error);
             }
           }}
           javaScriptEnabled={true}
@@ -370,7 +356,6 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
             setSelectedLocation(null);
           }}
           onScheduleNavigate={(date, eventId) => {
-            console.log('Navigate to schedule:', date, eventId);
             // TODO: Implement navigation to schedule screen
           }}
         />
@@ -472,6 +457,5 @@ const styles = StyleSheet.create({
   },
 });
 
-console.log('✅ [MapScreenSafe] Safe MapScreen component loaded successfully');
 
 export default MapScreen;

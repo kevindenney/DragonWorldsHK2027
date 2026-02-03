@@ -536,7 +536,6 @@ export class WeatherManager {
       if (alert.severity === 'high' || alert.severity === 'extreme') {
         // Trigger high-priority notifications
         // This would integrate with notification service
-        console.log(`High priority weather alert: ${alert.title}`);
       }
     }
   }
@@ -665,7 +664,6 @@ export class WeatherManager {
         this.updateSchedule = { ...this.updateSchedule, ...JSON.parse(saved) };
       }
     } catch (error) {
-      console.warn('Failed to load update schedule:', error);
     }
   }
 
@@ -673,7 +671,6 @@ export class WeatherManager {
     try {
       await AsyncStorage.setItem('weather_update_schedule', JSON.stringify(this.updateSchedule));
     } catch (error) {
-      console.warn('Failed to save update schedule:', error);
     }
   }
 

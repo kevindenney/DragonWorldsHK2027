@@ -101,7 +101,6 @@ export function useClubSpotEntrants(
   } = useQuery({
     queryKey,
     queryFn: async () => {
-      console.log(`[useClubSpotEntrants] Fetching entrants for ${regattaId}/${eventId}`);
       return clubSpotServiceInstance.getEntrants(regattaId, eventId);
     },
     enabled: enabled && !!regattaId && !!eventId,
@@ -152,13 +151,11 @@ export function useClubSpotEntrants(
 
   // Refetch function
   const refetch = useCallback(async () => {
-    console.log('[useClubSpotEntrants] Refetching data...');
     await queryRefetch();
   }, [queryRefetch]);
 
   // Refresh function (invalidate cache and refetch)
   const refresh = useCallback(async () => {
-    console.log('[useClubSpotEntrants] Refreshing data (cache invalidation)...');
     clubSpotServiceInstance.clearCache(regattaId);
     await queryClient.invalidateQueries({ queryKey });
   }, [queryClient, queryKey, regattaId]);
@@ -188,7 +185,6 @@ export function usePrefetchClubSpotEntrants() {
 
   return useCallback(
     async (regattaId: string, eventId: string) => {
-      console.log(`[useClubSpotEntrants] Prefetching entrants for ${regattaId}/${eventId}`);
       await queryClient.prefetchQuery({
         queryKey: QUERY_KEYS.entrants(regattaId, eventId),
         queryFn: () => clubSpotServiceInstance.getEntrants(regattaId, eventId),

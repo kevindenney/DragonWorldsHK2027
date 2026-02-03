@@ -63,7 +63,6 @@ export function DocumentViewer({ document, onClose }: DocumentViewerProps) {
         setDownloadedPath(localPath);
       }
     } catch (error) {
-      console.warn('Error checking downloaded file:', error);
     }
   };
 
@@ -107,7 +106,6 @@ export function DocumentViewer({ document, onClose }: DocumentViewerProps) {
         Alert.alert('Success', 'Document downloaded successfully');
       }
     } catch (error) {
-      console.error('Download error:', error);
       setError('Failed to download document');
       Alert.alert('Error', 'Failed to download document. Please try again.');
     } finally {
@@ -140,7 +138,6 @@ export function DocumentViewer({ document, onClose }: DocumentViewerProps) {
         await Sharing.shareAsync(downloadedPath);
       }
     } catch (error) {
-      console.error('Save error:', error);
       Alert.alert('Error', 'Failed to save document');
     }
   };
@@ -160,7 +157,6 @@ export function DocumentViewer({ document, onClose }: DocumentViewerProps) {
         });
       }
     } catch (error) {
-      console.error('Share error:', error);
       Alert.alert('Error', 'Failed to share document');
     }
   };
@@ -175,7 +171,6 @@ export function DocumentViewer({ document, onClose }: DocumentViewerProps) {
         Alert.alert('Error', 'Unable to open document in external app');
       }
     } catch (error) {
-      console.error('External open error:', error);
       Alert.alert('Error', 'Failed to open document');
     }
   };
@@ -258,7 +253,6 @@ export function DocumentViewer({ document, onClose }: DocumentViewerProps) {
             onLoadEnd={() => setLoading(false)}
             onError={(syntheticEvent) => {
               const { nativeEvent } = syntheticEvent;
-              console.error('WebView error:', nativeEvent);
               setError('Failed to load document');
               setLoading(false);
             }}

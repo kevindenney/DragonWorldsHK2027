@@ -54,11 +54,9 @@ export function deduplicateStations<T extends StationWithCoordinate>(
       deduplicated.push(station);
       usedCoordinates.push(station.coordinate);
     } else {
-      console.log(`🗑️ Removing duplicate station ${station.id} at ${station.coordinate.latitude}, ${station.coordinate.longitude}`);
     }
   }
 
-  console.log(`✅ Deduplicated stations: ${stations.length} → ${deduplicated.length} (removed ${stations.length - deduplicated.length} duplicates)`);
   return deduplicated;
 }
 

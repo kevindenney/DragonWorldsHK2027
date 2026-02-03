@@ -13,7 +13,8 @@ import {
   WeatherNotice,
   RegistrationStatus,
   ProtestDecision,
-  NoticeBoardServiceConfig
+  NoticeBoardServiceConfig,
+  MediaItem
 } from '../types/noticeBoard';
 import { UserStore } from '../stores/userStore';
 import { RealDataService } from './realDataService';
@@ -35,7 +36,7 @@ export class NoticeBoardService {
   private ccrNoticesService: CCR2024NoticesService;
   private dataSource: 'demo' | 'racing_rules' | 'ccr2024' = 'demo';
 
-  constructor(userStore: typeof UserStore, useDemoData: boolean = true, dataSource: 'demo' | 'racing_rules' | 'ccr2024' = 'demo') {
+  constructor(userStore: typeof UserStore, useDemoData: boolean = false, dataSource: 'demo' | 'racing_rules' | 'ccr2024' = 'racing_rules') {
     this.userStore = userStore;
     this.useDemoData = useDemoData;
     this.dataSource = dataSource;
@@ -53,20 +54,17 @@ export class NoticeBoardService {
    * Get event data by event ID
    */
   async getEvent(eventId: string): Promise<NoticeBoardEvent | null> {
-    console.log('[NoticeBoardService] getEvent called for:', eventId);
     try {
       const cacheKey = `event_${eventId}`;
 
       // Check cache first
       if (this.isCacheValid(cacheKey)) {
-        console.log('[NoticeBoardService] Returning cached data for:', eventId);
         return this.cache.get(cacheKey);
       }
 
       let event: NoticeBoardEvent;
 
       if (this.useDemoData) {
-        console.log('[NoticeBoardService] Generating demo data for:', eventId);
         // Return demo data for development/testing
         event = this.generateDemoEvent(eventId);
       } else {
@@ -80,7 +78,6 @@ export class NoticeBoardService {
       
       return event;
     } catch (error) {
-      console.error('Error fetching event:', error);
       return null;
     }
   }
@@ -93,7 +90,6 @@ export class NoticeBoardService {
       const event = await this.getEvent(eventId);
       return event?.noticeBoard.documents || [];
     } catch (error) {
-      console.error('Error fetching documents:', error);
       return [];
     }
   }
@@ -117,7 +113,6 @@ export class NoticeBoardService {
 
       return notifications;
     } catch (error) {
-      console.error('Error fetching notifications:', error);
       return [];
     }
   }
@@ -130,7 +125,6 @@ export class NoticeBoardService {
       // In a real implementation, this would parse the sailing instructions document
       return this.generateDemoSailingInstructions();
     } catch (error) {
-      console.error('Error fetching sailing instructions:', error);
       return [];
     }
   }
@@ -142,7 +136,6 @@ export class NoticeBoardService {
     try {
       return this.generateDemoNoticeOfRace(eventId);
     } catch (error) {
-      console.error('Error fetching notice of race:', error);
       return null;
     }
   }
@@ -156,7 +149,6 @@ export class NoticeBoardService {
       // For demo, generate competitor list based on entry count
       return this.generateDemoCompetitors(event?.entryCount || 50);
     } catch (error) {
-      console.error('Error fetching entry list:', error);
       return [];
     }
   }
@@ -169,7 +161,6 @@ export class NoticeBoardService {
       const event = await this.getEvent(eventId);
       return event?.noticeBoard.protests || [];
     } catch (error) {
-      console.error('Error fetching protests:', error);
       return [];
     }
   }
@@ -182,7 +173,6 @@ export class NoticeBoardService {
       const event = await this.getEvent(eventId);
       return event?.noticeBoard.hearings || [];
     } catch (error) {
-      console.error('Error fetching hearings:', error);
       return [];
     }
   }
@@ -200,11 +190,9 @@ export class NoticeBoardService {
       };
 
       // In a real implementation, this would submit to the API
-      console.log('Submitting protest:', newProtest);
       
       return newProtest;
     } catch (error) {
-      console.error('Error submitting protest:', error);
       throw new Error('Failed to submit protest');
     }
   }
@@ -217,7 +205,6 @@ export class NoticeBoardService {
       const event = await this.getEvent(eventId);
       return event?.noticeBoard.scoringInquiries || [];
     } catch (error) {
-      console.error('Error fetching scoring inquiries:', error);
       return [];
     }
   }
@@ -230,7 +217,6 @@ export class NoticeBoardService {
       const event = await this.getEvent(eventId);
       return event?.noticeBoard.penalties || [];
     } catch (error) {
-      console.error('Error fetching penalties:', error);
       return [];
     }
   }
@@ -248,7 +234,6 @@ export class NoticeBoardService {
 
       return this.generateDemoRegistrationStatus();
     } catch (error) {
-      console.error('Error fetching registration status:', error);
       return null;
     }
   }
@@ -258,22 +243,17 @@ export class NoticeBoardService {
    */
   private async fetchRealEventData(eventId: string): Promise<NoticeBoardEvent> {
     try {
-      console.log('🌐 Attempting to fetch real data from racingrulesofsailing.org...');
       
       // Try to fetch real data using the RealDataService
       const realData = await this.realDataService.fetchEventData(eventId);
       
       if (realData) {
-        console.log('✅ Successfully fetched real data');
         return realData;
       } else {
-        console.log('⚠️ Real data not available, falling back to demo data');
         return this.generateDemoEvent(eventId);
       }
       
     } catch (error) {
-      console.error('Error fetching real event data:', error);
-      console.log('⚠️ Error occurred, falling back to demo data');
       return this.generateDemoEvent(eventId);
     }
   }
@@ -338,7 +318,6 @@ export class NoticeBoardService {
     // Clear cache when switching sources
     this.cache.clear();
     this.lastFetchTime.clear();
-    console.log(`📡 Switched notice board data source to: ${source}`);
   }
 
   /**
@@ -386,12 +365,10 @@ export class NoticeBoardService {
       }
       
       // Handle generic form submissions
-      console.log(`📝 Submitting generic ${actionId} form:`, formData);
       await new Promise(resolve => setTimeout(resolve, 1000));
       return true;
       
     } catch (error) {
-      console.error(`❌ Error submitting ${actionId} form:`, error);
       return false;
     }
   }
@@ -420,8 +397,12 @@ export class NoticeBoardService {
    */
   private generateDemoEvent(eventId: string): NoticeBoardEvent {
     // Use centralized mock data if available, otherwise fall back to default
-    if (AVAILABLE_EVENTS.includes(eventId)) {
-      return generateMockEvent(eventId);
+    try {
+      if (AVAILABLE_EVENTS.includes(eventId)) {
+        return generateMockEvent(eventId);
+      }
+    } catch (error) {
+      // Fall through to default generation
     }
 
     // Fallback for unknown event IDs
@@ -453,9 +434,31 @@ export class NoticeBoardService {
         scoringInquiries: this.generateDemoScoringInquiries(),
         penalties: this.generateDemoPenalties(),
         courseChanges: this.generateDemoCourseChanges(),
-        weatherNotices: this.generateDemoWeatherNotices()
+        weatherNotices: this.generateDemoWeatherNotices(),
+        mediaItems: this.generateDemoMediaItems()
       }
     };
+  }
+
+  /**
+   * Get media items (podcasts, videos, etc.)
+   */
+  async getMediaItems(eventId: string): Promise<MediaItem[]> {
+    try {
+      const event = await this.getEvent(eventId);
+      return event?.noticeBoard.mediaItems || this.generateDemoMediaItems();
+    } catch (error) {
+      return this.generateDemoMediaItems();
+    }
+  }
+
+  /**
+   * Generate demo media items
+   * NOTE: Returns empty array - only show real media from official sources
+   */
+  private generateDemoMediaItems(): MediaItem[] {
+    // No demo media - only show real data from official sources
+    return [];
   }
 
   /**
@@ -474,122 +477,20 @@ export class NoticeBoardService {
 
   /**
    * Generate demo documents
+   * NOTE: Returns empty array - only show real documents from racingrulesofsailing.org
    */
   private generateDemoDocuments(): EventDocument[] {
-    return [
-      {
-        id: 'doc_1',
-        title: 'Notice of Race',
-        type: 'notice_of_race',
-        url: `${this.config.baseUrl}/documents/notice_of_race.pdf`,
-        fileType: 'pdf',
-        size: 2456789,
-        uploadedAt: new Date(Date.now() - 86400000 * 30).toISOString(),
-        lastModified: new Date(Date.now() - 86400000 * 2).toISOString(),
-        downloadCount: 156,
-        isRequired: true,
-        language: 'English',
-        description: 'Official Notice of Race for Dragon Worlds Hong Kong 2027',
-        category: 'Official Documents'
-      },
-      {
-        id: 'doc_2',
-        title: 'Sailing Instructions',
-        type: 'sailing_instructions',
-        url: `${this.config.baseUrl}/documents/sailing_instructions.pdf`,
-        fileType: 'pdf',
-        size: 1876543,
-        uploadedAt: new Date(Date.now() - 86400000 * 7).toISOString(),
-        isRequired: true,
-        language: 'English',
-        description: 'Complete sailing instructions and race procedures',
-        category: 'Official Documents'
-      },
-      {
-        id: 'doc_3',
-        title: 'Daily Schedule',
-        type: 'schedule',
-        url: `${this.config.baseUrl}/documents/daily_schedule.pdf`,
-        fileType: 'pdf',
-        size: 456789,
-        uploadedAt: new Date(Date.now() - 86400000 * 1).toISOString(),
-        isRequired: false,
-        language: 'English',
-        description: 'Updated daily racing schedule',
-        category: 'Schedules'
-      },
-      {
-        id: 'doc_4',
-        title: 'Dragon Class Rules',
-        type: 'classification',
-        url: `${this.config.baseUrl}/documents/dragon_class_rules.pdf`,
-        fileType: 'pdf',
-        size: 3456789,
-        uploadedAt: new Date(Date.now() - 86400000 * 45).toISOString(),
-        isRequired: true,
-        language: 'English',
-        description: 'International Dragon Class Rules and Measurement Requirements',
-        category: 'Class Rules'
-      },
-      {
-        id: 'doc_5',
-        title: 'Entry Form',
-        type: 'authorization',
-        url: `${this.config.baseUrl}/documents/entry_form.pdf`,
-        fileType: 'pdf',
-        size: 234567,
-        uploadedAt: new Date(Date.now() - 86400000 * 60).toISOString(),
-        isRequired: true,
-        language: 'English',
-        description: 'Official entry form and waiver',
-        category: 'Registration'
-      }
-    ];
+    // No demo documents - only show real data from racingrulesofsailing.org
+    return [];
   }
 
   /**
    * Generate demo notifications
+   * NOTE: Returns empty array - only show real notifications from racingrulesofsailing.org
    */
   private generateDemoNotifications(): OfficialNotification[] {
-    return [
-      {
-        id: 'notif_1',
-        title: 'Race Committee Meeting Moved',
-        content: 'The daily race committee meeting has been moved from 0800 to 0830 due to tide conditions. All competitors are welcome to attend.',
-        type: 'announcement',
-        priority: 'medium',
-        publishedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-        author: 'Principal Race Officer',
-        authorRole: 'race_committee',
-        tags: ['schedule', 'meeting'],
-        isRead: false
-      },
-      {
-        id: 'notif_2',
-        title: 'Strong Wind Warning',
-        content: 'Winds are forecast to increase to 25-30 knots this afternoon. Racing may be postponed if conditions exceed safety limits.',
-        type: 'weather',
-        priority: 'high',
-        publishedAt: new Date(Date.now() - 3600000 * 6).toISOString(),
-        author: 'Race Committee',
-        authorRole: 'race_committee',
-        tags: ['weather', 'safety'],
-        isRead: false,
-        affectedRaces: [3, 4]
-      },
-      {
-        id: 'notif_3',
-        title: 'Protest Time Limit Extended',
-        content: 'Due to the late finish of Race 2, the protest time limit has been extended to 1930 hours.',
-        type: 'protest',
-        priority: 'medium',
-        publishedAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-        author: 'Protest Committee Chair',
-        authorRole: 'protest_committee',
-        tags: ['protest', 'time-limit'],
-        isRead: true
-      }
-    ];
+    // No demo notifications - only show real data from racingrulesofsailing.org
+    return [];
   }
 
   /**

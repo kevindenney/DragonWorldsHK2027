@@ -18,11 +18,9 @@ export class CCR2024NoticesService {
     try {
       // Check cache first
       if (this.isCacheValid()) {
-        console.log('📱 Returning cached CCR notices');
         return this.cache.get('notices') || [];
       }
 
-      console.log('🌐 Fetching notices from China Coast Race Week...');
       
       // In a real app, we would use a web scraping service or API
       // For now, we'll return structured demo data that matches what would be scraped
@@ -32,11 +30,9 @@ export class CCR2024NoticesService {
       this.cache.set('notices', notices);
       this.lastFetchTime = Date.now();
       
-      console.log(`✅ Successfully fetched ${notices.length} notices from CCR`);
       return notices;
       
     } catch (error) {
-      console.error('❌ Error fetching CCR notices:', error);
       // Return cached data if available
       return this.cache.get('notices') || [];
     }
@@ -235,17 +231,14 @@ export class CCR2024NoticesService {
    */
   async submitActionForm(actionId: string, formData: Record<string, any>): Promise<boolean> {
     try {
-      console.log(`📝 Submitting ${actionId} form:`, formData);
       
       // In a real implementation, this would submit to the CCR website
       // For now, we'll simulate the submission
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      console.log(`✅ Successfully submitted ${actionId} form`);
       return true;
       
     } catch (error) {
-      console.error(`❌ Error submitting ${actionId} form:`, error);
       return false;
     }
   }

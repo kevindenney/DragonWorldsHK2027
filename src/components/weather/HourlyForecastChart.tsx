@@ -196,11 +196,6 @@ export const HourlyForecastChart: React.FC<HourlyForecastChartProps> = ({
   loading = false
 }) => {
   const [selectedHourIndex, setSelectedHourIndex] = useState<number | null>(null);
-  console.log('📊 HourlyForecastChart render', {
-    points: data?.length || 0,
-    selectedMetric,
-    loading,
-  });
 
   // Process data for display (denser: show every 2 hours)
   const displayData = useMemo(() => {

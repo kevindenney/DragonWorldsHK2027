@@ -1,147 +1,136 @@
 import { Sponsor, SponsorshipProgram } from '../types/sponsor';
 
 export const dragonWorldsSponsors: Sponsor[] = [
-  // TITLE SPONSOR
+  // === ORGANISER ===
   {
-    id: 'hsbc',
-    name: 'HSBC',
-    tier: 'lead',
-    description: 'The World\'s Local Bank - Proud Title Sponsor of Dragon Worlds HK 2027',
-    website: 'https://www.hsbc.com.hk',
-    primaryColor: '#DB0011',
+    id: 'sfhk',
+    name: 'Sailing Federation of Hong Kong, China',
+    tier: 'organiser',
+    description: 'Official organiser of the 2027 Hong Kong Dragon World Championship - Promoting sailing excellence in Hong Kong and China',
+    website: 'https://www.sailing.org.hk',
+    primaryColor: '#E31B23',
     isTitle: true,
     contact: {
-      phone: '+852 2233 3000',
-      email: 'premier@hsbc.com.hk',
-      address: 'HSBC Main Building, 1 Queen\'s Road Central, Hong Kong'
+      phone: '+852 2504 8159',
+      email: 'info@sailing.org.hk',
+      address: 'Room 1001, Olympic House, 1 Stadium Path, So Kon Po, Causeway Bay'
     },
     business: {
-      sector: 'Financial Services',
-      established: 1865,
-      headquarters: 'London, UK (Founded in Hong Kong)',
-      description: 'HSBC is one of the world\'s largest banking and financial services organisations. Founded in Hong Kong in 1865, HSBC has been an integral part of the city\'s development as a global financial center.'
+      sector: 'National Sailing Federation',
+      established: 1947,
+      headquarters: 'Hong Kong',
+      description: 'The Sailing Federation of Hong Kong, China is the national governing body for sailing in Hong Kong, responsible for developing and promoting the sport at all levels.'
     },
     locations: [
       {
-        name: 'HSBC Main Building',
-        address: '1 Queen\'s Road Central, Hong Kong',
-        phone: '+852 2822 1111',
-        website: 'https://www.hsbc.com.hk',
-        hours: {
-          'Monday': '09:00 AM - 5:00 PM',
-          'Tuesday': '09:00 AM - 5:00 PM',
-          'Wednesday': '09:00 AM - 5:00 PM',
-          'Thursday': '09:00 AM - 5:00 PM',
-          'Friday': '09:00 AM - 5:00 PM',
-          'Saturday': '09:00 AM - 1:00 PM',
-          'Sunday': 'Closed'
-        }
-      },
-      {
-        name: 'HSBC Premier Centre - Causeway Bay',
-        address: 'Times Square, 1 Matheson Street, Causeway Bay',
-        phone: '+852 2233 3322',
+        name: 'SFHK Office',
+        address: 'Room 1001, Olympic House, 1 Stadium Path, So Kon Po, Causeway Bay',
+        phone: '+852 2504 8159',
+        website: 'https://www.sailing.org.hk',
         hours: {
           'Monday': '09:00 AM - 6:00 PM',
           'Tuesday': '09:00 AM - 6:00 PM',
           'Wednesday': '09:00 AM - 6:00 PM',
           'Thursday': '09:00 AM - 6:00 PM',
           'Friday': '09:00 AM - 6:00 PM',
-          'Saturday': '09:00 AM - 1:00 PM',
+          'Saturday': 'Closed',
           'Sunday': 'Closed'
         }
-      },
+      }
+    ],
+    offers: [],
+    hongKongActivities: []
+  },
+
+  // === CO-ORGANISERS ===
+  {
+    id: 'rhkyc',
+    name: 'Royal Hong Kong Yacht Club',
+    tier: 'co-organiser',
+    description: 'Asia\'s premier yacht club and host venue for the 2027 Dragon World Championship',
+    website: 'https://www.rhkyc.org.hk',
+    primaryColor: '#1E3A5F',
+    contact: {
+      phone: '+852 2832 2817',
+      email: 'office@rhkyc.org.hk',
+      address: 'Kellett Island, Causeway Bay, Hong Kong'
+    },
+    business: {
+      sector: 'Yacht Club',
+      established: 1894,
+      headquarters: 'Hong Kong',
+      description: 'The Royal Hong Kong Yacht Club is one of the oldest and most prestigious yacht clubs in Asia, hosting major international sailing events.'
+    },
+    locations: [
       {
-        name: 'HSBC Regatta Information Desk',
-        address: 'Royal Hong Kong Yacht Club, Kellett Island, Causeway Bay',
-        phone: '+852 2233 3000',
+        name: 'RHKYC Kellett Island',
+        address: 'Kellett Island, Causeway Bay, Hong Kong',
+        phone: '+852 2832 2817',
+        website: 'https://www.rhkyc.org.hk',
         hours: {
-          'Monday': '08:00 AM - 6:00 PM',
-          'Tuesday': '08:00 AM - 6:00 PM',
-          'Wednesday': '08:00 AM - 6:00 PM',
-          'Thursday': '08:00 AM - 6:00 PM',
-          'Friday': '08:00 AM - 6:00 PM',
-          'Saturday': '08:00 AM - 4:00 PM',
-          'Sunday': '08:00 AM - 4:00 PM'
+          'Monday': '07:00 AM - 11:00 PM',
+          'Tuesday': '07:00 AM - 11:00 PM',
+          'Wednesday': '07:00 AM - 11:00 PM',
+          'Thursday': '07:00 AM - 11:00 PM',
+          'Friday': '07:00 AM - 11:00 PM',
+          'Saturday': '07:00 AM - 11:00 PM',
+          'Sunday': '07:00 AM - 11:00 PM'
         }
       }
     ],
-    offers: [
-      {
-        id: 'hsbc_premier_sailing',
-        title: 'Premier Sailing Account Package',
-        description: 'Exclusive banking package with zero account fees, free international transfers, and priority currency exchange for all Dragon Worlds participants',
-        type: 'service',
-        validUntil: '2027-12-31',
-        howToRedeem: 'Visit any HSBC Premier Centre with your Dragon Worlds participant credentials',
-        termsAndConditions: [
-          'Valid for Dragon Worlds participants and crew only',
-          'Free currency exchange up to HKD 100,000',
-          'No account maintenance fees during championship period',
-          'Complimentary travel insurance included'
-        ]
-      },
-      {
-        id: 'hsbc_global_transfers',
-        title: 'Free International Wire Transfers',
-        description: 'Unlimited complimentary wire transfers to over 40 countries during the championship period',
-        type: 'service',
-        validUntil: '2027-12-31',
-        howToRedeem: 'Use HSBC mobile app or visit any branch with participant credentials',
-        termsAndConditions: [
-          'Maximum transfer limit of USD 50,000 per transaction',
-          'Available to all registered participants',
-          'Beneficiary bank charges may apply'
-        ]
-      },
-      {
-        id: 'hsbc_lounge_access',
-        title: 'VIP Airport Lounge Access',
-        description: 'Complimentary access to HSBC Premier Lounges at Hong Kong International Airport',
-        type: 'experience',
-        validUntil: '2027-12-31',
-        howToRedeem: 'Present participant badge and boarding pass at lounge entrance',
-        termsAndConditions: [
-          'Valid for up to 4 guests per participant',
-          'Available 3 hours before flight departure',
-          'Food and beverages included'
-        ]
-      }
-    ],
-    hongKongActivities: [
-      {
-        id: 'hsbc_rooftop_reception',
-        title: 'HSBC Dragon Worlds Welcome Reception',
-        description: 'Exclusive welcome cocktail reception at the iconic HSBC Main Building rooftop with panoramic Victoria Harbour views',
-        type: 'social',
-        sponsorId: 'hsbc',
-        website: 'https://www.hsbc.com.hk/dragonworlds',
-        bookingRequired: true,
-        duration: '3 hours',
-        priceRange: 'free',
-        bestTime: 'Championship opening evening'
-      },
-      {
-        id: 'hsbc_finance_tour',
-        title: 'Hong Kong Financial District Walking Tour',
-        description: 'Guided tour exploring Hong Kong\'s evolution as a global financial hub, including HSBC\'s historic headquarters',
-        type: 'cultural',
-        sponsorId: 'hsbc',
-        bookingRequired: true,
-        duration: '2 hours',
-        priceRange: 'free',
-        bestTime: 'Weekday mornings'
-      }
-    ]
+    offers: [],
+    hongKongActivities: []
+  },
+  {
+    id: 'ida',
+    name: 'International Dragon Association',
+    tier: 'co-organiser',
+    description: 'The international governing body for Dragon class sailing worldwide',
+    website: 'https://internationaldragonsailing.net',
+    primaryColor: '#0066CC',
+    contact: {
+      email: 'secretary@intdragon.net'
+    },
+    business: {
+      sector: 'International Class Association',
+      established: 1929,
+      headquarters: 'International',
+      description: 'The International Dragon Association governs Dragon class sailing globally, maintaining class rules and promoting international competition.'
+    },
+    locations: [],
+    offers: [],
+    hongKongActivities: []
+  },
+  {
+    id: 'hkda',
+    name: 'Hong Kong Dragon Association',
+    tier: 'co-organiser',
+    description: 'Promoting Dragon class sailing in Hong Kong and the Asia Pacific region',
+    website: 'https://www.rhkyc.org.hk/sailing/classes/classes/dragon',
+    primaryColor: '#0066CC',
+    contact: {
+      email: 'info@hkdragon.org',
+      address: 'Royal Hong Kong Yacht Club, Kellett Island, Causeway Bay'
+    },
+    business: {
+      sector: 'Class Association',
+      established: 1970,
+      headquarters: 'Hong Kong',
+      description: 'The Hong Kong Dragon Association promotes Dragon class sailing in Hong Kong and serves as the local representative of the International Dragon Association.'
+    },
+    locations: [],
+    offers: [],
+    hongKongActivities: []
   },
 
-  // PREMIERE SPONSORS
+  // === PARTNERS ===
   {
     id: 'hopewell_hotel',
     name: 'Hopewell Hotel',
-    tier: 'premiere',
-    description: 'Your Home Away From Home - Official Accommodation Partner of Dragon Worlds HK 2027',
+    tier: 'partner',
+    description: 'Official Hospitality Partner for the 2027 Hong Kong Dragon World Championship - Experience exceptional hospitality in the heart of Hong Kong',
     website: 'https://www.hopewellhotel.com',
+    bookingUrl: 'https://www.secure-hotel-booking.com/d-edge/Hopewell-Hotel/J16P/en-US/RoomSelection?arrivalDate=2026-11-17&departureDate=2026-11-18&SelectedAdultCount=1&rateAction=highlight&rateId=700116&promoCode=MGDWC',
     primaryColor: '#1E3A5F',
     contact: {
       phone: '+852 2861 1111',
@@ -152,7 +141,7 @@ export const dragonWorldsSponsors: Sponsor[] = [
       sector: 'Luxury Hospitality',
       established: 1980,
       headquarters: 'Hong Kong',
-      description: 'Hopewell Hotel offers world-class accommodation in the heart of Hong Kong, with stunning harbour views and convenient access to the yacht club and racing venues.'
+      description: 'Hopewell Hotel is the official hospitality partner for the 2027 Hong Kong Dragon World Championship. This prestigious event marks a historic milestone as the first Dragon World Championship to be held in Asia, giving Hong Kong a remarkable chance to showcase its vibrant maritime tourism on an international stage.'
     },
     locations: [
       {
@@ -188,16 +177,17 @@ export const dragonWorldsSponsors: Sponsor[] = [
     offers: [
       {
         id: 'hopewell_competitor_rate',
-        title: 'Dragon Worlds Competitor Rate',
-        description: '35% discount on all room categories with complimentary breakfast and late checkout',
+        title: 'Dragon Worlds Championship Rate',
+        description: 'Exclusive championship rate for all Dragon Worlds participants with promo code MGDWC. Includes complimentary breakfast and late checkout.',
         type: 'discount',
         validUntil: '2027-12-31',
-        howToRedeem: 'Book directly using promo code DRAGON2027',
+        howToRedeem: 'Book directly at hopewellhotel.com using promo code MGDWC or use the direct booking link in the app',
         termsAndConditions: [
           'Valid for registered participants and their guests',
           'Subject to availability',
           'Complimentary upgrade subject to availability',
-          'Late checkout until 2:00 PM included'
+          'Late checkout until 2:00 PM included',
+          'Use promo code: MGDWC'
         ]
       },
       {
@@ -257,7 +247,7 @@ export const dragonWorldsSponsors: Sponsor[] = [
   {
     id: 'hktb',
     name: 'Hong Kong Tourism Board',
-    tier: 'premiere',
+    tier: 'partner',
     description: 'Discover Hong Kong - Official Tourism Partner of Dragon Worlds HK 2027',
     website: 'https://www.discoverhongkong.com',
     primaryColor: '#E31B23',
@@ -400,7 +390,7 @@ export const dragonWorldsSponsors: Sponsor[] = [
   {
     id: 'yanmar',
     name: 'Yanmar',
-    tier: 'premiere',
+    tier: 'partner',
     description: 'A Sustainable Future - Official Marine Engine Partner of Dragon Worlds HK 2027',
     website: 'https://www.yanmar.com',
     primaryColor: '#E60012',
@@ -515,9 +505,103 @@ export const dragonWorldsSponsors: Sponsor[] = [
   },
 
   {
+    id: 'central_oceans',
+    name: 'Central Oceans',
+    tier: 'partner',
+    description: 'Official Freight Partner for the 2027 Dragon World Championship - Specialists in yacht and sailboat shipping',
+    website: 'https://www.centraloceans.com',
+    primaryColor: '#0066CC',
+    contact: {
+      email: 'info@centraloceans.com',
+      website: 'https://www.centraloceans.com'
+    },
+    business: {
+      sector: 'Marine Freight & Logistics',
+      established: 2008,
+      headquarters: 'Hong Kong',
+      description: 'Central Oceans specializes in the market of oversized, complicated and project-related cargoes. Our dedicated team of international transport specialists offers innovative tailored solutions to guarantee safe delivery of your freight.'
+    },
+    locations: [],
+    offers: [
+      {
+        id: 'central_oceans_shipping',
+        title: 'Dragon Shipping Package',
+        description: 'Subsidized shipping and logistics for transporting your Dragon to and from Hong Kong',
+        type: 'service',
+        validUntil: '2027-12-31',
+        howToRedeem: 'Contact Central Oceans directly referencing Dragon World Championship 2027',
+        termsAndConditions: [
+          'RHKYC and sponsors subsidize shipping costs',
+          'Full container load (FCL) and custom crating available',
+          'Contact for personalized quote'
+        ]
+      }
+    ],
+    hongKongActivities: []
+  },
+  {
+    id: 'clearwater_bay',
+    name: 'Clearwater Bay Golf and Country Club',
+    tier: 'partner',
+    description: 'Official Marina Venue Partner with direct access to the Ninepins racing area',
+    website: 'https://www.cwbgcc.com',
+    primaryColor: '#006633',
+    contact: {
+      phone: '+852 2335 3885',
+      email: 'marina@cwbgcc.com',
+      address: '139 Tai Au Mun Road, Clearwater Bay, N.T.'
+    },
+    business: {
+      sector: 'Golf & Marina',
+      established: 1982,
+      headquarters: 'Hong Kong',
+      description: 'Hong Kong\'s most scenic marina with crystal clear waters. Championship venue providing direct access to Ninepins racing area with 300 wet berths and comprehensive marine services.'
+    },
+    locations: [
+      {
+        name: 'Clearwater Bay Marina',
+        address: '139 Tai Au Mun Road, Clearwater Bay, N.T.',
+        phone: '+852 2335 3885',
+        website: 'https://www.cwbgcc.com',
+        hours: {
+          'Monday': '06:00 AM - 7:00 PM',
+          'Tuesday': '06:00 AM - 7:00 PM',
+          'Wednesday': '06:00 AM - 7:00 PM',
+          'Thursday': '06:00 AM - 7:00 PM',
+          'Friday': '06:00 AM - 7:00 PM',
+          'Saturday': '06:00 AM - 7:00 PM',
+          'Sunday': '06:00 AM - 7:00 PM'
+        }
+      }
+    ],
+    offers: [],
+    hongKongActivities: []
+  },
+  {
+    id: 'sailors_for_the_sea',
+    name: 'Sailors for the Sea',
+    tier: 'partner',
+    description: 'Sustainability Partner - Promoting clean regattas and ocean conservation',
+    website: 'https://sailorsforthesea.org',
+    primaryColor: '#0077B6',
+    contact: {
+      email: 'info@sailorsforthesea.org',
+      website: 'https://sailorsforthesea.org'
+    },
+    business: {
+      sector: 'Environmental Non-Profit',
+      established: 2004,
+      headquarters: 'Newport, Rhode Island, USA',
+      description: 'Sailors for the Sea is the leading ocean conservation organization engaging the sailing and boating community in protecting the ocean. Their Clean Regattas program helps events reduce their environmental impact.'
+    },
+    locations: [],
+    offers: [],
+    hongKongActivities: []
+  },
+  {
     id: 'code_zero',
     name: 'Code Zero',
-    tier: 'premiere',
+    tier: 'supporting',
     description: 'Performance Sailing Apparel - Official Clothing Partner of Dragon Worlds HK 2027',
     website: 'https://www.codezero.com',
     primaryColor: '#000000',
@@ -660,9 +744,15 @@ export const getSponsorsByTier = (tier: string) => {
   return dragonWorldsSponsors.filter(sponsor => sponsor.tier === tier);
 };
 
-export const getLeadSponsors = () => getSponsorsByTier('lead');
-export const getPremiereSponsors = () => getSponsorsByTier('premiere');
-export const getMajorSponsors = () => getSponsorsByTier('major');
+// New tier structure matching official website
+export const getOrganiser = () => getSponsorsByTier('organiser');
+export const getCoOrganisers = () => getSponsorsByTier('co-organiser');
+export const getPartners = () => getSponsorsByTier('partner');
+
+// Legacy tier helpers (for backwards compatibility)
+export const getLeadSponsors = () => getSponsorsByTier('organiser');
+export const getPremiereSponsors = () => getSponsorsByTier('co-organiser');
+export const getMajorSponsors = () => getSponsorsByTier('partner');
 export const getSupportingSponsors = () => getSponsorsByTier('supporting');
 
 export const getAllHongKongActivities = () => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   Linking,
   Alert,
-  SafeAreaView
+  Animated
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useToolbarVisibility } from '../../contexts/TabBarVisibilityContext';
 import {
   Trophy,
   Award,
@@ -31,9 +33,9 @@ import * as Haptics from 'expo-haptics';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
 import {
   dragonWorldsSponsors,
-  getLeadSponsors,
-  getPremiereSponsors,
-  getMajorSponsors,
+  getOrganiser,
+  getCoOrganisers,
+  getPartners,
   getSupportingSponsors,
   getAllHongKongActivities,
   getActivitiesByType
@@ -68,14 +70,14 @@ const ActivityTypeIcon = ({ type }: { type: string }) => {
 const SponsorTierBadge = ({ tier }: { tier: string }) => {
   const getTierInfo = (tier: string) => {
     switch (tier) {
-      case 'lead':
-        return { label: 'TITLE SPONSOR', color: colors.championshipGold, icon: Trophy };
-      case 'premiere':
-        return { label: 'PREMIERE', color: colors.championshipSilver, icon: Award };
-      case 'major':
-        return { label: 'MAJOR', color: colors.championshipBronze, icon: Star };
+      case 'organiser':
+        return { label: 'ORGANISER', color: colors.championshipGold, icon: Trophy };
+      case 'co-organiser':
+        return { label: 'CO-ORGANISER', color: colors.championshipSilver, icon: Award };
+      case 'partner':
+        return { label: 'PARTNER', color: colors.primary, icon: Star };
       case 'supporting':
-        return { label: 'SUPPORTING', color: colors.primary, icon: Star };
+        return { label: 'SUPPORTING', color: colors.textMuted, icon: Star };
       default:
         return { label: tier.toUpperCase(), color: colors.textMuted, icon: Star };
     }
@@ -99,8 +101,8 @@ const SponsorCard = ({ sponsor, onPress }: { sponsor: Sponsor; onPress: () => Pr
     <TouchableOpacity
       style={[
         styles.sponsorCard,
-        sponsor.tier === 'lead' && styles.leadSponsorCard,
-        sponsor.tier === 'premiere' && styles.premiereSponsorCard
+        sponsor.tier === 'organiser' && styles.leadSponsorCard,
+        sponsor.tier === 'co-organiser' && styles.premiereSponsorCard
       ]}
       onPress={onPress}
       activeOpacity={0.7}
@@ -109,7 +111,7 @@ const SponsorCard = ({ sponsor, onPress }: { sponsor: Sponsor; onPress: () => Pr
         <View style={styles.sponsorTitleContainer}>
           <Text style={[
             styles.sponsorName,
-            sponsor.tier === 'lead' && styles.leadSponsorName
+            sponsor.tier === 'organiser' && styles.leadSponsorName
           ]}>
             {sponsor.name}
           </Text>
@@ -127,21 +129,6 @@ const SponsorCard = ({ sponsor, onPress }: { sponsor: Sponsor; onPress: () => Pr
             Est. {sponsor.business.established}
           </Text>
         )}
-      </View>
-
-      <View style={styles.sponsorActions}>
-        <View style={styles.actionCount}>
-          <Gift size={14} color={colors.primary} />
-          <Text style={styles.countText}>
-            {sponsor.offers.length} offer{sponsor.offers.length !== 1 ? 's' : ''}
-          </Text>
-        </View>
-        <View style={styles.actionCount}>
-          <MapPin size={14} color={colors.primary} />
-          <Text style={styles.countText}>
-            {sponsor.hongKongActivities.length} activit{sponsor.hongKongActivities.length !== 1 ? 'ies' : 'y'}
-          </Text>
-        </View>
       </View>
     </TouchableOpacity>
   );
@@ -208,64 +195,17 @@ const SponsorDetailModal = ({ sponsor, onClose }: { sponsor: Sponsor; onClose: (
         )}
       </View>
 
-      {/* Offers */}
-      {sponsor.offers.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Exclusive Offers</Text>
-          {sponsor.offers.map((offer) => (
-            <View key={offer.id} style={styles.offerCard}>
-              <View style={styles.offerHeader}>
-                <Text style={styles.offerTitle}>{offer.title}</Text>
-                <View style={[styles.offerTypeBadge, { backgroundColor: `${colors.success}15` }]}>
-                  <Text style={[styles.offerTypeText, { color: colors.success }]}>
-                    {offer.type.toUpperCase()}
-                  </Text>
-                </View>
-              </View>
-              <Text style={styles.offerDescription}>{offer.description}</Text>
-              <Text style={styles.offerRedemption}>
-                <Text style={styles.redeemLabel}>How to redeem: </Text>
-                {offer.howToRedeem}
-              </Text>
-            </View>
-          ))}
+      {/* Exclusive Offers & Activities - Coming Soon */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Exclusive Offers & Activities</Text>
+        <View style={styles.comingSoonCard}>
+          <Gift size={32} color={colors.textMuted} />
+          <Text style={styles.comingSoonTitle}>Coming Soon</Text>
+          <Text style={styles.comingSoonText}>
+            Exclusive offers and activities from this sponsor will be available closer to the event.
+          </Text>
         </View>
-      )}
-
-      {/* Hong Kong Activities */}
-      {sponsor.hongKongActivities.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Hong Kong Activities</Text>
-          {sponsor.hongKongActivities.map((activity) => (
-            <View key={activity.id} style={styles.activityCard}>
-              <View style={styles.activityHeader}>
-                <ActivityTypeIcon type={activity.type} />
-                <Text style={styles.activityTitle}>{activity.title}</Text>
-                {activity.priceRange && (
-                  <Text style={styles.priceRange}>{activity.priceRange}</Text>
-                )}
-              </View>
-              <Text style={styles.activityDescription}>{activity.description}</Text>
-              <View style={styles.activityMeta}>
-                {activity.duration && (
-                  <View style={styles.metaItem}>
-                    <Clock size={12} color={colors.textMuted} />
-                    <Text style={styles.metaText}>{activity.duration}</Text>
-                  </View>
-                )}
-                {activity.bookingRequired && (
-                  <View style={styles.metaItem}>
-                    <Calendar size={12} color={colors.warning} />
-                    <Text style={[styles.metaText, { color: colors.warning }]}>
-                      Booking Required
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
+      </View>
 
       {/* Locations */}
       {sponsor.locations && sponsor.locations.length > 0 && (
@@ -327,10 +267,18 @@ const ActivityCard = ({ activity }: { activity: HongKongActivity & { sponsorName
 export function SponsorsScreen() {
   const [selectedTab, setSelectedTab] = useState<TabType>('sponsors');
   const [selectedSponsor, setSelectedSponsor] = useState<Sponsor | null>(null);
+  const insets = useSafeAreaInsets();
 
-  const leadSponsors = getLeadSponsors();
-  const premiereSponsors = getPremiereSponsors();
-  const majorSponsors = getMajorSponsors();
+  // Toolbar auto-hide on scroll
+  const { toolbarTranslateY, createScrollHandler } = useToolbarVisibility();
+  const scrollHandler = useMemo(() => createScrollHandler(), [createScrollHandler]);
+
+  // Header height for content padding
+  const HEADER_HEIGHT = 56;
+
+  const organiser = getOrganiser();
+  const coOrganisers = getCoOrganisers();
+  const partners = getPartners();
   const supportingSponsors = getSupportingSponsors();
   const allActivities = getAllHongKongActivities();
 
@@ -351,8 +299,8 @@ export function SponsorsScreen() {
 
   if (selectedSponsor) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.modalHeaderContainer}>
+      <View style={styles.container}>
+        <View style={[styles.modalHeaderContainer, { paddingTop: insets.top + 56 }]}>
           <TouchableOpacity
             onPress={handleCloseModal}
             style={styles.backButton}
@@ -366,42 +314,30 @@ export function SponsorsScreen() {
           </TouchableOpacity>
         </View>
         <SponsorDetailModal sponsor={selectedSponsor} onClose={handleCloseModal} />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Tab Navigation */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'sponsors' && styles.activeTab]}
-          onPress={() => handleTabPress('sponsors')}
-        >
-          <Trophy size={18} color={selectedTab === 'sponsors' ? colors.primary : colors.textMuted} />
-          <Text style={[styles.tabText, selectedTab === 'sponsors' && styles.activeTabText]}>
-            Sponsors
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'activities' && styles.activeTab]}
-          onPress={() => handleTabPress('activities')}
-        >
-          <MapPin size={18} color={selectedTab === 'activities' ? colors.primary : colors.textMuted} />
-          <Text style={[styles.tabText, selectedTab === 'activities' && styles.activeTabText]}>
-            Activities
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
+      {/* ScrollView - scrolls behind the tab navigation */}
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={{ paddingTop: insets.top + HEADER_HEIGHT + 8 }}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={scrollHandler.onScroll}
+        onScrollBeginDrag={scrollHandler.onScrollBeginDrag}
+        onScrollEndDrag={scrollHandler.onScrollEndDrag}
+        onMomentumScrollEnd={scrollHandler.onMomentumScrollEnd}
+      >
         {selectedTab === 'sponsors' && (
           <>
-            {/* Lead Sponsors */}
-            {leadSponsors.length > 0 && (
+            {/* Organiser */}
+            {organiser.length > 0 && (
               <View style={styles.tierSection}>
-                <Text style={styles.tierTitle}>Title Sponsor</Text>
-                {leadSponsors.map((sponsor) => (
+                <Text style={styles.tierTitle}>Organiser</Text>
+                {organiser.map((sponsor) => (
                   <SponsorCard
                     key={sponsor.id}
                     sponsor={sponsor}
@@ -411,11 +347,11 @@ export function SponsorsScreen() {
               </View>
             )}
 
-            {/* Premiere Sponsors */}
-            {premiereSponsors.length > 0 && (
+            {/* Co-Organisers */}
+            {coOrganisers.length > 0 && (
               <View style={styles.tierSection}>
-                <Text style={styles.tierTitle}>Premiere Sponsors</Text>
-                {premiereSponsors.map((sponsor) => (
+                <Text style={styles.tierTitle}>Co-Organisers</Text>
+                {coOrganisers.map((sponsor) => (
                   <SponsorCard
                     key={sponsor.id}
                     sponsor={sponsor}
@@ -425,11 +361,11 @@ export function SponsorsScreen() {
               </View>
             )}
 
-            {/* Major Sponsors */}
-            {majorSponsors.length > 0 && (
+            {/* Partners */}
+            {partners.length > 0 && (
               <View style={styles.tierSection}>
-                <Text style={styles.tierTitle}>Major Sponsors</Text>
-                {majorSponsors.map((sponsor) => (
+                <Text style={styles.tierTitle}>Partners</Text>
+                {partners.map((sponsor) => (
                   <SponsorCard
                     key={sponsor.id}
                     sponsor={sponsor}
@@ -442,7 +378,7 @@ export function SponsorsScreen() {
             {/* Supporting Sponsors */}
             {supportingSponsors.length > 0 && (
               <View style={styles.tierSection}>
-                <Text style={styles.tierTitle}>Supporting Sponsors</Text>
+                <Text style={styles.tierTitle}>Supporting</Text>
                 {supportingSponsors.map((sponsor) => (
                   <SponsorCard
                     key={sponsor.id}
@@ -461,13 +397,48 @@ export function SponsorsScreen() {
             <Text style={styles.sectionSubtitle}>
               Exclusive activities and experiences from our sponsors
             </Text>
-            {allActivities.map((activity) => (
-              <ActivityCard key={activity.id} activity={activity} />
-            ))}
+            <View style={styles.comingSoonCard}>
+              <MapPin size={48} color={colors.textMuted} />
+              <Text style={styles.comingSoonTitle}>Coming Soon</Text>
+              <Text style={styles.comingSoonText}>
+                Exclusive activities and experiences from our sponsors will be available closer to the event.
+              </Text>
+            </View>
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+
+      {/* Floating Tab Navigation - positioned absolute, hides on scroll */}
+      <Animated.View
+        style={[
+          styles.tabContainer,
+          {
+            paddingTop: insets.top,
+            paddingLeft: 56, // Make room for FloatingBackButton from MoreScreen
+            transform: [{ translateY: toolbarTranslateY }],
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={[styles.tab, selectedTab === 'sponsors' && styles.activeTab]}
+          onPress={() => handleTabPress('sponsors')}
+        >
+          <Trophy size={18} color={selectedTab === 'sponsors' ? colors.primary : colors.textMuted} />
+          <Text style={[styles.tabText, selectedTab === 'sponsors' && styles.activeTabText]}>
+            Sponsors
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, selectedTab === 'activities' && styles.activeTab]}
+          onPress={() => handleTabPress('activities')}
+        >
+          <MapPin size={18} color={selectedTab === 'activities' ? colors.primary : colors.textMuted} />
+          <Text style={[styles.tabText, selectedTab === 'activities' && styles.activeTabText]}>
+            Activities
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -477,11 +448,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   tabContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
-    paddingHorizontal: spacing.lg,
+    paddingRight: spacing.lg,
+    zIndex: 10,
   },
   tab: {
     flex: 1,
@@ -830,5 +806,26 @@ const styles = StyleSheet.create({
   activityListMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  comingSoonCard: {
+    backgroundColor: colors.backgroundSecondary,
+    borderRadius: borderRadius.lg,
+    padding: spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.md,
+  },
+  comingSoonTitle: {
+    ...typography.headlineSmall,
+    color: colors.textSecondary,
+    fontWeight: '600',
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  comingSoonText: {
+    ...typography.bodyMedium,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

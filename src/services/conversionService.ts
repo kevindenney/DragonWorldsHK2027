@@ -75,9 +75,7 @@ export class ConversionService {
   async initialize(): Promise<void> {
     try {
       await this.loadConversionData();
-      console.log('Conversion service initialized');
     } catch (error) {
-      console.error('Failed to initialize conversion service:', error);
     }
   }
 
@@ -123,7 +121,6 @@ export class ConversionService {
     await notificationService.monitorSubscriptionStatus();
     
     // Track trial start for analytics
-    console.log(`Trial started from: ${event.context.source}`);
   }
 
   private async onFeatureBlocked(event: ConversionEvent): Promise<void> {
@@ -140,7 +137,6 @@ export class ConversionService {
     
     // Don't oversaturate with prompts
     if (recentPrompts.length >= 3) {
-      console.log('Upgrade prompt limit reached for today');
       return;
     }
   }
@@ -273,7 +269,6 @@ export class ConversionService {
     });
 
     // In a real implementation, this would show the paywall UI
-    console.log(`Showing paywall: ${paywall.title}`);
   }
 
   // Conversion optimization
@@ -441,7 +436,6 @@ export class ConversionService {
         this.conversionEvents = JSON.parse(stored);
       }
     } catch (error) {
-      console.warn('Failed to load conversion data:', error);
     }
   }
 
@@ -452,7 +446,6 @@ export class ConversionService {
         JSON.stringify(this.conversionEvents.slice(0, this.maxEventHistory))
       );
     } catch (error) {
-      console.warn('Failed to save conversion data:', error);
     }
   }
 

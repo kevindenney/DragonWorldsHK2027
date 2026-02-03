@@ -56,7 +56,6 @@ export function PodcastSection({ style }: PodcastSectionProps) {
         }
       }
     } catch (error) {
-      console.error('Error opening Spotify:', error);
       Alert.alert(
         'Error',
         'Failed to open the podcast. Please try again later.',

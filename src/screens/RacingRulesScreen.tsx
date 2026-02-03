@@ -48,7 +48,6 @@ export function RacingRulesScreen({ navigation }: RacingRulesScreenProps) {
         await Linking.openURL(racingRulesUrl);
       }
     } catch (error) {
-      console.error('Failed to open URL:', error);
     }
   };
 

@@ -192,10 +192,8 @@ export const NoticeCard: React.FC<NoticeCardProps> = ({
       if (supported) {
         await Linking.openURL(url);
       } else {
-        console.log('Cannot open URL:', url);
       }
     } catch (error) {
-      console.error('Error opening URL:', error);
     }
   };
 

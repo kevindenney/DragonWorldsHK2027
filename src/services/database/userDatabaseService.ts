@@ -68,7 +68,6 @@ export class UserDatabaseService {
 
       return createdUser;
     } catch (error) {
-      console.error('Failed to create user profile:', error);
       throw new FirestoreServiceError(
         'user_creation_failed',
         'Failed to create user profile',
@@ -519,7 +518,6 @@ export class UserDatabaseService {
       // Note: Sessions, activities, and notifications might be kept for audit purposes
       // or deleted based on data retention policies
     } catch (error) {
-      console.error('Failed to cleanup user data:', error);
       // Don't throw error as main user deletion succeeded
     }
   }

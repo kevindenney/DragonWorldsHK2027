@@ -5,11 +5,9 @@ import type { Activity } from '../data/scheduleData';
 
 // Enhanced logging for debugging calendar issues
 const logCalendarDebug = (message: string, data?: any) => {
-  console.log(`[CalendarDebug] ${message}`, data ? JSON.stringify(data, null, 2) : '');
 };
 
 const logCalendarError = (message: string, error?: any) => {
-  console.error(`[CalendarError] ${message}`, error);
 };
 
 // Test expo-calendar module availability
@@ -116,7 +114,6 @@ export const getDefaultCalendarId = async (): Promise<string | null> => {
 
     return defaultCalendar?.id || null;
   } catch (error) {
-    console.error('Error getting default calendar:', error);
     return null;
   }
 };

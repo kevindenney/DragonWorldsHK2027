@@ -151,9 +151,7 @@ export class AnalyticsService {
     try {
       await this.loadAnalyticsData();
       this.initializeSession();
-      console.log('Analytics service initialized');
     } catch (error) {
-      console.error('Failed to initialize analytics service:', error);
     }
   }
 
@@ -210,7 +208,6 @@ export class AnalyticsService {
       this.updateSponsorMetrics(event, properties);
 
     } catch (error) {
-      console.warn('Failed to track analytics event:', error);
     }
   }
 
@@ -856,7 +853,6 @@ export class AnalyticsService {
         }
       }
     } catch (error) {
-      console.warn('Failed to load analytics data:', error);
     }
   }
 
@@ -868,7 +864,6 @@ export class AnalyticsService {
       
       await AsyncStorage.setItem('analytics_data', JSON.stringify(data));
     } catch (error) {
-      console.warn('Failed to save analytics data:', error);
     }
   }
 

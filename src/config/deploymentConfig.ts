@@ -320,21 +320,10 @@ export const validateConfiguration = (): { isValid: boolean; errors: string[] } 
 
 // Debug information (only in development)
 if (isDevelopment()) {
-  console.log('🚀 Dragon Worlds Deployment Configuration:');
-  console.log('📱 Environment:', deploymentConfig.environment);
-  console.log('🔧 Build Type:', deploymentConfig.buildType);
-  console.log('📦 Version:', getVersionString());
-  console.log('🌐 API URL:', deploymentConfig.apiUrl);
-  console.log('🌤️ Weather API URL:', deploymentConfig.weatherApiUrl);
-  console.log('📊 Analytics Enabled:', deploymentConfig.analyticsEnabled);
-  console.log('🐛 Sentry Enabled:', deploymentConfig.sentryEnabled);
-  console.log('🔗 Scheme:', deploymentConfig.scheme);
   
   const validation = validateConfiguration();
   if (!validation.isValid) {
-    console.warn('⚠️ Configuration Issues:', validation.errors);
   } else {
-    console.log('✅ Configuration is valid');
   }
 }
 

@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "272884873953",
+    "project_id": "dragonworldshk2027",
+    "storage_bucket": "dragonworldshk2027.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:272884873953:android:3e146036e303b55af7d5a0",
+        "android_client_info": {
+          "package_name": "com.dragonworlds.hk2027"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "272884873953-q30l2ccld3hpr4mrhetoohm06co2ung8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAkcVmDD1fsWic6o0TB8LvL-8Iq_XD9F_s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "272884873953-q30l2ccld3hpr4mrhetoohm06co2ung8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "272884873953-q9bnuce7mrdm47iiqo28uhous2mgicfa.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.regattaflow.dragonworldshk2027"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

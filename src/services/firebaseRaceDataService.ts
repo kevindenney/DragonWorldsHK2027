@@ -129,14 +129,12 @@ class FirebaseRaceDataService {
 
     try {
       if (!firestore) {
-        console.error('[RaceDataService] Firestore not initialized. isFirestoreReady=', isFirestoreReady());
         throw new Error('Firestore not initialized');
       }
 
       const eventDoc = await getDoc(doc(firestore, 'events', eventId));
       
       if (!eventDoc.exists()) {
-        console.log(`Event ${eventId} not found in Firestore`);
         return this.getOfflineData(cacheKey);
       }
 
@@ -149,7 +147,6 @@ class FirebaseRaceDataService {
       
       return eventData;
     } catch (error) {
-      console.error('Error fetching event:', error);
       return this.getOfflineData(cacheKey);
     }
   }
@@ -166,7 +163,6 @@ class FirebaseRaceDataService {
 
     try {
       if (!firestore) {
-        console.error('[RaceDataService] Firestore not initialized in getRaceResults. isFirestoreReady=', isFirestoreReady());
         throw new Error('Firestore not initialized');
       }
 
@@ -190,7 +186,6 @@ class FirebaseRaceDataService {
       
       return races;
     } catch (error) {
-      console.error('Error fetching race results:', error);
       return this.getOfflineData(cacheKey) || [];
     }
   }
@@ -207,7 +202,6 @@ class FirebaseRaceDataService {
 
     try {
       if (!firestore) {
-        console.error('[RaceDataService] Firestore not initialized in getStandings. isFirestoreReady=', isFirestoreReady());
         throw new Error('Firestore not initialized');
       }
 
@@ -227,7 +221,6 @@ class FirebaseRaceDataService {
       
       return standings;
     } catch (error) {
-      console.error('Error fetching standings:', error);
       return this.getOfflineData(cacheKey) || [];
     }
   }
@@ -244,7 +237,6 @@ class FirebaseRaceDataService {
 
     try {
       if (!firestore) {
-        console.error('[RaceDataService] Firestore not initialized in getCompetitors. isFirestoreReady=', isFirestoreReady());
         throw new Error('Firestore not initialized');
       }
 
@@ -261,7 +253,6 @@ class FirebaseRaceDataService {
       
       return competitors;
     } catch (error) {
-      console.error('Error fetching competitors:', error);
       return this.getOfflineData(cacheKey) || [];
     }
   }
@@ -278,7 +269,6 @@ class FirebaseRaceDataService {
 
     try {
       if (!firestore) {
-        console.error('[RaceDataService] Firestore not initialized in getNotices. isFirestoreReady=', isFirestoreReady());
         throw new Error('Firestore not initialized');
       }
 
@@ -311,7 +301,6 @@ class FirebaseRaceDataService {
       
       return notices;
     } catch (error) {
-      console.error('Error fetching notices:', error);
       return this.getOfflineData(cacheKey) || [];
     }
   }
@@ -344,7 +333,6 @@ class FirebaseRaceDataService {
       
       return documents;
     } catch (error) {
-      console.error('Error fetching documents:', error);
       return this.getOfflineData(cacheKey) || [];
     }
   }
@@ -362,7 +350,6 @@ class FirebaseRaceDataService {
     this.unsubscribe(subscriptionKey);
 
     if (!firestore) {
-      console.error('Firestore not initialized');
       return () => {};
     }
 
@@ -382,7 +369,6 @@ class FirebaseRaceDataService {
       const cacheKey = `standings_${eventId}_all`;
       this.setCache(cacheKey, standings);
     }, (error) => {
-      console.error('Error in standings subscription:', error);
     });
 
     this.subscriptions.set(subscriptionKey, unsubscribe);
@@ -402,7 +388,6 @@ class FirebaseRaceDataService {
     this.unsubscribe(subscriptionKey);
 
     if (!firestore) {
-      console.error('Firestore not initialized');
       return () => {};
     }
 
@@ -424,7 +409,6 @@ class FirebaseRaceDataService {
       const cacheKey = `notices_${eventId}_all`;
       this.setCache(cacheKey, notices);
     }, (error) => {
-      console.error('Error in notices subscription:', error);
     });
 
     this.subscriptions.set(subscriptionKey, unsubscribe);
@@ -470,14 +454,12 @@ class FirebaseRaceDataService {
       }
 
       const result = await response.json();
-      console.log('Data sync result:', result);
       
       // Clear cache to force refresh
       this.clearCache();
       
       return true;
     } catch (error) {
-      console.error('Error triggering data sync:', error);
       return false;
     }
   }
@@ -520,7 +502,6 @@ class FirebaseRaceDataService {
       };
       await AsyncStorage.setItem(this.OFFLINE_CACHE_KEY, JSON.stringify(offlineCache));
     } catch (error) {
-      console.error('Error saving offline data:', error);
     }
   }
 
@@ -533,11 +514,9 @@ class FirebaseRaceDataService {
       const cached = offlineCache[key];
       
       if (cached && cached.data) {
-        console.log(`Using offline data for ${key}`);
         return cached.data;
       }
     } catch (error) {
-      console.error('Error getting offline data:', error);
     }
     
     return null;
@@ -551,7 +530,6 @@ class FirebaseRaceDataService {
       const cached = await AsyncStorage.getItem(this.OFFLINE_CACHE_KEY);
       return cached ? JSON.parse(cached) : {};
     } catch (error) {
-      console.error('Error getting offline cache:', error);
       return {};
     }
   }
@@ -563,7 +541,6 @@ class FirebaseRaceDataService {
     try {
       await AsyncStorage.removeItem(this.OFFLINE_CACHE_KEY);
     } catch (error) {
-      console.error('Error clearing offline cache:', error);
     }
   }
 
@@ -812,7 +789,6 @@ class FirebaseRaceDataService {
     standings: Standing[];
     competitors: Competitor[];
   }> {
-    console.log('🔥 Fetching CCR 2024 results from Firestore...');
     
     try {
       if (!isFirestoreReady()) {
@@ -827,10 +803,6 @@ class FirebaseRaceDataService {
       }
       
       const data = docSnap.data();
-      console.log('🔥 Found CCR 2024 Firestore data:', {
-        divisions: Object.keys(data.divisions || {}),
-        eventData: data.eventData?.name
-      });
       
       // Convert Firestore format to app format
       const allBoats: any[] = [];
@@ -908,7 +880,6 @@ class FirebaseRaceDataService {
       };
       
     } catch (error) {
-      console.error('❌ Failed to fetch CCR 2024 from Firestore:', error);
       throw error;
     }
   }
@@ -921,7 +892,6 @@ class FirebaseRaceDataService {
     standings: Standing[];
     competitors: Competitor[];
   }> {
-    console.log('🏁 Scraping China Coast Regatta 2024 results...');
     
     try {
       // Dynamically import the scraping service to avoid circular dependencies
@@ -933,7 +903,6 @@ class FirebaseRaceDataService {
       // Convert to our display format
       const displayFormat = ccr2024ScrapingService.convertToDisplayFormat(ccrData);
       
-      console.log(`✅ CCR 2024 scraping complete! Got ${displayFormat.standings.length} competitors`);
       
       return {
         eventData: {
@@ -1004,10 +973,8 @@ class FirebaseRaceDataService {
       };
       
     } catch (error) {
-      console.error('❌ CCR 2024 scraping failed:', error);
       
       // Fall back to Dragon Worlds mock data if scraping fails
-      console.log('🔄 Falling back to Dragon Worlds mock data...');
       return this.generateMockRaceData();
     }
   }
@@ -1016,12 +983,10 @@ class FirebaseRaceDataService {
    * Enhanced data sync that tries CCR 2024 scraping first
    */
   async triggerDataSync(eventId: string): Promise<boolean> {
-    console.log(`🔄 Starting enhanced data sync for ${eventId}...`);
     
     try {
       // Try scraping CCR 2024 data first
       if (eventId.includes('dragon-worlds') || eventId.includes('ccr')) {
-        console.log('🏁 Attempting CCR 2024 scraping...');
         const scrapedData = await this.scrapeCCR2024Results();
         
         // Cache the scraped data
@@ -1034,12 +999,10 @@ class FirebaseRaceDataService {
         await this.saveOfflineData(`standings_${eventId}`, scrapedData.standings);
         await this.saveOfflineData(`competitors_${eventId}`, scrapedData.competitors);
         
-        console.log('✅ CCR 2024 data sync successful');
         return true;
       }
       
       // For other events, try Firestore
-      console.log('📊 Attempting Firestore sync...');
       if (!firestore) {
         throw new Error('Firestore not initialized');
       }
@@ -1047,15 +1010,12 @@ class FirebaseRaceDataService {
       // Check if event exists in Firestore
       const eventDoc = await getDoc(doc(firestore, 'events', eventId));
       if (eventDoc.exists()) {
-        console.log('✅ Firestore sync successful');
         return true;
       }
       
-      console.log('⚠️ Event not found in Firestore');
       return false;
       
     } catch (error) {
-      console.error('❌ Data sync failed:', error);
       return false;
     }
   }

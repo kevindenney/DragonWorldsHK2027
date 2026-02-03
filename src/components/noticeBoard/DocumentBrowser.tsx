@@ -58,7 +58,6 @@ export const DocumentBrowser: React.FC<DocumentBrowserProps> = ({
       const docs = await documentProcessingService.getEventDocuments(eventId);
       setDocuments(docs);
     } catch (error) {
-      console.error('Error loading documents:', error);
       Alert.alert('Error', 'Failed to load documents');
     } finally {
       setLoading(false);
@@ -70,7 +69,6 @@ export const DocumentBrowser: React.FC<DocumentBrowserProps> = ({
       const documentStats = await documentProcessingService.getDocumentStatistics(eventId);
       setStats(documentStats);
     } catch (error) {
-      console.error('Error loading statistics:', error);
     }
   };
 
@@ -92,7 +90,6 @@ export const DocumentBrowser: React.FC<DocumentBrowserProps> = ({
       );
       setSearchResults(results);
     } catch (error) {
-      console.error('Error searching documents:', error);
       Alert.alert('Error', 'Failed to search documents');
     } finally {
       setLoading(false);
@@ -116,7 +113,6 @@ export const DocumentBrowser: React.FC<DocumentBrowserProps> = ({
         Alert.alert('Error', 'Cannot open this document');
       }
     } catch (error) {
-      console.error('Error opening document:', error);
       Alert.alert('Error', 'Failed to open document');
     }
   };
@@ -129,7 +125,6 @@ export const DocumentBrowser: React.FC<DocumentBrowserProps> = ({
         url: document.url,
       });
     } catch (error) {
-      console.error('Error sharing document:', error);
     }
   };
 

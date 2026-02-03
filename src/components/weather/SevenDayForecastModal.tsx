@@ -101,10 +101,8 @@ const openURL = async (url: string) => {
     if (supported) {
       await Linking.openURL(url);
     } else {
-      console.warn('Cannot open URL:', url);
     }
   } catch (error) {
-    console.error('Error opening URL:', error);
   }
 };
 
@@ -221,17 +219,9 @@ export const SevenDayForecastModal: React.FC<SevenDayForecastModalProps> = ({
 
   const getStationCurrentData = () => {
     if (!station) {
-      console.log(`📊 [MODAL DEBUG] No station provided`);
       return null;
     }
 
-    console.log(`📊 [MODAL DEBUG] Processing station data:`, {
-      stationId: station.id,
-      stationName: station.name,
-      stationType: station.type,
-      hasData: !!station.data,
-      rawData: station.data
-    });
 
     const data = station.data;
     switch (station.type) {
@@ -249,32 +239,6 @@ export const SevenDayForecastModal: React.FC<SevenDayForecastModalProps> = ({
       case 'wave':
         const waveData = data as WaveStation;
 
-        console.log(`📊 [MODAL DEBUG] Wave station data processing:`, {
-          waveHeight: {
-            raw: waveData.waveHeight,
-            hasValue: waveData.waveHeight !== undefined && waveData.waveHeight !== null,
-            fallbackUsed: !waveData.waveHeight,
-            displayValue: `${(waveData.waveHeight ?? 0).toFixed(1)}m`
-          },
-          wavePeriod: {
-            raw: waveData.wavePeriod,
-            hasValue: waveData.wavePeriod !== undefined && waveData.wavePeriod !== null,
-            fallbackUsed: !waveData.wavePeriod,
-            displayValue: `${(waveData.wavePeriod ?? 0).toFixed(0)}s`
-          },
-          waveDirection: {
-            raw: waveData.waveDirection,
-            hasValue: waveData.waveDirection !== undefined && waveData.waveDirection !== null,
-            displayValue: formatWindDirection(waveData.waveDirection ?? 0)
-          },
-          additionalData: {
-            swellHeight: waveData.swellHeight,
-            swellPeriod: waveData.swellPeriod,
-            swellDirection: waveData.swellDirection,
-            lastUpdated: waveData.lastUpdated,
-            dataQuality: waveData.dataQuality
-          }
-        });
 
         // Apply fallback logic for zero or invalid values
         const finalWaveHeight = (waveData.waveHeight && waveData.waveHeight > 0) ?
@@ -284,15 +248,6 @@ export const SevenDayForecastModal: React.FC<SevenDayForecastModalProps> = ({
         const finalWaveDirection = (waveData.waveDirection && waveData.waveDirection > 0) ?
           waveData.waveDirection : (Math.random() * 360);
 
-        console.log(`🌊 [MODAL FALLBACK] Applied fallback logic:`, {
-          original: { height: waveData.waveHeight, period: waveData.wavePeriod, direction: waveData.waveDirection },
-          final: { height: finalWaveHeight, period: finalWavePeriod, direction: finalWaveDirection },
-          fallbackUsed: {
-            height: !waveData.waveHeight || waveData.waveHeight <= 0,
-            period: !waveData.wavePeriod || waveData.wavePeriod <= 0,
-            direction: !waveData.waveDirection || waveData.waveDirection <= 0
-          }
-        });
 
         return {
           primary: `${finalWaveHeight.toFixed(1)}m`,
@@ -305,48 +260,25 @@ export const SevenDayForecastModal: React.FC<SevenDayForecastModalProps> = ({
       case 'tide':
         const tideData = data as TideStation;
 
-        console.log(`🔍 [MODAL DEBUG] === TIDE FORECAST MODAL CALCULATION DEBUG ===`);
-        console.log(`🔍 [MODAL DEBUG] Station Details:`, {
-          name: station.name,
-          id: station.id,
-          coordinate: station.coordinate,
-          type: station.type
-        });
-        console.log(`🔍 [MODAL DEBUG] Tide Data Object:`, tideData);
 
         // Get real-time tide height from unified service
         const now = new Date();
-        console.log(`🔍 [MODAL DEBUG] Current time: ${now.toISOString()}`);
 
         try {
-          console.log(`🔍 [MODAL DEBUG] Step 1: Attempting to get current tide height from unified service...`);
           const currentHeight = unifiedTideService.getCurrentTideHeight(station.coordinate, now);
-          console.log(`🔍 [MODAL DEBUG] ✅ Step 1 SUCCESS: Unified service returned ${currentHeight.toFixed(3)}m`);
 
           // Get trend by comparing with next hour
-          console.log(`🔍 [MODAL DEBUG] Step 2: Calculating trend by comparing with next hour...`);
           const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
           const nextHeight = unifiedTideService.getCurrentTideHeight(station.coordinate, nextHour);
           const heightDiff = nextHeight - currentHeight;
           const trend = heightDiff > 0.05 ? 'rising' : heightDiff < -0.05 ? 'falling' : 'stable';
-          console.log(`🔍 [MODAL DEBUG] ✅ Step 2 SUCCESS: Next hour ${nextHeight.toFixed(3)}m, diff ${heightDiff.toFixed(3)}m, trend: ${trend}`);
 
           // Verify consistency with map marker data
-          console.log(`🔍 [MODAL DEBUG] Step 3: Verifying consistency with map marker data...`);
           const syncData = unifiedTideService.getSynchronizedTideData(station.coordinate, now);
           const heightDifference = Math.abs(currentHeight - syncData.height);
-          console.log(`🔍 [MODAL DEBUG] ✅ Step 3 SUCCESS: Sync data height ${syncData.height.toFixed(3)}m, difference ${heightDifference.toFixed(3)}m`);
 
           // Compare with any static data that might be in tideData
-          console.log(`🔍 [MODAL DEBUG] Step 4: Comparing with static tideData...`);
-          console.log(`🔍 [MODAL DEBUG] - tideData.currentHeight: ${tideData.currentHeight}`);
-          console.log(`🔍 [MODAL DEBUG] - tideData.predictedHeight: ${tideData.predictedHeight}`);
-          console.log(`🔍 [MODAL DEBUG] - unified currentHeight: ${currentHeight.toFixed(3)}m`);
 
-          console.log(`🔍 [MODAL DEBUG] === FINAL MODAL RESULT ===`);
-          console.log(`🔍 [MODAL DEBUG] Primary display: ${currentHeight.toFixed(1)}m`);
-          console.log(`🔍 [MODAL DEBUG] Secondary display: ${trend}`);
-          console.log(`🔍 [MODAL DEBUG] Consistency check: ${heightDifference < 0.05 ? '✅ CONSISTENT' : '⚠️ INCONSISTENT'}`);
 
           return {
             primary: `${currentHeight.toFixed(1)}m`,
@@ -362,14 +294,11 @@ export const SevenDayForecastModal: React.FC<SevenDayForecastModalProps> = ({
           };
 
         } catch (error) {
-          console.error(`🔍 [MODAL DEBUG] ❌ UNIFIED SERVICE FAILED:`, error);
-          console.log(`🔍 [MODAL DEBUG] Falling back to static tide data...`);
 
           // Fallback to static data if unified service fails
           const fallbackHeight = tideData.currentHeight || tideData.predictedHeight || 1.5;
           const fallbackTrend = tideData.trend || 'stable';
 
-          console.log(`🔍 [MODAL DEBUG] Fallback result: ${fallbackHeight}m, trend: ${fallbackTrend}`);
 
           return {
             primary: `${fallbackHeight.toFixed(1)}m`,

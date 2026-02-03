@@ -525,7 +525,6 @@ export class SubscriptionService {
         this.currentStatus = JSON.parse(saved);
       }
     } catch (error) {
-      console.warn('Failed to load subscription status:', error);
     }
   }
 
@@ -535,7 +534,6 @@ export class SubscriptionService {
         await AsyncStorage.setItem('subscription_status', JSON.stringify(this.currentStatus));
       }
     } catch (error) {
-      console.warn('Failed to save subscription status:', error);
     }
   }
 
@@ -546,7 +544,6 @@ export class SubscriptionService {
         this.participantVerification = JSON.parse(saved);
       }
     } catch (error) {
-      console.warn('Failed to load participant verification:', error);
     }
   }
 
@@ -556,7 +553,6 @@ export class SubscriptionService {
         await AsyncStorage.setItem('participant_verification', JSON.stringify(this.participantVerification));
       }
     } catch (error) {
-      console.warn('Failed to save participant verification:', error);
     }
   }
 

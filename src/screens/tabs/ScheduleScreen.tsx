@@ -1,266 +1,243 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+/**
+ * ScheduleScreen - Apple WWDC25 Design Principles
+ *
+ * Redesigned following Apple's design principles:
+ * - Structure: Prioritize essential features, remove decorative elements
+ * - Progressive Disclosure: Show only what's necessary upfront
+ * - Content First: Schedule visible immediately without tapping
+ *
+ * Layout:
+ * - Header with event switch and info button
+ * - HorizontalDatePicker for quick day navigation
+ * - ScheduleDayContent showing activities immediately
+ * - EventInfoSheet for progressive disclosure of event details
+ */
+
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { View, ScrollView, StyleSheet, RefreshControl, Animated } from 'react-native';
+import { TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IOSText } from '../../components/ios/IOSText';
-import { IOSSegmentedControl } from '../../components/ios/IOSSegmentedControl';
-import { EventHeader } from '../../components/schedule/EventHeader';
-import { DayCard } from '../../components/schedule/DayCard';
+import { FloatingEventSwitch } from '../../components/navigation/FloatingEventSwitch';
+import { ProfileButton } from '../../components/navigation/ProfileButton';
+import { useSelectedEvent, useSetSelectedEvent } from '../../stores/eventStore';
+import { EVENTS } from '../../constants/events';
+import { HorizontalDatePicker } from '../../components/schedule/HorizontalDatePicker';
+import { ScheduleDayContent } from '../../components/schedule/ScheduleDayContent';
+import { EventInfoSheet } from '../../components/schedule/EventInfoSheet';
 import { colors, spacing } from '../../constants/theme';
 import { eventSchedules } from '../../data/scheduleData';
+import { useToolbarVisibility } from '../../contexts/TabBarVisibilityContext';
+import { useWalkthroughStore } from '../../stores/walkthroughStore';
 import type { ScheduleScreenProps } from '../../types/navigation';
 
-export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
-  const [selectedEvent, setSelectedEvent] = useState<'asia-pacific-2026' | 'dragon-worlds-2026'>('asia-pacific-2026');
-  const [refreshing, setRefreshing] = useState(false);
-  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
+const HEADER_HEIGHT = 250; // Height of header section including month/year, date picker, and day title
 
-  const currentEvent = selectedEvent === 'dragon-worlds-2026'
+export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
+  const selectedEvent = useSelectedEvent();
+  const setSelectedEvent = useSetSelectedEvent();
+  const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
+  const [showEventInfo, setShowEventInfo] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const insets = useSafeAreaInsets();
+
+  // Walkthrough target refs
+  const headerRef = useRef<View>(null);
+  const eventSwitchRef = useRef<View>(null);
+  const datePickerRef = useRef<View>(null);
+  const scheduleContentRef = useRef<View>(null);
+  const { registerTarget, unregisterTarget } = useWalkthroughStore();
+
+  // Register walkthrough targets
+  useEffect(() => {
+    registerTarget('schedule-header', headerRef);
+    registerTarget('event-switch', eventSwitchRef);
+    registerTarget('date-picker', datePickerRef);
+    registerTarget('schedule-content', scheduleContentRef);
+
+    return () => {
+      unregisterTarget('schedule-header');
+      unregisterTarget('event-switch');
+      unregisterTarget('date-picker');
+      unregisterTarget('schedule-content');
+    };
+  }, [registerTarget, unregisterTarget]);
+
+  // Toolbar auto-hide
+  const { toolbarTranslateY, createScrollHandler } = useToolbarVisibility();
+  const scrollHandler = useMemo(() => createScrollHandler(), [createScrollHandler]);
+
+  // Get current event data
+  const currentEvent = selectedEvent === EVENTS.WORLDS_2027.id
     ? eventSchedules.worldChampionship
     : eventSchedules.asiaPacificChampionships;
 
-  // Handle navigation parameters to auto-expand and highlight specific events
+  // Get currently selected day
+  const selectedDay = useMemo(() => {
+    if (!selectedDayId) return null;
+    return currentEvent.days.find(day => day.id === selectedDayId) || null;
+  }, [selectedDayId, currentEvent]);
+
+  // Derive month/year from the first day of the event
+  const monthYear = useMemo(() => {
+    if (currentEvent.days.length === 0) return undefined;
+    // Parse date string like "Thursday, November 19, 2026"
+    const firstDay = currentEvent.days[0];
+    const dateParts = firstDay.date.split(', ');
+    const monthDay = dateParts[1]?.split(' ') || ['November'];
+    const month = monthDay[0] || 'November';
+    const year = dateParts[2] || '2026';
+    return `${month} ${year}`;
+  }, [currentEvent]);
+
+  // Auto-select first day when event changes
+  useEffect(() => {
+    if (currentEvent.days.length > 0) {
+      setSelectedDayId(currentEvent.days[0].id);
+    }
+  }, [selectedEvent]);
+
+  // Handle navigation parameters to auto-select and highlight specific events
   useEffect(() => {
     const { date, eventId } = route?.params || {};
-    
-    if (date || eventId) {
-      // Find the day that matches the date or contains the event
-      const matchingDay = currentEvent.days.find(day => {
-        // Match by date (check if day.date contains the date string)
-        const dateMatches = date && (day.date === date || day.date.includes(date));
 
-        // Match by event name
+    if (date || eventId) {
+      const matchingDay = currentEvent.days.find(day => {
+        const dateMatches = date && (day.date === date || day.date.includes(date));
         const eventMatches = eventId && day.activities.some(activity =>
           activity.activity.includes(eventId)
         );
-
         return dateMatches || eventMatches;
       });
 
       if (matchingDay) {
-        const dayId = matchingDay.date;
-        setExpandedDays(new Set([dayId]));
+        setSelectedDayId(matchingDay.id);
       }
     }
   }, [route?.params, currentEvent]);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1000);
-  };
+  }, []);
 
-  const handleEventChange = (eventId: 'asia-pacific-2026' | 'dragon-worlds-2026') => {
-    setSelectedEvent(eventId);
-    // Clear expanded days when switching events
-    setExpandedDays(new Set());
-  };
-
-  const handleDayToggle = (dayId: string) => {
-    const newExpandedDays = new Set(expandedDays);
-    if (newExpandedDays.has(dayId)) {
-      newExpandedDays.delete(dayId);
-    } else {
-      newExpandedDays.add(dayId);
-    }
-    setExpandedDays(newExpandedDays);
-  };
-
-  const calculateEventStats = () => {
-    const totalActivities = currentEvent.days.reduce((sum, day) => sum + day.activities.length, 0);
-    const competitionDays = currentEvent.days.length;
-    const racingDays = currentEvent.days.filter(day => 
-      day.activities.some(activity => activity.type === 'racing')
-    ).length;
-    
-    return { totalActivities, competitionDays, racingDays };
-  };
-
-  const { totalActivities, competitionDays, racingDays } = calculateEventStats();
+  const handleDaySelect = useCallback((dayId: string) => {
+    setSelectedDayId(dayId);
+  }, []);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-      </View>
-
-      {/* Event Selector */}
-      <View style={styles.eventToggleContainer}>
-        <IOSSegmentedControl
-          options={[
-            { label: '2026 Asia Pacific Championship', value: 'asia-pacific-2026' },
-            { label: '2027 Dragon World Championship', value: 'dragon-worlds-2026' }
-          ]}
-          selectedValue={selectedEvent}
-          onValueChange={(eventId) => handleEventChange(eventId as 'asia-pacific-2026' | 'dragon-worlds-2026')}
-        />
-      </View>
-
-      {/* Main Content */}
+    <View style={styles.container}>
+      {/* Main Content - Scrolls under the header */}
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: HEADER_HEIGHT + insets.top }}
+        scrollEventThrottle={16}
+        onScroll={scrollHandler.onScroll}
+        onScrollBeginDrag={scrollHandler.onScrollBeginDrag}
+        onScrollEndDrag={scrollHandler.onScrollEndDrag}
+        onMomentumScrollEnd={scrollHandler.onMomentumScrollEnd}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={colors.primary}
+            progressViewOffset={HEADER_HEIGHT + insets.top}
           />
         }
       >
-        {/* Event Header */}
-        <EventHeader event={currentEvent} />
-
-        {/* Event Statistics */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statsCard}>
-            <View style={styles.statsRow}>
-              {/* Total Activities - Blue */}
-              <View style={styles.statItem}>
-                <View style={[styles.statCircle, styles.statCircleBlue]}>
-                  <IOSText textStyle="title1" weight="bold" style={[styles.statNumber, styles.statNumberBlue]}>
-                    {totalActivities}
-                  </IOSText>
-                </View>
-                <IOSText textStyle="caption" style={styles.statLabel}>
-                  Total Activities
-                </IOSText>
-              </View>
-
-              {/* Event Days - Teal */}
-              <View style={styles.statItem}>
-                <View style={[styles.statCircle, styles.statCircleTeal]}>
-                  <IOSText textStyle="title1" weight="bold" style={[styles.statNumber, styles.statNumberTeal]}>
-                    {competitionDays}
-                  </IOSText>
-                </View>
-                <IOSText textStyle="caption" style={styles.statLabel}>
-                  Event Days
-                </IOSText>
-              </View>
-
-              {/* Racing Days - Orange */}
-              <View style={styles.statItem}>
-                <View style={[styles.statCircle, styles.statCircleOrange]}>
-                  <IOSText textStyle="title1" weight="bold" style={[styles.statNumber, styles.statNumberOrange]}>
-                    {racingDays}
-                  </IOSText>
-                </View>
-                <IOSText textStyle="caption" style={styles.statLabel}>
-                  Racing Days
-                </IOSText>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Day Cards */}
-        <View style={styles.daysContainer}>
-          {currentEvent.days.map((day) => (
-            <DayCard
-              key={day.id}
-              day={day}
-              isExpanded={expandedDays.has(day.id)}
-              onToggle={handleDayToggle}
-            />
-          ))}
+        {/* Day Content - Activities visible immediately */}
+        <View ref={scheduleContentRef} collapsable={false}>
+          <ScheduleDayContent day={selectedDay} />
         </View>
 
         {/* Bottom Padding */}
         <View style={styles.bottomPadding} />
       </ScrollView>
-    </SafeAreaView>
+
+      {/* Floating Header Section - Positioned above content */}
+      <Animated.View
+        style={[
+          styles.headerSection,
+          {
+            paddingTop: insets.top,
+            transform: [{ translateY: toolbarTranslateY }]
+          }
+        ]}
+      >
+        {/* Title Row */}
+        <View ref={headerRef} collapsable={false} style={styles.header}>
+          <View style={styles.headerContent}>
+            <IOSText textStyle="title1" weight="bold" style={styles.headerTitle}>
+              Schedule
+            </IOSText>
+            <ProfileButton size={36} />
+          </View>
+          <View ref={eventSwitchRef} collapsable={false}>
+            <FloatingEventSwitch
+              options={[
+                { label: 'APAC 2026', shortLabel: 'APAC 2026', value: EVENTS.APAC_2026.id },
+                { label: 'Worlds 2027', shortLabel: 'Worlds 2027', value: EVENTS.WORLDS_2027.id }
+              ]}
+              selectedValue={selectedEvent}
+              onValueChange={setSelectedEvent}
+            />
+          </View>
+        </View>
+
+        {/* Date Picker with Day Title */}
+        <View ref={datePickerRef} collapsable={false}>
+          <HorizontalDatePicker
+            days={currentEvent.days}
+            selectedDayId={selectedDayId}
+            onDaySelect={handleDaySelect}
+            selectedDayTitle={selectedDay?.title}
+            monthYear={monthYear}
+          />
+        </View>
+      </Animated.View>
+
+      {/* Event Info Sheet - Progressive Disclosure */}
+      <EventInfoSheet
+        event={currentEvent}
+        visible={showEventInfo}
+        onClose={() => setShowEventInfo(false)}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.surface,
+  },
+  headerSection: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     backgroundColor: colors.background,
+    zIndex: 10,
   },
   header: {
     paddingHorizontal: 16,
-    paddingBottom: 8,
-    backgroundColor: colors.background,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.borderLight,
+    paddingTop: 8,
+    paddingBottom: 4,
   },
-  title: {
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTitle: {
     color: colors.text,
-    marginBottom: 4,
   },
   scrollView: {
     flex: 1,
     backgroundColor: colors.surface,
   },
-  statsContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 16,
-  },
-  statsCard: {
-    backgroundColor: colors.background,
-    borderRadius: 12,
-    padding: spacing.md,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  statCircleBlue: {
-    backgroundColor: '#E3F2FD', // Light blue
-  },
-  statCircleTeal: {
-    backgroundColor: '#E0F7FA', // Light teal
-  },
-  statCircleOrange: {
-    backgroundColor: '#FFF3E0', // Light orange
-  },
-  statNumber: {
-    fontSize: 34,
-    fontWeight: 'bold',
-  },
-  statNumberBlue: {
-    color: '#0066CC', // Blue
-  },
-  statNumberTeal: {
-    color: '#00ACC1', // Teal
-  },
-  statNumberOrange: {
-    color: '#FF9800', // Orange
-  },
-  statLabel: {
-    textAlign: 'center',
-    fontSize: 13,
-    color: '#666666',
-    marginTop: 0,
-  },
-  daysContainer: {
-    paddingBottom: spacing.md,
-  },
   bottomPadding: {
-    height: spacing.lg,
-  },
-  eventToggleContainer: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    height: 100,
   },
 });

@@ -63,7 +63,6 @@ export const formatChartTime = (
 
   // Validate the date
   if (!date || isNaN(date.getTime())) {
-    console.warn('Invalid date provided to formatChartTime:', input);
     return 'Invalid Time';
   }
 
@@ -84,7 +83,6 @@ export const formatChartTime = (
 
     timeString = timeFormatter.format(date);
   } catch (error) {
-    console.warn('Error formatting time:', error, 'Input:', input);
     return 'Time Error';
   }
 

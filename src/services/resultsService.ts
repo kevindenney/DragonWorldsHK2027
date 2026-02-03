@@ -254,13 +254,11 @@ class ResultsService {
     if (!forceRefresh && this.isCacheValid(cacheKey)) {
       const cached = this.cache.get(cacheKey);
       if (cached) {
-        console.log(`[ResultsService] Returning cached data for event ${cloudEventId}`);
         return cached;
       }
     }
 
     try {
-      console.log(`[ResultsService] Fetching live data for event ${cloudEventId}`);
       const championship = await this.fetchLiveResults(cloudEventId);
 
       // Update cache
@@ -269,17 +267,14 @@ class ResultsService {
 
       return championship;
     } catch (error) {
-      console.error('[ResultsService] Error fetching live results:', error);
 
       // Return cached data if available (even if expired)
       const cachedData = this.cache.get(cacheKey);
       if (cachedData) {
-        console.log('[ResultsService] Returning expired cached data due to error');
         return cachedData;
       }
 
       // Fallback to bundled mock data
-      console.log('[ResultsService] Falling back to bundled data');
       return this.getBundledChampionship(cloudEventId);
     }
   }
@@ -420,7 +415,6 @@ class ResultsService {
       this.cache.clear();
       this.lastFetchTime.clear();
     }
-    console.log(`[ResultsService] Cache cleared${eventId ? ` for event ${eventId}` : ''}`);
   }
 
   /**
@@ -489,7 +483,6 @@ class ResultsService {
         lastUpdate: new Date().toISOString()
       };
     } catch (error) {
-      console.error('Error fetching live race data:', error);
       return null;
     }
   }
@@ -501,7 +494,6 @@ class ResultsService {
     try {
       return this.generateDemoRaceResults(raceNumber);
     } catch (error) {
-      console.error('Error fetching race results:', error);
       throw new Error('Failed to load race results');
     }
   }
@@ -517,7 +509,6 @@ class ResultsService {
         .sort((a, b) => (a.position || 999) - (b.position || 999))
         .slice(0, limit);
     } catch (error) {
-      console.error('Error fetching current race results:', error);
       throw new Error('Failed to load current race results');
     }
   }
@@ -586,7 +577,6 @@ class ResultsService {
         position: index + 1
       }));
     } catch (error) {
-      console.error('Error fetching championship standings:', error);
       throw new Error('Failed to load championship standings');
     }
   }
@@ -637,7 +627,6 @@ class ResultsService {
 
       return schedule;
     } catch (error) {
-      console.error('Error fetching race schedule:', error);
       throw new Error('Failed to load race schedule');
     }
   }
@@ -657,7 +646,6 @@ class ResultsService {
             onUpdate(liveData);
           }
         } catch (error) {
-          console.error('Error in live update:', error);
         }
       }, this.config.updateInterval);
 
@@ -665,7 +653,6 @@ class ResultsService {
       this.listeners['liveUpdate'] = [() => clearInterval(updateInterval)];
       
     } catch (error) {
-      console.error('Error starting live updates:', error);
     }
   }
 
@@ -714,7 +701,6 @@ class ResultsService {
         nextRace
       };
     } catch (error) {
-      console.error('Error fetching personal results:', error);
       throw new Error('Failed to load personal results');
     }
   }

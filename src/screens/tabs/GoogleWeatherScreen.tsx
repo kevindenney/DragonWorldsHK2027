@@ -49,7 +49,6 @@ interface GoogleWeatherScreenProps {
 export const GoogleWeatherScreen: React.FC<GoogleWeatherScreenProps> = ({ 
   navigation 
 }) => {
-  console.log('🌦️ GoogleWeatherScreen: Component loading...');
   // State Management
   const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
   const [selectedMetric, setSelectedMetric] = useState<MetricType>('temperature');
@@ -113,7 +112,6 @@ export const GoogleWeatherScreen: React.FC<GoogleWeatherScreenProps> = ({
       await new Promise(resolve => setTimeout(resolve, 1000));
       
     } catch (error) {
-      console.error('Failed to load weather data:', error);
       Alert.alert(
         'Weather Data Error',
         'Failed to load weather data. Please check your connection and try again.',
@@ -154,19 +152,16 @@ export const GoogleWeatherScreen: React.FC<GoogleWeatherScreenProps> = ({
   // Hour selection handler
   const handleHourSelect = (hourData: HourlyForecastData) => {
     // Could navigate to detailed hour view or show modal
-    console.log('Selected hour:', hourData);
   };
 
   // Day selection handler  
   const handleDaySelect = (dayData: DailyForecastData) => {
     // Could navigate to detailed day view or show modal
-    console.log('Selected day:', dayData);
   };
 
   // Day selector handler
   const handleDaySelectorSelect = (dayId: string) => {
     setSelectedDay(dayId);
-    console.log('Selected day from selector:', dayId);
   };
 
   return (

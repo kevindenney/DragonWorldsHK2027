@@ -485,7 +485,6 @@ export class ABTestingService {
       return test;
 
     } catch (error) {
-      console.error('Failed to create A/B test:', error);
       throw new Error('A/B test creation failed');
     }
   }
@@ -520,10 +519,8 @@ export class ABTestingService {
         expected_end_date: test.endDate
       });
 
-      console.log(`A/B test "${test.name}" launched successfully`);
 
     } catch (error) {
-      console.error('Failed to launch A/B test:', error);
       throw error;
     }
   }
@@ -565,7 +562,6 @@ export class ABTestingService {
       return null;
 
     } catch (error) {
-      console.error('Failed to get user variant:', error);
       return null;
     }
   }
@@ -605,7 +601,6 @@ export class ABTestingService {
       });
 
     } catch (error) {
-      console.error('Failed to track test exposure:', error);
     }
   }
 
@@ -678,7 +673,6 @@ export class ABTestingService {
       });
 
     } catch (error) {
-      console.error('Failed to track conversion:', error);
     }
   }
 
@@ -710,7 +704,6 @@ export class ABTestingService {
       return results;
 
     } catch (error) {
-      console.error('Failed to analyze test results:', error);
       throw new Error('Test analysis failed');
     }
   }
@@ -746,7 +739,6 @@ export class ABTestingService {
       });
 
     } catch (error) {
-      console.error('Failed to stop test:', error);
       throw error;
     }
   }
@@ -810,7 +802,6 @@ export class ABTestingService {
       return true;
 
     } catch (error) {
-      console.error('Failed to check user eligibility:', error);
       return false;
     }
   }
@@ -853,7 +844,6 @@ export class ABTestingService {
       return variantId;
 
     } catch (error) {
-      console.error('Failed to enroll user in test:', error);
       return null;
     }
   }
@@ -1165,7 +1155,6 @@ export class ABTestingService {
         const results = await this.calculateTestResults(test);
         if (results.statisticalSignificance && results.effectSize > test.statisticalSettings.minimumDetectableEffect * 1.5) {
           // Consider early stopping if effect is very strong
-          console.log(`Test ${testId} shows strong results - consider early stopping`);
         }
       }
     }
@@ -1189,7 +1178,6 @@ export class ABTestingService {
         }
       }
     } catch (error) {
-      console.warn('Failed to load A/B testing data:', error);
     }
   }
 
@@ -1203,7 +1191,6 @@ export class ABTestingService {
       
       await AsyncStorage.setItem('ab_testing_data', JSON.stringify(data));
     } catch (error) {
-      console.warn('Failed to save A/B testing data:', error);
     }
   }
 

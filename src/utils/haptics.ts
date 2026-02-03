@@ -29,13 +29,11 @@ class HapticManager {
     
     // Could add additional device capability checks here
     if (this.isSupported) {
-      console.log('Haptic feedback is supported');
     }
   }
 
   setEnabled(enabled: boolean): void {
     this.isEnabled = enabled;
-    console.log(`Haptic feedback ${enabled ? 'enabled' : 'disabled'}`);
   }
 
   isHapticEnabled(): boolean {
@@ -64,7 +62,6 @@ class HapticManager {
           await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
     }
   }
 
@@ -85,7 +82,6 @@ class HapticManager {
           break;
       }
     } catch (error) {
-      console.warn('Haptic notification failed:', error);
     }
   }
 
@@ -96,7 +92,6 @@ class HapticManager {
     try {
       await Haptics.selectionAsync();
     } catch (error) {
-      console.warn('Haptic selection failed:', error);
     }
   }
 

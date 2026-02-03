@@ -398,7 +398,6 @@ class SinoGroupService {
 
       return properties;
     } catch (error) {
-      console.error('Error fetching Sino properties:', error);
       throw new Error('Failed to load Sino Group properties');
     }
   }
@@ -563,11 +562,9 @@ class SinoGroupService {
       };
 
       // In real implementation, this would call Sino's booking API
-      console.log('Hospitality booking created:', booking);
       
       return booking;
     } catch (error) {
-      console.error('Error making booking:', error);
       throw new Error('Failed to create booking');
     }
   }
@@ -591,11 +588,9 @@ class SinoGroupService {
       };
 
       // In real implementation, this would call Sino's concierge API
-      console.log('Concierge request submitted:', conciergeRequest);
       
       return conciergeRequest;
     } catch (error) {
-      console.error('Error submitting concierge request:', error);
       throw new Error('Failed to submit concierge request');
     }
   }

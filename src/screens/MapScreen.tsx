@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput, ScrollView, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
-import { Filter, Info, Crosshair, Search, X } from 'lucide-react-native';
+import { Filter, Crosshair, Search, X } from 'lucide-react-native';
 
 import { SailingLocationMarker } from '../components/maps/SailingLocationMarker';
 import { LocationDetailModal } from '../components/maps/LocationDetailModal';
+import { FloatingBackButton } from '../components/navigation/FloatingBackButton';
+import { haptics } from '../utils/haptics';
 import {
   sailingLocations,
   locationFilters,
@@ -22,13 +24,19 @@ import type { MapScreenProps } from '../types/navigation';
 const { colors, spacing, typography, shadows, borderRadius } = dragonChampionshipsLightTheme;
 const { width, height } = Dimensions.get('window');
 
-export const MapScreen: React.FC<MapScreenProps> = ({ navigation, route }) => {
+// Tab bar height (64) + bottom offset (20) + safe area margin
+const TAB_BAR_BOTTOM_PADDING = 100;
+
+interface MapScreenLocalProps {
+  onBack?: () => void;
+}
+
+export const MapScreen: React.FC<Partial<MapScreenProps> & MapScreenLocalProps> = ({ navigation, route, onBack }) => {
   const mapRef = useRef<MapView>(null);
   const insets = useSafeAreaInsets();
   const [selectedFilter, setSelectedFilter] = useState<SailingLocationFilter['type']>('all');
   const [selectedLocation, setSelectedLocation] = useState<SailingLocation | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [showLegend, setShowLegend] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SailingLocation[]>([]);
@@ -69,8 +77,11 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation, route }) => {
   }, [route?.params?.locationId]);
 
   const handleLocationPress = (location: SailingLocation) => {
+    // Haptic feedback for marker selection
+    haptics.selection();
+
     setSelectedLocation(location);
-    
+
     // Center map on selected location
     mapRef.current?.animateToRegion({
       ...location.coordinates,
@@ -80,9 +91,12 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation, route }) => {
   };
 
   const handleFilterChange = (filter: SailingLocationFilter['type']) => {
+    // Haptic feedback for filter change
+    haptics.selection();
+
     setSelectedFilter(filter);
     setShowFilters(false);
-    
+
     // If filtering to specific type, zoom to show those locations
     const locations = getLocationsByType(filter);
     if (locations.length > 0 && mapRef.current) {
@@ -131,6 +145,9 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation, route }) => {
   };
 
   const handleSearchResultPress = (location: SailingLocation) => {
+    // Haptic feedback for search result selection
+    haptics.selection();
+
     setSelectedLocation(location);
     setSearchQuery('');
     setShowSearch(false);
@@ -145,6 +162,9 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation, route }) => {
 
   // Center on user location
   const handleMyLocationPress = () => {
+    // Haptic feedback for button press
+    haptics.buttonPress();
+
     // The MapView component already handles user location with showsUserLocation
     // This button provides a manual trigger to center on user location
     if (mapRef.current) {
@@ -181,21 +201,27 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation, route }) => {
             }
           }}
         >
-          {filteredLocations.map((location) => (
-            <Marker
-              key={location.id}
-              coordinate={location.coordinates}
-              onPress={() => handleLocationPress(location)}
-              tracksViewChanges={false} // Optimize performance
-            >
-              <SailingLocationMarker
-                location={location}
-                isSelected={selectedLocation?.id === location.id}
-                onPress={handleLocationPress}
-              />
-            </Marker>
-          ))}
+          {filteredLocations.map((location) => {
+            const isSelected = selectedLocation?.id === location.id;
+            return (
+              <Marker
+                key={location.id}
+                coordinate={location.coordinates}
+                onPress={() => handleLocationPress(location)}
+                tracksViewChanges={isSelected} // Track changes only for selected marker (for label)
+                zIndex={isSelected ? 1000 : 1} // Bring selected marker to front
+              >
+                <SailingLocationMarker
+                  location={location}
+                  isSelected={isSelected}
+                />
+              </Marker>
+            );
+          })}
         </MapView>
+
+        {/* Back Button - always show, use navigation.goBack() as fallback when no onBack prop */}
+        <FloatingBackButton onPress={onBack || (() => navigation?.goBack())} />
 
         {/* Top Floating Buttons */}
         <View style={[styles.topButtonsContainer, { top: insets.top + 8 }]}>
@@ -221,19 +247,10 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation, route }) => {
 
         {/* My Location Button */}
         <TouchableOpacity
-          style={styles.myLocationButton}
+          style={[styles.myLocationButton, { bottom: TAB_BAR_BOTTOM_PADDING }]}
           onPress={handleMyLocationPress}
         >
-          <Crosshair size={24} color={colors.white} />
-        </TouchableOpacity>
-
-        {/* Legend Button (Bottom-left) */}
-        <TouchableOpacity
-          style={styles.legendButton}
-          onPress={() => setShowLegend(true)}
-        >
-          <Info size={18} color={colors.primary} />
-          <Text style={styles.legendButtonText}>Legend</Text>
+          <Crosshair size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
@@ -344,78 +361,23 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation, route }) => {
         </TouchableOpacity>
       </Modal>
 
-      {/* Legend Modal */}
-      <Modal
-        visible={showLegend}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowLegend(false)}
-      >
-        <TouchableOpacity
-          style={styles.legendModalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowLegend(false)}
-        >
-          <View style={styles.legendModal}>
-            <View style={styles.legendHeader}>
-              <Text style={styles.legendTitle}>Map Legend</Text>
-              <TouchableOpacity onPress={() => setShowLegend(false)}>
-                <X size={24} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.legendItem}>
-              <View style={[styles.legendMarker, { backgroundColor: '#DC2626' }]} />
-              <Text style={styles.legendText}>Championship HQ</Text>
-            </View>
-
-            <View style={styles.legendItem}>
-              <View style={[styles.legendMarker, { backgroundColor: '#2563EB' }]} />
-              <Text style={styles.legendText}>Race Course</Text>
-            </View>
-
-            <View style={styles.legendItem}>
-              <View style={[styles.legendMarker, { backgroundColor: '#0891B2' }]} />
-              <Text style={styles.legendText}>Marinas</Text>
-            </View>
-
-            <View style={styles.legendItem}>
-              <View style={[styles.legendMarker, { backgroundColor: '#EA580C' }]} />
-              <Text style={styles.legendText}>Chandleries</Text>
-            </View>
-
-            <View style={styles.legendItem}>
-              <View style={[styles.legendMarker, { backgroundColor: '#D97706' }]} />
-              <Text style={styles.legendText}>Gear Stores</Text>
-            </View>
-
-            <View style={styles.legendItem}>
-              <View style={[styles.legendMarker, { backgroundColor: '#7C3AED' }]} />
-              <Text style={styles.legendText}>Hotels</Text>
-            </View>
-
-            <View style={styles.legendDivider} />
-
-            <View style={styles.legendItem}>
-              <View style={styles.championshipIndicator} />
-              <Text style={styles.legendText}>Championship 2027</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
       {/* Location Detail Modal */}
       {selectedLocation && (
         <LocationDetailModal
           location={selectedLocation}
           onClose={handleCloseModal}
           onScheduleNavigate={(date, event) => {
-            // Navigate to schedule screen with specific event
-            navigation.navigate('Schedule', {
-              date: date,
-              eventId: event
-            });
-            setSelectedLocation(null); // Close modal after navigation
+            // Navigate back to tabs, then to Schedule screen
+            setSelectedLocation(null); // Close modal first
+            if (navigation) {
+              navigation.navigate('MainTabs', {
+                screen: 'Schedule',
+                params: {
+                  date: date,
+                  eventId: event
+                }
+              });
+            }
           }}
         />
       )}
@@ -441,7 +403,7 @@ const styles = StyleSheet.create({
   // Top Floating Buttons
   topButtonsContainer: {
     position: 'absolute',
-    left: spacing.md,
+    left: 60, // Account for back button
     right: spacing.md,
     flexDirection: 'row',
     gap: spacing.sm,
@@ -587,7 +549,6 @@ const styles = StyleSheet.create({
   // My Location Button (Bottom-right)
   myLocationButton: {
     position: 'absolute',
-    bottom: spacing.lg,
     right: spacing.lg,
     width: 48,
     height: 48,
@@ -597,85 +558,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...shadows.cardMedium,
     elevation: 8,
-  },
-
-  // Legend Button (Bottom-left)
-  legendButton: {
-    position: 'absolute',
-    bottom: spacing.lg,
-    left: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    ...shadows.cardMedium,
-    elevation: 5,
-  },
-  legendButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.primary,
-    marginLeft: 6,
-  },
-
-  // Legend Modal
-  legendModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  legendModal: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    minWidth: 280,
-    maxWidth: 340,
-    ...shadows.cardLarge,
-  },
-  legendHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  legendTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  legendMarker: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    marginRight: spacing.md,
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
-  },
-  legendText: {
-    fontSize: 14,
-    color: colors.text,
-  },
-  legendDivider: {
-    height: 1,
-    backgroundColor: colors.borderLight,
-    marginVertical: spacing.md,
-  },
-  championshipIndicator: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: '#FFD700',
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
-    marginRight: spacing.md,
   },
 });

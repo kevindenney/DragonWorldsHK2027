@@ -3,11 +3,12 @@ import { View, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Settings } from 'lucide-react-native';
 import { IOSNavigationBar } from '../components/ios';
-import { UserProfile } from '../components/auth/UserProfile';
+import { AppleStyleProfile } from '../components/profile/AppleStyleProfile';
 import { RequireAuth } from '../components/auth/AuthGuard';
 import { EditProfileModal } from '../components/profile/EditProfileModal';
 import { useAuth } from '../auth/useAuth';
 import { colors } from '../constants/theme';
+// Tab bar stays always visible per Apple HIG - no visibility context needed
 
 interface ProfileScreenProps {
   navigation: any;
@@ -16,6 +17,7 @@ interface ProfileScreenProps {
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const { logout, user } = useAuth();
   const [showEditModal, setShowEditModal] = useState(false);
+  // Tab bar stays always visible - no hide/show needed
 
   const handleEditProfile = () => {
     setShowEditModal(true);
@@ -76,10 +78,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           ]}
         />
         
-        <UserProfile
+        <AppleStyleProfile
           onEditProfile={handleEditProfile}
           onChangePassword={handleChangePassword}
           onDeleteAccount={handleDeleteAccount}
+          onNavigateToSettings={() => {
+            Alert.alert('Settings', 'Advanced settings will be available in a future update.');
+          }}
           testID="profile-screen"
         />
 

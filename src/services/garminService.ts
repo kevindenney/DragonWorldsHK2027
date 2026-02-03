@@ -162,7 +162,6 @@ class GarminService {
         }
       ];
     } catch (error) {
-      console.error('Error fetching Garmin charts:', error);
       throw new Error('Failed to load marine charts');
     }
   }
@@ -226,7 +225,6 @@ class GarminService {
         }
       ];
     } catch (error) {
-      console.error('Error fetching race boundaries:', error);
       throw new Error('Failed to load race area data');
     }
   }
@@ -503,7 +501,6 @@ class GarminService {
         }
       ];
     } catch (error) {
-      console.error('Error fetching sponsor locations:', error);
       throw new Error('Failed to load sponsor locations');
     }
   }
@@ -544,7 +541,6 @@ class GarminService {
         ]
       };
     } catch (error) {
-      console.error('Error calculating route:', error);
       throw new Error('Failed to calculate navigation route');
     }
   }

@@ -69,7 +69,6 @@ export function WeatherScreen({ navigation }: WeatherScreenProps) {
         const cachedData = await offlineManager.getCriticalWeatherData();
         setCachedWeatherData(cachedData);
       } catch (error) {
-        console.error('Failed to load cached weather data:', error);
       }
     };
 
@@ -88,7 +87,6 @@ export function WeatherScreen({ navigation }: WeatherScreenProps) {
         setCachedWeatherData(cachedData);
       }
     } catch (err) {
-      console.error('Weather refresh failed:', err);
     } finally {
       setRefreshing(false);
     }

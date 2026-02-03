@@ -123,14 +123,12 @@ export class ClubSpotService {
    * @param forceRefresh - Skip cache and fetch fresh data
    */
   async getEntrants(regattaId: string, eventId: string, forceRefresh = false): Promise<Competitor[]> {
-    console.log(`[ClubSpotService] Fetching entrants for regatta: ${regattaId}, event: ${eventId}`);
 
     const cacheKey = `${regattaId}_${eventId}`;
 
     try {
       // Check cache first (unless force refresh)
       if (!forceRefresh && this.isCacheValid(cacheKey)) {
-        console.log('[ClubSpotService] Returning cached data');
         const cachedInfo = this.dataSourceInfo.get(cacheKey);
         if (cachedInfo) {
           this.dataSourceInfo.set(cacheKey, { ...cachedInfo, source: 'cache' });
@@ -141,7 +139,6 @@ export class ClubSpotService {
       let entrants: Competitor[];
 
       if (this.config.useDemoData) {
-        console.log('[ClubSpotService] Generating demo data');
         entrants = this.generateDemoEntrants(eventId);
         this.dataSourceInfo.set(cacheKey, {
           isLive: false,
@@ -149,7 +146,6 @@ export class ClubSpotService {
           source: 'demo'
         });
       } else {
-        console.log('[ClubSpotService] Fetching real data from ClubSpot');
         try {
           entrants = await this.fetchRealEntrants(regattaId);
           this.dataSourceInfo.set(cacheKey, {
@@ -158,11 +154,9 @@ export class ClubSpotService {
             source: 'live'
           });
         } catch (fetchError) {
-          console.warn('[ClubSpotService] Live fetch failed, using fallback:', fetchError);
 
           // Try to use cached data first
           if (this.cache.has(cacheKey)) {
-            console.log('[ClubSpotService] Using stale cached data as fallback');
             const cachedEntrants = this.cache.get(cacheKey) || [];
             this.dataSourceInfo.set(cacheKey, {
               isLive: false,
@@ -174,7 +168,6 @@ export class ClubSpotService {
           }
 
           // Fall back to demo data
-          console.log('[ClubSpotService] Falling back to demo data');
           entrants = this.generateDemoEntrants(eventId);
           this.dataSourceInfo.set(cacheKey, {
             isLive: false,
@@ -191,7 +184,6 @@ export class ClubSpotService {
 
       return entrants;
     } catch (error) {
-      console.error('[ClubSpotService] Error fetching entrants:', error);
       this.dataSourceInfo.set(cacheKey, {
         isLive: false,
         lastFetched: new Date(),
@@ -221,7 +213,6 @@ export class ClubSpotService {
       throw new Error('Cloud Function URL not configured');
     }
 
-    console.log(`[ClubSpotService] Calling Cloud Function: ${functionUrl}?regattaId=${regattaId}`);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
@@ -240,7 +231,6 @@ export class ClubSpotService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`[ClubSpotService] Cloud Function error: ${response.status} - ${errorText}`);
         throw new Error(`Cloud Function failed: ${response.status}`);
       }
 
@@ -250,7 +240,6 @@ export class ClubSpotService {
         throw new Error(data.error || 'Cloud Function returned unsuccessful response');
       }
 
-      console.log(`[ClubSpotService] Received ${data.entrants?.length || 0} entrants from Cloud Function`);
 
       // Transform and validate the response
       const entrants = this.transformCloudFunctionResponse(data.entrants || []);
@@ -432,12 +421,10 @@ export class ClubSpotService {
         this.cache.delete(key);
         this.lastFetchTime.delete(key);
       });
-      console.log(`[ClubSpotService] Cleared cache for regatta: ${regattaId}`);
     } else {
       // Clear all cache
       this.cache.clear();
       this.lastFetchTime.clear();
-      console.log('[ClubSpotService] Cleared all cache');
     }
   }
 
@@ -447,7 +434,6 @@ export class ClubSpotService {
   setUseDemoData(useDemoData: boolean): void {
     this.config.useDemoData = useDemoData;
     this.clearCache();
-    console.log(`[ClubSpotService] Switched to ${useDemoData ? 'demo' : 'real'} data mode`);
   }
 
   /**

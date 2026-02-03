@@ -173,7 +173,6 @@ function validateCoordinates(station: TideStation): boolean {
 // Validate all stations have proper coordinates
 const invalidStations = HK_TIDE_STATIONS.filter(station => !validateCoordinates(station));
 if (invalidStations.length > 0) {
-  console.warn('Invalid tide station coordinates:', invalidStations);
 }
 
 // Export station groups for convenience

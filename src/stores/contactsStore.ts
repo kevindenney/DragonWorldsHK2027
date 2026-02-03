@@ -165,6 +165,68 @@ const defaultKeyContacts: KeyContact[] = [
     isEmergency: false,
     location: 'Kellett Island, Causeway Bay',
     hours: 'Monday-Sunday 08:00-20:00'
+  },
+  // Dragon Worlds Committee
+  {
+    id: 'dragon-worlds-general',
+    role: 'event-coordinator',
+    name: 'Dragon Worlds Committee',
+    email: 'info@dragonworld2027.com',
+    organization: 'Hong Kong Dragon Association',
+    category: 'host-organization',
+    isEmergency: false,
+    description: 'General event enquiries',
+    location: 'Royal Hong Kong Yacht Club, Kellett Island, Causeway Bay, Hong Kong'
+  },
+  {
+    id: 'bram-van-olphen',
+    role: 'event-coordinator',
+    name: 'Bram Van Olphen',
+    email: 'bram@dragonworld2027.com',
+    organization: 'Dragon Worlds Committee',
+    category: 'host-organization',
+    isEmergency: false,
+    description: 'Liaison Logistics'
+  },
+  {
+    id: 'ken-wong',
+    role: 'event-coordinator',
+    name: 'Ken Wong',
+    email: 'ken@dragonworld2027.com',
+    organization: 'Dragon Worlds Committee',
+    category: 'host-organization',
+    isEmergency: false,
+    description: 'Class Secretary & Liaison Volunteers'
+  },
+  {
+    id: 'nick-bilcliffe',
+    role: 'event-coordinator',
+    name: 'Nick Bilcliffe',
+    email: 'nick@dragonworld2027.com',
+    organization: 'Dragon Worlds Committee',
+    category: 'host-organization',
+    isEmergency: false,
+    description: 'Liaison HKDA, IDA and International Sailors'
+  },
+  {
+    id: 'victor-pang',
+    role: 'event-coordinator',
+    name: 'Victor Pang',
+    email: 'victor@dragonworld2027.com',
+    organization: 'Dragon Worlds Committee',
+    category: 'host-organization',
+    isEmergency: false,
+    description: 'Liaison Social Program'
+  },
+  {
+    id: 'ronnie-chan',
+    role: 'event-coordinator',
+    name: 'Ronnie Chan',
+    email: 'ronnie@dragonworld2027.com',
+    organization: 'Dragon Worlds Committee',
+    category: 'host-organization',
+    isEmergency: false,
+    description: 'Liaison Sponsorship'
   }
 ];
 

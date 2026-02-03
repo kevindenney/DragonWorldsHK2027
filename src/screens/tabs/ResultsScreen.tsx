@@ -1,33 +1,34 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   RefreshControl,
-  Dimensions 
+  Dimensions,
+  Animated as RNAnimated
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, SlideInRight } from '../../utils/reanimatedWrapper';
-import { 
+import {
   Trophy,
   Medal,
   TrendingUp,
   TrendingDown,
-  User,
-  Flag,
-  Calendar,
-  Filter,
-  Download,
-  BarChart3,
   Crown,
-  Star,
-  RefreshCw,
   WifiOff
 } from 'lucide-react-native';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
+import { IOSText } from '../../components/ios/IOSText';
+import { FloatingEventSwitch } from '../../components/navigation/FloatingEventSwitch';
+import { ProfileButton } from '../../components/navigation/ProfileButton';
+import { useToolbarVisibility } from '../../contexts/TabBarVisibilityContext';
+import { useSelectedEvent, useSetSelectedEvent } from '../../stores/eventStore';
+import { EVENTS } from '../../constants/events';
 import type { ResultsScreenProps } from '../../types/navigation';
+
+const HEADER_HEIGHT = 60; // Height of header section for content padding
 
 const { colors, typography, spacing, shadows, borderRadius } = dragonChampionshipsLightTheme;
 const { width } = Dimensions.get('window');
@@ -71,106 +72,24 @@ interface Championship {
 }
 
 export function ResultsScreen({ navigation }: ResultsScreenProps) {
-  const [championship] = useState<Championship>({
-    id: '1',
-    name: 'Dragon World Championships 2027',
-    location: 'Hong Kong',
-    totalRaces: 12,
-    completedRaces: 8,
-    currentRace: 9,
-    lastUpdated: new Date().toISOString(),
-  });
-
+  const selectedEvent = useSelectedEvent();
+  const setSelectedEvent = useSetSelectedEvent();
   const [standings, setStandings] = useState<SeriesStanding[]>([]);
   const [selectedDivision, setSelectedDivision] = useState<'All' | 'Red' | 'Blue' | 'Yellow'>('All');
   const [refreshing, setRefreshing] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [showDetails, setShowDetails] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
 
-  // Mock data for demonstration
+  // Toolbar auto-hide
+  const { toolbarTranslateY, createScrollHandler } = useToolbarVisibility();
+  const scrollHandler = useMemo(() => createScrollHandler(), [createScrollHandler]);
+
+  // Results will be loaded from racingrulesofsailing.org when racing begins
+  // For now, we show an empty state since no live results are available yet
   useEffect(() => {
-    const mockStandings: SeriesStanding[] = [
-      {
-        competitor: {
-          id: '1',
-          sailNumber: 'DEN 7',
-          helmName: 'Lars Hansen',
-          crewName: 'Mikkel Jensen',
-          clubCountry: 'Royal Danish YC (DEN)',
-          boatName: 'Valkyrie',
-          division: 'Red',
-        },
-        totalPoints: 24,
-        netPoints: 18,
-        position: 1,
-        previousPosition: 2,
-        dropWorst: 1,
-        raceResults: [
-          { raceNumber: 1, position: 3, points: 3, status: 'finished' },
-          { raceNumber: 2, position: 1, points: 1, status: 'finished' },
-          { raceNumber: 3, position: 2, points: 2, status: 'finished' },
-          { raceNumber: 4, position: 1, points: 1, status: 'finished' },
-          { raceNumber: 5, position: 6, points: 6, status: 'finished' },
-          { raceNumber: 6, position: 1, points: 1, status: 'finished' },
-          { raceNumber: 7, position: 2, points: 2, status: 'finished' },
-          { raceNumber: 8, position: 2, points: 2, status: 'finished' },
-        ],
-      },
-      {
-        competitor: {
-          id: '2',
-          sailNumber: 'GBR 888',
-          helmName: 'James Thompson',
-          crewName: 'Sarah Mitchell',
-          clubCountry: 'Royal Thames YC (GBR)',
-          boatName: 'Britannia',
-          division: 'Red',
-        },
-        totalPoints: 28,
-        netPoints: 20,
-        position: 2,
-        previousPosition: 1,
-        dropWorst: 1,
-        raceResults: [
-          { raceNumber: 1, position: 1, points: 1, status: 'finished' },
-          { raceNumber: 2, position: 2, points: 2, status: 'finished' },
-          { raceNumber: 3, position: 1, points: 1, status: 'finished' },
-          { raceNumber: 4, position: 4, points: 4, status: 'finished' },
-          { raceNumber: 5, position: 2, points: 2, status: 'finished' },
-          { raceNumber: 6, position: 8, points: 8, status: 'finished' },
-          { raceNumber: 7, position: 3, points: 3, status: 'finished' },
-          { raceNumber: 8, position: 1, points: 1, status: 'finished' },
-        ],
-      },
-      {
-        competitor: {
-          id: '3',
-          sailNumber: 'AUS 1234',
-          helmName: 'Michael Chen',
-          crewName: 'David Wong',
-          clubCountry: 'Hong Kong YC (HKG)',
-          boatName: 'Dragon Pearl',
-          division: 'Blue',
-        },
-        totalPoints: 32,
-        netPoints: 25,
-        position: 3,
-        previousPosition: 4,
-        dropWorst: 1,
-        raceResults: [
-          { raceNumber: 1, position: 2, points: 2, status: 'finished' },
-          { raceNumber: 2, position: 4, points: 4, status: 'finished' },
-          { raceNumber: 3, position: 3, points: 3, status: 'finished' },
-          { raceNumber: 4, position: 2, points: 2, status: 'finished' },
-          { raceNumber: 5, position: 1, points: 1, status: 'finished' },
-          { raceNumber: 6, position: 3, points: 3, status: 'finished' },
-          { raceNumber: 7, position: 7, points: 7, status: 'finished' },
-          { raceNumber: 8, position: 4, points: 4, status: 'finished' },
-        ],
-      },
-      // Add more mock competitors...
-    ];
-    setStandings(mockStandings);
+    // No mock data - results will come from live data source
+    setStandings([]);
   }, []);
 
   const onRefresh = useCallback(async () => {
@@ -409,115 +328,110 @@ export function ResultsScreen({ navigation }: ResultsScreenProps) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Championship Standings</Text>
-        <TouchableOpacity style={styles.downloadButton}>
-          <Download color={colors.primary} size={20} />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.championshipInfo}>
-        <Text style={styles.championshipName}>{championship.name}</Text>
-        <View style={styles.championshipStats}>
-          <View style={styles.statItem}>
-            <Flag color={colors.textSecondary} size={16} />
-            <Text style={styles.statText}>
-              {championship.completedRaces}/{championship.totalRaces} races
-            </Text>
-          </View>
-          <View style={styles.statItem}>
-            <User color={colors.textSecondary} size={16} />
-            <Text style={styles.statText}>{standings.length} boats</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Calendar color={colors.textSecondary} size={16} />
-            <Text style={styles.statText}>
-              Updated {new Date(championship.lastUpdated).toLocaleTimeString()}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {isOffline && (
-        <Animated.View 
-          style={styles.offlineIndicator}
-          entering={SlideInRight.duration(300)}
-        >
-          <WifiOff color={colors.warning} size={16} />
-          <Text style={styles.offlineText}>Offline - showing cached results</Text>
-        </Animated.View>
-      )}
-
-      {/* Fleet filter removed per design request */}
-
+    <View style={styles.container}>
+      {/* Main Content - Scrolls under the header */}
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={{ paddingTop: HEADER_HEIGHT + insets.top }}
+        scrollEventThrottle={16}
+        onScroll={scrollHandler.onScroll}
+        onScrollBeginDrag={scrollHandler.onScrollBeginDrag}
+        onScrollEndDrag={scrollHandler.onScrollEndDrag}
+        onMomentumScrollEnd={scrollHandler.onMomentumScrollEnd}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={colors.primary}
             colors={[colors.primary]}
+            progressViewOffset={HEADER_HEIGHT + insets.top}
           />
         }
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.standingsContainer}>
-          {filteredStandings.map((standing, index) => renderStandingCard(standing, index))}
-        </View>
+        {isOffline && (
+          <Animated.View
+            style={styles.offlineIndicator}
+            entering={SlideInRight.duration(300)}
+          >
+            <WifiOff color={colors.warning} size={16} />
+            <Text style={styles.offlineText}>Offline - showing cached results</Text>
+          </Animated.View>
+        )}
+
+        {filteredStandings.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Trophy color={colors.textMuted} size={64} strokeWidth={1.5} />
+            <Text style={styles.emptyStateTitle}>No Results Yet</Text>
+            <Text style={styles.emptyStateDescription}>
+              Results will appear here once racing begins and scores are posted to racingrulesofsailing.org
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.standingsContainer}>
+            {filteredStandings.map((standing, index) => renderStandingCard(standing, index))}
+          </View>
+        )}
       </ScrollView>
-    </SafeAreaView>
+
+      {/* Floating Header Section - Positioned above content */}
+      <RNAnimated.View
+        style={[
+          styles.headerSection,
+          {
+            paddingTop: insets.top,
+            transform: [{ translateY: toolbarTranslateY }]
+          }
+        ]}
+      >
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <IOSText textStyle="title1" weight="bold" style={styles.headerTitle}>
+              Results
+            </IOSText>
+            <ProfileButton size={36} />
+          </View>
+          <FloatingEventSwitch
+            options={[
+              { label: 'APAC 2026', shortLabel: 'APAC 2026', value: EVENTS.APAC_2026.id },
+              { label: 'Worlds 2027', shortLabel: 'Worlds 2027', value: EVENTS.WORLDS_2027.id }
+            ]}
+            selectedValue={selectedEvent}
+            onValueChange={setSelectedEvent}
+          />
+        </View>
+      </RNAnimated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.surface,
+  },
+  headerSection: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     backgroundColor: colors.background,
+    zIndex: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderLight,
   },
   header: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
+  headerContent: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.screenPadding,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    alignItems: 'center',
   },
   headerTitle: {
-    ...typography.headlineLarge,
     color: colors.text,
-  },
-  downloadButton: {
-    padding: spacing.sm,
-  },
-  championshipInfo: {
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.screenPadding,
-    paddingBottom: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-  },
-  championshipName: {
-    ...typography.headlineSmall,
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  championshipStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  statText: {
-    ...typography.labelMedium,
-    color: colors.textSecondary,
-    marginLeft: spacing.xs,
   },
   offlineIndicator: {
     flexDirection: 'row',
@@ -570,6 +484,28 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    backgroundColor: colors.surface,
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.xl * 2,
+  },
+  emptyStateTitle: {
+    ...typography.headlineMedium,
+    color: colors.text,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  emptyStateDescription: {
+    ...typography.bodyMedium,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    maxWidth: 300,
   },
   standingsContainer: {
     padding: spacing.screenPadding,

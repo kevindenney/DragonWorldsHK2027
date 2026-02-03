@@ -72,7 +72,6 @@ export const RadarOverlay: React.FC<RadarOverlayProps> = ({
     onLoadingChange?.(true);
 
     try {
-      console.log('📡 Loading radar data...');
 
       let frames: RadarFrame[];
       if (animated) {
@@ -86,11 +85,9 @@ export const RadarOverlay: React.FC<RadarOverlayProps> = ({
       setCurrentFrameIndex(0);
       onDataLoaded?.(frames);
 
-      console.log(`✅ Loaded ${frames.length} radar frames`);
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load radar data';
-      console.error('❌ Radar data loading failed:', errorMessage);
       setError(errorMessage);
       onError?.(errorMessage);
     } finally {
@@ -129,57 +126,38 @@ export const RadarOverlay: React.FC<RadarOverlayProps> = ({
 
   // Add detailed logging about what's happening with the overlay
   React.useEffect(() => {
-    console.log('📡 RadarOverlay render state:', {
-      visible,
-      frameCount: radarFrames.length,
-      currentFrameIndex,
-      currentFrameExists: !!currentFrame,
-      currentFrameTileCount: currentFrame?.tiles.length || 0,
-      loading,
-      error
-    });
 
     if (currentFrame && currentFrame.tiles.length > 0) {
-      console.log('📡 RadarOverlay will render', currentFrame.tiles.length, 'tiles');
       currentFrame.tiles.forEach((tile, index) => {
-        console.log(`📡 Tile ${index}: ${tile.url}`);
       });
     } else {
-      console.log('📡 RadarOverlay has no tiles to render');
     }
   }, [visible, radarFrames, currentFrameIndex, currentFrame, loading, error]);
 
   if (!visible) {
-    console.log('📡 RadarOverlay not visible, returning null');
     return null;
   }
 
   if (loading) {
-    console.log('📡 RadarOverlay loading, returning null');
     return null;
   }
 
   if (error) {
-    console.log('📡 RadarOverlay has error:', error);
     return null;
   }
 
   if (!currentFrame) {
-    console.log('📡 RadarOverlay no current frame, returning null');
     return null;
   }
 
   if (currentFrame.tiles.length === 0) {
-    console.log('📡 RadarOverlay current frame has no tiles, returning null');
     return null;
   }
 
-  console.log('📡 RadarOverlay rendering', currentFrame.tiles.length, 'tiles');
 
   return (
     <View style={styles.container}>
       {currentFrame.tiles.map((tile, index) => {
-        console.log(`📡 Rendering UrlTile ${index}: ${tile.url} with opacity ${opacity}`);
         return (
           <UrlTile
             key={`radar-tile-${currentFrameIndex}-${index}`}

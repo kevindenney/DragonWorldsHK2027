@@ -20,49 +20,72 @@ import { User, AuthProviderType, LoginCredentials, RegisterCredentials } from '.
 import { getDocRef, withTimestamp, UserDocument } from '../config/firestore';
 import { setDoc, getDoc } from 'firebase/firestore';
 import { firestore } from '../config/firebase';
-import { makeRedirectUri } from 'expo-auth-session';
-import * as AuthSession from 'expo-auth-session';
-import * as WebBrowser from 'expo-web-browser';
+import {
+  GoogleSignin,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
+import { Platform } from 'react-native';
 
-// Configure WebBrowser for OAuth
-WebBrowser.maybeCompleteAuthSession();
+// Configure Google Sign-In
+GoogleSignin.configure({
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+  offlineAccess: true,
+  forceCodeForRefreshToken: true,
+});
 
 /**
- * OAuth helper functions
+ * OAuth helper functions using native Google Sign-In
  */
 const handleGoogleOAuth = async () => {
   try {
-    // Use expo-auth-session with Firebase Auth web flow
-    const redirectUri = makeRedirectUri({
-      scheme: 'dragonworlds',
-      path: '/auth/callback',
-    });
+    console.log('🔐 [GOOGLE AUTH] ========== NATIVE SIGN-IN ==========');
+    console.log('🔐 [GOOGLE AUTH] Platform:', Platform.OS);
+    console.log('🔐 [GOOGLE AUTH] Web Client ID:', process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || 'NOT SET');
 
-    const request = new AuthSession.AuthRequest({
-      clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID!,
-      scopes: ['openid', 'profile', 'email'],
-      responseType: AuthSession.ResponseType.IdToken,
-      redirectUri,
-      extraParams: {
-        // Ensure we get an ID token for Firebase
-        nonce: Math.random().toString(36).substring(2, 15),
-      },
-    });
-
-    const result = await request.promptAsync({
-      authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-    });
-
-    if (result.type === 'success' && result.params.id_token) {
-      // Create Firebase credential from Google ID token
-      const credential = GoogleAuthProvider.credential(result.params.id_token);
-      return await signInWithCredential(auth, credential);
-    } else {
-      throw new Error('Google sign-in was cancelled or failed');
+    // Check if Google Play Services are available (Android only)
+    if (Platform.OS === 'android') {
+      console.log('🔐 [GOOGLE AUTH] Checking Google Play Services...');
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      console.log('🔐 [GOOGLE AUTH] Google Play Services available');
     }
-  } catch (error) {
-    console.error('Google OAuth error:', error);
-    throw error;
+
+    // Sign in with Google
+    console.log('🔐 [GOOGLE AUTH] Starting native sign-in...');
+    const signInResult = await GoogleSignin.signIn();
+    console.log('🔐 [GOOGLE AUTH] Sign-in successful, user:', signInResult.data?.user?.email);
+
+    // Get the ID token
+    const tokens = await GoogleSignin.getTokens();
+    const idToken = tokens.idToken;
+
+    if (!idToken) {
+      throw new Error('Failed to get ID token from Google Sign-In');
+    }
+
+    console.log('🔐 [GOOGLE AUTH] Got ID token, creating Firebase credential...');
+
+    // Create Firebase credential from Google ID token
+    const credential = GoogleAuthProvider.credential(idToken);
+    const userCredential = await signInWithCredential(auth, credential);
+
+    console.log('🔐 [GOOGLE AUTH] Firebase sign-in successful:', userCredential.user.email);
+    return userCredential;
+
+  } catch (error: any) {
+    console.error('🔐 [GOOGLE AUTH] Error:', error);
+
+    // Handle specific Google Sign-In errors
+    if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+      throw new Error('Google sign-in was cancelled');
+    } else if (error.code === statusCodes.IN_PROGRESS) {
+      throw new Error('Google sign-in is already in progress');
+    } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+      throw new Error('Google Play Services not available or outdated');
+    } else {
+      console.error('🔐 [GOOGLE AUTH] Error code:', error.code);
+      console.error('🔐 [GOOGLE AUTH] Error message:', error.message);
+      throw error;
+    }
   }
 };
 
@@ -101,7 +124,6 @@ const handleAppleOAuth = async () => {
       throw new Error('Apple sign-in was cancelled or failed');
     }
   } catch (error) {
-    console.error('Apple OAuth error:', error);
     throw error;
   }
 };
@@ -116,6 +138,8 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   isInitialized: boolean;
+  initializing: boolean;
+  unsubscribe: (() => void) | null;
 
   // Actions
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -148,6 +172,8 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
       error: null,
       isInitialized: false,
+      initializing: false,
+      unsubscribe: null,
 
       // Login action
       login: async (credentials: LoginCredentials) => {
@@ -168,7 +194,6 @@ export const useAuthStore = create<AuthState>()(
               userData = userDoc.data();
             }
           } catch (error) {
-            console.warn('⚠️ Could not fetch user data from Firestore:', error);
           }
           
           const user: User = {
@@ -247,12 +272,9 @@ export const useAuthStore = create<AuthState>()(
               });
 
               await setDoc(getDocRef.user(userCredential.user.uid), userDoc);
-              console.log('✅ User document created in Firestore');
             } else {
-              console.warn('⚠️ Firestore not available, skipping user document creation');
             }
           } catch (error) {
-            console.warn('⚠️ Could not create user document in Firestore:', error);
           }
 
           // Send verification email
@@ -321,7 +343,6 @@ export const useAuthStore = create<AuthState>()(
               userData = userDoc.data();
             }
           } catch (error) {
-            console.warn('⚠️ Could not fetch user data from Firestore:', error);
           }
 
           // Create or update user document in Firestore
@@ -344,10 +365,8 @@ export const useAuthStore = create<AuthState>()(
               });
 
               await setDoc(getDocRef.user(userCredential.user.uid), userDoc, { merge: true });
-              console.log(`✅ User document updated in Firestore for ${provider} login`);
             }
           } catch (error) {
-            console.warn('⚠️ Could not update user document in Firestore:', error);
           }
 
           const user: User = {
@@ -469,7 +488,6 @@ export const useAuthStore = create<AuthState>()(
               }, { merge: true });
             }
           } catch (error) {
-            console.warn('⚠️ Could not update user document in Firestore:', error);
           }
           
           const updatedUser = {
@@ -546,12 +564,12 @@ export const useAuthStore = create<AuthState>()(
           const currentState = get();
           
           // Prevent multiple initializations
-          if (currentState.isInitialized || (currentState as any).initializing) {
+          if (currentState.isInitialized || currentState.initializing) {
             return;
           }
-          
+
           // Mark as initializing to prevent concurrent calls
-          (currentState as any).initializing = true;
+          set({ initializing: true });
           set({ isLoading: true });
           
           // Set up Firebase auth state listener
@@ -566,7 +584,6 @@ export const useAuthStore = create<AuthState>()(
                     userData = userDoc.data();
                   }
                 } catch (firestoreError) {
-                  console.warn('⚠️ Could not fetch user data from Firestore:', firestoreError);
                 }
                 
                 const user: User = {
@@ -600,7 +617,6 @@ export const useAuthStore = create<AuthState>()(
                 });
               }
             } catch (error) {
-              console.error('Auth state change error:', error);
               // Still mark as initialized to prevent loops
               set({
                 isInitialized: true,
@@ -611,10 +627,9 @@ export const useAuthStore = create<AuthState>()(
           });
           
           // Store unsubscribe function for cleanup if needed
-          (get() as any).unsubscribe = unsubscribe;
+          set({ unsubscribe });
           
         } catch (error) {
-          console.error('Auth initialization error:', error);
           set({
             isInitialized: true,
             isLoading: false,
@@ -627,14 +642,11 @@ export const useAuthStore = create<AuthState>()(
       name: 'auth-storage',
       storage: (() => {
         authDebugger.beforePersist();
-        console.log('🔍 [AuthStore] Creating AsyncStorage for Zustand persistence...');
         try {
           const storage = createJSONStorage(() => AsyncStorage);
           authDebugger.afterPersist();
-          console.log('🔍 [AuthStore] AsyncStorage persistence setup successful');
           return storage;
         } catch (error) {
-          console.error('🚨 [AuthStore] AsyncStorage persistence setup failed:', error);
           throw error;
         }
       })(),

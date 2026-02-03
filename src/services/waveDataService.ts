@@ -187,7 +187,6 @@ class WaveDataService {
     if (this.pollingEnabled) return;
 
     this.pollingEnabled = true;
-    console.log('🌊 [HKO WAVE] Starting real-time buoy data polling (10-second intervals)');
 
     // Initial fetch
     this.fetchHKOWaveData();
@@ -207,7 +206,6 @@ class WaveDataService {
       this.pollingTimer = null;
     }
     this.pollingEnabled = false;
-    console.log('🌊 [HKO WAVE] Stopped real-time buoy data polling');
   }
 
   /**
@@ -215,7 +213,6 @@ class WaveDataService {
    */
   private async fetchHKOWaveData(): Promise<void> {
     try {
-      console.log('🌊 [HKO WAVE] Fetching real-time data from HKO weather buoys...');
 
       // Try to get HKO weather buoys, but fall back to simulated data if API is unavailable
       let buoys: any[] = [];
@@ -223,17 +220,14 @@ class WaveDataService {
       try {
         buoys = await hkoAPI.getWeatherBuoys();
       } catch (apiError) {
-        console.warn('🌊 [HKO WAVE] HKO API unavailable, using simulated data:', apiError);
         // Create simulated HKO buoys for development/testing
         buoys = this.createSimulatedHKOBuoys();
       }
 
       if (buoys.length === 0) {
-        console.warn('🌊 [HKO WAVE] No HKO weather buoys available, creating fallback data');
         buoys = this.createSimulatedHKOBuoys();
       }
 
-      console.log(`🌊 [HKO WAVE] Processing ${buoys.length} weather buoys (${buoys[0]?.source || 'simulated'} data)`);
 
       // Convert each buoy to a wave station with corresponding coordinates
       buoys.forEach((buoy, index) => {
@@ -243,19 +237,11 @@ class WaveDataService {
         const station = this.convertHKOBuoyToWaveStation(buoy, coordinate);
         this.waveStations.set(station.id, station);
 
-        console.log(`🌊 [HKO WAVE] Updated station ${station.name}:`, {
-          windSpeed: station.windSpeed,
-          waveHeight: station.waveHeight,
-          wavePeriod: station.wavePeriod,
-          dataQuality: station.dataQuality,
-          source: buoy.source || 'simulated'
-        });
       });
 
       this.lastUpdate = new Date();
 
     } catch (error) {
-      console.error('🌊 [HKO WAVE] Critical error in wave data service:', error);
       // Even if everything fails, create basic fallback data
       this.createFallbackWaveStations();
     }
@@ -302,7 +288,6 @@ class WaveDataService {
       };
 
       this.waveStations.set(station.id, station);
-      console.log(`🌊 [HKO WAVE] Created fallback station: ${station.name}`);
     });
   }
 

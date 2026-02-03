@@ -156,17 +156,14 @@ export const CompetitorDirectory: React.FC<CompetitorDirectoryProps> = ({
 
   const exportToCSV = () => {
     // Implementation for CSV export
-    console.log('Exporting to CSV...');
   };
 
   const exportToPDF = () => {
     // Implementation for PDF export
-    console.log('Exporting to PDF...');
   };
 
   const handleShareList = () => {
     // Implementation for sharing functionality
-    console.log('Sharing competitor list...');
   };
 
   const renderCompetitorItem = ({ item }: { item: Competitor }) => (

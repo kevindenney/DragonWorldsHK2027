@@ -377,7 +377,6 @@ class BMWService {
 
       return vehicles;
     } catch (error) {
-      console.error('Error fetching BMW vehicles:', error);
       throw new Error('Failed to load BMW vehicles');
     }
   }
@@ -419,11 +418,9 @@ class BMWService {
       };
 
       // In real implementation, this would call BMW's booking API
-      console.log('BMW transport booking created:', booking);
       
       return booking;
     } catch (error) {
-      console.error('Error booking transport:', error);
       throw new Error('Failed to book BMW transport');
     }
   }
@@ -547,7 +544,6 @@ class BMWService {
 
       return experiences;
     } catch (error) {
-      console.error('Error fetching BMW experiences:', error);
       throw new Error('Failed to load BMW experiences');
     }
   }
@@ -727,7 +723,6 @@ class BMWService {
         ]
       };
     } catch (error) {
-      console.error('Error tracking booking:', error);
       throw new Error('Failed to track booking');
     }
   }

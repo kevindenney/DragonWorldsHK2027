@@ -111,7 +111,6 @@ export class UserProfileService {
 
       return createdUser;
     } catch (error) {
-      console.error('Failed to create user profile on sign-in:', error);
       throw new UserProfileServiceError(
         'profile_creation_failed',
         'Failed to create user profile',
@@ -155,7 +154,6 @@ export class UserProfileService {
 
       return updatedUser;
     } catch (error) {
-      console.error('Failed to update user profile:', error);
       throw new UserProfileServiceError(
         'profile_update_failed',
         'Failed to update user profile',
@@ -181,7 +179,6 @@ export class UserProfileService {
 
       return updatedUser;
     } catch (error) {
-      console.error('Failed to update user preferences:', error);
       throw new UserProfileServiceError(
         'preferences_update_failed',
         'Failed to update user preferences',
@@ -217,7 +214,6 @@ export class UserProfileService {
 
       return updatedUser;
     } catch (error) {
-      console.error('Failed to update profile info:', error);
       throw new UserProfileServiceError(
         'profile_info_update_failed',
         'Failed to update profile information',
@@ -252,7 +248,6 @@ export class UserProfileService {
 
       return updatedUser;
     } catch (error) {
-      console.error('Failed to sync auth with profile:', error);
       throw new UserProfileServiceError(
         'sync_failed',
         'Failed to sync authentication data with profile',
@@ -316,7 +311,6 @@ export class UserProfileService {
         preferences
       );
     } catch (error) {
-      console.error('Failed to update weather preferences:', error);
       throw new UserProfileServiceError(
         'weather_preferences_update_failed',
         'Failed to update weather preferences',
@@ -341,7 +335,6 @@ export class UserProfileService {
         metadata,
       });
     } catch (error) {
-      console.error('Failed to track user activity:', error);
       // Don't throw error for activity tracking failures
     }
   }
@@ -370,7 +363,6 @@ export class UserProfileService {
       this.currentUser = null;
       this.cleanup();
     } catch (error) {
-      console.error('Failed to delete user profile:', error);
       throw new UserProfileServiceError(
         'profile_deletion_failed',
         'Failed to delete user profile',
@@ -408,7 +400,6 @@ export class UserProfileService {
 
       return updatedUser;
     } catch (error) {
-      console.error('Failed to link auth provider:', error);
       throw new UserProfileServiceError(
         'provider_linking_failed',
         'Failed to link authentication provider',
@@ -441,7 +432,6 @@ export class UserProfileService {
 
       return updatedUser;
     } catch (error) {
-      console.error('Failed to unlink auth provider:', error);
       throw new UserProfileServiceError(
         'provider_unlinking_failed',
         'Failed to unlink authentication provider',

@@ -251,7 +251,6 @@ function validateCoordinates(station: WaveStation): boolean {
 // Validate all stations have proper coordinates
 const invalidStations = HK_WAVE_STATIONS.filter(station => !validateCoordinates(station));
 if (invalidStations.length > 0) {
-  console.warn('Invalid wave station coordinates:', invalidStations);
 }
 
 // Export station groups by type

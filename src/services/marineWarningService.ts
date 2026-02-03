@@ -67,7 +67,6 @@ class MarineWarningService {
     if (this.pollingEnabled) return;
 
     this.pollingEnabled = true;
-    console.log('⚠️ [MARINE WARNINGS] Starting real-time warning polling (30-second intervals)');
 
     // Initial fetch
     this.fetchMarineWarnings();
@@ -87,7 +86,6 @@ class MarineWarningService {
       this.pollingTimer = null;
     }
     this.pollingEnabled = false;
-    console.log('⚠️ [MARINE WARNINGS] Stopped warning polling');
   }
 
   /**
@@ -95,7 +93,6 @@ class MarineWarningService {
    */
   private async fetchMarineWarnings(): Promise<void> {
     try {
-      console.log('⚠️ [MARINE WARNINGS] Fetching marine warnings...');
 
       // Get HKO marine warnings
       const hkoWarnings = await hkoAPI.getMarineWarnings();
@@ -127,9 +124,7 @@ class MarineWarningService {
       // Notify listeners
       this.notifyListeners();
 
-      console.log(`⚠️ [MARINE WARNINGS] Active warnings: ${this.warnings.size}`);
     } catch (error) {
-      console.error('⚠️ [MARINE WARNINGS] Failed to fetch warnings:', error);
     }
   }
 
@@ -299,7 +294,6 @@ class MarineWarningService {
     this.alerts.set(alert.id, alert);
 
     if (shouldNotify) {
-      console.log(`🚨 [MARINE ALERT] ${alertLevel.toUpperCase()}: ${warning.title}`);
     }
   }
 
@@ -341,7 +335,6 @@ class MarineWarningService {
     });
 
     if (expiredWarnings.length > 0) {
-      console.log(`⚠️ [MARINE WARNINGS] Cleaned up ${expiredWarnings.length} expired warnings`);
     }
   }
 
@@ -372,7 +365,6 @@ class MarineWarningService {
       try {
         callback(warningsList);
       } catch (error) {
-        console.error('⚠️ [MARINE WARNINGS] Error in warning listener:', error);
       }
     });
   }
@@ -437,7 +429,6 @@ class MarineWarningService {
     const alert = this.alerts.get(alertId);
     if (alert) {
       alert.acknowledgedAt = new Date().toISOString();
-      console.log(`✅ [MARINE ALERT] Acknowledged alert: ${alertId}`);
     }
   }
 

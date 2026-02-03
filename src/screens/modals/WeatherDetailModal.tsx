@@ -130,10 +130,8 @@ const openURL = async (url: string) => {
     if (supported) {
       await Linking.openURL(url);
     } else {
-      console.warn('Cannot open URL:', url);
     }
   } catch (error) {
-    console.error('Error opening URL:', error);
   }
 };
 

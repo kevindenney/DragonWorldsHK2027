@@ -54,20 +54,50 @@ export const externalUrls = {
    * Event-specific racing rules pages
    */
   racingRules: {
-    // General World Sailing rules page
-    officialUrl: 'https://www.sailing.org/inside-world-sailing/rules-regulations/racing-rules-of-sailing/',
+    // Official Racing Rules of Sailing page - use racingrulesofsailing.org (sailing.org redirects)
+    officialUrl: 'https://www.racingrulesofsailing.org/rules',
+    baseUrl: 'https://www.racingrulesofsailing.org',
 
     // APAC 2026 - Event #13241
     apac: {
+      eventId: '13241',
       eventNumber: '13241',
       eventLinks: 'https://www.racingrulesofsailing.org/events/13241/event_links?name=2026%2520HONG%2520KONG%2520DRAGON%2520ASIA%2520PACIFIC%2520CHAMPIONSHIP',
+      documents: 'https://www.racingrulesofsailing.org/documents/13241/event',
+      schedules: 'https://www.racingrulesofsailing.org/schedules/13241/event',
+      decisions: 'https://www.racingrulesofsailing.org/decisions/13241/event',
+      forms: {
+        question: 'https://www.racingrulesofsailing.org/questions/new?event_id=13241',
+        crewSubstitution: 'https://www.racingrulesofsailing.org/crew_substitutions/new?event_id=13241',
+        equipmentSubstitution: 'https://www.racingrulesofsailing.org/equipment_substitutions/new?event_id=13241',
+        scoringInquiry: 'https://www.racingrulesofsailing.org/scoring_inquiries/new?event_id=13241',
+        protest: 'https://www.racingrulesofsailing.org/protests/new?event_id=13241',
+      },
     },
 
     // Worlds 2027 - Event #13242
     worlds: {
+      eventId: '13242',
       eventNumber: '13242',
       eventLinks: 'https://www.racingrulesofsailing.org/events/13242/event_links?name=2027%2520HONG%2520KONG%2520DRAGON%2520WORLD%2520CHAMPIONSHIP',
+      documents: 'https://www.racingrulesofsailing.org/documents/13242/event',
+      schedules: 'https://www.racingrulesofsailing.org/schedules/13242/event',
+      decisions: 'https://www.racingrulesofsailing.org/decisions/13242/event',
+      forms: {
+        question: 'https://www.racingrulesofsailing.org/questions/new?event_id=13242',
+        crewSubstitution: 'https://www.racingrulesofsailing.org/crew_substitutions/new?event_id=13242',
+        equipmentSubstitution: 'https://www.racingrulesofsailing.org/equipment_substitutions/new?event_id=13242',
+        scoringInquiry: 'https://www.racingrulesofsailing.org/scoring_inquiries/new?event_id=13242',
+        protest: 'https://www.racingrulesofsailing.org/protests/new?event_id=13242',
+      },
     },
+
+    // Helper to build URLs dynamically
+    getDocumentsUrl: (eventId: string) => `https://www.racingrulesofsailing.org/documents/${eventId}/event`,
+    getSchedulesUrl: (eventId: string) => `https://www.racingrulesofsailing.org/schedules/${eventId}/event`,
+    getDecisionsUrl: (eventId: string) => `https://www.racingrulesofsailing.org/decisions/${eventId}/event`,
+    getProtestFormUrl: (eventId: string) => `https://www.racingrulesofsailing.org/protests/new?event_id=${eventId}`,
+    getQuestionFormUrl: (eventId: string) => `https://www.racingrulesofsailing.org/questions/new?event_id=${eventId}`,
   },
 
   /**

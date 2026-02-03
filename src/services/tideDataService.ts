@@ -265,7 +265,6 @@ class TideDataService {
     if (this.pollingEnabled) return;
 
     this.pollingEnabled = true;
-    console.log('🌊 [HKO TIDE] Starting real-time tide station polling (10-second intervals)');
 
     // Initial fetch
     this.fetchHKOTideData();
@@ -285,7 +284,6 @@ class TideDataService {
       this.pollingTimer = null;
     }
     this.pollingEnabled = false;
-    console.log('🌊 [HKO TIDE] Stopped real-time tide station polling');
   }
 
   /**
@@ -293,7 +291,6 @@ class TideDataService {
    */
   private async fetchHKOTideData(): Promise<void> {
     try {
-      console.log('🌊 [HKO TIDE] Fetching real-time data from HKO tide stations...');
 
       // Try to get HKO tide stations, but fall back to simulated data if API is unavailable
       let hkoStations: any[] = [];
@@ -301,17 +298,14 @@ class TideDataService {
       try {
         hkoStations = await hkoAPI.getTideStations();
       } catch (apiError) {
-        console.warn('🌊 [HKO TIDE] HKO API unavailable, using simulated data:', apiError);
         // Create simulated HKO stations for development/testing
         hkoStations = this.createSimulatedHKOStations();
       }
 
       if (hkoStations.length === 0) {
-        console.warn('🌊 [HKO TIDE] No HKO tide stations available, creating fallback data');
         hkoStations = this.createSimulatedHKOStations();
       }
 
-      console.log(`🌊 [HKO TIDE] Processing ${hkoStations.length} tide stations (${hkoStations[0]?.source || 'simulated'} data)`);
 
       // Convert each HKO station to our format using predefined locations
       hkoStations.forEach((hkoStation, index) => {
@@ -323,18 +317,11 @@ class TideDataService {
         const station = this.convertHKOTideStation(hkoStation, stationInfo);
         this.tideStations.set(station.id, station);
 
-        console.log(`🌊 [HKO TIDE] Updated station ${station.name}:`, {
-          currentHeight: station.currentHeight,
-          trend: station.trend,
-          dataQuality: station.dataQuality,
-          source: hkoStation.source || 'simulated'
-        });
       });
 
       this.lastUpdate = new Date();
 
     } catch (error) {
-      console.error('🌊 [HKO TIDE] Critical error in tide data service:', error);
       // Even if everything fails, create basic fallback data
       this.createFallbackTideStations();
     }
@@ -386,7 +373,6 @@ class TideDataService {
       };
 
       this.tideStations.set(station.id, station);
-      console.log(`🌊 [HKO TIDE] Created fallback station: ${station.name}`);
     });
   }
 

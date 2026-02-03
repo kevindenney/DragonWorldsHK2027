@@ -34,10 +34,8 @@ export class RealDataService {
     } else {
       // Fallback for development
       this.apiBaseUrl = 'http://localhost:5001/your-project/us-central1';
-      console.warn('⚠️ EXPO_PUBLIC_FIREBASE_PROJECT_ID not set, using local emulator URL');
     }
     
-    console.log('🔥 Firebase Functions API URL:', this.apiBaseUrl);
   }
 
   /**
@@ -49,7 +47,6 @@ export class RealDataService {
     onError?: (error: Error) => void
   ): () => void {
     try {
-      console.log('🔔 Subscribing to real-time notices for event:', eventId);
       
       const noticesQuery = query(
         collection(db, 'notices'),
@@ -82,11 +79,9 @@ export class RealDataService {
             });
           });
 
-          console.log(`✅ Received ${notices.length} notices from Firestore`);
           onNoticesUpdate(notices);
         },
         (error) => {
-          console.error('❌ Error in notices subscription:', error);
           if (onError) onError(error);
         }
       );
@@ -98,7 +93,6 @@ export class RealDataService {
       return unsubscribe;
       
     } catch (error) {
-      console.error('❌ Error setting up notices subscription:', error);
       if (onError) onError(error as Error);
       return () => {};
     }
@@ -109,7 +103,6 @@ export class RealDataService {
    */
   async triggerManualRefresh(eventId: string): Promise<boolean> {
     try {
-      console.log('🔄 Triggering manual notice board refresh...');
       
       const apiUrl = `${this.apiBaseUrl}/scrapeNoticeBoard?eventId=${eventId}`;
       const response = await fetch(apiUrl, {
@@ -125,11 +118,9 @@ export class RealDataService {
       }
 
       const result = await response.json();
-      console.log(`✅ Manual refresh completed: ${result.noticesCount} notices`);
       return true;
       
     } catch (error) {
-      console.error('❌ Manual refresh failed:', error);
       return false;
     }
   }
@@ -151,7 +142,6 @@ export class RealDataService {
       
       return null;
     } catch (error) {
-      console.error('Error fetching user notice status:', error);
       return null;
     }
   }
@@ -170,9 +160,7 @@ export class RealDataService {
         isBookmarked: false
       }, { merge: true });
       
-      console.log(`✅ Marked notice ${noticeId} as read for user ${userId}`);
     } catch (error) {
-      console.error('Error marking notice as read:', error);
       throw error;
     }
   }
@@ -195,10 +183,8 @@ export class RealDataService {
         bookmarkedAt: newBookmarkStatus ? Timestamp.now() : null
       }, { merge: true });
       
-      console.log(`✅ ${newBookmarkStatus ? 'Bookmarked' : 'Unbookmarked'} notice ${noticeId} for user ${userId}`);
       return newBookmarkStatus;
     } catch (error) {
-      console.error('Error toggling notice bookmark:', error);
       throw error;
     }
   }
@@ -225,7 +211,6 @@ export class RealDataService {
           onBookmarksUpdate(bookmarkedIds);
         },
         (error) => {
-          console.error('Error in bookmarks subscription:', error);
           if (onError) onError(error);
         }
       );
@@ -235,7 +220,6 @@ export class RealDataService {
       
       return unsubscribe;
     } catch (error) {
-      console.error('Error setting up bookmarks subscription:', error);
       if (onError) onError(error as Error);
       return () => {};
     }
@@ -247,7 +231,6 @@ export class RealDataService {
   cleanup(): void {
     this.listeners.forEach((unsubscribe, listenerId) => {
       unsubscribe();
-      console.log(`🧹 Cleaned up listener: ${listenerId}`);
     });
     this.listeners.clear();
   }
@@ -257,7 +240,6 @@ export class RealDataService {
    */
   async fetchEventData(eventId: string): Promise<NoticeBoardEvent | null> {
     try {
-      console.log('🌐 Fetching event data via HTTP API (fallback mode)');
       
       const apiUrl = `${this.apiBaseUrl}/scrapeRaceData?eventId=${eventId}&type=event`;
       const response = await fetch(apiUrl, {
@@ -269,7 +251,6 @@ export class RealDataService {
       });
 
       if (!response.ok) {
-        console.log('🔄 HTTP API not available, falling back to demo data');
         return null;
       }
 
@@ -277,7 +258,6 @@ export class RealDataService {
       return this.transformApiResponse(data, eventId);
       
     } catch (error) {
-      console.error('❌ HTTP API fallback failed:', error);
       return null;
     }
   }
@@ -296,7 +276,6 @@ export class RealDataService {
       return data.races || [];
       
     } catch (error) {
-      console.error('Error fetching race results:', error);
       return [];
     }
   }
@@ -315,7 +294,6 @@ export class RealDataService {
       return data.competitors || [];
       
     } catch (error) {
-      console.error('Error fetching competitors:', error);
       return [];
     }
   }
@@ -334,7 +312,6 @@ export class RealDataService {
       return data.documents || [];
       
     } catch (error) {
-      console.error('Error fetching documents:', error);
       return [];
     }
   }
@@ -385,7 +362,6 @@ export class RealDataService {
 
     // Add metadata if this was a fallback response
     if (data._fallback) {
-      console.log('📄 Using fallback data from API due to scraping error:', data._error);
     }
 
     return transformedEvent;

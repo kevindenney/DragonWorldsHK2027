@@ -258,7 +258,6 @@ class HSBCService {
 
       return locations;
     } catch (error) {
-      console.error('Error fetching HSBC locations:', error);
       throw new Error('Failed to load HSBC locations');
     }
   }
@@ -408,7 +407,6 @@ class HSBCService {
 
       return rates;
     } catch (error) {
-      console.error('Error fetching currency rates:', error);
       throw new Error('Failed to load currency exchange rates');
     }
   }
@@ -455,7 +453,6 @@ class HSBCService {
         }
       };
     } catch (error) {
-      console.error('Error fetching account info:', error);
       return null;
     }
   }
@@ -493,11 +490,9 @@ class HSBCService {
       };
 
       // In real implementation, this would call HSBC's appointment API
-      console.log('Service request submitted:', request);
       
       return request;
     } catch (error) {
-      console.error('Error requesting service:', error);
       throw new Error('Failed to request banking service');
     }
   }
@@ -519,7 +514,6 @@ class HSBCService {
       
       return false;
     } catch (error) {
-      console.error('Error connecting account:', error);
       throw new Error('Failed to connect HSBC account');
     }
   }

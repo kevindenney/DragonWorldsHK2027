@@ -64,7 +64,6 @@ class AuthService {
       try {
         await this.handleAuthStateChange(firebaseUser);
       } catch (error) {
-        console.error('Auth state change error:', error);
         this.updateAuthState({
           user: null,
           firebaseUser: null,
@@ -109,7 +108,6 @@ class AuthService {
           throw new Error('Failed to fetch user profile');
         }
       } catch (error) {
-        console.error('Failed to handle auth state change:', error);
         await this.signOut();
       }
     } else {
@@ -169,7 +167,6 @@ class AuthService {
         ['@last_activity', Date.now().toString()],
       ]);
     } catch (error) {
-      console.error('Failed to store auth data:', error);
     }
   }
 
@@ -180,7 +177,6 @@ class AuthService {
     try {
       await AsyncStorage.multiRemove(['@auth_token', '@user_data', '@last_activity']);
     } catch (error) {
-      console.error('Failed to clear auth data:', error);
     }
   }
 
@@ -400,7 +396,6 @@ class AuthService {
           await GoogleSignin.signOut();
         } catch (error) {
           // Google sign-out might fail if user wasn't signed in with Google
-          console.log('Google sign-out skipped:', error);
         }
       }
 
@@ -408,13 +403,11 @@ class AuthService {
       try {
         await authApi.logout();
       } catch (error) {
-        console.error('Backend logout error:', error);
       }
 
       // Sign out from Firebase
       await signOut(auth);
     } catch (error) {
-      console.error('Sign out error:', error);
       // Force clear local state even if sign out fails
       await this.clearStoredAuthData();
       authApi.clearAuthToken();

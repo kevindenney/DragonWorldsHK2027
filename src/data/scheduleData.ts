@@ -111,12 +111,13 @@ export const eventSchedules = {
             mapLocationId: "rhkyc_kellett"
           },
           {
-            time: "18:00-20:00",
-            activity: "Opening Cocktails",
+            time: "19:00",
+            activity: "Worlds Welcome Reception",
             type: "social" as const,
-            location: "RHKYC Kellett Island",
-            detail: "Official championship opening reception.",
-            mapLocationId: "rhkyc_kellett"
+            location: "Hopewell Hotel Sky Bar",
+            detail: "World Championship welcome cocktail reception at Sky Bar.",
+            mapLocationId: "hopewell_hotel",
+            dressCode: "Smart casual"
           }
         ]
       },
@@ -137,9 +138,9 @@ export const eventSchedules = {
             time: "17:00",
             activity: "After Sailing Social Debrief",
             type: "social" as const,
-            location: "RHKYC Kellett Island",
+            location: "Clearwater Bay Marina",
             detail: "Post-racing social debrief available after sailing.",
-            mapLocationId: "rhkyc_kellett"
+            mapLocationId: "clearwater_bay_marina"
           }
         ]
       },
@@ -160,9 +161,9 @@ export const eventSchedules = {
             time: "17:00",
             activity: "After Sailing Social Debrief",
             type: "social" as const,
-            location: "RHKYC Kellett Island",
+            location: "Clearwater Bay Marina",
             detail: "Post-racing social debrief available after sailing.",
-            mapLocationId: "rhkyc_kellett"
+            mapLocationId: "clearwater_bay_marina"
           }
         ]
       },
@@ -183,9 +184,9 @@ export const eventSchedules = {
             time: "17:00",
             activity: "After Sailing Social Debrief",
             type: "social" as const,
-            location: "RHKYC Kellett Island",
+            location: "Clearwater Bay Marina",
             detail: "Post-racing social debrief available after sailing.",
-            mapLocationId: "rhkyc_kellett"
+            mapLocationId: "clearwater_bay_marina"
           },
           {
             time: "TBC",
@@ -227,9 +228,9 @@ export const eventSchedules = {
             time: "17:00",
             activity: "After Sailing Social Debrief",
             type: "social" as const,
-            location: "RHKYC Kellett Island",
+            location: "Clearwater Bay Marina",
             detail: "Post-racing social debrief available after sailing.",
-            mapLocationId: "rhkyc_kellett"
+            mapLocationId: "clearwater_bay_marina"
           }
         ]
       },
@@ -250,9 +251,9 @@ export const eventSchedules = {
             time: "17:00",
             activity: "After Sailing Social Debrief",
             type: "social" as const,
-            location: "RHKYC Kellett Island",
+            location: "Clearwater Bay Marina",
             detail: "Post-racing social debrief available after sailing.",
-            mapLocationId: "rhkyc_kellett"
+            mapLocationId: "clearwater_bay_marina"
           }
         ]
       },
@@ -270,26 +271,13 @@ export const eventSchedules = {
             mapLocationId: "ninepins_race_course"
           },
           {
-            time: "17:00",
-            activity: "After Sailing Social Debrief",
+            time: "19:00",
+            activity: "Prize Giving Dinner",
             type: "social" as const,
-            location: "RHKYC Kellett Island",
-            detail: "Post-racing social debrief available after sailing.",
-            mapLocationId: "rhkyc_kellett"
-          },
-          {
-            time: "TBC",
-            activity: "Prizegiving",
-            type: "social" as const,
-            location: "TBC",
-            detail: "Venue and time to be confirmed."
-          },
-          {
-            time: "TBC",
-            activity: "Closing Ceremony Dinner",
-            type: "social" as const,
-            location: "TBC",
-            detail: "To be confirmed."
+            location: "Hopewell Hotel",
+            detail: "Championship prize giving gala dinner.",
+            mapLocationId: "hopewell_hotel",
+            dressCode: "Formal"
           }
         ]
       },
@@ -356,12 +344,13 @@ export const eventSchedules = {
             mapLocationId: "rhkyc_kellett"
           },
           {
-            time: "18:00-20:00",
-            activity: "Opening Cocktails",
+            time: "19:00",
+            activity: "APAC Welcome Reception",
             type: "social" as const,
-            location: "RHKYC Kellett Island",
-            detail: "Welcome reception for all competitors.",
-            mapLocationId: "rhkyc_kellett"
+            location: "Hopewell Hotel",
+            detail: "Asia Pacific Championship welcome cocktail reception.",
+            mapLocationId: "hopewell_hotel",
+            dressCode: "Smart casual"
           }
         ]
       },
@@ -382,9 +371,9 @@ export const eventSchedules = {
             time: "18:00",
             activity: "After Sailing Social Debrief",
             type: "social" as const,
-            location: "RHKYC Kellett Island",
+            location: "Clearwater Bay Marina",
             detail: "Post-racing social debrief available after sailing.",
-            mapLocationId: "rhkyc_kellett"
+            mapLocationId: "clearwater_bay_marina"
           }
         ]
       },
@@ -405,9 +394,9 @@ export const eventSchedules = {
             time: "18:00",
             activity: "After Sailing Social Debrief",
             type: "social" as const,
-            location: "RHKYC Kellett Island",
+            location: "Clearwater Bay Marina",
             detail: "Post-racing social debrief available after sailing.",
-            mapLocationId: "rhkyc_kellett"
+            mapLocationId: "clearwater_bay_marina"
           }
         ]
       },
@@ -425,26 +414,13 @@ export const eventSchedules = {
             mapLocationId: "ninepins_race_course"
           },
           {
-            time: "18:00",
-            activity: "After Sailing Social Debrief",
+            time: "19:00",
+            activity: "APAC Prizegiving Dinner",
             type: "social" as const,
-            location: "RHKYC Kellett Island",
-            detail: "Post-racing social debrief available after sailing.",
-            mapLocationId: "rhkyc_kellett"
-          },
-          {
-            time: "TBC",
-            activity: "Prizegiving Ceremony",
-            type: "social" as const,
-            location: "TBC",
-            detail: "Awards ceremony for APAC Championship. Venue and time to be confirmed."
-          },
-          {
-            time: "TBC",
-            activity: "Closing Ceremony Dinner",
-            type: "social" as const,
-            location: "TBC",
-            detail: "To be confirmed."
+            location: "Hopewell Hotel",
+            detail: "Asia Pacific Championship prizegiving gala dinner.",
+            mapLocationId: "hopewell_hotel",
+            dressCode: "Formal"
           }
         ]
       }

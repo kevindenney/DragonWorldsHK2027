@@ -13,7 +13,6 @@ export interface ConfigValidationResult {
 }
 
 export function validateRuntimeConfiguration(): ConfigValidationResult {
-  console.log('🔍 [ConfigValidator] Starting comprehensive configuration validation...');
 
   const result: ConfigValidationResult = {
     isValid: true,
@@ -23,7 +22,6 @@ export function validateRuntimeConfiguration(): ConfigValidationResult {
   };
 
   // Firebase Configuration
-  console.log('🔍 [ConfigValidator] Validating Firebase configuration...');
   const firebaseConfig = {
     apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
     authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -44,9 +42,7 @@ export function validateRuntimeConfiguration(): ConfigValidationResult {
     hasMeasurementId: !!firebaseConfig.measurementId,
   };
 
-  console.log('🔍 [ConfigValidator] Firebase config details:');
   Object.entries(result.debugInfo.firebase).forEach(([key, value]) => {
-    console.log(`  ${key}: ${value}`);
   });
 
   // Validate Firebase project ID
@@ -56,7 +52,6 @@ export function validateRuntimeConfiguration(): ConfigValidationResult {
   }
 
   // Google OAuth Configuration
-  console.log('🔍 [ConfigValidator] Validating Google OAuth configuration...');
   const googleConfig = {
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
@@ -70,9 +65,7 @@ export function validateRuntimeConfiguration(): ConfigValidationResult {
     webClientIdPrefix: googleConfig.webClientId?.split('-')[0] || 'missing',
   };
 
-  console.log('🔍 [ConfigValidator] Google OAuth config details:');
   Object.entries(result.debugInfo.google).forEach(([key, value]) => {
-    console.log(`  ${key}: ${value}`);
   });
 
   // Validate Google Client ID format and consistency
@@ -86,7 +79,6 @@ export function validateRuntimeConfiguration(): ConfigValidationResult {
   }
 
   // Environment Information
-  console.log('🔍 [ConfigValidator] Environment information...');
   result.debugInfo.environment = {
     nodeEnv: process.env.EXPO_PUBLIC_NODE_ENV,
     debugMode: process.env.EXPO_PUBLIC_DEBUG_MODE,
@@ -94,13 +86,10 @@ export function validateRuntimeConfiguration(): ConfigValidationResult {
     isDev: __DEV__,
   };
 
-  console.log('🔍 [ConfigValidator] Environment details:');
   Object.entries(result.debugInfo.environment).forEach(([key, value]) => {
-    console.log(`  ${key}: ${value}`);
   });
 
   // URL Schemes (from app.json via Metro bundler)
-  console.log('🔍 [ConfigValidator] Note: URL schemes are configured in app.json and Info.plist');
   result.debugInfo.urlSchemes = {
     expectedOAuthScheme: 'com.googleusercontent.apps.839737857128-qvdva2jrauf49erhratq7ri72d9hfjbb',
     expectedAppScheme: 'dragonworlds',
@@ -108,25 +97,17 @@ export function validateRuntimeConfiguration(): ConfigValidationResult {
   };
 
   // Summary
-  console.log('🔍 [ConfigValidator] Validation summary:');
-  console.log(`  Valid: ${result.isValid}`);
-  console.log(`  Errors: ${result.errors.length}`);
-  console.log(`  Warnings: ${result.warnings.length}`);
 
   if (result.errors.length > 0) {
-    console.error('❌ [ConfigValidator] Configuration errors:');
     result.errors.forEach(error => console.error(`  - ${error}`));
   }
 
   if (result.warnings.length > 0) {
-    console.warn('⚠️ [ConfigValidator] Configuration warnings:');
     result.warnings.forEach(warning => console.warn(`  - ${warning}`));
   }
 
   if (result.isValid) {
-    console.log('✅ [ConfigValidator] Configuration validation passed');
   } else {
-    console.error('❌ [ConfigValidator] Configuration validation failed');
   }
 
   return result;
@@ -136,7 +117,6 @@ export function validateRuntimeConfiguration(): ConfigValidationResult {
  * Log all process.env variables (safely)
  */
 export function logEnvironmentVariables(): void {
-  console.log('🔍 [ConfigValidator] All EXPO_PUBLIC environment variables:');
 
   const expoPublicVars = Object.keys(process.env)
     .filter(key => key.startsWith('EXPO_PUBLIC_'))
@@ -146,13 +126,10 @@ export function logEnvironmentVariables(): void {
     const value = process.env[key];
     // Safely log sensitive values
     if (key.includes('API_KEY') || key.includes('SECRET')) {
-      console.log(`  ${key}: ${value ? '***SET***' : 'MISSING'}`);
     } else {
-      console.log(`  ${key}: ${value || 'MISSING'}`);
     }
   });
 
   if (expoPublicVars.length === 0) {
-    console.warn('⚠️ [ConfigValidator] No EXPO_PUBLIC_ environment variables found!');
   }
 }

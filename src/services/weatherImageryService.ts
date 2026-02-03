@@ -92,17 +92,13 @@ export class WeatherImageryService {
     // Check cache first
     const cached = this.getFromCache(cacheKey);
     if (cached && Array.isArray(cached)) {
-      console.log('📡 Using cached radar data, frames:', cached.length);
       // Add debugging to see if cached data has tiles
       cached.forEach((frame, index) => {
-        console.log(`📡 Cached frame ${index}: ${frame.tiles.length} tiles`);
       });
       return cached as RadarFrame[];
     }
 
     try {
-      console.log('📡 Fetching fresh radar data from RainViewer API...');
-      console.log('📡 API endpoint:', this.RAINVIEWER_API);
 
       // Get available radar maps from RainViewer (free)
       const response = await fetch(this.RAINVIEWER_API, {
@@ -112,24 +108,18 @@ export class WeatherImageryService {
         }
       });
 
-      console.log('📡 RainViewer API response status:', response.status);
 
       if (!response.ok) {
         throw new Error(`RainViewer API error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log('📡 RainViewer API response data keys:', Object.keys(data));
-      console.log('📡 Radar data structure:', data.radar ? Object.keys(data.radar) : 'No radar key');
 
       const radarFrames = this.processRainViewerData(data, options);
-      console.log(`📡 Processed ${radarFrames.length} radar frames`);
 
       // Log details about generated frames
       radarFrames.forEach((frame, index) => {
-        console.log(`📡 Frame ${index}: ${frame.tiles.length} tiles, intensity: ${frame.precipitationIntensity}`);
         if (frame.tiles.length > 0) {
-          console.log(`📡 Sample tile URL: ${frame.tiles[0].url}`);
         }
       });
 
@@ -137,8 +127,6 @@ export class WeatherImageryService {
       return radarFrames;
 
     } catch (error) {
-      console.error('❌ Failed to fetch radar data:', error);
-      console.error('❌ Error details:', error instanceof Error ? error.message : error);
 
       // Return fallback with some test tiles for debugging
       const fallbackFrame: RadarFrame = {
@@ -148,8 +136,6 @@ export class WeatherImageryService {
         coverage: 10
       };
 
-      console.log('📡 Returning fallback frame with', fallbackFrame.tiles.length, 'test tiles');
-      console.log('📡 Sample fallback tile URL:', fallbackFrame.tiles[0]?.url);
       return [fallbackFrame];
     }
   }
@@ -163,24 +149,18 @@ export class WeatherImageryService {
     // Check cache first
     const cached = this.getFromCache(cacheKey);
     if (cached && Array.isArray(cached)) {
-      console.log('🛰️ Using cached satellite data, frames:', cached.length);
       cached.forEach((frame, index) => {
-        console.log(`🛰️ Cached frame ${index}: ${frame.tiles.length} tiles, type: ${frame.type}`);
       });
       return cached as SatelliteFrame[];
     }
 
     try {
-      console.log(`🛰️ Fetching ${type} satellite data...`);
 
       // Use alternative satellite layers (free sources)
       const satelliteFrames = await this.fetchAlternativeSatellite(type);
-      console.log(`🛰️ Fetched ${satelliteFrames.length} satellite frames`);
 
       satelliteFrames.forEach((frame, index) => {
-        console.log(`🛰️ Frame ${index}: ${frame.tiles.length} tiles, coverage: ${frame.cloudCoverage}%`);
         if (frame.tiles.length > 0) {
-          console.log(`🛰️ Sample tile URL: ${frame.tiles[0].url}`);
         }
       });
 
@@ -188,8 +168,6 @@ export class WeatherImageryService {
       return satelliteFrames;
 
     } catch (error) {
-      console.error('❌ Failed to fetch satellite data:', error);
-      console.error('❌ Error details:', error instanceof Error ? error.message : error);
 
       // Return fallback with test tiles for debugging
       const fallbackFrame: SatelliteFrame = {
@@ -199,8 +177,6 @@ export class WeatherImageryService {
         type
       };
 
-      console.log('🛰️ Returning fallback frame with', fallbackFrame.tiles.length, 'test tiles');
-      console.log('🛰️ Sample fallback tile URL:', fallbackFrame.tiles[0]?.url);
       return [fallbackFrame];
     }
   }
@@ -213,7 +189,6 @@ export class WeatherImageryService {
 
     const cached = this.getFromCache(cacheKey);
     if (cached && 'frames' in cached) {
-      console.log('🎬 Using cached radar animation');
       return cached as WeatherAnimation;
     }
 
@@ -231,7 +206,6 @@ export class WeatherImageryService {
       return animation;
 
     } catch (error) {
-      console.error('❌ Failed to create radar animation:', error);
 
       return {
         frames: [],
@@ -262,7 +236,6 @@ export class WeatherImageryService {
       return tiles;
 
     } catch (error) {
-      console.error(`❌ Failed to fetch ${layer} tiles:`, error);
       return [];
     }
   }
@@ -457,7 +430,6 @@ export class WeatherImageryService {
       });
     });
 
-    console.log('📡 Generated', tiles.length, 'test radar tiles');
     return tiles;
   }
 
@@ -493,7 +465,6 @@ export class WeatherImageryService {
       });
     });
 
-    console.log('🛰️ Generated', tiles.length, 'test satellite tiles');
     return tiles;
   }
 
@@ -507,7 +478,6 @@ export class WeatherImageryService {
         this.cache = JSON.parse(cached);
       }
     } catch (error) {
-      console.warn('Failed to load weather imagery cache:', error);
       this.cache = {};
     }
   }
@@ -516,7 +486,6 @@ export class WeatherImageryService {
     try {
       await AsyncStorage.setItem('weather_imagery_cache', JSON.stringify(this.cache));
     } catch (error) {
-      console.warn('Failed to save weather imagery cache:', error);
     }
   }
 
@@ -579,54 +548,35 @@ export class WeatherImageryService {
    * Test API endpoints and log detailed results for debugging
    */
   public async testAPIEndpoints(): Promise<void> {
-    console.log('🧪 Testing weather imagery API endpoints...');
 
     // Test RainViewer API
     try {
-      console.log('🧪 Testing RainViewer API:', this.RAINVIEWER_API);
       const response = await fetch(this.RAINVIEWER_API);
-      console.log('🧪 RainViewer response status:', response.status);
 
       if (response.ok) {
         const data = await response.json();
-        console.log('🧪 RainViewer response structure:', {
-          hasRadar: !!data.radar,
-          radarKeys: data.radar ? Object.keys(data.radar) : [],
-          pastFrames: data.radar?.past?.length || 0,
-          nowcastFrames: data.radar?.nowcast?.length || 0
-        });
 
         if (data.radar?.past?.length > 0) {
           const sampleFrame = data.radar.past[0];
-          console.log('🧪 Sample radar frame:', sampleFrame);
 
           // Test generating tiles for this frame
           const testTiles = this.generateRainViewerTiles(sampleFrame.path, 6);
-          console.log('🧪 Generated', testTiles.length, 'test tiles');
           if (testTiles.length > 0) {
-            console.log('🧪 Sample tile URL:', testTiles[0].url);
           }
         }
       } else {
-        console.log('🧪 RainViewer API failed with status:', response.status);
       }
     } catch (error) {
-      console.error('🧪 RainViewer API test failed:', error);
     }
 
     // Test alternative tile endpoint
     try {
-      console.log('🧪 Testing alternative tile service...');
       const testTileUrl = `https://tilecache.rainviewer.com/v2/radar/0/6/32/20/2/1_1.png`;
-      console.log('🧪 Sample alternative tile URL:', testTileUrl);
 
       const response = await fetch(testTileUrl);
-      console.log('🧪 Alternative tile response status:', response.status);
     } catch (error) {
-      console.log('🧪 Alternative tile test:', error);
     }
 
-    console.log('🧪 API endpoint testing completed');
   }
 }
 

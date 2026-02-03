@@ -59,7 +59,6 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     // Call custom error handler if provided
     this.props.onError?.(error, errorInfo);
 
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
   retry = () => {

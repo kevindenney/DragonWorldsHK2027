@@ -10,11 +10,14 @@ import { UnifiedAuthScreen } from '../../screens/auth/UnifiedAuthScreen';
 import { DocumentViewer } from '../../components/noticeBoard/DocumentViewer';
 import { NotificationDetail } from '../../components/noticeBoard/NotificationDetail';
 import { EntryList } from '../../components/noticeBoard/EntryListCard';
+import { ProfileScreen } from '../../screens/ProfileScreen';
+import { MapScreen } from '../../screens/MapScreen';
 import { AuthProvider } from '../../auth/AuthProvider';
 import { useAuth } from '../../auth/useAuth';
 import { TabNavigator } from './TabNavigator';
 import { WelcomeScreen, FeatureTourScreen, GuestModeScreen, OnboardingScreen, AccountCreationScreen } from '../../screens/onboarding';
 import { useUserStore } from '../../stores/userStore';
+import { WalkthroughProvider } from '../../components/walkthrough/WalkthroughProvider';
 
 const Stack = createStackNavigator();
 
@@ -22,15 +25,38 @@ const Stack = createStackNavigator();
 const OnboardingNavigator = () => {
   const [currentStep, setCurrentStep] = React.useState<'welcome' | 'signup' | 'login'>('welcome');
   const { completeOnboarding, setUserType, setSelectedOnboardingType } = useUserStore();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
 
-  console.log('📋 [OnboardingNavigator] Current step:', currentStep);
+  // Track if we've cleared stale session and if user has freshly authenticated
+  const hasCleared = React.useRef(false);
+  const [readyForAuth, setReadyForAuth] = React.useState(false);
 
-  // Monitor authentication state and complete onboarding when user authenticates
+  // On mount: Clear any existing Firebase session to ensure clean slate
+  // User must explicitly login/signup to proceed
   React.useEffect(() => {
-    if (isAuthenticated && user) {
-      console.log('✅ [OnboardingNavigator] User authenticated during onboarding, completing onboarding');
-      // Complete onboarding with spectator type for social sign-ups
+    const clearStaleSession = async () => {
+      if (!hasCleared.current) {
+        hasCleared.current = true;
+        // If there's an existing session, sign out to ensure clean onboarding
+        if (isAuthenticated) {
+          console.log('[OnboardingNavigator] Clearing stale auth session for clean onboarding');
+          try {
+            await logout();
+          } catch (e) {
+            // Ignore logout errors
+          }
+        }
+        // Now ready to accept fresh authentication
+        setReadyForAuth(true);
+      }
+    };
+    clearStaleSession();
+  }, []);
+
+  // Only complete onboarding after user FRESHLY authenticates (after we cleared stale session)
+  React.useEffect(() => {
+    if (readyForAuth && isAuthenticated && user) {
+      console.log('[OnboardingNavigator] Fresh authentication detected, completing onboarding');
       completeOnboarding('spectator', {
         onboardingType: 'spectator',
         needsVerification: false,
@@ -39,34 +65,21 @@ const OnboardingNavigator = () => {
         email: user.email || '',
       });
     }
-  }, [isAuthenticated, user, completeOnboarding]);
+  }, [readyForAuth, isAuthenticated, user, completeOnboarding]);
 
   const handleWelcomeContinue = () => {
-    console.log('📋 [OnboardingNavigator] Welcome continue -> signup');
     setCurrentStep('signup');
   };
 
-  const handleWelcomeSkip = () => {
-    console.log('📋 [OnboardingNavigator] Welcome skip -> main app as guest');
-    completeOnboarding('spectator', {
-      onboardingType: 'spectator',
-      needsVerification: false,
-      joinedAt: new Date().toISOString(),
-    });
-  };
-
   const handleSignupBack = () => {
-    console.log('📋 [OnboardingNavigator] Signup back -> welcome');
     setCurrentStep('welcome');
   };
 
   const handleNavigateToLogin = () => {
-    console.log('📋 [OnboardingNavigator] Navigating to login');
     setCurrentStep('login');
   };
 
   const handleLoginBack = () => {
-    console.log('📋 [OnboardingNavigator] Login back -> signup');
     setCurrentStep('signup');
   };
 
@@ -75,7 +88,6 @@ const OnboardingNavigator = () => {
       return (
         <WelcomeScreen
           onContinue={handleWelcomeContinue}
-          onSkip={handleWelcomeSkip}
           onSignIn={handleNavigateToLogin}
         />
       );
@@ -86,7 +98,6 @@ const OnboardingNavigator = () => {
           navigation={{
             goBack: handleSignupBack,
             navigate: (routeName: string) => {
-              console.log('📋 [OnboardingNavigator] Navigate called with:', routeName);
               if (routeName === 'Login') {
                 handleNavigateToLogin();
               }
@@ -103,7 +114,6 @@ const OnboardingNavigator = () => {
           navigation={{
             goBack: handleLoginBack,
             navigate: (routeName: string) => {
-              console.log('📋 [OnboardingNavigator] Login navigate called with:', routeName);
               if (routeName === 'Register') {
                 setCurrentStep('signup');
               }
@@ -118,7 +128,6 @@ const OnboardingNavigator = () => {
       return (
         <WelcomeScreen
           onContinue={handleWelcomeContinue}
-          onSkip={handleWelcomeSkip}
           onSignIn={handleNavigateToLogin}
         />
       );
@@ -127,22 +136,20 @@ const OnboardingNavigator = () => {
 
 // Main authenticated app with stack navigation for Notice Board screens
 const MainApp = () => {
-  console.log('🚀 [NavigationContainer] Rendering MainApp component');
 
   React.useEffect(() => {
-    console.log('📱 [MainApp] Component mounted');
     return () => {
-      console.log('📱 [MainApp] Component unmounted');
     };
   }, []);
 
   try {
     return (
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen
-        name="MainTabs"
-        component={TabNavigator}
-      />
+      <WalkthroughProvider>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen
+          name="MainTabs"
+          component={TabNavigator}
+        />
       {/* Auth screens - accessible from More tab and within app flow */}
       <Stack.Screen
         name="UnifiedAuth"
@@ -189,10 +196,26 @@ const MainApp = () => {
         name="EntryList"
         component={EntryList}
       />
+      <Stack.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          headerShown: false,
+          presentation: 'card'
+        }}
+      />
+      <Stack.Screen
+        name="Map"
+        component={MapScreen}
+        options={{
+          headerShown: false,
+          presentation: 'card'
+        }}
+      />
     </Stack.Navigator>
+      </WalkthroughProvider>
     );
   } catch (error) {
-    console.error('💥 [NavigationContainer] MainApp render error:', error);
     throw error;
   }
 };
@@ -221,12 +244,9 @@ const AppContent = () => {
   const timeSinceLastRender = currentTime - lastRenderTime.current;
   lastRenderTime.current = currentTime;
 
-  console.log(`🚀 [AppContent] Render #${renderCountRef.current} (${timeSinceLastRender}ms since last)`);
 
   React.useEffect(() => {
-    console.log('📱 [AppContent] Component mounted');
     return () => {
-      console.log('📱 [AppContent] Component unmounted');
     };
   }, []);
 
@@ -243,37 +263,22 @@ const AppContent = () => {
     const onboardingChanged = prevOnboarding.needsOnboarding !== needsOnboarding;
 
     if (authChanged) {
-      console.log(`🔄 [AppContent] Auth state CHANGED:`, {
-        from: prevAuth,
-        to: { isAuthenticated, isInitialized },
-        renderCount: renderCountRef.current
-      });
       authStateRef.current = { isAuthenticated, isInitialized };
     } else {
-      console.log(`📊 [AppContent] Auth state unchanged: ${JSON.stringify({ isAuthenticated, isInitialized })}`);
     }
 
     if (onboardingChanged) {
-      console.log(`🔄 [AppContent] Onboarding state CHANGED:`, {
-        from: prevOnboarding.needsOnboarding,
-        to: needsOnboarding,
-        renderCount: renderCountRef.current
-      });
       onboardingStateRef.current = { needsOnboarding };
     } else {
-      console.log(`📊 [AppContent] Onboarding state unchanged: needsOnboarding=${needsOnboarding}`);
     }
 
     // Hide splash screen when auth is initialized
     React.useEffect(() => {
       async function hideSplash() {
         if (isInitialized) {
-          console.log('🎯 [AppContent] Auth initialized, hiding splash screen...');
           try {
             await SplashScreen.hideAsync();
-            console.log('✅ [AppContent] Splash screen hidden successfully');
           } catch (error) {
-            console.warn('⚠️ [AppContent] Error hiding splash screen:', error);
           }
         }
       }
@@ -282,50 +287,34 @@ const AppContent = () => {
 
     // Wait for auth initialization
     if (!isInitialized) {
-      console.log('🚀 [NavigationContainer] Auth not yet initialized, keeping splash visible');
       return null; // Splash screen will remain visible until isInitialized is true
     }
 
-    // Check if user needs onboarding first
-    if (needsOnboarding) {
-      console.log('🚀 [NavigationContainer] User needs onboarding, showing OnboardingNavigator');
+    // Require authentication - users must sign in or sign up to use the app
+    // Show onboarding/auth flow if:
+    // 1. User needs onboarding (first-time user)
+    // 2. User is not authenticated (logged out or never signed in)
+    if (needsOnboarding || !isAuthenticated) {
       return <OnboardingNavigator />;
     }
 
-    // Racing app strategy: Optional authentication
-    // - Allow guest access to all core features (Schedule, Notices, Results, Map)
-    // - Provide authentication for personalized features when needed
-    // - Users can sign in/out from More tab at any time
-
-    // Show main app - authentication is optional and accessible via More tab
-    console.log('🚀 [NavigationContainer] Auth initialized and onboarding complete, rendering MainApp');
+    // Only show main app when user is authenticated
     return <MainApp />;
   } catch (error) {
-    console.error('💥 [NavigationContainer] AppContent error:', error);
     throw error;
   }
 };
 
 export function AppNavigationContainer() {
-  console.log('🚀 [NavigationContainer] Rendering AppNavigationContainer');
 
   try {
-    console.log('🚀 [NavigationContainer] Testing AuthProvider with Hermes-compatible wrapper');
-    console.log('🚀 [NavigationContainer] About to render AuthProvider');
 
     // React Navigation state change listener
     const onNavigationStateChange = React.useCallback((state: any) => {
-      console.log('🧭 [Navigation] State changed:', {
-        index: state?.index,
-        routeNames: state?.routeNames,
-        routes: state?.routes?.map((r: any) => ({ name: r.name, key: r.key })),
-        timestamp: Date.now()
-      });
     }, []);
 
     // Navigation ready listener
     const onNavigationReady = React.useCallback(() => {
-      console.log('🧭 [Navigation] Navigation container ready');
     }, []);
 
     return (
@@ -339,12 +328,6 @@ export function AppNavigationContainer() {
       </AuthProvider>
     );
   } catch (error) {
-    console.error('💥 [NavigationContainer] AppNavigationContainer render error:', error);
-    console.error('💥 [NavigationContainer] Error details:', {
-      message: error.message,
-      name: error.name,
-      stack: error.stack?.substring(0, 500)
-    });
     throw error;
   }
 }

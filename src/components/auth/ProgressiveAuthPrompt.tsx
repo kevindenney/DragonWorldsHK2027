@@ -10,8 +10,10 @@ import {
 import { User, X, LogIn } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
 import { useAuth } from '../../auth/useAuth';
+import type { RootStackParamList } from '../../types/navigation';
 
 const { colors, spacing, typography, shadows, borderRadius } = dragonChampionshipsLightTheme;
 
@@ -34,7 +36,7 @@ export function ProgressiveAuthPrompt({
   feature,
   onAuthComplete,
 }: ProgressiveAuthPromptProps) {
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { isAuthenticated } = useAuth();
 
   // If user becomes authenticated while modal is open, close it
@@ -48,7 +50,7 @@ export function ProgressiveAuthPrompt({
   const handleSignIn = async () => {
     await Haptics.selectionAsync();
     onClose();
-    (navigation as any).navigate('Login');
+    navigation.navigate('Login');
   };
 
   const handleClose = async () => {

@@ -138,7 +138,6 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         ]
       );
     } catch (error) {
-      console.error('Error updating profile:', error);
       Alert.alert(
         'Error',
         'Failed to update your profile. Please try again.',

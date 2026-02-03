@@ -194,7 +194,6 @@ class StationCatalogService {
     });
 
     this.initialized = true;
-    console.log(`📡 [STATION CATALOG] Initialized ${this.stationCatalog.stations.length} weather stations`);
   }
 
   /**

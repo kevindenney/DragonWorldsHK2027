@@ -74,14 +74,7 @@ interface LayerToggles {
   current: boolean;
 }
 
-export function ModernWeatherMapScreen({navigation}: {navigation?: {goBack: () => void}}) {
-  console.log('🌤️ [WeatherScreen] Component mounted with navigation:', {
-    hasNavigation: !!navigation,
-    hasGoBack: !!(navigation?.goBack),
-    navigationType: typeof navigation,
-    navigationKeys: navigation ? Object.keys(navigation) : [],
-    timestamp: Date.now()
-  });
+export function ModernWeatherMapScreen({onBack}: {onBack?: () => void}) {
 
   const store = useSevenDayWeatherStore();
   const {bundles, loading, fetchAllBundles, clearCache} = store;
@@ -175,33 +168,19 @@ export function ModernWeatherMapScreen({navigation}: {navigation?: {goBack: () =
 
   // Clear cache and fetch fresh data to get live tide data
   useEffect(() => {
-    console.log('🗺️ [MAP FLOW] === MODERN WEATHER MAP INITIALIZATION ===');
-    console.log('🗺️ [MAP FLOW] Component mounted, starting fresh data fetch...');
-    console.log('🗺️ [MAP FLOW] Current bundles state:', Object.keys(bundles));
 
     clearCache().then(() => {
-      console.log('🗺️ [MAP FLOW] ✅ Cache cleared successfully, fetching fresh bundles...');
-      console.log('🗺️ [MAP FLOW] About to call fetchAllBundles()...');
 
       const startTime = Date.now();
       fetchAllBundles().then(() => {
         const endTime = Date.now();
-        console.log(`🗺️ [MAP FLOW] ✅ fetchAllBundles() completed in ${endTime - startTime}ms`);
-        console.log('🗺️ [MAP FLOW] Updated bundles state:', Object.keys(bundles));
 
         // Log tide data for each bundle
         Object.entries(bundles).forEach(([areaKey, bundle]) => {
-          console.log(`🗺️ [MAP FLOW] Bundle ${areaKey} tide data:`, {
-            heightM: bundle.current.tide.heightM,
-            trend: bundle.current.tide.trend,
-            stationName: bundle.current.tide.stationName
-          });
         });
       }).catch(error => {
-        console.error('🗺️ [MAP FLOW] ❌ fetchAllBundles() failed:', error);
       });
     }).catch(error => {
-      console.error('🗺️ [MAP FLOW] ❌ clearCache() failed:', error);
     });
   }, []);
 
@@ -365,13 +344,12 @@ export function ModernWeatherMapScreen({navigation}: {navigation?: {goBack: () =
       </SafeAreaView>
 
       {/* Auto-hide back button */}
-      {navigation && (
+      {onBack && (
         <Animated.View style={[styles.backButtonContainer, { opacity: backButtonOpacity }]}>
           <TouchableOpacity
             onPressIn={handleBackButtonPress}
             onPress={() => {
-              console.log('🌤️ [WeatherScreen] Back button pressed, calling navigation.goBack');
-              navigation.goBack();
+              onBack();
             }}
             style={styles.backButton}
             accessibilityRole="button"

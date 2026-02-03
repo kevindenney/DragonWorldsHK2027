@@ -73,13 +73,11 @@ export const NoticeBoardFeed: React.FC<NoticeBoardFeedProps> = ({
   useEffect(() => {
     if (!useLiveData || !user) return;
 
-    console.log('🔔 Setting up real-time notices subscription');
 
     // Subscribe to notices updates
     const noticesUnsubscribe = realDataService.subscribeToNotices(
       eventId,
       (updatedNotices) => {
-        console.log(`📝 Received ${updatedNotices.length} notices from Firestore`);
         setNotices(updatedNotices);
         setLastUpdateTime(new Date());
         
@@ -93,7 +91,6 @@ export const NoticeBoardFeed: React.FC<NoticeBoardFeedProps> = ({
         }
       },
       (error) => {
-        console.error('❌ Notices subscription error:', error);
         setIsOnline(false);
       }
     );
@@ -105,7 +102,6 @@ export const NoticeBoardFeed: React.FC<NoticeBoardFeedProps> = ({
         setBookmarkedNotices(bookmarkedIds);
       },
       (error) => {
-        console.error('❌ Bookmarks subscription error:', error);
       }
     ) : () => {};
 
@@ -140,12 +136,10 @@ export const NoticeBoardFeed: React.FC<NoticeBoardFeedProps> = ({
       const success = await realDataService.triggerManualRefresh(eventId);
       if (success) {
         setIsOnline(true);
-        console.log('✅ Manual refresh completed');
       } else {
         setIsOnline(false);
       }
     } catch (error) {
-      console.error('❌ Manual refresh failed:', error);
       setIsOnline(false);
     } finally {
       setIsRefreshing(false);
@@ -163,7 +157,6 @@ export const NoticeBoardFeed: React.FC<NoticeBoardFeedProps> = ({
           n.id === notice.id ? { ...n, isRead: true } : n
         ));
       } catch (error) {
-        console.error('Error marking notice as read:', error);
       }
     }
     
@@ -188,7 +181,6 @@ export const NoticeBoardFeed: React.FC<NoticeBoardFeedProps> = ({
       Vibration.vibrate(50);
       
     } catch (error) {
-      console.error('Error toggling bookmark:', error);
     }
   }, [user, realDataService]);
 

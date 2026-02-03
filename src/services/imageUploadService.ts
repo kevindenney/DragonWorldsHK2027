@@ -48,7 +48,6 @@ export class ImageUploadService {
     }
 
     try {
-      console.log('📷 [ImageUpload] Starting profile picture upload for user:', userId);
 
       // Validate and process image
       const imageBlob = await this.processImage(imageUri, options);
@@ -58,7 +57,6 @@ export class ImageUploadService {
       const filename = `profile-pictures/${userId}/${timestamp}.jpg`;
       const storageRef = ref(storage, filename);
 
-      console.log('📷 [ImageUpload] Uploading to:', filename);
 
       // Start upload with progress tracking
       const uploadTask = uploadBytesResumable(storageRef, imageBlob, {
@@ -91,11 +89,9 @@ export class ImageUploadService {
               state: snapshot.state as UploadProgress['state'],
             };
 
-            console.log('📷 [ImageUpload] Progress:', `${progress.percentage}%`);
             options.onProgress?.(progress);
           },
           (error) => {
-            console.error('📷 [ImageUpload] Upload failed:', error);
             reject(this.handleUploadError(error));
           },
           async () => {
@@ -107,12 +103,9 @@ export class ImageUploadService {
                 timeCreated: uploadTask.snapshot.metadata.timeCreated || new Date().toISOString(),
               };
 
-              console.log('✅ [ImageUpload] Upload completed successfully');
-              console.log('📷 [ImageUpload] Download URL:', downloadURL);
 
               resolve({ downloadURL, metadata });
             } catch (error) {
-              console.error('📷 [ImageUpload] Failed to get download URL:', error);
               reject(new Error('Failed to get download URL'));
             }
           }
@@ -123,7 +116,6 @@ export class ImageUploadService {
       return await Promise.race([uploadPromise, timeoutPromise]);
 
     } catch (error) {
-      console.error('📷 [ImageUpload] Profile picture upload failed:', error);
       throw error;
     }
   }
@@ -133,7 +125,6 @@ export class ImageUploadService {
    */
   private async processImage(imageUri: string, options: UploadOptions): Promise<Blob> {
     try {
-      console.log('📷 [ImageUpload] Processing image:', imageUri);
 
       // Fetch the image as blob
       const response = await fetch(imageUri);
@@ -142,8 +133,6 @@ export class ImageUploadService {
       }
 
       const blob = await response.blob();
-      console.log('📷 [ImageUpload] Image blob size:', blob.size, 'bytes');
-      console.log('📷 [ImageUpload] Image blob type:', blob.type);
 
       // Validate file size
       const maxSize = options.maxSizeBytes || this.defaultMaxSize;
@@ -157,11 +146,9 @@ export class ImageUploadService {
         throw new Error(`Unsupported image format. Allowed formats: ${allowedTypes.join(', ')}`);
       }
 
-      console.log('✅ [ImageUpload] Image validation passed');
       return blob;
 
     } catch (error) {
-      console.error('📷 [ImageUpload] Image processing failed:', error);
       throw error;
     }
   }
@@ -170,7 +157,6 @@ export class ImageUploadService {
    * Handle upload errors with user-friendly messages
    */
   private handleUploadError(error: any): Error {
-    console.error('📷 [ImageUpload] Upload error details:', error);
 
     let message: string;
 
@@ -217,7 +203,6 @@ export class ImageUploadService {
    */
   async compressImage(imageUri: string, maxWidth: number = 800, quality: number = 0.8): Promise<string> {
     try {
-      console.log('📷 [ImageUpload] Compressing image...');
 
       // Use ImagePicker's image manipulation API
       const manipulatedImage = await ImagePicker.manipulateAsync(
@@ -229,11 +214,9 @@ export class ImageUploadService {
         }
       );
 
-      console.log('✅ [ImageUpload] Image compressed successfully');
       return manipulatedImage.uri;
 
     } catch (error) {
-      console.warn('📷 [ImageUpload] Image compression failed, using original:', error);
       return imageUri;
     }
   }
@@ -247,7 +230,6 @@ export class ImageUploadService {
     }
 
     try {
-      console.log('📷 [ImageUpload] Deleting profile picture:', downloadURL);
 
       // Extract storage path from download URL
       const url = new URL(downloadURL);
@@ -263,10 +245,8 @@ export class ImageUploadService {
       // Note: deleteObject would be used here, but we'll skip actual deletion for now
       // await deleteObject(storageRef);
 
-      console.log('✅ [ImageUpload] Profile picture deletion completed');
 
     } catch (error) {
-      console.error('📷 [ImageUpload] Failed to delete profile picture:', error);
       throw new Error('Failed to delete profile picture');
     }
   }

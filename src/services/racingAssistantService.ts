@@ -366,7 +366,6 @@ export class RacingAssistantService {
       return performanceAnalysis;
 
     } catch (error) {
-      console.error('Failed to analyze performance:', error);
       throw new Error('Performance analysis failed');
     }
   }
@@ -409,7 +408,6 @@ export class RacingAssistantService {
       return limitedRecommendations;
 
     } catch (error) {
-      console.error('Failed to get tactical recommendations:', error);
       return [];
     }
   }
@@ -474,7 +472,6 @@ export class RacingAssistantService {
       return trainingPlan;
 
     } catch (error) {
-      console.error('Failed to generate training plan:', error);
       throw new Error('Training plan generation failed');
     }
   }
@@ -511,7 +508,6 @@ export class RacingAssistantService {
       return predictions;
 
     } catch (error) {
-      console.error('Failed to get wind predictions:', error);
       return [];
     }
   }
@@ -633,7 +629,6 @@ export class RacingAssistantService {
       return checklist;
 
     } catch (error) {
-      console.error('Failed to generate race checklist:', error);
       throw new Error('Race checklist generation failed');
     }
   }
@@ -685,7 +680,6 @@ export class RacingAssistantService {
       return insights.slice(0, 10);
 
     } catch (error) {
-      console.error('Failed to get personalized insights:', error);
       return [];
     }
   }
@@ -1114,7 +1108,6 @@ export class RacingAssistantService {
         }
       }
     } catch (error) {
-      console.warn('Failed to load racing assistant data:', error);
     }
   }
 
@@ -1128,7 +1121,6 @@ export class RacingAssistantService {
       
       await AsyncStorage.setItem('racing_assistant_data', JSON.stringify(data));
     } catch (error) {
-      console.warn('Failed to save racing assistant data:', error);
     }
   }
 

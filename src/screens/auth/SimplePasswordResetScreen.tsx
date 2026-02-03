@@ -68,7 +68,11 @@ export function SimplePasswordResetScreen({ navigation }: SimplePasswordResetScr
   };
 
   const handleBackToLogin = () => {
-    navigation.navigate('Login');
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('Login');
+    }
   };
 
   return (

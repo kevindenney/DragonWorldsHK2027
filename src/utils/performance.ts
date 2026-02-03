@@ -41,7 +41,6 @@ class PerformanceMonitor {
 
     const metric = this.metrics.get(name);
     if (!metric) {
-      console.warn(`Performance metric "${name}" was not started`);
       return null;
     }
 
@@ -56,7 +55,6 @@ class PerformanceMonitor {
 
     // Log slow operations in development
     if (!isProduction() && duration > 1000) {
-      console.warn(`Slow operation detected: ${name} took ${duration}ms`);
     }
 
     return duration;
@@ -264,7 +262,6 @@ export const usePerformanceTracking = (componentName: string) => {
 // Performance decorator for methods - DISABLED for Hermes compatibility
 export const performanceTracked = (name?: string) => {
   return (target: any, propertyName: string, descriptor: PropertyDescriptor) => {
-    console.log('🚨 [Performance] Decorator disabled for Hermes compatibility:', propertyName);
     // Return descriptor unchanged to avoid property configuration issues
     return descriptor;
   };
@@ -295,7 +292,6 @@ export const sailingPerformanceTracking = {
 
 // Initialize performance monitoring
 if (!isProduction()) {
-  console.log('🚀 Performance monitoring initialized');
   
   // Track app launch performance
   performanceMonitor.mark('app_launch', {

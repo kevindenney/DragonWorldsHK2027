@@ -7,7 +7,6 @@ const LazyMapScreen = lazy(() =>
   import('../../screens/MapScreenSafe').then(module => ({
     default: module.MapScreen
   })).catch(error => {
-    console.warn('Failed to load MapScreen:', error);
     return { default: MapFallback };
   })
 );
@@ -16,7 +15,6 @@ const LazyModernWeatherMapScreen = lazy(() =>
   import('../../screens/tabs/ModernWeatherMapScreen').then(module => ({
     default: module.ModernWeatherMapScreen
   })).catch(error => {
-    console.warn('Failed to load ModernWeatherMapScreen:', error);
     return { default: WeatherMapFallback };
   })
 );
@@ -45,11 +43,9 @@ class SafeMapWrapper extends Component<SafeMapWrapperProps, SafeMapWrapperState>
   }
 
   componentDidCatch(error: Error, errorInfo: any) {
-    console.error('Map component error caught by SafeMapWrapper:', error, errorInfo);
 
     // Log specific Hermes/deriveBFS errors
     if (error.message?.includes('distance') || error.message?.includes('deriveBFS')) {
-      console.error('🚨 Hermes/deriveBFS error detected in map component:', error.message);
     }
   }
 

@@ -8,20 +8,27 @@ export type RootStackParamList = {
   Register: undefined;
   UnifiedAuth: { mode?: 'signin' | 'signup' } | undefined;
   ForgotPassword: undefined;
+  Profile: undefined;
   CompetitorDetail: {
     sailNumber: string;
     competitorData: any;
     standings: any;
   };
-  // Add other stack screens here as needed
+  Map: { locationId?: string } | undefined;
+  Weather: undefined;
+  Contacts: undefined;
+  Sponsors: undefined;
+  AboutRegattaFlow: undefined;
+  Entrants: undefined;
+  Shipping: undefined;
+  RaceForms: undefined;
 };
 
 export type MainTabParamList = {
-  Map: { locationId?: string } | undefined;
   Schedule: { date?: string; eventId?: string } | undefined;
-  Results: undefined;
   NoticeBoard: { eventId: string };
-  Entrants: undefined;
+  Results: undefined;
+  Forms: undefined;
   More: undefined;
 };
 
@@ -35,12 +42,16 @@ export type MainTabScreenProps<Screen extends keyof MainTabParamList> =
   >;
 
 // Individual screen props for type safety
-export type MapScreenProps = MainTabScreenProps<'Map'>;
 export type ScheduleScreenProps = MainTabScreenProps<'Schedule'>;
-export type ResultsScreenProps = MainTabScreenProps<'Results'>;
 export type NoticeBoardScreenProps = MainTabScreenProps<'NoticeBoard'>;
-export type EntrantsScreenProps = MainTabScreenProps<'Entrants'>;
+export type ResultsScreenProps = MainTabScreenProps<'Results'>;
+export type FormsScreenProps = MainTabScreenProps<'Forms'>;
 export type MoreScreenProps = MainTabScreenProps<'More'>;
+
+// Props for screens that moved to More stack
+export type MapScreenProps = StackScreenProps<RootStackParamList, 'Map'>;
+export type EntrantsScreenProps = StackScreenProps<RootStackParamList, 'MainTabs'>;
+export type ShippingScreenProps = StackScreenProps<RootStackParamList, 'MainTabs'>;
 
 declare global {
   namespace ReactNavigation {

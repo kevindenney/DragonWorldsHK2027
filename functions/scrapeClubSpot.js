@@ -266,28 +266,47 @@ function scrapeRenderedEntryList($, regattaId) {
       headers.push($(th).text().trim().toLowerCase());
     });
 
-    logger.info(`[ClubSpot] Table ${tableIndex} headers: ${JSON.stringify(headers)}`);
+    logger.info(`[ClubSpot] Table ${tableIndex} raw headers: ${JSON.stringify(headers)}`);
 
-    // Map header positions
+    // Map header positions with precise matching to avoid false positives
+    // Key insight: "name" matches both "sailors name" and "boat name", so we need to be specific
     const colMap = {
-      sailors: headers.findIndex(h => h.includes('sailor') || h.includes('name') || h.includes('crew')),
+      // "sailor" matches "SAILORS" but exclude "boat name" by checking for "boat"
+      sailors: headers.findIndex(h =>
+        h.includes('sailor') ||
+        h.includes('crew') ||
+        (h.includes('name') && !h.includes('boat'))  // Exclude "boat name"
+      ),
       class: headers.findIndex(h => h.includes('class')),
-      sailNumber: headers.findIndex(h => h.includes('sail') || h.includes('number')),
-      boatName: headers.findIndex(h => h.includes('boat')),
+      // "sail number" specifically, or "sail #" / "sail no"
+      sailNumber: headers.findIndex(h =>
+        (h.includes('sail') && (h.includes('number') || h.includes('#') || h.includes('no'))) ||
+        h === 'sail' ||  // exact match for just "sail"
+        (h.includes('number') && !h.includes('phone'))  // "number" alone but not phone number
+      ),
+      // "boat name" specifically - must have BOTH "boat" AND "name"
+      boatName: headers.findIndex(h => h.includes('boat') && h.includes('name')),
       club: headers.findIndex(h => h.includes('club') || h.includes('org'))
     };
 
-    logger.info(`[ClubSpot] Column mapping: ${JSON.stringify(colMap)}`);
+    logger.info(`[ClubSpot] Initial column mapping: ${JSON.stringify(colMap)}`);
 
-    // If no clear headers, use default ClubSpot layout:
-    // SAILORS, CLASS, SAIL NUMBER, BOAT NAME, CLUB / ORG
-    if (colMap.sailors === -1 && colMap.sailNumber === -1) {
+    // Validate mapping - use default ClubSpot layout if detection is uncertain
+    // ClubSpot standard layout: SAILORS, CLASS, SAIL NUMBER, BOAT NAME, CLUB / ORG
+    const hasValidMapping = colMap.sailors >= 0 && colMap.sailNumber >= 0;
+    if (!hasValidMapping) {
+      logger.info('[ClubSpot] Column detection uncertain, using default ClubSpot column layout');
       colMap.sailors = 0;
       colMap.class = 1;
       colMap.sailNumber = 2;
       colMap.boatName = 3;
       colMap.club = 4;
     }
+
+    logger.info(`[ClubSpot] Final column mapping: ${JSON.stringify(colMap)}`);
+
+    // Track if we're logging sample row for debugging
+    let loggedSampleRow = false;
 
     // Extract rows
     $table.find('tbody tr').each((rowIndex, row) => {
@@ -301,6 +320,12 @@ function scrapeRenderedEntryList($, regattaId) {
       cells.each((i, cell) => {
         cellValues.push($(cell).text().trim());
       });
+
+      // Log sample row data for debugging (first row only)
+      if (!loggedSampleRow) {
+        logger.info(`[ClubSpot] Sample row data (${cellValues.length} cells): ${JSON.stringify(cellValues)}`);
+        loggedSampleRow = true;
+      }
 
       // Extract data based on column mapping
       let sailorsCell = colMap.sailors >= 0 ? cellValues[colMap.sailors] || '' : '';
@@ -346,17 +371,64 @@ function scrapeRenderedEntryList($, regattaId) {
       // Parse sailors - typically "Name1, Name2, Name3" or multiline or concatenated
       let sailorNames = [];
       if (sailorsCell) {
-        // Try to split concatenated names (look for capital letters starting new names)
-        // e.g., "Sandy AndersonSusan ParkerCaroline Gibson" -> ["Sandy Anderson", "Susan Parker", "Caroline Gibson"]
-        const maybeConcatenated = sailorsCell.match(/[A-Z][a-zÀ-ÿ']+\s+[A-Z][a-zÀ-ÿ']+/g);
-        if (maybeConcatenated && maybeConcatenated.length > 1) {
-          sailorNames = maybeConcatenated;
-        } else {
-          // Standard split by comma or newline
+        // First check if comma or newline separated (most common)
+        if (sailorsCell.includes(',') || sailorsCell.includes('\n')) {
           sailorNames = sailorsCell
             .split(/[,\n]/)
             .map(n => n.trim())
-            .filter(n => n && n.length > 0);
+            .filter(n => n && n.length > 1);
+        }
+        // Check for concatenated names without separators
+        // e.g., "Sandy AndersonSusan ParkerCaroline Gibson"
+        // Split at uppercase letters that follow lowercase letters (start of new name)
+        else if (!sailorsCell.includes(' ') || /[a-z][A-Z]/.test(sailorsCell)) {
+          // Split where a lowercase letter is followed by uppercase (new first name)
+          const parts = sailorsCell.split(/(?<=[a-z])(?=[A-Z])/);
+          // Now each part should be a full name like "Sandy Anderson" or "Glenn Cooke"
+          sailorNames = parts
+            .map(n => n.trim())
+            .filter(n => n && n.length > 1 && /\s/.test(n)); // Must have space (first + last)
+        }
+        // Otherwise treat as space-separated list where each full name might be "First Last" pattern
+        // Handle names with particles like "van", "von", "de", etc.
+        else {
+          // Split by multiple spaces or try to identify name boundaries
+          const words = sailorsCell.split(/\s+/);
+          const names = [];
+          let currentName = [];
+
+          for (let i = 0; i < words.length; i++) {
+            const word = words[i];
+            const nextWord = words[i + 1];
+
+            currentName.push(word);
+
+            // Check if this completes a name:
+            // - Next word starts with capital (new first name) AND current doesn't end with particle
+            // - We have at least 2 words and next isn't a particle (van, von, de, etc.)
+            const particles = ['van', 'von', 'de', 'du', 'le', 'la', 'der', 'den', 'het'];
+            const isParticle = particles.includes(word.toLowerCase());
+            const nextIsParticle = nextWord && particles.includes(nextWord.toLowerCase());
+            const nextStartsCapital = nextWord && /^[A-Z]/.test(nextWord);
+
+            // End name if: we have 2+ words, next starts capital, and current isn't a particle
+            if (currentName.length >= 2 && !isParticle && nextStartsCapital && !nextIsParticle) {
+              names.push(currentName.join(' '));
+              currentName = [];
+            }
+          }
+
+          // Don't forget the last name
+          if (currentName.length > 0) {
+            names.push(currentName.join(' '));
+          }
+
+          sailorNames = names.filter(n => n && n.trim().length > 1);
+        }
+
+        // Fallback: if we got nothing, just use the whole cell as one name
+        if (sailorNames.length === 0 && sailorsCell.trim().length > 0) {
+          sailorNames = [sailorsCell.trim()];
         }
       }
 
@@ -471,25 +543,32 @@ function transformToCompetitors(registrations, regattaId) {
     const boatClass = reg.boatClassObject?.name || reg.boatClass || 'Dragon';
     const club = reg.club?.name || reg.club || '';
 
-    // Extract helm and crew
+    // Extract helm and crew - PRIORITY ORDER MATTERS!
+    // Priority 1: Direct helmName from scraping (most reliable for ClubSpot HTML scraping)
+    // Priority 2: Parse API participants array (for API-based fetching)
+    // Priority 3: Alternative field names (skipperName, owner, etc.)
+    // Priority 4: ONLY use "Entry X" if we truly have no data
     let helmName = '';
     let crewNames = [];
 
-    if (Array.isArray(participants)) {
-      if (participants.length > 0) {
-        // First participant is typically the helm
-        helmName = formatParticipantName(participants[0]);
-        // Rest are crew
-        crewNames = participants.slice(1).map(formatParticipantName).filter(n => n);
-      }
-    } else if (reg.helmName) {
-      helmName = reg.helmName;
+    // Priority 1: Direct helmName from scraping
+    if (reg.helmName && reg.helmName.trim()) {
+      helmName = reg.helmName.trim();
       crewNames = reg.crewNames || [];
     }
-
-    // If no helm found, try other fields
-    if (!helmName) {
-      helmName = reg.skipperName || reg.owner || reg.contactName || `Entry ${index + 1}`;
+    // Priority 2: Parse API participants array
+    else if (Array.isArray(participants) && participants.length > 0) {
+      helmName = formatParticipantName(participants[0]);
+      crewNames = participants.slice(1).map(formatParticipantName).filter(n => n);
+    }
+    // Priority 3: Alternative field names
+    else if (reg.skipperName || reg.owner || reg.contactName) {
+      helmName = (reg.skipperName || reg.owner || reg.contactName || '').trim();
+    }
+    // Priority 4: ONLY use "Entry X" if we truly have no data
+    else {
+      helmName = `Entry ${index + 1}`;
+      logger.info(`[ClubSpot] Warning: No helmName found for entry ${index + 1}, using fallback`);
     }
 
     // Determine registration status

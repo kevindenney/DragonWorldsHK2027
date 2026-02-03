@@ -110,7 +110,6 @@ export const EnhancedSocialScreen: React.FC<SocialScreenProps> = ({ navigation }
     try {
       await useSocialStore.getState().refreshGroups();
     } catch (error) {
-      console.error('Error loading social data:', error);
     }
   }, []);
 
@@ -123,7 +122,6 @@ export const EnhancedSocialScreen: React.FC<SocialScreenProps> = ({ navigation }
     try {
       await refreshGroups();
     } catch (error) {
-      console.error('Error refreshing social data:', error);
     } finally {
       setRefreshing(false);
     }
@@ -180,7 +178,6 @@ export const EnhancedSocialScreen: React.FC<SocialScreenProps> = ({ navigation }
         { text: 'Cancel', style: 'cancel' },
         { text: 'Open WhatsApp', onPress: () => {
           // Here you would use Linking.openURL with the WhatsApp group link
-          console.log('Opening WhatsApp group:', groupId);
         }}
       ]
     );

@@ -106,7 +106,6 @@ export function LiveResultsScreen({ navigation }: ResultsScreenProps) {
 
       setIsOffline(false);
     } catch (error) {
-      console.error('Error loading event data:', error);
       setError('Failed to load race data. Using cached results.');
       setIsOffline(true);
     } finally {
@@ -139,7 +138,6 @@ export function LiveResultsScreen({ navigation }: ResultsScreenProps) {
   const openExternalLink = (url: string) => {
     Linking.openURL(url).catch(err => {
       Alert.alert('Error', 'Unable to open link');
-      console.error('Failed to open URL:', err);
     });
   };
 

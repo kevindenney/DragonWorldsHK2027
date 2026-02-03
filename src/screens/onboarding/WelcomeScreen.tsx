@@ -13,11 +13,10 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 interface WelcomeScreenProps {
   onContinue: () => void;
-  onSkip: () => void;
   onSignIn?: () => void;
 }
 
-export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSkip, onSignIn }) => {
+export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSignIn }) => {
   const { loginWithProvider, isLoading } = useAuth();
   const [loadingProvider, setLoadingProvider] = useState<'google' | 'apple' | null>(null);
 
@@ -77,12 +76,21 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSkip
   };
 
   const handleAppleSignIn = async () => {
-    await Haptics.selectionAsync();
-    Alert.alert(
-      'Apple Sign In',
-      'Apple Sign In is coming soon! Please use Google Sign In or Email for now.',
-      [{ text: 'OK', style: 'default' }]
-    );
+    try {
+      await Haptics.selectionAsync();
+      setLoadingProvider('apple');
+      await loginWithProvider(AuthProvider.APPLE);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // Navigation will happen automatically via auth state change
+    } catch (error: any) {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert(
+        'Sign In Failed',
+        error?.message || 'Failed to sign in with Apple. Please try again.'
+      );
+    } finally {
+      setLoadingProvider(null);
+    }
   };
 
   const handleEmailSignUp = async () => {
@@ -90,9 +98,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSkip
     onContinue();
   };
 
-  const handleSkip = async () => {
+  const handleSignIn = async () => {
     await Haptics.selectionAsync();
-    onSkip();
+    onSignIn?.();
   };
 
   return (
@@ -142,7 +150,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSkip
 
           {/* Buttons Section */}
           <Animated.View style={[styles.buttonsSection, { opacity: buttonsOpacity }]}>
-            {/* Primary: Google Sign In */}
+            {/* Primary: Google Sign In/Sign Up */}
             <TouchableOpacity
               style={styles.googleButton}
               onPress={handleGoogleSignIn}
@@ -161,43 +169,38 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSkip
               </Text>
             </TouchableOpacity>
 
-            {/* Secondary: Apple Sign In (iOS only) */}
-            {Platform.OS === 'ios' && (
-              <TouchableOpacity
-                style={styles.appleButton}
-                onPress={handleAppleSignIn}
-                disabled={isLoading || loadingProvider !== null}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.appleIcon}></Text>
-                <Text style={styles.appleButtonText}>
-                  {loadingProvider === 'apple' ? 'Signing in...' : 'Continue with Apple'}
-                </Text>
-              </TouchableOpacity>
-            )}
+            {/* Secondary: Apple Sign In/Sign Up (all platforms) */}
+            <TouchableOpacity
+              style={styles.appleButton}
+              onPress={handleAppleSignIn}
+              disabled={isLoading || loadingProvider !== null}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.appleIcon}></Text>
+              <Text style={styles.appleButtonText}>
+                {loadingProvider === 'apple' ? 'Signing in...' : 'Continue with Apple'}
+              </Text>
+            </TouchableOpacity>
 
-            {/* Tertiary: Email Sign Up */}
+            {/* Tertiary: Email Sign In/Sign Up */}
             <TouchableOpacity
               style={styles.emailButton}
               onPress={handleEmailSignUp}
               activeOpacity={0.7}
             >
               <Mail size={18} color="#FFFFFF" strokeWidth={2} style={styles.emailIcon} />
-              <Text style={styles.emailButtonText}>Sign up with Email</Text>
+              <Text style={styles.emailButtonText}>Continue with Email</Text>
             </TouchableOpacity>
 
-            {/* Divider */}
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Skip Option - Always visible */}
+            {/* Sign In Link */}
             <TouchableOpacity
-              style={styles.skipButton}
-              onPress={handleSkip}
+              style={styles.signInLink}
+              onPress={handleSignIn}
               activeOpacity={0.7}
             >
-              <Text style={styles.skipButtonText}>Skip for now</Text>
+              <Text style={styles.signInLinkText}>
+                Already have an account? <Text style={styles.signInLinkBold}>Sign In</Text>
+              </Text>
             </TouchableOpacity>
           </Animated.View>
 
@@ -374,26 +377,19 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  // Divider
-  divider: {
+  // Sign In Link
+  signInLink: {
     alignItems: 'center',
-    marginBottom: 16,
+    paddingVertical: 16,
   },
-  dividerLine: {
-    width: 60,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-  },
-
-  // Skip Button
-  skipButton: {
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  skipButtonText: {
+  signInLinkText: {
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: '400',
     color: 'rgba(255, 255, 255, 0.7)',
+  },
+  signInLinkBold: {
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 
   // Footer

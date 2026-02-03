@@ -57,10 +57,6 @@ export const AuthProvider = {
 export type AuthProviderType = typeof AuthProvider[keyof typeof AuthProvider];
 
 // DEBUG: Log what we're exporting
-console.log('🔍 [authTypes] Exporting AuthProvider as object:', AuthProvider);
-console.log('🔍 [authTypes] AuthProvider.GOOGLE:', AuthProvider.GOOGLE);
-console.log('🔍 [authTypes] AuthProvider.APPLE:', AuthProvider.APPLE);
-console.log('🔍 [authTypes] AuthProvider.FACEBOOK:', AuthProvider.FACEBOOK);
 
 export interface AuthState {
   user: User | null;

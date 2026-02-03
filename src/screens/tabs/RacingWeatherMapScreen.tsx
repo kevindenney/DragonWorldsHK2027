@@ -186,7 +186,6 @@ export function RacingWeatherMapScreen({ navigation }: WeatherScreenProps) {
         const stations = await windStationService.getStations();
         setWindStations(stations);
       } catch (error) {
-        console.error('Failed to load wind stations:', error);
         setWindStations([]);
       }
     };

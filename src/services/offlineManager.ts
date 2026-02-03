@@ -60,9 +60,7 @@ export class OfflineManager {
       await this.loadOfflineData();
       await this.initializeNetworkMonitoring();
       await this.setupBackgroundSync();
-      console.log('Offline manager initialized');
     } catch (error) {
-      console.error('Failed to initialize offline manager:', error);
     }
   }
 
@@ -75,7 +73,6 @@ export class OfflineManager {
       // Subscribe to network state changes
       NetInfo.addEventListener(this.updateNetworkStatus.bind(this));
     } catch (error) {
-      console.error('Failed to initialize network monitoring:', error);
     }
   }
 
@@ -84,7 +81,6 @@ export class OfflineManager {
     this.isOnline = state.isConnected === true && state.isInternetReachable === true;
     this.connectionType = state.type || 'unknown';
 
-    console.log(`Network status changed: ${wasOnline ? 'online' : 'offline'} -> ${this.isOnline ? 'online' : 'offline'}`);
 
     // Notify listeners
     this.notifyStatusChange();
@@ -117,7 +113,6 @@ export class OfflineManager {
       await this.maintainCacheSize();
       await this.saveOfflineData();
     } catch (error) {
-      console.error('Failed to cache data:', error);
     }
   }
 
@@ -134,7 +129,6 @@ export class OfflineManager {
 
       return cached.data;
     } catch (error) {
-      console.error('Failed to get cached data:', error);
       return null;
     }
   }
@@ -199,7 +193,6 @@ export class OfflineManager {
         this.processSyncQueue();
       }
     } catch (error) {
-      console.error('Failed to queue action:', error);
     }
   }
 
@@ -241,7 +234,6 @@ export class OfflineManager {
             action.retryCount++;
             this.syncQueue.push(action);
           } else {
-            console.error(`Action ${action.id} failed after ${action.maxRetries} retries:`, error);
           }
         }
       }
@@ -250,7 +242,6 @@ export class OfflineManager {
       this.notifyStatusChange();
 
     } catch (error) {
-      console.error('Sync queue processing failed:', error);
       result.success = false;
     } finally {
       this.syncInProgress = false;
@@ -288,22 +279,18 @@ export class OfflineManager {
 
   private async processScheduleUpdate(data: any): Promise<void> {
     // Process queued schedule update
-    console.log('Processing schedule update:', data);
   }
 
   private async processResultsSync(data: any): Promise<void> {
     // Process queued results sync
-    console.log('Processing results sync:', data);
   }
 
   private async processSocialInteraction(data: any): Promise<void> {
     // Process queued social interaction
-    console.log('Processing social interaction:', data);
   }
 
   private async processAnalyticsEvent(data: any): Promise<void> {
     // Process queued analytics event
-    console.log('Processing analytics event:', data);
   }
 
   // Graceful degradation
@@ -363,10 +350,8 @@ export class OfflineManager {
 
       if (expiredKeys.length > 0) {
         await this.saveOfflineData();
-        console.log(`Cleaned ${expiredKeys.length} expired cache entries`);
       }
     } catch (error) {
-      console.error('Failed to clean expired cache:', error);
     }
   }
 
@@ -396,7 +381,6 @@ export class OfflineManager {
       removedSize += cached.size;
     }
 
-    console.log(`Cache maintenance: removed ${removedSize} bytes`);
   }
 
   private getCurrentCacheSize(): number {
@@ -433,7 +417,6 @@ export class OfflineManager {
       try {
         callback(status);
       } catch (error) {
-        console.error('Error in status change callback:', error);
       }
     });
   }
@@ -454,7 +437,6 @@ export class OfflineManager {
         }
       }
     } catch (error) {
-      console.warn('Failed to load offline data:', error);
     }
   }
 
@@ -467,7 +449,6 @@ export class OfflineManager {
       
       await AsyncStorage.setItem('offline_data', JSON.stringify(data));
     } catch (error) {
-      console.warn('Failed to save offline data:', error);
     }
   }
 
@@ -538,9 +519,7 @@ export class OfflineManager {
       const notices = await this.getCriticalNotices();
       await this.cacheData('critical_notices', notices, { priority: 'critical', expiresIn: 720 }); // 12 hours
 
-      console.log('Critical data pre-cached successfully');
     } catch (error) {
-      console.error('Failed to pre-cache critical data:', error);
     }
   }
 }

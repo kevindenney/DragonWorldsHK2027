@@ -130,7 +130,6 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, 
   }, []);
 
   const handleUserTypeSelect = (userType: OnboardingUserType) => {
-    console.log('🎯 [OnboardingScreen] User type selected:', userType);
     setSelectedUserType(userType);
     setShowBenefits(true);
   };
@@ -138,7 +137,6 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, 
   const handleContinue = () => {
     if (!selectedUserType) return;
 
-    console.log('📋 [OnboardingScreen] Proceeding to account creation with type:', selectedUserType);
     onComplete(selectedUserType);
   };
 
@@ -152,7 +150,6 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, 
 
   const handleSkip = () => {
     // Default to spectator type
-    console.log('📋 [OnboardingScreen] Skipping to spectator account creation');
     onComplete('spectator');
   };
 

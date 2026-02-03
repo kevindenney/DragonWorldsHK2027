@@ -64,9 +64,7 @@ export class ErrorHandler {
     try {
       await this.loadErrorLog();
       await this.checkNetworkStatus();
-      console.log('Error handler initialized');
     } catch (error) {
-      console.error('Failed to initialize error handler:', error);
     }
   }
 
@@ -127,7 +125,6 @@ export class ErrorHandler {
   }
 
   private handleError(error: AppError): void {
-    console.error(`[${error.severity.toUpperCase()}] ${error.type}: ${error.message}`, error);
 
     // Show user-facing errors as notifications
     if (error.userFacing) {
@@ -164,7 +161,6 @@ export class ErrorHandler {
           }
         );
       }).catch(err => {
-        console.warn('Failed to show weather error notification:', err);
       });
     }
   }
@@ -233,7 +229,6 @@ export class ErrorHandler {
       return;
     }
 
-    console.log(`Processing ${this.offlineActions.length} offline actions`);
     
     const actionsToProcess = [...this.offlineActions];
     this.offlineActions = [];
@@ -241,14 +236,11 @@ export class ErrorHandler {
     for (const action of actionsToProcess) {
       try {
         await this.executeOfflineAction(action);
-        console.log(`Successfully processed offline action: ${action.id}`);
       } catch (error) {
         if (action.retryCount < action.maxRetries) {
           action.retryCount++;
           this.offlineActions.push(action);
-          console.warn(`Offline action ${action.id} failed, will retry (${action.retryCount}/${action.maxRetries})`);
         } else {
-          console.error(`Offline action ${action.id} failed permanently:`, error);
           this.logError({
             type: 'general',
             severity: 'medium',
@@ -337,7 +329,6 @@ export class ErrorHandler {
           config.maxDelay
         );
 
-        console.warn(`Attempt ${attempt + 1} failed, retrying in ${delay}ms:`, lastError.message);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -357,7 +348,6 @@ export class ErrorHandler {
   private async retryErrorAction(error: AppError): Promise<void> {
     try {
       // This would retry the original action that caused the error
-      console.log(`Retrying action for error: ${error.id}`);
       
       // Mark error as resolved if retry succeeds
       this.markErrorResolved(error.id);
@@ -383,13 +373,11 @@ export class ErrorHandler {
         timestamp: new Date().toISOString()
       };
 
-      console.log('Error report generated:', report);
       
       // Could integrate with Sentry, Bugsnag, etc.
       // await crashlytics().recordError(new Error(error.message));
       
     } catch (reportError) {
-      console.error('Failed to report error:', reportError);
     }
   }
 
@@ -440,7 +428,6 @@ export class ErrorHandler {
         this.errorLog = JSON.parse(stored);
       }
     } catch (error) {
-      console.warn('Failed to load error log:', error);
     }
   }
 
@@ -448,7 +435,6 @@ export class ErrorHandler {
     try {
       await AsyncStorage.setItem('error_log', JSON.stringify(this.errorLog.slice(0, this.maxErrorLogSize)));
     } catch (error) {
-      console.warn('Failed to save error log:', error);
     }
   }
 
@@ -459,7 +445,6 @@ export class ErrorHandler {
         this.offlineActions = JSON.parse(stored);
       }
     } catch (error) {
-      console.warn('Failed to load offline actions:', error);
     }
   }
 
@@ -467,7 +452,6 @@ export class ErrorHandler {
     try {
       await AsyncStorage.setItem('offline_actions', JSON.stringify(this.offlineActions));
     } catch (error) {
-      console.warn('Failed to save offline actions:', error);
     }
   }
 

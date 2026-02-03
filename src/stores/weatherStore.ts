@@ -286,7 +286,6 @@ const generateSampleHourlyData = (): HourlyForecastData[] => {
 };
 
 const generateSampleDailyData = async (coordinate?: LocationCoordinate): Promise<DailyForecastData[]> => {
-  console.log('🌊 [WEATHER STORE] Generating daily data with unified tide service');
 
   const days = ['Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu'];
   const conditions = ['Partly cloudy', 'Sunny', 'Mostly sunny', 'Cloudy', 'Rain', 'Partly cloudy', 'Sunny', 'Thunderstorms'];
@@ -301,7 +300,6 @@ const generateSampleDailyData = async (coordinate?: LocationCoordinate): Promise
     const module = await import('../services/unifiedTideService');
     unifiedTideService = module.unifiedTideService;
   } catch (error) {
-    console.warn('🌊 [WEATHER STORE] Unified tide service not available, using fallback');
     unifiedTideService = null;
   }
 
@@ -344,10 +342,8 @@ const generateSampleDailyData = async (coordinate?: LocationCoordinate): Promise
         const lowTideHeight = unifiedTideService.getCurrentTideHeight(defaultCoordinate, noonLowTide);
         tideRange = Math.abs(highTideHeight - lowTideHeight);
 
-        console.log(`🌊 [WEATHER STORE] Day ${index}: High ${highTideHeight.toFixed(1)}m at ${highTideTime}, Low ${lowTideHeight.toFixed(1)}m at ${lowTideTime}, Range ${tideRange.toFixed(1)}m`);
 
       } catch (error) {
-        console.warn(`🌊 [WEATHER STORE] Failed to get unified tide data for day ${index}:`, error);
       }
     }
 
@@ -503,7 +499,6 @@ export const useWeatherStore = create<WeatherState>()(
             expiresIn: 180 // 3 hours for weather data
           });
         } catch (error) {
-          console.warn('Failed to cache weather data for offline use:', error);
         }
       },
 
@@ -1086,7 +1081,6 @@ export const useWeatherStore = create<WeatherState>()(
             loading: false
           });
         } catch (error) {
-          console.error('Failed to fetch HKO data:', error);
           set({
             error: error instanceof Error ? error.message : 'Failed to fetch HKO data',
             loading: false

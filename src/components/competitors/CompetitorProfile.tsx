@@ -114,10 +114,8 @@ export const CompetitorProfile: React.FC<CompetitorProfileProps> = ({
   const handleContact = (type: 'phone' | 'email') => {
     if (type === 'phone' && competitor.emergencyContact?.phone) {
       // Open phone dialer
-      console.log('Call:', competitor.emergencyContact.phone);
     } else if (type === 'email' && competitor.emergencyContact?.email) {
       // Open email client
-      console.log('Email:', competitor.emergencyContact.email);
     }
   };
 

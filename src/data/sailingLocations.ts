@@ -552,6 +552,12 @@ export const sailingLocations: SailingLocation[] = [
         description: 'Asia Pacific Championship welcome cocktail reception'
       },
       {
+        date: '2026-11-21',
+        time: '19:00',
+        event: 'APAC Prizegiving Dinner',
+        description: 'Asia Pacific Championship prizegiving gala dinner'
+      },
+      {
         date: '2026-11-22',
         time: '19:00',
         event: 'Worlds Welcome Reception',
@@ -875,8 +881,8 @@ export const sailingLocations: SailingLocation[] = [
     name: 'Star Ferry Terminal',
     type: 'tourism',
     coordinates: {
-      latitude: 22.2939,
-      longitude: 114.1720
+      latitude: 22.2932,
+      longitude: 114.1686
     },
     description: 'Historic ferry service operating since 1888, offering scenic harbor crossings and charming glimpses of old Hong Kong character.',
     championshipRole: 'Historic transportation and harbor viewing experience',
@@ -1126,7 +1132,6 @@ export const getLocationsByType = (type: SailingLocationFilter['type']) => {
 
   if (validLocations.length !== filteredLocations.length) {
     const invalidCount = filteredLocations.length - validLocations.length;
-    console.warn(`⚠️ [sailingLocations] Filtered out ${invalidCount} invalid location(s) for type: ${type}`);
   }
 
   return validLocations;
@@ -1135,7 +1140,6 @@ export const getLocationsByType = (type: SailingLocationFilter['type']) => {
 export const getLocationById = (id: string) => {
   const location = sailingLocations.find(location => location.id === id);
   if (location && !isValidLocation(location)) {
-    console.warn(`⚠️ [sailingLocations] Invalid location found for ID: ${id}`);
     return undefined;
   }
   return location;

@@ -307,7 +307,6 @@ class WhatsAppService {
       // Filter groups based on user access
       return allGroups.filter(group => this.canUserAccessGroup(group, user));
     } catch (error) {
-      console.error('Error fetching WhatsApp groups:', error);
       throw new Error('Failed to load WhatsApp groups');
     }
   }
@@ -372,11 +371,9 @@ class WhatsAppService {
       };
 
       // In a real implementation, this would send the request to WhatsApp Business API
-      console.log('Group access request created:', request);
       
       return request;
     } catch (error) {
-      console.error('Error requesting group access:', error);
       throw new Error('Failed to request group access');
     }
   }
@@ -402,11 +399,9 @@ class WhatsAppService {
       };
 
       // In a real implementation, this would use WhatsApp Business API
-      console.log('Joined group:', membership);
       
       return membership;
     } catch (error) {
-      console.error('Error joining group:', error);
       throw new Error('Failed to join group');
     }
   }
@@ -467,7 +462,6 @@ class WhatsAppService {
 
       return memberships;
     } catch (error) {
-      console.error('Error fetching user groups:', error);
       throw new Error('Failed to load user groups');
     }
   }
@@ -529,7 +523,6 @@ class WhatsAppService {
 
       return demoComments.slice(0, limit);
     } catch (error) {
-      console.error('Error fetching group comments:', error);
       throw new Error('Failed to load group comments');
     }
   }
@@ -554,11 +547,9 @@ class WhatsAppService {
       };
 
       // In a real implementation, this would use WhatsApp Business API
-      console.log('Comment posted:', comment);
       
       return comment;
     } catch (error) {
-      console.error('Error posting comment:', error);
       throw new Error('Failed to post comment');
     }
   }
@@ -572,7 +563,6 @@ class WhatsAppService {
       const inviteCode = Math.random().toString(36).substr(2, 12);
       return `https://chat.whatsapp.com/${inviteCode}`;
     } catch (error) {
-      console.error('Error generating invite link:', error);
       throw new Error('Failed to generate invite link');
     }
   }
@@ -585,9 +575,7 @@ class WhatsAppService {
       const user = this.userStore?.getState();
       
       // In a real implementation, this would use WhatsApp Business API
-      console.log(`User ${user?.id} left group ${groupId}`);
     } catch (error) {
-      console.error('Error leaving group:', error);
       throw new Error('Failed to leave group');
     }
   }

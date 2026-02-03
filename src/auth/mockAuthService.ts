@@ -24,7 +24,6 @@ export class MockAuthService {
   private listeners: ((user: User | null) => void)[] = [];
 
   async initialize() {
-    console.log('🔧 [MockAuth] Initializing mock authentication service...');
 
     // Load existing users
     try {
@@ -33,7 +32,6 @@ export class MockAuthService {
         this.users = JSON.parse(storedUsers);
       }
     } catch (error) {
-      console.warn('Failed to load mock users:', error);
     }
 
     // Check for existing session
@@ -44,14 +42,11 @@ export class MockAuthService {
         this.notifyListeners();
       }
     } catch (error) {
-      console.warn('Failed to load current user:', error);
     }
 
-    console.log('✅ [MockAuth] Mock authentication initialized');
   }
 
   async register(credentials: RegisterCredentials): Promise<User> {
-    console.log('🔧 [MockAuth] Registering user:', credentials.email);
 
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -103,12 +98,10 @@ export class MockAuthService {
     await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
     this.notifyListeners();
 
-    console.log('✅ [MockAuth] User registered successfully:', user.email);
     return user;
   }
 
   async login(credentials: LoginCredentials): Promise<User> {
-    console.log('🔧 [MockAuth] Logging in user:', credentials.email);
 
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 800));
@@ -147,18 +140,15 @@ export class MockAuthService {
     await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
     this.notifyListeners();
 
-    console.log('✅ [MockAuth] User logged in successfully:', user.email);
     return user;
   }
 
   async logout(): Promise<void> {
-    console.log('🔧 [MockAuth] Logging out user');
 
     this.currentUser = null;
     await AsyncStorage.removeItem(CURRENT_USER_KEY);
     this.notifyListeners();
 
-    console.log('✅ [MockAuth] User logged out');
   }
 
   getCurrentUser(): User | null {
@@ -184,7 +174,6 @@ export class MockAuthService {
     try {
       await AsyncStorage.setItem(MOCK_USERS_KEY, JSON.stringify(this.users));
     } catch (error) {
-      console.warn('Failed to save mock users:', error);
     }
   }
 
@@ -193,26 +182,21 @@ export class MockAuthService {
       try {
         listener(this.currentUser);
       } catch (error) {
-        console.warn('Error in auth state listener:', error);
       }
     });
   }
 
   // Additional mock methods for testing
   async resetPassword(email: string): Promise<void> {
-    console.log('🔧 [MockAuth] Password reset requested for:', email);
     // Simulate sending reset email
     await new Promise(resolve => setTimeout(resolve, 500));
-    console.log('✅ [MockAuth] Password reset email sent (mock)');
   }
 
   async clearAllData(): Promise<void> {
-    console.log('🔧 [MockAuth] Clearing all mock data');
     this.users = [];
     this.currentUser = null;
     await AsyncStorage.multiRemove([MOCK_USERS_KEY, CURRENT_USER_KEY]);
     this.notifyListeners();
-    console.log('✅ [MockAuth] All mock data cleared');
   }
 }
 

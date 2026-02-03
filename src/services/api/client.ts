@@ -298,14 +298,13 @@ export class UserApiClient extends ApiClient {
     const formData = new FormData();
     formData.append('avatar', file);
 
+    // Create headers without Content-Type for FormData (browser sets boundary automatically)
+    const { 'Content-Type': _, ...headersWithoutContentType } = this.defaultHeaders;
+
     return this.request('/users/profile/avatar', {
       method: 'POST',
       body: formData,
-      headers: {
-        // Remove Content-Type to let browser set boundary for FormData
-        ...this.defaultHeaders,
-        'Content-Type': undefined as any,
-      },
+      headers: headersWithoutContentType,
     });
   }
 

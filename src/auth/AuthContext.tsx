@@ -67,7 +67,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }));
         }
       } catch (error) {
-        console.error('Error loading persisted user:', error);
         setAuthState(prev => ({
           ...prev,
           isLoading: false,
@@ -112,7 +111,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }));
         }
       } catch (error) {
-        console.error('Error handling auth state change:', error);
         setAuthState(prev => ({
           ...prev,
           isLoading: false,
@@ -181,7 +179,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
           await authService.sendEmailVerification();
         } catch (verificationError) {
-          console.warn('Failed to send email verification:', verificationError);
           // Don't throw here as the main sign up succeeded
         }
       }

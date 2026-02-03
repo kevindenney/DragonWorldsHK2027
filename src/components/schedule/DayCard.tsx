@@ -12,7 +12,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const DATE_SECTION_WIDTH = 96;
+const DATE_SECTION_WIDTH = 110;
 const CONTENT_INDENT = spacing.md + DATE_SECTION_WIDTH + spacing.sm;
 
 export interface DayCardProps {
@@ -73,7 +73,7 @@ export const DayCard: React.FC<DayCardProps> = ({
         accessibilityHint={`${isExpanded ? 'Collapse' : 'Expand'} ${day.title} schedule`}
       >
         <View style={styles.dateSection}>
-          <IOSText textStyle="callout" weight="semibold" style={styles.dayOfWeek}>
+          <IOSText textStyle="callout" weight="semibold" style={styles.dayOfWeek} numberOfLines={1}>
             {dayOfWeek}
           </IOSText>
           {date && (

@@ -40,7 +40,6 @@ export class AuthSyncService {
       try {
         await this.syncAuthState(firebaseUser);
       } catch (error) {
-        console.error('Auth sync failed:', error);
         this.notifyListeners(null);
       }
     });
@@ -64,7 +63,6 @@ export class AuthSyncService {
       try {
         listener(user);
       } catch (error) {
-        console.error('Auth sync listener error:', error);
       }
     });
   }
@@ -104,7 +102,6 @@ export class AuthSyncService {
         return newUser;
       }
     } catch (error) {
-      console.error(`Auth sync failed for user ${uid}:`, error);
       throw new AuthSyncError('sync_failed', 'Failed to sync authentication state', error as Error);
     } finally {
       this.syncInProgress.delete(uid);
@@ -299,7 +296,6 @@ export class AuthSyncService {
 
       return null;
     } catch (error) {
-      console.error('Failed to handle email verification:', error);
       throw new AuthSyncError('email_verification_failed', 'Failed to handle email verification', error as Error);
     }
   }
@@ -319,7 +315,6 @@ export class AuthSyncService {
       // Update last activity
       await userDatabaseService.updateUserActivity(uid);
     } catch (error) {
-      console.error('Failed to handle password change:', error);
       // Don't throw error as password change itself was successful
     }
   }
@@ -341,7 +336,6 @@ export class AuthSyncService {
 
       this.notifyListeners(null);
     } catch (error) {
-      console.error('Failed to handle account deletion:', error);
       throw new AuthSyncError('account_deletion_failed', 'Failed to handle account deletion', error as Error);
     }
   }
@@ -372,7 +366,6 @@ export class AuthSyncService {
       
       return user;
     } catch (error) {
-      console.error('Manual sync failed:', error);
       throw new AuthSyncError('manual_sync_failed', 'Failed to manually sync user', error as Error);
     }
   }

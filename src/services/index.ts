@@ -68,7 +68,6 @@ export {
 // Service initialization helper
 export const initializeServices = async () => {
   try {
-    console.log('Initializing application services...');
     
     // Initialize error handler first
     await errorHandler.initialize();
@@ -76,11 +75,9 @@ export const initializeServices = async () => {
     // Initialize notification service
     const notificationInitialized = await notificationService.initialize();
     if (!notificationInitialized) {
-      console.warn('Notification service initialization failed');
     }
     
     // Weather manager will auto-initialize when first used
-    console.log('Services initialization completed');
     
     return {
       errorHandler: true,
@@ -90,7 +87,6 @@ export const initializeServices = async () => {
     };
     
   } catch (error) {
-    console.error('Failed to initialize services:', error);
     errorHandler.logError({
       type: 'general',
       severity: 'critical',
@@ -119,7 +115,6 @@ export const checkServiceHealth = async () => {
     await weatherAPI.getHKObservatoryData();
     health.weatherAPI = true;
   } catch (error) {
-    console.warn('Weather API health check failed:', error);
   }
   
   // Test subscription service
@@ -127,7 +122,6 @@ export const checkServiceHealth = async () => {
     await subscriptionService.getSubscriptionStatus();
     health.subscription = true;
   } catch (error) {
-    console.warn('Subscription service health check failed:', error);
   }
   
   // Test notification service
@@ -135,7 +129,6 @@ export const checkServiceHealth = async () => {
     const token = notificationService.getPushToken();
     health.notifications = token !== null;
   } catch (error) {
-    console.warn('Notification service health check failed:', error);
   }
   
   return health;
@@ -144,7 +137,6 @@ export const checkServiceHealth = async () => {
 // Service sync helper for background refresh
 export const syncAllServices = async () => {
   try {
-    console.log('Starting service synchronization...');
     
     // Sync weather data
     await weatherManager.updateWeatherData();
@@ -155,10 +147,8 @@ export const syncAllServices = async () => {
     // Process any offline actions
     // (errorHandler will automatically handle this when network becomes available)
     
-    console.log('Service synchronization completed');
     
   } catch (error) {
-    console.error('Service synchronization failed:', error);
     errorHandler.logError({
       type: 'general',
       severity: 'medium',
@@ -178,10 +168,8 @@ export const resetAllServices = () => {
     errorHandler.clearOfflineActions();
     notificationService.clearAllScheduledNotifications();
     
-    console.log('All services reset successfully');
     
   } catch (error) {
-    console.error('Failed to reset services:', error);
   }
 };
 

@@ -58,7 +58,6 @@ export const NoticeActions: React.FC<NoticeActionsProps> = ({
         const availableActions = noticeBoardService.getAvailableActions();
         setActions(availableActions);
       } catch (error) {
-        console.error('Error loading actions:', error);
       }
     };
 
@@ -127,7 +126,6 @@ export const NoticeActions: React.FC<NoticeActionsProps> = ({
         );
       }
     } catch (error) {
-      console.error('Error submitting action:', error);
       await haptics.errorAction();
       Alert.alert(
         'Error',

@@ -103,15 +103,9 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
 
     try {
       // Debug environment variables before attempting registration
-      console.log('🔍 [Register] Environment variable check:');
-      console.log('EXPO_PUBLIC_FIREBASE_API_KEY:', process.env.EXPO_PUBLIC_FIREBASE_API_KEY ? '***set***' : 'MISSING');
-      console.log('EXPO_PUBLIC_FIREBASE_PROJECT_ID:', process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'MISSING');
-      console.log('EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN:', process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || 'MISSING');
 
       // Check network connectivity before attempting Firebase operation
-      console.log('🔍 [Register] Checking network connectivity...');
       const isConnected = await checkConnectivity();
-      console.log('🔍 [Register] Network connectivity:', isConnected ? 'Connected' : 'No connection');
 
       if (!isConnected) {
         throw {
@@ -120,33 +114,25 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
         };
       }
 
-      console.log('🎉 [Register] Starting registration process...');
       await register({ email, password, displayName });
 
-      console.log('🎉 [Register] Registration successful!');
 
       // Check if navigation is available and navigate appropriately
       try {
-        console.log('🔗 [Register] Attempting to navigate back to main app');
 
         // Check if we can navigate to MainTabs, otherwise go back to login
         if (navigation.canGoBack()) {
-          console.log('🔗 [Register] Can go back, navigating to MainTabs');
           navigation.navigate('MainTabs');
         } else {
-          console.log('🔗 [Register] Cannot go back, resetting to MainTabs');
           navigation.reset({
             index: 0,
             routes: [{ name: 'MainTabs' }],
           });
         }
       } catch (navError) {
-        console.error('❌ [Register] Navigation error after successful registration:', navError);
         // If navigation fails, the auth state change should still trigger proper navigation
-        console.log('🔗 [Register] Navigation failed, relying on auth state change');
       }
     } catch (error: any) {
-      console.error('Registration error:', error);
 
       // Provide more specific error messages
       let title = 'Unable to Create Account';
@@ -201,18 +187,13 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
   };
 
   const handleSwitchToLogin = () => {
-    console.log('🔗 [SimpleRegisterScreen] handleSwitchToLogin called');
     try {
-      console.log('🔗 [SimpleRegisterScreen] Attempting to navigate to Login screen');
       navigation.navigate('Login');
-      console.log('✅ [SimpleRegisterScreen] Navigation to Login completed successfully');
     } catch (error) {
-      console.error('❌ [SimpleRegisterScreen] Navigation to Login failed:', error);
     }
   };
 
   const handleCancel = () => {
-    console.log('🔗 [SimpleRegisterScreen] handleCancel called');
     try {
       if (navigation.canGoBack()) {
         navigation.goBack();
@@ -220,21 +201,17 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
         navigation.navigate('Login');
       }
     } catch (error) {
-      console.error('❌ [SimpleRegisterScreen] Cancel navigation failed:', error);
     }
   };
 
   const handleSocialSignUp = async (provider: 'google' | 'apple') => {
     try {
-      console.log(`🔗 [SimpleRegisterScreen] Attempting ${provider} sign up`);
       if (loginWithProvider) {
         await loginWithProvider(provider);
-        console.log(`✅ [SimpleRegisterScreen] ${provider} sign up successful`);
       } else {
         throw new Error(`${provider} sign up not available`);
       }
     } catch (error: any) {
-      console.error(`❌ [SimpleRegisterScreen] ${provider} sign up failed:`, error);
       Alert.alert(
         'Sign Up Failed',
         error.message || `Unable to sign up with ${provider}. Please try again.`
@@ -258,7 +235,6 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
       clearTimeout(timeoutId);
       return response.ok;
     } catch (error) {
-      console.log('🔍 [Register] Connectivity check failed or timed out:', error);
       // If connectivity check fails or times out, assume we're connected
       // Firebase will handle the actual network error if there is one
       return true;

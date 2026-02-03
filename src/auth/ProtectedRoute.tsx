@@ -227,7 +227,6 @@ const EmailVerificationRequiredComponent: React.FC<EmailVerificationRequiredProp
       await sendEmailVerification();
       // Could show a toast or alert here
     } catch (error) {
-      console.error('Failed to send verification email:', error);
     }
   };
 

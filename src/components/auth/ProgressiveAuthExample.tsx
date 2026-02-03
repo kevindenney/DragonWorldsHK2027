@@ -26,7 +26,6 @@ export function ProgressiveAuthExample({ itemTitle = "this feature" }: Progressi
 
     if (isAuthenticated) {
       // User is authenticated, proceed with action
-      console.log('Saving preference - user is authenticated');
       // Implement actual save logic here
     } else {
       // Show progressive auth prompt
@@ -42,7 +41,6 @@ export function ProgressiveAuthExample({ itemTitle = "this feature" }: Progressi
         feature: 'preferences',
         onAuthComplete: () => {
           // This will be called after successful authentication
-          console.log('User authenticated, now saving preference...');
           // Implement actual save logic here
         },
       });
@@ -54,7 +52,6 @@ export function ProgressiveAuthExample({ itemTitle = "this feature" }: Progressi
 
     if (isAuthenticated) {
       // User is authenticated, show feedback form
-      console.log('Opening feedback form - user is authenticated');
       // Navigate to feedback form or show modal
     } else {
       // Show progressive auth prompt
@@ -69,7 +66,6 @@ export function ProgressiveAuthExample({ itemTitle = "this feature" }: Progressi
         ],
         feature: 'feedback submission',
         onAuthComplete: () => {
-          console.log('User authenticated, now showing feedback form...');
           // Navigate to feedback form or show modal
         },
       });
@@ -81,7 +77,6 @@ export function ProgressiveAuthExample({ itemTitle = "this feature" }: Progressi
 
     if (isAuthenticated) {
       // User is authenticated, toggle like
-      console.log('Toggling like - user is authenticated');
       // Implement like toggle logic
     } else {
       // Show progressive auth prompt
@@ -96,7 +91,6 @@ export function ProgressiveAuthExample({ itemTitle = "this feature" }: Progressi
         ],
         feature: 'social features',
         onAuthComplete: () => {
-          console.log('User authenticated, now toggling like...');
           // Implement like toggle logic
         },
       });

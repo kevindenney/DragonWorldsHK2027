@@ -1,22 +1,13 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { 
-  Users, 
-  Shield, 
-  Star, 
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import {
+  Users,
   MessageCircle,
-  ExternalLink,
-  Lock,
-  Verified,
-  UserPlus,
   Clock,
-  QrCode
 } from 'lucide-react-native';
 
-import { IOSText, IOSButton, IOSBadge, IOSCard } from '../ios';
-import { QRCodeDisplay } from '../contacts/QRCodeDisplay';
+import { IOSText, IOSCard } from '../ios';
 import type { WhatsAppGroup } from '../../stores/socialStore';
-import { useUserStore } from '../../stores/userStore';
 
 interface WhatsAppGroupCardProps {
   group: WhatsAppGroup;
@@ -28,288 +19,55 @@ interface WhatsAppGroupCardProps {
   onLeave?: (groupId: string) => void;
 }
 
+/**
+ * WhatsAppGroupCard - Coming Soon State
+ *
+ * WhatsApp group functionality is temporarily disabled.
+ * This component displays a "Coming Soon" placeholder state.
+ */
 export const WhatsAppGroupCard: React.FC<WhatsAppGroupCardProps> = ({
   group,
-  isJoined,
-  hasAccessRequest,
-  onJoin,
-  onRequestAccess,
-  onViewGroup,
-  onLeave,
 }) => {
-  const user = useUserStore();
-  const [showQRCode, setShowQRCode] = useState(false);
-
-  const getSponsorColor = (sponsor?: string): string => {
-    switch (sponsor) {
-      case 'HSBC': return '#DC143C';
-      case 'Sino Group': return '#8B4513';
-      case 'BMW': return '#0066CC';
-      case 'Garmin': return '#007CC3';
-      default: return '#007AFF';
-    }
-  };
-
-  const getCategoryColor = (category: string): string => {
-    switch (category) {
-      case 'active-racing': return '#FF9500';
-      case 'spectators-families': return '#34C759';
-      case 'vip-hospitality': return '#AF52DE';
-      case 'hong-kong-local': return '#007AFF';
-      case 'technical-support': return '#FF3B30';
-      case 'media-press': return '#8E8E93';
-      default: return '#8E8E93';
-    }
-  };
-
-  const getCategoryIcon = (category: string) => {
-    const color = getCategoryColor(category);
-    switch (category) {
-      case 'active-racing': return <MessageCircle size={16} color={color} />;
-      case 'spectators-families': return <Users size={16} color={color} />;
-      case 'vip-hospitality': return <Star size={16} color={color} />;
-      case 'hong-kong-local': return <Shield size={16} color={color} />;
-      case 'technical-support': return <Shield size={16} color={color} />;
-      case 'media-press': return <ExternalLink size={16} color={color} />;
-      default: return <Users size={16} color={color} />;
-    }
-  };
-
-  const handleJoinPress = () => {
-    if (group.isInviteOnly) {
-      Alert.alert(
-        'Request Access',
-        `This group requires approval. Would you like to request access to "${group.title}"?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Request Access',
-            onPress: () => onRequestAccess(group.id)
-          }
-        ]
-      );
-    } else {
-      Alert.alert(
-        'Join Group',
-        `Join "${group.title}" on WhatsApp?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Join',
-            onPress: () => onJoin(group.id)
-          }
-        ]
-      );
-    }
-  };
-
-  const handleLeavePress = () => {
-    Alert.alert(
-      'Leave Group',
-      `Are you sure you want to leave "${group.title}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Leave',
-          style: 'destructive',
-          onPress: () => onLeave?.(group.id)
-        }
-      ]
-    );
-  };
-
-  const handleShowQRCode = () => {
-    setShowQRCode(true);
-  };
-
-  const canUserJoin = (): boolean => {
-    if (isJoined) return false;
-    if (hasAccessRequest) return false;
-    
-    // VIP groups require VIP status
-    if (group.isVIP && user.userType !== 'vip') {
-      return false;
-    }
-    
-    return true;
-  };
-
-  const getActionButtonConfig = () => {
-    if (isJoined) {
-      return {
-        title: 'Open',
-        onPress: () => onViewGroup(group.id),
-        variant: 'primary' as const,
-        icon: <ExternalLink size={16} color="#FFFFFF" />
-      };
-    }
-    
-    if (hasAccessRequest) {
-      return {
-        title: 'Pending',
-        onPress: undefined,
-        variant: 'secondary' as const,
-        disabled: true,
-        icon: <Clock size={16} color="#8E8E93" />
-      };
-    }
-    
-    if (!canUserJoin()) {
-      return {
-        title: 'Restricted',
-        onPress: undefined,
-        variant: 'secondary' as const,
-        disabled: true,
-        icon: <Lock size={16} color="#8E8E93" />
-      };
-    }
-    
-    if (group.isInviteOnly) {
-      return {
-        title: 'Request',
-        onPress: handleJoinPress,
-        variant: 'secondary' as const,
-        icon: <UserPlus size={16} color="#007AFF" />
-      };
-    }
-    
-    return {
-      title: 'Join',
-      onPress: handleJoinPress,
-      variant: 'primary' as const,
-      icon: <UserPlus size={16} color="#FFFFFF" />
-    };
-  };
-
-  const actionConfig = getActionButtonConfig();
-  const activityLevel = group.activeMemberCount && group.memberCount 
-    ? (group.activeMemberCount / group.memberCount) > 0.3 ? 'high' : 'medium'
-    : 'low';
-
   return (
     <IOSCard style={styles.card}>
-      <TouchableOpacity onPress={() => onViewGroup(group.id)} style={styles.cardContent}>
+      <View style={styles.cardContent}>
+        {/* Coming Soon Badge */}
+        <View style={styles.comingSoonBadge}>
+          <Clock size={12} color="#FFFFFF" />
+          <IOSText style={styles.comingSoonBadgeText}>COMING SOON</IOSText>
+        </View>
+
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.titleRow}>
             <View style={styles.categoryIcon}>
-              {getCategoryIcon(group.category)}
+              <MessageCircle size={16} color="#C7C7CC" />
             </View>
             <View style={styles.titleContainer}>
               <IOSText style={styles.title}>{group.title}</IOSText>
-              {group.sponsorPrefix && (
-                <IOSText style={[styles.sponsor, { color: getSponsorColor(group.sponsorPrefix) }]}>
-                  {group.sponsorPrefix}
-                </IOSText>
-              )}
-            </View>
-            <View style={styles.badges}>
-              {group.verificationStatus === 'verified' && (
-                <Verified size={16} color="#007AFF" />
-              )}
-              {group.isVIP && (
-                <Star size={16} color="#AF52DE" style={styles.badgeIcon} />
-              )}
-              {group.isInviteOnly && (
-                <Lock size={16} color="#8E8E93" style={styles.badgeIcon} />
-              )}
             </View>
           </View>
-          
+
           <IOSText style={styles.description}>{group.description}</IOSText>
         </View>
 
-        {/* Stats */}
+        {/* Stats - Placeholder */}
         <View style={styles.stats}>
           <View style={styles.statItem}>
-            <Users size={14} color="#8E8E93" />
+            <Users size={14} color="#C7C7CC" />
             <IOSText style={styles.statText}>
-              {group.memberCount.toLocaleString()} member{group.memberCount !== 1 ? 's' : ''}
-            </IOSText>
-          </View>
-          
-          {group.activeMemberCount && (
-            <View style={styles.statItem}>
-              <MessageCircle size={14} color="#8E8E93" />
-              <IOSText style={styles.statText}>
-                {group.activeMemberCount} active
-              </IOSText>
-            </View>
-          )}
-          
-          <View style={styles.statItem}>
-            <View style={[
-              styles.activityIndicator,
-              { backgroundColor: activityLevel === 'high' ? '#34C759' : 
-                               activityLevel === 'medium' ? '#FF9500' : '#8E8E93' }
-            ]} />
-            <IOSText style={styles.statText}>
-              {activityLevel} activity
+              {group.memberCount?.toLocaleString() || '—'} members
             </IOSText>
           </View>
         </View>
 
-        {/* Rules/Requirements */}
-        {group.rules && group.rules.length > 0 && (
-          <View style={styles.rules}>
-            {group.rules.slice(0, 2).map((rule, index) => (
-              <IOSText key={index} style={styles.ruleText}>
-                • {rule}
-              </IOSText>
-            ))}
-            {group.rules.length > 2 && (
-              <IOSText style={styles.moreRules}>
-                +{group.rules.length - 2} more rules
-              </IOSText>
-            )}
-          </View>
-        )}
-      </TouchableOpacity>
-
-      {/* Actions */}
-      <View style={styles.actions}>
-        {isJoined && (
-          <IOSButton
-            title="Leave"
-            onPress={handleLeavePress}
-            variant="tinted"
-            size="small"
-            style={[styles.leaveButton, styles.highContrastButton]}
-          />
-        )}
-
-        {group.joinUrl && !isJoined && (
-          <IOSButton
-            title="QR Code"
-            onPress={handleShowQRCode}
-            variant="tinted"
-            size="small"
-            icon={<QrCode size={16} color="#007AFF" />}
-            style={[styles.qrButton, styles.highContrastButton]}
-          />
-        )}
-        
-        <IOSButton
-          title={actionConfig.title}
-          onPress={actionConfig.onPress}
-          variant={actionConfig.variant}
-          size="small"
-          disabled={actionConfig.disabled}
-          icon={actionConfig.icon}
-          style={styles.actionButton}
-        />
+        {/* Coming Soon Message */}
+        <View style={styles.comingSoonMessage}>
+          <IOSText style={styles.comingSoonText}>
+            WhatsApp group integration will be available closer to the event.
+          </IOSText>
+        </View>
       </View>
-
-      {/* QR Code Modal */}
-      {group.joinUrl && (
-        <QRCodeDisplay
-          visible={showQRCode}
-          onClose={() => setShowQRCode(false)}
-          data={group.joinUrl}
-          title={group.title}
-          description={group.description}
-        />
-      )}
     </IOSCard>
   );
 };
@@ -318,12 +76,34 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
     padding: 0,
+    opacity: 0.7,
   },
   cardContent: {
     padding: 16,
+    position: 'relative',
+  },
+  comingSoonBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#8E8E93',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderBottomLeftRadius: 8,
+    borderTopRightRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  comingSoonBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   header: {
     marginBottom: 12,
+    marginTop: 8,
   },
   titleRow: {
     flexDirection: 'row',
@@ -340,23 +120,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#1C1C1E',
+    color: '#8E8E93',
     marginBottom: 2,
-  },
-  sponsor: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  badges: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  badgeIcon: {
-    marginLeft: 6,
   },
   description: {
     fontSize: 14,
-    color: '#3C3C43',
+    color: '#AEAEB2',
     lineHeight: 20,
   },
   stats: {
@@ -373,53 +142,18 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 13,
-    color: '#8E8E93',
+    color: '#C7C7CC',
     marginLeft: 4,
   },
-  activityIndicator: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 4,
-  },
-  rules: {
+  comingSoonMessage: {
     backgroundColor: '#F2F2F7',
     borderRadius: 8,
     padding: 12,
-    marginBottom: 12,
   },
-  ruleText: {
-    fontSize: 12,
+  comingSoonText: {
+    fontSize: 13,
     color: '#8E8E93',
-    marginBottom: 2,
-  },
-  moreRules: {
-    fontSize: 12,
-    color: '#007AFF',
+    textAlign: 'center',
     fontStyle: 'italic',
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    paddingTop: 8,
-    borderTopWidth: 0.5,
-    borderTopColor: '#C6C6C8',
-  },
-  leaveButton: {
-    minWidth: 70,
-  },
-  qrButton: {
-    minWidth: 80,
-  },
-  actionButton: {
-    minWidth: 80,
-  },
-  highContrastButton: {
-    backgroundColor: '#F2F2F7',
-    borderWidth: 1,
-    borderColor: '#C6C6C8',
   },
 });

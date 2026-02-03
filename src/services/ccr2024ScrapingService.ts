@@ -41,13 +41,11 @@ class CCR2024ScrapingService {
    * Main scraping method - fetches all racing class results
    */
   async scrapeAllResults(): Promise<CCR2024EventData> {
-    console.log('🏁 Starting CCR 2024 results scraping...');
     
     try {
       // Check cache first
       const cached = this.getCachedData('all-results');
       if (cached) {
-        console.log('📋 Returning cached CCR 2024 results');
         return cached;
       }
 
@@ -71,7 +69,6 @@ class CCR2024ScrapingService {
         'hong-kong-kettle'
       ];
 
-      console.log(`🔄 Scraping ${racingClasses.length} racing classes...`);
 
       for (const racingClass of racingClasses) {
         try {
@@ -83,12 +80,10 @@ class CCR2024ScrapingService {
             eventData.totalRaces = classResults[0].raceResults.length;
           }
           
-          console.log(`✅ Scraped ${classResults.length} boats for ${racingClass}`);
           
           // Add delay between requests to be respectful
           await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (error) {
-          console.error(`❌ Failed to scrape ${racingClass}:`, error);
           // Continue with other classes even if one fails
           eventData.classes.push([]);
         }
@@ -97,11 +92,9 @@ class CCR2024ScrapingService {
       // Cache the results
       this.setCachedData('all-results', eventData);
       
-      console.log(`🏆 CCR 2024 scraping complete! Total classes: ${eventData.classes.length}`);
       return eventData;
 
     } catch (error) {
-      console.error('❌ CCR 2024 scraping failed:', error);
       throw new Error(`Failed to scrape CCR 2024 results: ${error}`);
     }
   }
@@ -110,7 +103,6 @@ class CCR2024ScrapingService {
    * Scrape results for a specific racing class
    */
   private async scrapeClassResults(racingClass: CCR2024RacingClass): Promise<CCR2024Result[]> {
-    console.log(`🔍 Scraping ${racingClass}...`);
     
     // For now, return mock data until we can test the actual scraping
     // This will be replaced with actual web scraping logic
@@ -457,7 +449,6 @@ class CCR2024ScrapingService {
    */
   clearCache(): void {
     this.cache.clear();
-    console.log('🧹 CCR 2024 cache cleared');
   }
 }
 

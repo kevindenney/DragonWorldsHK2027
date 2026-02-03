@@ -83,12 +83,6 @@ export default function MetricDetailSheet({
       startIndex = 0;
     }
 
-    console.log('🕒 [MetricDetailSheet] Time sync:', {
-      currentTime: now.toISOString(),
-      startIndex,
-      startTime: bundle.hourly.times[startIndex],
-      totalTimes: bundle.hourly.times.length
-    });
   }
 
   // Slice arrays based on horizon starting from current time
@@ -115,8 +109,6 @@ export default function MetricDetailSheet({
         };
       case 'tide':
         // 🔧 [TIDE FIX] Use unified tide service instead of bundle.hourly.tideHeightM
-        console.log('🔧 [METRIC SHEET] === TIDE FORECAST CALCULATION FIX ===');
-        console.log('🔧 [METRIC SHEET] OLD DATA - bundle.hourly.tideHeightM:', bundle.hourly.tideHeightM.slice(startIndex, sliceEnd));
 
         // Generate unified tide data for each time slot
         const unifiedTideData = times.map((timeStr, index) => {
@@ -132,30 +124,24 @@ export default function MetricDetailSheet({
 
             const area = RACE_AREAS.find(a => a.key === areaKey);
             if (!area) {
-              console.warn(`🔧 [METRIC SHEET] Unknown area key: ${areaKey}`);
               return bundle.hourly.tideHeightM[startIndex + index]; // fallback
             }
 
             const stationKey = RACE_AREA_TIDE_MAP[areaKey];
             if (!stationKey) {
-              console.warn(`🔧 [METRIC SHEET] No tide station mapped for ${areaKey}`);
               return bundle.hourly.tideHeightM[startIndex + index]; // fallback
             }
 
             const coordinate = { lat: area.lat, lon: area.lon };
             const unifiedHeight = unifiedTideService.getCurrentTideHeight(coordinate, timeForCalculation);
 
-            console.log(`🔧 [METRIC SHEET] Time ${timeStr}: unified=${unifiedHeight}m, old=${bundle.hourly.tideHeightM[startIndex + index]}m`);
             return unifiedHeight;
 
           } catch (error) {
-            console.error(`🔧 [METRIC SHEET] Error calculating unified tide for ${timeStr}:`, error);
             return bundle.hourly.tideHeightM[startIndex + index]; // fallback to old data
           }
         });
 
-        console.log('🔧 [METRIC SHEET] NEW DATA - unifiedTideData:', unifiedTideData);
-        console.log('🔧 [METRIC SHEET] === TIDE FORECAST CALCULATION COMPLETE ===');
 
         return {
           primary: unifiedTideData,

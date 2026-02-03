@@ -584,7 +584,6 @@ export class LoyaltyService {
       await this.updateChallengeProgress(userId, source, multipliedAmount);
 
     } catch (error) {
-      console.error('Failed to award loyalty points:', error);
     }
   }
 
@@ -897,7 +896,6 @@ export class LoyaltyService {
         }
       }
     } catch (error) {
-      console.warn('Failed to load loyalty data:', error);
     }
   }
 
@@ -912,7 +910,6 @@ export class LoyaltyService {
       
       await AsyncStorage.setItem('loyalty_data', JSON.stringify(data));
     } catch (error) {
-      console.warn('Failed to save loyalty data:', error);
     }
   }
 }

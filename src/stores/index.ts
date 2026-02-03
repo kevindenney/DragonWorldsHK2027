@@ -184,6 +184,5 @@ export const syncStores = async () => {
   try {
     await Promise.allSettled(promises);
   } catch (error) {
-    console.error('Store sync error:', error);
   }
 };

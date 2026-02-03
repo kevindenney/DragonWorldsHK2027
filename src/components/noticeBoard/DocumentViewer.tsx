@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Dimensions, Alert } from 'react-native';
+import { View, StyleSheet, Dimensions, Alert, Linking, Platform, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
-import { 
-  Download, 
-  Share, 
+import {
+  Download,
+  Share as ShareIcon,
   ChevronLeft,
   FileText,
   ExternalLink
@@ -18,7 +18,7 @@ import {
   IOSText,
   IOSCard
 } from '../ios';
-import { LoadingSpinner } from '../shared';
+import { LoadingSpinner } from '../shared/LoadingSpinner';
 import type { EventDocument } from '../../types/noticeBoard';
 
 interface DocumentViewerProps {
@@ -40,74 +40,55 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [isDownloading, setIsDownloading] = useState(false);
+
   const handleDownload = async () => {
     try {
       await haptics.buttonPress();
-      // In a real implementation, this would download the file
-      Alert.alert(
-        'Download',
-        `Download ${document.title}?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Download', 
-            onPress: () => {
-              // Implement actual download logic
-              Alert.alert('Success', 'Document downloaded successfully');
-            }
-          }
-        ]
-      );
+      setIsDownloading(true);
+
+      // Open document in external browser/app for download
+      await Linking.openURL(document.url);
     } catch (err) {
-      console.error('Download error:', err);
-      Alert.alert('Error', 'Failed to download document');
+      Alert.alert('Error', 'Failed to open document. Please try again.');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
   const handleShare = async () => {
     try {
       await haptics.buttonPress();
-      // In a real implementation, this would share the document
-      Alert.alert(
-        'Share',
-        `Share ${document.title}?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Share', 
-            onPress: () => {
-              // Implement actual share logic
-              console.log('Sharing document:', document.title);
-            }
-          }
-        ]
-      );
+
+      // Use React Native's built-in Share API
+      await Share.share({
+        title: document.title,
+        message: `${document.title}\n${document.url}`,
+        url: document.url, // iOS only
+      });
     } catch (err) {
-      console.error('Share error:', err);
-      Alert.alert('Error', 'Failed to share document');
+      if (!(err instanceof Error && err.message === 'User did not share')) {
+        Alert.alert('Error', 'Failed to share document');
+      }
     }
   };
 
   const handleOpenExternal = async () => {
     try {
       await haptics.buttonPress();
-      // In a real implementation, this would open in external browser
-      Alert.alert(
-        'Open External',
-        'Open document in external browser?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Open', 
-            onPress: () => {
-              // Implement external browser opening
-              console.log('Opening externally:', document.url);
-            }
-          }
-        ]
-      );
+
+
+      // Check if we can open the URL
+      const canOpen = await Linking.canOpenURL(document.url);
+
+      if (canOpen) {
+        await Linking.openURL(document.url);
+      } else {
+        // Try to open anyway - some URLs report false but still work
+        await Linking.openURL(document.url);
+      }
     } catch (err) {
-      console.error('External open error:', err);
+      Alert.alert('Error', 'Unable to open document in external browser');
     }
   };
 
@@ -151,7 +132,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           variant="tinted"
           size="small"
           onPress={handleShare}
-          icon={<Share size={16} color={colors.primary} />}
+          icon={<ShareIcon size={16} color={colors.primary} />}
           style={styles.actionButton}
         />
         
@@ -182,13 +163,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           
           <View style={styles.pdfActions}>
             <IOSButton
-              title="Download PDF"
+              title={isDownloading ? "Downloading..." : "Download PDF"}
               variant="filled"
               size="medium"
               onPress={handleDownload}
+              disabled={isDownloading}
               icon={<Download size={20} color={colors.surface} />}
             />
-            
+
             <IOSButton
               title="Open External"
               variant="tinted"
@@ -213,7 +195,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             const { nativeEvent } = syntheticEvent;
             setError('Failed to load document');
             setIsLoading(false);
-            console.error('WebView error:', nativeEvent);
           }}
           startInLoadingState={true}
           renderLoading={() => (
@@ -246,7 +227,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         }}
         rightActions={[
           {
-            icon: <Share size={20} color={colors.primary} />,
+            icon: <ShareIcon size={20} color={colors.primary} />,
             onPress: handleShare
           }
         ]}

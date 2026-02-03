@@ -143,7 +143,6 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
         setError('Event not found');
       }
     } catch (err) {
-      console.error('Failed to load event data:', err);
       setError('Failed to load event data');
       await haptics.errorAction();
       
@@ -156,7 +155,6 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
             setError(null);
           }
         } catch (cacheError) {
-          console.error('Failed to load from cache:', cacheError);
         }
       }
     } finally {
@@ -181,7 +179,6 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
           await notificationService.registerForPushNotifications(user.uid);
         }
       } catch (error) {
-        console.error('Failed to initialize notifications:', error);
       }
     };
 
@@ -207,7 +204,6 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
       const results = searchEngine.search(query);
       setSearchResults(results);
     } catch (error) {
-      console.error('Search error:', error);
     } finally {
       setIsSearching(false);
     }
@@ -476,13 +472,11 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
   const handleDocumentDownload = useCallback(async (document: EventDocument) => {
     await haptics.buttonPress();
     // Implement download functionality
-    console.log('Download document:', document.title);
   }, []);
 
   const handleBookmarkItem = useCallback(async (item: EventDocument | OfficialNotification) => {
     await haptics.selection();
     // Implement bookmark functionality
-    console.log('Bookmark item:', item.title);
   }, []);
 
   // Legacy render function kept for compatibility
@@ -622,7 +616,6 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
               noticeBoardService={noticeBoardService}
               userRole={user?.role || 'participant'}
               onActionSubmitted={(actionId) => {
-                console.log(`Action ${actionId} submitted successfully`);
                 // Optionally reload notices or show confirmation
               }}
             />
@@ -853,7 +846,6 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
   return (
     <ErrorBoundary
       onError={(error, errorInfo) => {
-        console.error('Notice board screen error:', error, errorInfo);
         haptics.errorAction();
       }}
       testID="notice-board-error-boundary"

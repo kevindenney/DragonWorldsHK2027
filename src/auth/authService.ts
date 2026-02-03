@@ -11,8 +11,12 @@ import {
   AuthError as FirebaseAuthError,
   onAuthStateChanged,
   Unsubscribe,
+  OAuthProvider,
+  signInWithCredential,
 } from 'firebase/auth';
 import { Platform } from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 import { auth } from '../config/firebase';
 import {
   User,
@@ -154,9 +158,71 @@ class AuthService {
     throw new Error('Google Sign-In is temporarily disabled');
   };
 
-  // Apple Sign-In (placeholder - disabled for now)
+  // Apple Sign-In
   signInWithApple = async (): Promise<User> => {
-    throw new Error('Apple Sign-In is temporarily disabled');
+    if (Platform.OS !== 'ios') {
+      throw new Error('Apple Sign-In is only available on iOS devices');
+    }
+
+    try {
+      // Check if Apple Sign-In is available
+      const isAvailable = await AppleAuthentication.isAvailableAsync();
+      if (!isAvailable) {
+        throw new Error('Apple Sign-In is not available on this device');
+      }
+
+      // Generate a secure nonce for the sign-in request
+      const nonce = Math.random().toString(36).substring(2, 10);
+      const hashedNonce = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        nonce
+      );
+
+      // Request Apple credential
+      const appleCredential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+        nonce: hashedNonce,
+      });
+
+      // Build Firebase credential using Apple's identityToken
+      const { identityToken } = appleCredential;
+      if (!identityToken) {
+        throw new Error('No identity token received from Apple');
+      }
+
+      const provider = new OAuthProvider('apple.com');
+      const credential = provider.credential({
+        idToken: identityToken,
+        rawNonce: nonce,
+      });
+
+      // Sign in with Firebase
+      const result = await signInWithCredential(this.auth, credential);
+
+      // Update display name if provided by Apple (only on first sign-in)
+      if (appleCredential.fullName?.givenName && !result.user.displayName) {
+        const displayName = [
+          appleCredential.fullName.givenName,
+          appleCredential.fullName.familyName,
+        ]
+          .filter(Boolean)
+          .join(' ');
+
+        if (displayName) {
+          await updateProfile(result.user, { displayName });
+        }
+      }
+
+      return await this.mapFirebaseUserToUser(result.user);
+    } catch (error: any) {
+      if (error.code === 'ERR_REQUEST_CANCELED') {
+        throw { code: 'auth/popup-closed-by-user', message: 'Sign-in was cancelled' };
+      }
+      throw this.handleAuthError(error as FirebaseAuthError);
+    }
   };
 
   // Password Reset
@@ -244,7 +310,6 @@ class AuthService {
   // Initialize Google Sign-In (placeholder - disabled for now)
   initializeGoogleSignIn = (webClientId: string) => {
     // Google Sign-In initialization disabled
-    console.log('Google Sign-In initialization skipped');
   };
 
   // Check if user is signed in

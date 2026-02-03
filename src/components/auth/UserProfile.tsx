@@ -104,7 +104,6 @@ export function UserProfile({
         ]
       );
     } catch (error) {
-      console.error('Error requesting photo permissions:', error);
       Alert.alert('Error', 'Unable to access photo library. Please try again.');
     }
   };
@@ -119,7 +118,6 @@ export function UserProfile({
       setIsUploadingPhoto(true);
       setUploadProgress(null);
 
-      console.log('📷 [UserProfile] Starting image selection:', source);
 
       let result: ImagePicker.ImagePickerResult;
 
@@ -147,11 +145,9 @@ export function UserProfile({
 
       if (!result.canceled && result.assets[0]) {
         const imageUri = result.assets[0].uri;
-        console.log('📷 [UserProfile] Image selected:', imageUri);
 
         // Compress image if needed to reduce upload time
         const compressedUri = await imageUploadService.compressImage(imageUri, 400, 0.8);
-        console.log('📷 [UserProfile] Image compressed:', compressedUri);
 
         // Upload to Firebase Storage with progress tracking
         const uploadResult = await imageUploadService.uploadProfilePicture(
@@ -159,7 +155,6 @@ export function UserProfile({
           compressedUri,
           {
             onProgress: (progress) => {
-              console.log('📷 [UserProfile] Upload progress:', progress.percentage + '%');
               setUploadProgress(progress);
             },
             timeoutMs: 30000, // 30 second timeout
@@ -167,7 +162,6 @@ export function UserProfile({
           }
         );
 
-        console.log('📷 [UserProfile] Upload completed:', uploadResult.downloadURL);
 
         // Update the profile with the cloud storage URL
         await updateProfile({
@@ -177,7 +171,6 @@ export function UserProfile({
         showSuccessMessage('Profile photo updated successfully!');
       }
     } catch (error) {
-      console.error('📷 [UserProfile] Image upload failed:', error);
 
       let errorMessage = 'Failed to update profile photo.';
       if (error instanceof Error) {
@@ -212,7 +205,6 @@ export function UserProfile({
         `Push notifications ${value ? 'enabled' : 'disabled'} successfully!`
       );
     } catch (error) {
-      console.error('Failed to update notification preferences:', error);
       // Revert the toggle on error
       setNotificationsEnabled(!value);
       Alert.alert('Error', 'Failed to update notification preferences. Please try again.');

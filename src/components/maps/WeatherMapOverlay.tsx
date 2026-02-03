@@ -76,7 +76,6 @@ export const WeatherMapOverlay: React.FC<WeatherMapOverlayProps> = ({
       
       setWeatherData(realWeatherData);
     } catch (error) {
-      console.error('Error loading weather data:', error);
       
       // Fallback to demo data if real data fails
       const demoWeatherData: WeatherDataPoint[] = [];

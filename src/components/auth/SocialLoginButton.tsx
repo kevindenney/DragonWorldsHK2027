@@ -5,11 +5,6 @@ import { colors, typography, spacing, borderRadius, shadows } from '../../consta
 import { AuthProvider } from '../../auth/authTypes';
 
 // DEBUG: Log AuthProvider import to validate type and properties
-console.log('🔍 [SocialLoginButton] AuthProvider imported:', AuthProvider);
-console.log('🔍 [SocialLoginButton] typeof AuthProvider:', typeof AuthProvider);
-console.log('🔍 [SocialLoginButton] AuthProvider.GOOGLE:', AuthProvider?.GOOGLE);
-console.log('🔍 [SocialLoginButton] AuthProvider.APPLE:', AuthProvider?.APPLE);
-console.log('🔍 [SocialLoginButton] AuthProvider.FACEBOOK:', AuthProvider?.FACEBOOK);
 
 // Social login brand colors and configurations
 const socialConfigs = {
@@ -81,7 +76,6 @@ export function SocialLoginButton({
   const config = socialConfigs[provider];
   
   if (!config) {
-    console.warn(`SocialLoginButton: Unknown provider ${provider}`);
     return null;
   }
 

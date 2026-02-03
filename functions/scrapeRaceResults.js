@@ -1,17 +1,43 @@
 /**
  * Enhanced race results scraping module for racingrulesofsailing.org
- * Handles China Coast Race Week and similar events
+ * Handles Dragon Worlds HK 2027 and APAC 2026 events
+ *
+ * Event IDs:
+ * - APAC 2026: 13241
+ * - Worlds 2027: 13242
  */
 
 const cheerio = require('cheerio');
 const fetch = require('node-fetch');
 const { logger } = require('firebase-functions');
 
+// Event configuration
+const EVENT_CONFIG = {
+  '13241': {
+    name: 'Hong Kong Dragon Asia Pacific Championship 2026',
+    shortName: 'APAC 2026',
+    documentsUrl: 'https://www.racingrulesofsailing.org/documents/13241/event',
+    schedulesUrl: 'https://www.racingrulesofsailing.org/schedules/13241/event',
+    decisionsUrl: 'https://www.racingrulesofsailing.org/decisions/13241/event',
+  },
+  '13242': {
+    name: 'Hong Kong Dragon World Championship 2027',
+    shortName: 'Worlds 2027',
+    documentsUrl: 'https://www.racingrulesofsailing.org/documents/13242/event',
+    schedulesUrl: 'https://www.racingrulesofsailing.org/schedules/13242/event',
+    decisionsUrl: 'https://www.racingrulesofsailing.org/decisions/13242/event',
+  },
+};
+
 /**
  * Scrape comprehensive race results from event page
  */
 async function scrapeRaceResults(eventId, eventUrl = null) {
-  const url = eventUrl || `https://www.racingrulesofsailing.org/event/${eventId}/results`;
+  // Use event-specific URL pattern for racingrulesofsailing.org
+  const config = EVENT_CONFIG[eventId];
+  const url = eventUrl || (config
+    ? config.documentsUrl
+    : `https://www.racingrulesofsailing.org/documents/${eventId}/event`);
   
   try {
     logger.info(`Scraping race results from: ${url}`);
@@ -628,5 +654,6 @@ function extractNumber(text) {
 module.exports = {
   scrapeRaceResults,
   parseRaceTable,
-  extractOverallStandings
+  extractOverallStandings,
+  EVENT_CONFIG
 };

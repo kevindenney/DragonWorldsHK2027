@@ -105,7 +105,6 @@ class LocationWeatherService {
   private async generateLocationWeatherData(location: LocationData): Promise<LocationWeatherData> {
     const { coordinate } = location;
     
-    console.log(`🌤️ Generating weather data for ${location.name} (${location.type})`);
     
     // Generate base weather conditions based on location characteristics
     const weather = this.generateWeatherConditions(location);
@@ -116,11 +115,6 @@ class LocationWeatherService {
     const waveStations = this.generateWaveStations(location);
     const tideStations = this.generateTideStations(location);
 
-    console.log(`📍 Generated stations for ${location.name}:`, {
-      wind: windStations.length,
-      wave: waveStations.length,
-      tide: tideStations.length
-    });
 
     return {
       location,

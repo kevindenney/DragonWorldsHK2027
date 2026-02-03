@@ -35,7 +35,6 @@ export const setupNotifications = async () => {
   }
   
   if (finalStatus !== 'granted') {
-    console.warn('Failed to get push token for push notification!');
     return false;
   }
   
@@ -48,7 +47,6 @@ export const scheduleRaceNotification = async (raceNotification: RaceNotificatio
   const notificationTime = new Date(startTime.getTime() - notifyBefore * 60 * 1000);
   
   if (notificationTime <= new Date()) {
-    console.warn('Race notification time is in the past');
     return null;
   }
   

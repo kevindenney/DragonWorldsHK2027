@@ -216,11 +216,11 @@ export class WeatherAPI {
       return processedData;
       
     } catch (error) {
-      console.error('Open-Meteo Marine API error:', error);
+      const errorObj = error as Record<string, unknown>;
       throw {
         source: 'open-meteo',
         error: error instanceof Error ? error.message : 'Unknown error',
-        code: error instanceof Error && 'status' in error ? (error as any).status : undefined
+        code: typeof errorObj?.status === 'number' ? errorObj.status : undefined
       } as WeatherAPIError;
     }
   }
@@ -272,11 +272,11 @@ export class WeatherAPI {
       return processedData;
 
     } catch (error) {
-      console.error('Open-Meteo Weather API error:', error);
+      const errorObj = error as Record<string, unknown>;
       throw {
         source: 'open-meteo-weather',
         error: error instanceof Error ? error.message : 'Unknown error',
-        code: error instanceof Error && 'status' in error ? (error as any).status : undefined
+        code: typeof errorObj?.status === 'number' ? errorObj.status : undefined
       } as WeatherAPIError;
     }
   }
@@ -309,7 +309,6 @@ export class WeatherAPI {
       return processedData;
       
     } catch (error) {
-      console.error('NOAA API error:', error);
       throw {
         source: 'noaa',
         error: error instanceof Error ? error.message : 'NOAA API unavailable'
@@ -350,7 +349,6 @@ export class WeatherAPI {
       return processedData;
       
     } catch (error) {
-      console.error('HKO API error:', error);
       throw {
         source: 'hko',
         error: error instanceof Error ? error.message : 'HKO API unavailable'
@@ -366,18 +364,14 @@ export class WeatherAPI {
     // Get Open-Meteo weather data first (free, no API key needed, reliable)
     try {
       results.openmeteo_weather = await this.getOpenMeteoWeatherData(location?.lat, location?.lon);
-      console.log('✅ Open-Meteo Weather API data retrieved successfully');
     } catch (error) {
-      console.log('⚠️ Open-Meteo Weather failed, continuing with other sources:', error);
       errors.push(error as WeatherAPIError);
     }
 
     // Get Open-Meteo marine data (free, no API key needed)
     try {
       results.openmeteo = await this.getOpenMeteoMarineData(location?.lat, location?.lon);
-      console.log('✅ Open-Meteo Marine API data retrieved successfully');
     } catch (error) {
-      console.log('⚠️ Open-Meteo Marine failed:', error);
       errors.push(error as WeatherAPIError);
     }
 
@@ -420,7 +414,6 @@ export class WeatherAPI {
     const errors: WeatherAPIError[] = [];
     const results: any = {};
 
-    console.log(`📅 Fetching weather data for ${date.toDateString()} at ${location?.lat}, ${location?.lon}`);
 
 
     // For marine data, we'll use Open-Meteo with date parameter
@@ -453,7 +446,6 @@ export class WeatherAPI {
     const errors: WeatherAPIError[] = [];
     const results: any = {};
 
-    console.log(`⏰ Fetching weather data for ${time.toTimeString()} at ${location?.lat}, ${location?.lon}`);
 
 
     // Get hourly marine data
@@ -517,7 +509,6 @@ export class WeatherAPI {
       return processedData;
       
     } catch (error) {
-      console.error('Open-Meteo marine date data error:', error);
       throw {
         source: 'openmeteo_marine_date',
         error: 'Date-specific marine data unavailable',
@@ -567,7 +558,6 @@ export class WeatherAPI {
       return processedData;
       
     } catch (error) {
-      console.error('Open-Meteo marine time data error:', error);
       throw {
         source: 'openmeteo_marine_time',
         error: 'Time-specific marine data unavailable',
@@ -594,7 +584,6 @@ export class WeatherAPI {
       return data;
       
     } catch (error) {
-      console.error('NOAA date data error:', error);
       throw {
         source: 'noaa_date',
         error: 'Date-specific tide data unavailable',
@@ -751,7 +740,6 @@ export class WeatherAPI {
         this.cache = JSON.parse(cached);
       }
     } catch (error) {
-      console.warn('Failed to load weather cache:', error);
       this.cache = {};
     }
   }
@@ -760,7 +748,6 @@ export class WeatherAPI {
     try {
       await AsyncStorage.setItem('weather_cache', JSON.stringify(this.cache));
     } catch (error) {
-      console.warn('Failed to save weather cache:', error);
     }
   }
 
@@ -822,12 +809,10 @@ export class WeatherAPI {
     // Check cache first
     const cached = this.getFromCache(cacheKey);
     if (cached) {
-      console.log('📡 Using cached radar data');
       return cached;
     }
 
     try {
-      console.log('📡 Fetching weather radar data...');
 
       // Use RainViewer API for radar data
       const response = await fetch('https://api.rainviewer.com/public/weather-maps.json', {
@@ -848,7 +833,6 @@ export class WeatherAPI {
       return radarData;
 
     } catch (error) {
-      console.error('❌ Failed to fetch radar data:', error);
       throw {
         source: 'rainviewer',
         error: error instanceof Error ? error.message : 'Radar data unavailable'
@@ -871,12 +855,10 @@ export class WeatherAPI {
     // Check cache first
     const cached = this.getFromCache(cacheKey);
     if (cached) {
-      console.log('🛰️ Using cached satellite data');
       return cached;
     }
 
     try {
-      console.log(`🛰️ Fetching ${type} satellite data...`);
 
       // Note: This would integrate with OpenWeatherMap satellite layers
       // For now, return structured data for the imagery service
@@ -908,7 +890,6 @@ export class WeatherAPI {
       return satelliteData;
 
     } catch (error) {
-      console.error('❌ Failed to fetch satellite data:', error);
       throw {
         source: 'satellite',
         error: error instanceof Error ? error.message : 'Satellite data unavailable'
@@ -990,7 +971,6 @@ export class WeatherAPI {
       return tilesData;
 
     } catch (error) {
-      console.error(`❌ Failed to fetch ${layer} tiles:`, error);
       throw {
         source: 'weather_tiles',
         error: error instanceof Error ? error.message : 'Weather tiles unavailable'

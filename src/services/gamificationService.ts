@@ -682,7 +682,6 @@ export class GamificationService {
       });
 
     } catch (error) {
-      console.error('Failed to track gamification activity:', error);
     }
   }
 
@@ -766,7 +765,6 @@ export class GamificationService {
       });
 
     } catch (error) {
-      console.error('Failed to award achievement:', error);
     }
   }
 
@@ -804,7 +802,6 @@ export class GamificationService {
       await this.saveGamificationData();
 
     } catch (error) {
-      console.error('Failed to award badge:', error);
     }
   }
 
@@ -827,7 +824,6 @@ export class GamificationService {
       await this.saveGamificationData();
 
     } catch (error) {
-      console.error('Failed to update leaderboards:', error);
     }
   }
 
@@ -1179,7 +1175,6 @@ export class GamificationService {
         }
       }
     } catch (error) {
-      console.warn('Failed to load gamification data:', error);
     }
   }
 
@@ -1195,7 +1190,6 @@ export class GamificationService {
       
       await AsyncStorage.setItem('gamification_data', JSON.stringify(data));
     } catch (error) {
-      console.warn('Failed to save gamification data:', error);
     }
   }
 }

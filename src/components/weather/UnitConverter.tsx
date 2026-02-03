@@ -227,7 +227,6 @@ export const UnitConverter: React.FC<UnitConverterProps> = ({
         setUnits({ ...DEFAULT_UNITS, ...parsedUnits });
       }
     } catch (error) {
-      console.warn('Failed to load units from storage:', error);
     } finally {
       setLoading(false);
     }
@@ -237,7 +236,6 @@ export const UnitConverter: React.FC<UnitConverterProps> = ({
     try {
       await AsyncStorage.setItem(UNITS_STORAGE_KEY, JSON.stringify(newUnits));
     } catch (error) {
-      console.warn('Failed to save units to storage:', error);
     }
   };
 

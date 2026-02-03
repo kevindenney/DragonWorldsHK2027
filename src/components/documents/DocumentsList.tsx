@@ -77,7 +77,6 @@ export function DocumentsList({ eventId, category }: DocumentsListProps) {
       const docs = await firebaseRaceDataService.getDocuments(eventId);
       setDocuments(docs);
     } catch (error) {
-      console.error('Error loading documents:', error);
       setError('Failed to load documents');
     } finally {
       setLoading(false);

@@ -101,7 +101,6 @@ export const EntryList: React.FC<EntryListProps> = ({
       setCompetitors(entryList);
       setFilteredCompetitors(entryList);
     } catch (err) {
-      console.error('Failed to load entry list:', err);
       setError('Failed to load entry list');
       await haptics.errorAction();
     } finally {

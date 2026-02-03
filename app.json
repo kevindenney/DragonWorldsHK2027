@@ -25,8 +25,8 @@
     ],
     "primaryColor": "#DC2626",
     "splash": {
-      "image": "./assets/splash-dragon-worlds-fullscreen.png",
-      "resizeMode": "cover",
+      "image": "./assets/splash-portrait.png",
+      "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },
     "assetBundlePatterns": [
@@ -35,6 +35,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.denneyke.dragonworldshk2027",
+      "usesAppleSignIn": true,
       "buildNumber": "5",
       "deploymentTarget": "15.0",
       "requireFullScreen": false,
@@ -42,7 +43,7 @@
       "jsEngine": "hermes",
       "hermes": true,
       "splash": {
-        "image": "./assets/splash-dragon-worlds-fullscreen.png",
+        "image": "./assets/splash-portrait.png",
         "resizeMode": "contain",
         "backgroundColor": "#FFFFFF"
       },
@@ -77,12 +78,10 @@
         }
       },
       "associatedDomains": [
-        "applinks:dragonworlds.com",
         "applinks:dragonworlds.com"
       ],
       "config": {
-        "usesNonExemptEncryption": false,
-        "googleMapsApiKey": "AIzaSyASvagpRFBzK0HhRGqSqeW7W4FiEoFTf1w"
+        "usesNonExemptEncryption": false
       },
       "runtimeVersion": "1.0.0"
     },
@@ -92,7 +91,7 @@
       "compileSdkVersion": 34,
       "targetSdkVersion": 34,
       "splash": {
-        "image": "./assets/splash-dragon-worlds-fullscreen.png",
+        "image": "./assets/splash-portrait.png",
         "resizeMode": "contain",
         "backgroundColor": "#FFFFFF"
       },
@@ -108,29 +107,8 @@
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_NETWORK_STATE",
-        "INTERNET",
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_NETWORK_STATE",
-        "INTERNET",
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_NETWORK_STATE",
-        "INTERNET",
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "WRITE_CALENDAR",
-        "READ_CALENDAR"
+        "READ_CALENDAR",
+        "WRITE_CALENDAR"
       ],
       "edgeToEdgeEnabled": true,
       "intentFilters": [
@@ -147,55 +125,8 @@
             "BROWSABLE",
             "DEFAULT"
           ]
-        },
-        {
-          "action": "VIEW",
-          "autoVerify": true,
-          "data": [
-            {
-              "scheme": "https",
-              "host": "dragonworlds.com"
-            }
-          ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
-        },
-        {
-          "action": "VIEW",
-          "autoVerify": true,
-          "data": [
-            {
-              "scheme": "https",
-              "host": "dragonworlds.com"
-            }
-          ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
-        },
-        {
-          "action": "VIEW",
-          "autoVerify": true,
-          "data": [
-            {
-              "scheme": "https",
-              "host": "dragonworlds.com"
-            }
-          ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
         }
       ],
-      "config": {
-        "googleMaps": {
-          "apiKey": "AIzaSyASvagpRFBzK0HhRGqSqeW7W4FiEoFTf1w"
-        }
-      },
       "runtimeVersion": "1.0.0"
     },
     "web": {
@@ -210,7 +141,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash-dragon-worlds-fullscreen.png",
+          "image": "./assets/splash-portrait.png",
           "resizeMode": "contain",
           "backgroundColor": "#FFFFFF"
         }
@@ -223,7 +154,8 @@
           "defaultChannel": "default"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": false

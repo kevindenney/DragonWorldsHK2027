@@ -38,23 +38,9 @@ const firebaseConfig: FirebaseConfig = {
 };
 
 // Debug Firebase config object for Hermes compatibility
-console.log('🔍 [Firebase] Debugging Firebase config object...');
 debugFirebaseConfig(firebaseConfig);
 
 // Additional debugging for environment variables
-console.log('🔍 [Firebase] Environment variable values:');
-console.log('EXPO_PUBLIC_FIREBASE_API_KEY:', process.env.EXPO_PUBLIC_FIREBASE_API_KEY ? '***set***' : 'MISSING');
-console.log('EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN:', process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || 'MISSING');
-console.log('EXPO_PUBLIC_FIREBASE_PROJECT_ID:', process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'MISSING');
-console.log('EXPO_PUBLIC_FIREBASE_APP_ID:', process.env.EXPO_PUBLIC_FIREBASE_APP_ID ? '***set***' : 'MISSING');
-console.log('🔍 [Firebase] Final Firebase Config:', {
-  apiKey: firebaseConfig.apiKey ? '***set***' : 'MISSING',
-  authDomain: firebaseConfig.authDomain,
-  projectId: firebaseConfig.projectId,
-  storageBucket: firebaseConfig.storageBucket,
-  messagingSenderId: firebaseConfig.messagingSenderId,
-  appId: firebaseConfig.appId ? '***set***' : 'MISSING'
-});
 
 /**
  * Enhanced validation function for Firebase configuration with emulator support
@@ -69,7 +55,6 @@ function validateFirebaseConfig(config: FirebaseConfig): { isValid: boolean; isE
     'appId'
   ];
 
-  console.log('🔍 [Firebase] Validating configuration...');
   const missingFields = requiredFields.filter(field => !config[field]);
   const errors: string[] = [];
 
@@ -77,15 +62,11 @@ function validateFirebaseConfig(config: FirebaseConfig): { isValid: boolean; isE
   const isEmulatorMode = !config.apiKey && config.projectId;
 
   if (missingFields.length > 0) {
-    console.warn('⚠️ [Firebase] Missing configuration fields:', missingFields);
-    console.warn('⚠️ [Firebase] Current config values:');
     requiredFields.forEach(field => {
       const value = config[field];
-      console.warn(`  ${field}: ${value ? (field === 'apiKey' ? '***set***' : value) : 'MISSING'}`);
     });
 
     if (isEmulatorMode) {
-      console.log('🔥 [Firebase] Emulator mode detected - relaxing validation requirements');
       // For emulator mode, only project ID is strictly required
       if (!config.projectId) {
         errors.push('Project ID is required even in emulator mode');
@@ -98,12 +79,9 @@ function validateFirebaseConfig(config: FirebaseConfig): { isValid: boolean; isE
   const isValid = errors.length === 0;
 
   if (isValid) {
-    console.log('✅ [Firebase] Configuration validation passed');
     if (isEmulatorMode) {
-      console.log('🔥 [Firebase] Running in emulator mode');
     }
   } else {
-    console.error('❌ [Firebase] Configuration validation failed:', errors);
   }
 
   if (__DEV__) {
@@ -122,7 +100,6 @@ function validateFirebaseConfig(config: FirebaseConfig): { isValid: boolean; isE
  */
 export async function testFirebaseConnection(): Promise<{ success: boolean; error?: string }> {
   try {
-    console.log('🔍 [Firebase] Testing connection...');
 
     // Test if auth is available
     if (!auth) {
@@ -131,11 +108,9 @@ export async function testFirebaseConnection(): Promise<{ success: boolean; erro
 
     // Test if we can access auth properties
     const currentUser = auth.currentUser;
-    console.log('✅ [Firebase] Auth service accessible, current user:', currentUser ? 'logged in' : 'anonymous');
 
     return { success: true };
   } catch (error) {
-    console.error('❌ [Firebase] Connection test failed:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown connection error'
@@ -148,20 +123,8 @@ const configValidation = validateFirebaseConfig(firebaseConfig);
 let isEmulatorMode = false;
 
 if (!configValidation.isValid) {
-  console.error('[firebase.ts] ❌ Firebase config validation failed:', configValidation.errors);
-  console.log('[firebase.ts] ⚠️ App will fall back to mock authentication');
-  console.log('[firebase.ts] Env snapshot', {
-    NODE_ENV: process.env.EXPO_PUBLIC_NODE_ENV,
-    hasApiKey: Boolean(process.env.EXPO_PUBLIC_FIREBASE_API_KEY),
-    hasAuthDomain: Boolean(process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN),
-    hasProjectId: Boolean(process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID),
-    hasStorageBucket: Boolean(process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET),
-    hasMessagingSenderId: Boolean(process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID),
-    hasAppId: Boolean(process.env.EXPO_PUBLIC_FIREBASE_APP_ID)
-  });
 
   // Don't throw - let AuthProvider handle fallback to mock auth
-  console.warn('[firebase.ts] ⚠️ Firebase services will be unavailable, using mock auth');
 } else {
   if (__DEV__) {
     console.log('[firebase.ts] ✅ Config validated. projectId=', firebaseConfig.projectId);
@@ -180,16 +143,11 @@ let app: FirebaseApp | null = null;
 try {
   if (configValidation.isValid && getApps().length === 0) {
     app = initializeApp(firebaseConfig);
-    console.log('[firebase.ts] ✅ Firebase app initialized');
   } else if (configValidation.isValid) {
     app = getApp();
-    console.log('[firebase.ts] ✅ Firebase app already initialized');
   } else {
-    console.warn('[firebase.ts] ⚠️ Skipping Firebase app initialization due to invalid config');
   }
 } catch (error) {
-  console.error('[firebase.ts] ❌ Firebase app initialization failed:', error);
-  console.log('[firebase.ts] ⚠️ Will use mock authentication instead');
   app = null;
 }
 
@@ -209,15 +167,12 @@ if (app) {
         auth = initializeAuth(app, {
           persistence: getReactNativePersistence(AsyncStorage)
         });
-        console.log('✅ Firebase Auth initialized with AsyncStorage persistence');
       } catch (error) {
         // Auth might already be initialized
         auth = getAuth(app);
-        console.log('✅ Firebase Auth retrieved (already initialized)');
       }
     } else {
       auth = getAuth(app);
-      console.log('✅ Firebase Auth initialized for web');
     }
 
     // Initialize Firestore and Storage only if Firebase is properly configured
@@ -231,11 +186,8 @@ if (app) {
       // Services will remain null if not available
     }
   } catch (error) {
-    console.error('❌ Firebase services initialization failed:', error);
-    console.log('⚠️ Firebase services unavailable, will use mock auth');
   }
 } else {
-  console.log('⚠️ Firebase app not available, Firebase services will be null');
 }
 
 export { auth, firestore, storage };

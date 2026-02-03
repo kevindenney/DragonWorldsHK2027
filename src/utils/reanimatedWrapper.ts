@@ -16,7 +16,6 @@ const globalGestureState = {
   time: 0
 };
 
-console.log('[AnimationWrapper] Initializing React Native Animated API wrapper');
 
 // Use React Native's Animated API
 const AnimatedDefault = {
@@ -125,16 +124,13 @@ class SharedValueImpl {
                 listener({ value: safeValue });
               }
             } catch (error) {
-              console.warn('[SharedValueImpl] Listener error:', error);
             }
           });
         }
       } catch (error) {
-        console.error('[SharedValueImpl] Critical listener error:', error);
       }
     });
 
-    console.log(`[SharedValueImpl] Initialized with distance: ${this.distance}`);
   }
 
   get value() {
@@ -159,7 +155,6 @@ class SharedValueImpl {
         velocity: 0
       };
     } catch (error) {
-      console.error('[SharedValueImpl] Error setting value:', error);
     }
   }
 
@@ -418,7 +413,6 @@ export const isReanimatedAvailable = () => {
 
 // HERMES-SAFE: Global gesture state for React Navigation compatibility
 if (typeof global !== 'undefined') {
-  console.log('[AnimationWrapper] Setting up Hermes-compatible gesture state handling');
 
   // CONFIRMED: The "property is not configurable" error comes from dependencies, not our code
   // Safe approach: Use direct property assignment without descriptor modifications
@@ -437,18 +431,12 @@ if (typeof global !== 'undefined') {
 
     // Direct assignment - no property descriptor modification
     (global as any).__reactNavigationGestureState = safeGestureState;
-    console.log('[AnimationWrapper] ✅ Hermes-safe gesture state initialized');
   } catch (error) {
-    console.warn('[AnimationWrapper] ⚠️ Could not set global gesture state:', error);
     // Minimal fallback
     try {
       (global as any).__reactNavigationGestureState = { distance: 0 };
     } catch (fallbackError) {
-      console.warn('[AnimationWrapper] ⚠️ All gesture state setup failed');
     }
   }
 
-  console.log('[AnimationWrapper] ✅ Hermes-compatible wrapper initialized');
 }
-
-console.log('[AnimationWrapper] React Native Animated API wrapper ready with all exports and defensive gesture handling');
