@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   Linking,
   Alert,
-  Animated
+  Animated,
+  Platform
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToolbarVisibility } from '../../contexts/TabBarVisibilityContext';
@@ -160,8 +161,36 @@ const SponsorDetailModal = ({ sponsor, onClose }: { sponsor: Sponsor; onClose: (
     }
   };
 
+  const handleOpenMap = async (address: string) => {
+    await Haptics.selectionAsync();
+    const encodedAddress = encodeURIComponent(address);
+
+    // Use platform-specific map URLs
+    const mapUrl = Platform.select({
+      ios: `maps:?q=${encodedAddress}`,
+      android: `geo:0,0?q=${encodedAddress}`,
+      default: `https://maps.google.com/?q=${encodedAddress}`,
+    });
+
+    try {
+      const supported = await Linking.canOpenURL(mapUrl);
+      if (supported) {
+        await Linking.openURL(mapUrl);
+      } else {
+        // Fallback to Google Maps URL
+        await Linking.openURL(`https://maps.google.com/?q=${encodedAddress}`);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Unable to open maps');
+    }
+  };
+
   return (
-    <ScrollView style={styles.modalContainer} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.modalContainer}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 120 }}
+    >
       <View style={styles.modalHeader}>
         <View>
           <Text style={styles.modalTitle}>{sponsor.name}</Text>
@@ -214,7 +243,13 @@ const SponsorDetailModal = ({ sponsor, onClose }: { sponsor: Sponsor; onClose: (
           {sponsor.locations.map((location, index) => (
             <View key={index} style={styles.locationCard}>
               <Text style={styles.locationName}>{location.name}</Text>
-              <Text style={styles.locationAddress}>{location.address}</Text>
+              <TouchableOpacity
+                style={styles.locationAddressContainer}
+                onPress={() => handleOpenMap(location.address)}
+              >
+                <Text style={styles.locationAddressLink}>{location.address}</Text>
+                <MapPin size={14} color={colors.primary} style={styles.mapIcon} />
+              </TouchableOpacity>
               {location.phone && (
                 <TouchableOpacity
                   style={styles.locationContact}
@@ -274,7 +309,7 @@ export function SponsorsScreen() {
   const scrollHandler = useMemo(() => createScrollHandler(), [createScrollHandler]);
 
   // Header height for content padding
-  const HEADER_HEIGHT = 56;
+  const HEADER_HEIGHT = 44;
 
   const organiser = getOrganiser();
   const coOrganisers = getCoOrganisers();
@@ -300,7 +335,7 @@ export function SponsorsScreen() {
   if (selectedSponsor) {
     return (
       <View style={styles.container}>
-        <View style={[styles.modalHeaderContainer, { paddingTop: insets.top + 12 }]}>
+        <View style={styles.modalHeaderContainer}>
           <TouchableOpacity
             onPress={handleCloseModal}
             style={styles.backButton}
@@ -323,7 +358,7 @@ export function SponsorsScreen() {
       {/* ScrollView - scrolls behind the tab navigation */}
       <ScrollView
         style={styles.content}
-        contentContainerStyle={{ paddingTop: insets.top + HEADER_HEIGHT + 8, paddingBottom: 120 }}
+        contentContainerStyle={{ paddingTop: HEADER_HEIGHT + 8, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={scrollHandler.onScroll}
@@ -413,7 +448,6 @@ export function SponsorsScreen() {
         style={[
           styles.tabContainer,
           {
-            paddingTop: insets.top,
             paddingLeft: 56, // Make room for FloatingBackButton from MoreScreen
             transform: [{ translateY: toolbarTranslateY }],
           },
@@ -464,7 +498,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
@@ -747,6 +781,20 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     color: colors.textSecondary,
     marginBottom: spacing.sm,
+  },
+  locationAddressContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: spacing.sm,
+  },
+  locationAddressLink: {
+    ...typography.bodyMedium,
+    color: colors.primary,
+    flex: 1,
+  },
+  mapIcon: {
+    marginLeft: spacing.xs,
+    marginTop: 2,
   },
   locationContact: {
     flexDirection: 'row',

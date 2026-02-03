@@ -34,9 +34,9 @@ export function SimpleAuthButton({
 
   const buttonStyle = [
     styles.button,
+    variant !== 'text' && shadows.button,
     styles[`button${variant.charAt(0).toUpperCase() + variant.slice(1)}`],
     isDisabled && styles.buttonDisabled,
-    variant !== 'text' && shadows.button,
     style,
   ];
 

@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -71,9 +72,15 @@ export class NotificationService {
         return null;
       }
 
-      // Get the Expo push token
+      // Get the Expo push token using the EAS project ID from app config
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+      if (!projectId) {
+        console.warn('No EAS project ID found in app config');
+        return null;
+      }
+
       const token = await Notifications.getExpoPushTokenAsync({
-        projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+        projectId,
       });
 
       this.expoPushToken = token.data;

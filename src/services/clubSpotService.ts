@@ -76,8 +76,24 @@ const BUNDLED_ENTRANTS: Record<string, Competitor[]> = {
     { id: 'bundled_33', sailNumber: 'GER 1146', helmName: 'Ferdinand Ziegelmayer', crewNames: ['Peter Eckhardt', 'Philip Walkenbach'], country: 'GER', club: 'NRV', className: 'Dragon', boatName: 'Dörte', registrationStatus: 'confirmed', entryDate: '2026-01-01T00:00:00Z', paymentStatus: 'paid', documentsSubmitted: true, measurementCompleted: false },
     { id: 'bundled_34', sailNumber: 'HKG 59', helmName: 'Abraham van Olphen', crewNames: ['Kevin Denney', 'Glenn Cooke'], country: 'HKG', club: 'RHKYC', className: 'Dragon', boatName: 'DRAGONFLY', registrationStatus: 'confirmed', entryDate: '2025-12-31T00:00:00Z', paymentStatus: 'paid', documentsSubmitted: true, measurementCompleted: false },
   ],
-  // Worlds 2027 - placeholder until entries open
-  'zyQIfeVjhb': [],
+  // Worlds 2027 - bundled entries
+  'zyQIfeVjhb': [
+    { id: 'w27_1', sailNumber: 'GBR 833', helmName: 'Grant Gordon', crewNames: ['Luke Patience', 'Ruairidh Scott'], country: 'GBR', club: 'Royal Yacht Squadron', className: 'Dragon', boatName: 'Louise Racing', registrationStatus: 'confirmed', entryDate: '2027-01-15T00:00:00Z', paymentStatus: 'paid', documentsSubmitted: true, measurementCompleted: false },
+    { id: 'w27_2', sailNumber: 'GER 11', helmName: 'Christoph Toepfer', crewNames: ['Diego Negri', 'Markus Koy'], country: 'GER', club: 'NRV', className: 'Dragon', boatName: 'Aurora', registrationStatus: 'confirmed', entryDate: '2027-01-14T00:00:00Z', paymentStatus: 'paid', documentsSubmitted: true, measurementCompleted: false },
+    { id: 'w27_3', sailNumber: 'DEN 410', helmName: 'Jens Christensen', crewNames: ['Thomas Larsen', 'Soren Hansen'], country: 'DEN', club: 'KDY', className: 'Dragon', boatName: 'Out of Bounce', registrationStatus: 'confirmed', entryDate: '2027-01-13T00:00:00Z', paymentStatus: 'paid', documentsSubmitted: true, measurementCompleted: false },
+    { id: 'w27_4', sailNumber: 'HKG 59', helmName: 'Abraham van Olphen', crewNames: ['Kevin Denney', 'Glenn Cooke'], country: 'HKG', club: 'RHKYC', className: 'Dragon', boatName: 'DRAGONFLY', registrationStatus: 'confirmed', entryDate: '2027-01-12T00:00:00Z', paymentStatus: 'paid', documentsSubmitted: true, measurementCompleted: false },
+    { id: 'w27_5', sailNumber: 'SWE 345', helmName: 'Jacob Wallenberg', crewNames: ['Erik Lindgren', 'Magnus Berg'], country: 'SWE', club: 'KSSS', className: 'Dragon', boatName: 'MING', registrationStatus: 'confirmed', entryDate: '2027-01-11T00:00:00Z', paymentStatus: 'paid', documentsSubmitted: true, measurementCompleted: false },
+    { id: 'w27_6', sailNumber: 'NED 449', helmName: 'Huib Bannier', crewNames: ['Jan de Vries', 'Pieter Visser'], country: 'NED', club: 'WV Aalsmeer', className: 'Dragon', boatName: 'Felicity Shagwell', registrationStatus: 'confirmed', entryDate: '2027-01-10T00:00:00Z', paymentStatus: 'paid', documentsSubmitted: true, measurementCompleted: false },
+    { id: 'w27_7', sailNumber: 'USA 325', helmName: 'William Swigart', crewNames: ['David Caesar', 'Arthur Anosov'], country: 'USA', club: 'Newport Harbor YC', className: 'Dragon', boatName: 'Magic', registrationStatus: 'confirmed', entryDate: '2027-01-09T00:00:00Z', paymentStatus: 'paid', documentsSubmitted: true, measurementCompleted: false },
+    { id: 'w27_8', sailNumber: 'AUS 219', helmName: 'Sandy Anderson', crewNames: ['Susan Parker', 'Caroline Gibson'], country: 'AUS', club: 'RFBYC', className: 'Dragon', boatName: 'Blue Marlin', registrationStatus: 'confirmed', entryDate: '2027-01-08T00:00:00Z', paymentStatus: 'paid', documentsSubmitted: true, measurementCompleted: false },
+    { id: 'w27_9', sailNumber: 'SUI 5', helmName: 'Andreas Brechbuhl', crewNames: ['Peter Baer', 'Matthias Wacker'], country: 'SUI', club: 'YC Zug', className: 'Dragon', boatName: 'Sai Mui', registrationStatus: 'confirmed', entryDate: '2027-01-07T00:00:00Z', paymentStatus: 'paid', documentsSubmitted: true, measurementCompleted: false },
+    { id: 'w27_10', sailNumber: 'IRL 232', helmName: 'Jamie McWilliam', crewNames: ['Mark Buckley', 'Sean Murphy'], country: 'IRL', club: 'RHKYC', className: 'Dragon', boatName: 'LALALAM', registrationStatus: 'confirmed', entryDate: '2027-01-06T00:00:00Z', paymentStatus: 'paid', documentsSubmitted: true, measurementCompleted: false },
+    { id: 'w27_11', sailNumber: 'HKG 18', helmName: 'Patrick Li', crewNames: ['Nick Sin', 'Felicia Leung'], country: 'HKG', club: 'RHKYC', className: 'Dragon', boatName: 'Endeavour', registrationStatus: 'confirmed', entryDate: '2027-01-05T00:00:00Z', paymentStatus: 'paid', documentsSubmitted: true, measurementCompleted: false },
+    { id: 'w27_12', sailNumber: 'GER 1263', helmName: 'Christopher Opielok', crewNames: ['Stefan Mueller', 'Thomas Weber'], country: 'GER', club: 'NRV', className: 'Dragon', boatName: 'Rockall', registrationStatus: 'confirmed', entryDate: '2027-01-04T00:00:00Z', paymentStatus: 'paid', documentsSubmitted: true, measurementCompleted: false },
+    { id: 'w27_13', sailNumber: 'FRA 421', helmName: 'Jean-Pierre Dubois', crewNames: ['François Martin', 'Pierre Lefebvre'], country: 'FRA', club: 'YCF', className: 'Dragon', boatName: 'Mistral', registrationStatus: 'confirmed', entryDate: '2027-01-03T00:00:00Z', paymentStatus: 'paid', documentsSubmitted: true, measurementCompleted: false },
+    { id: 'w27_14', sailNumber: 'RUS 76', helmName: 'Dmitry Samokhin', crewNames: ['Alexei Bushuyev', 'Pavel Kalinkin'], country: 'RUS', club: 'CSKA', className: 'Dragon', boatName: 'Annapurna', registrationStatus: 'confirmed', entryDate: '2027-01-02T00:00:00Z', paymentStatus: 'paid', documentsSubmitted: true, measurementCompleted: false },
+    { id: 'w27_15', sailNumber: 'POR 89', helmName: 'Pedro Andrade', crewNames: ['Miguel Santos', 'João Silva'], country: 'POR', club: 'CNC', className: 'Dragon', boatName: 'Maré Alta', registrationStatus: 'confirmed', entryDate: '2027-01-01T00:00:00Z', paymentStatus: 'paid', documentsSubmitted: true, measurementCompleted: false },
+  ],
 };
 
 export class ClubSpotService {
@@ -89,7 +105,7 @@ export class ClubSpotService {
   constructor(config?: Partial<ClubSpotConfig>) {
     this.config = {
       baseUrl: externalUrls.clubSpot.baseUrl || 'https://theclubspot.com',
-      cacheDuration: 300000, // 5 minutes
+      cacheDuration: 24 * 60 * 60 * 1000, // 24 hours - entry lists don't change often
       useDemoData: false, // Default to live data
       cloudFunctionUrl: externalUrls.cloudFunctions?.scrapeClubSpot || '',
       ...config
@@ -442,6 +458,55 @@ export class ClubSpotService {
   getConfig(): ClubSpotConfig {
     return { ...this.config };
   }
+
+  /**
+   * Check health/connectivity of the ClubSpot service
+   * Returns status indicating if the service is reachable and functional
+   */
+  async checkHealth(): Promise<{ isHealthy: boolean; source: string; message?: string }> {
+    // If using demo data mode, always report as healthy
+    if (this.config.useDemoData) {
+      return { isHealthy: true, source: 'demo', message: 'Using demo data mode' };
+    }
+
+    // Check if we have bundled data available (always counts as healthy)
+    const hasBundledData = Object.keys(BUNDLED_ENTRANTS).length > 0;
+    if (hasBundledData) {
+      // Check if cloud function is configured
+      if (!this.config.cloudFunctionUrl) {
+        return { isHealthy: true, source: 'bundled', message: 'Using bundled data' };
+      }
+
+      // Try a quick health check to the cloud function
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+        const response = await fetch(this.config.cloudFunctionUrl, {
+          method: 'HEAD',
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok || response.status === 405) { // 405 = Method Not Allowed is fine for HEAD
+          return { isHealthy: true, source: 'live', message: 'Cloud function reachable' };
+        }
+
+        // Cloud function not reachable but we have bundled data
+        return { isHealthy: true, source: 'bundled', message: 'Using bundled data (cloud function unavailable)' };
+      } catch {
+        // Network error but bundled data available
+        return { isHealthy: true, source: 'bundled', message: 'Using bundled data (cloud function unavailable)' };
+      }
+    }
+
+    // No bundled data and no cloud function
+    return { isHealthy: false, source: 'none', message: 'No data source available' };
+  }
 }
+
+// Export singleton instance for convenience
+export const clubSpotService = new ClubSpotService();
 
 export default ClubSpotService;

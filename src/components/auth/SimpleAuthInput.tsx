@@ -122,7 +122,7 @@ export function SimpleAuthInput({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   label: {
     ...typography.body2,
@@ -144,8 +144,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    minHeight: 48,
+    paddingVertical: spacing.xs + 2,
+    minHeight: 44,
   },
   inputFocused: {
     borderColor: colors.primary,

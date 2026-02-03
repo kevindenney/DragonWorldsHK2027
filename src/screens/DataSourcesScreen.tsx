@@ -12,7 +12,7 @@ const open = async (url: string) => {
   } catch {}
 };
 
-type SourceKey = 'openweathermap' | 'hko' | 'racingrulesofsailing';
+type SourceKey = 'openmeteo' | 'hko' | 'clubspot' | 'racingrules';
 
 interface SourceHealth {
   status: 'ok' | 'degraded' | 'down';
@@ -26,14 +26,16 @@ export function DataSourcesScreen() {
   const [loading, setLoading] = useState(false);
   const [fetchedAt, setFetchedAt] = useState<string | null>(null);
   const [availableSources, setAvailableSources] = useState<Record<SourceKey, boolean>>({
-    openweathermap: false,
+    openmeteo: false,
     hko: false,
-    racingrulesofsailing: false,
+    clubspot: false,
+    racingrules: false,
   });
   const [health, setHealth] = useState<Record<SourceKey, SourceHealth>>({
-    openweathermap: { status: 'down' },
+    openmeteo: { status: 'down' },
     hko: { status: 'down' },
-    racingrulesofsailing: { status: 'down' },
+    clubspot: { status: 'down' },
+    racingrules: { status: 'down' },
   });
   const [recentErrors, setRecentErrors] = useState<string[]>([]);
   type Metric = 'temperature' | 'wind' | 'waves' | 'tide' | 'all';
@@ -43,22 +45,63 @@ export function DataSourcesScreen() {
     try {
       setLoading(true);
       const { weatherAPI } = await import('../services/weatherAPI');
-      const res = await weatherAPI.getWeatherData();
-      const keys = Object.keys(res.data || {}) as SourceKey[];
+      const { clubSpotService } = await import('../services/clubSpotService');
 
-      const nextAvailable: Record<SourceKey, boolean> = { openweathermap: false, hko: false, racingrulesofsailing: false };
-      keys.forEach(k => { if (k in nextAvailable) nextAvailable[k] = true; });
+      // Fetch weather data
+      const res = await weatherAPI.getWeatherData();
+      const dataKeys = Object.keys(res.data || {});
+
+      const nextAvailable: Record<SourceKey, boolean> = { openmeteo: false, hko: false, clubspot: false, racingrules: false };
+
+      // Check for Open-Meteo data (either openmeteo or openmeteo_weather keys)
+      if (dataKeys.includes('openmeteo') || dataKeys.includes('openmeteo_weather')) {
+        nextAvailable.openmeteo = true;
+      }
+      // Check for HKO data
+      if (dataKeys.includes('hko')) {
+        nextAvailable.hko = true;
+      }
+
+      // Check ClubSpot connectivity
+      try {
+        const clubSpotHealth = await clubSpotService.checkHealth();
+        nextAvailable.clubspot = clubSpotHealth.isHealthy;
+      } catch {
+        nextAvailable.clubspot = false;
+      }
+
+      // Check Racing Rules of Sailing connectivity
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const rrosResponse = await fetch('https://www.racingrulesofsailing.org/events/13242/event_links', {
+          method: 'HEAD',
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        nextAvailable.racingrules = rrosResponse.ok;
+      } catch {
+        nextAvailable.racingrules = false;
+      }
+
       setAvailableSources(nextAvailable);
 
-      const nextHealth: Record<SourceKey, SourceHealth> = { openweathermap: { status: 'down' }, hko: { status: 'down' }, racingrulesofsailing: { status: 'down' } };
-      (['openweathermap','hko','racingrulesofsailing'] as SourceKey[]).forEach(k => {
+      const nextHealth: Record<SourceKey, SourceHealth> = { openmeteo: { status: 'down' }, hko: { status: 'down' }, clubspot: { status: 'down' }, racingrules: { status: 'down' } };
+      (['openmeteo', 'hko', 'clubspot', 'racingrules'] as SourceKey[]).forEach(k => {
         nextHealth[k] = nextAvailable[k] ? { status: 'ok' } : { status: 'down' };
       });
 
       if (Array.isArray(res.errors) && res.errors.length) {
         setRecentErrors(res.errors.map((e: any) => `${e.source}: ${e.error}`));
         res.errors.forEach((e: any) => {
-          const key = e.source as SourceKey;
+          // Map error sources to our health keys
+          const sourceMap: Record<string, SourceKey> = {
+            'open-meteo': 'openmeteo',
+            'open-meteo-weather': 'openmeteo',
+            'openmeteo': 'openmeteo',
+            'hko': 'hko',
+          };
+          const key = sourceMap[e.source];
           if (key && nextHealth[key]) nextHealth[key] = { status: 'degraded', message: e.error };
         });
       } else {
@@ -80,9 +123,9 @@ export function DataSourcesScreen() {
 
   const activeSourceByMetric = useMemo(() => {
     return {
-      temperature: availableSources.openweathermap ? 'OpenWeatherMap' : (availableSources.hko ? 'Hong Kong Observatory' : 'Simulated/Fallback'),
-      wind: availableSources.openweathermap ? 'OpenWeatherMap' : (availableSources.hko ? 'HKO Weather Buoys' : 'Simulated/Fallback'),
-      waves: availableSources.openweathermap ? 'OpenWeatherMap' : 'Simulated/Fallback',
+      temperature: availableSources.openmeteo ? 'Open-Meteo' : (availableSources.hko ? 'Hong Kong Observatory' : 'Simulated/Fallback'),
+      wind: availableSources.openmeteo ? 'Open-Meteo' : (availableSources.hko ? 'HKO Weather Buoys' : 'Simulated/Fallback'),
+      waves: availableSources.openmeteo ? 'Open-Meteo Marine' : 'Simulated/Fallback',
       tide: availableSources.hko ? 'HKO Tide Stations' : 'Simulated/Fallback',
     };
   }, [availableSources]);
@@ -143,7 +186,7 @@ export function DataSourcesScreen() {
         <View style={styles.card}>
           <IOSText style={styles.cardTitle}>Primary Live Sources</IOSText>
 
-          {/* OpenWeatherMap - Primary weather data */}
+          {/* Open-Meteo - Primary weather data */}
           {(filter === 'all' || filter === 'temperature' || filter === 'wind' || filter === 'waves') && (
             <View style={styles.sourceRow}>
               <View style={styles.multiIcon}>
@@ -152,8 +195,8 @@ export function DataSourcesScreen() {
                 <Waves size={16} color="#007AFF" style={{ marginLeft: 6 }} />
               </View>
               <View style={styles.sourceTextWrap}>
-                <TouchableOpacity onPress={() => open('https://openweathermap.org/api/one-call-3')}>
-                  <IOSText style={styles.link}>OpenWeatherMap One Call API</IOSText>
+                <TouchableOpacity onPress={() => open('https://open-meteo.com/')}>
+                  <IOSText style={styles.link}>Open-Meteo Weather & Marine API</IOSText>
                 </TouchableOpacity>
                 <IOSText style={styles.cardBody}>Temperature, wind, waves, pressure, humidity, and hourly forecasts for Hong Kong waters</IOSText>
               </View>
@@ -183,10 +226,23 @@ export function DataSourcesScreen() {
               <ExternalLink size={16} color="#007AFF" />
             </View>
             <View style={styles.sourceTextWrap}>
-              <TouchableOpacity onPress={() => open('https://www.racingrulesofsailing.org/')}>
+              <TouchableOpacity onPress={() => open('https://www.racingrulesofsailing.org/events/13242/event_links?name=2027%2520HONG%2520KONG%2520DRAGON%2520WORLD%2520CHAMPIONSHIP')}>
                 <IOSText style={styles.link}>Racing Rules of Sailing</IOSText>
               </TouchableOpacity>
               <IOSText style={styles.cardBody}>Live race results, official notices, sailing instructions, and regatta documentation</IOSText>
+            </View>
+          </View>
+
+          {/* ClubSpot - Entrants */}
+          <View style={styles.sourceRow}>
+            <View style={styles.multiIcon}>
+              <ExternalLink size={16} color="#007AFF" />
+            </View>
+            <View style={styles.sourceTextWrap}>
+              <TouchableOpacity onPress={() => open('https://theclubspot.com/regatta/zyQIfeVjhb')}>
+                <IOSText style={styles.link}>ClubSpot Entrants</IOSText>
+              </TouchableOpacity>
+              <IOSText style={styles.cardBody}>Live competitor registration, entry lists, and entrant data for Dragon Worlds</IOSText>
             </View>
           </View>
         </View>
@@ -277,9 +333,9 @@ export function DataSourcesScreen() {
         {/* Update Frequency */}
         <View style={styles.card}>
           <IOSText style={styles.cardTitle}>Update Frequency</IOSText>
-          <IOSText style={styles.cardBody}>• OpenWeatherMap: 10-minute cache, updates every 15 minutes</IOSText>
+          <IOSText style={styles.cardBody}>• Open-Meteo: 10-minute cache, updates every 15 minutes</IOSText>
           <IOSText style={styles.cardBody}>• HKO Weather Data: 10-second real-time polling when available</IOSText>
-          <IOSText style={styles.cardBody}>• Racing Rules of Sailing: Real-time updates during events</IOSText>
+          <IOSText style={styles.cardBody}>• ClubSpot Entrants: Real-time updates, 5-minute cache</IOSText>
           <IOSText style={styles.cardBody}>• Race Results: Live updates during active racing</IOSText>
           <IOSText style={styles.cardBody}>• Notices: Automatic refresh every 5 minutes</IOSText>
         </View>
@@ -287,9 +343,10 @@ export function DataSourcesScreen() {
         {/* API Health */}
         <View style={styles.card}>
           <IOSText style={styles.cardTitle}>API Health Status</IOSText>
-          <View style={styles.healthItem}><IOSText style={styles.healthLabel}>OpenWeatherMap One Call API</IOSText>{renderHealth(health.openweathermap)}</View>
+          <View style={styles.healthItem}><IOSText style={styles.healthLabel}>Open-Meteo Weather API</IOSText>{renderHealth(health.openmeteo)}</View>
           <View style={styles.healthItem}><IOSText style={styles.healthLabel}>Hong Kong Observatory</IOSText>{renderHealth(health.hko)}</View>
-          <View style={styles.healthItem}><IOSText style={styles.healthLabel}>Racing Rules of Sailing</IOSText>{renderHealth(health.racingrulesofsailing)}</View>
+          <View style={styles.healthItem}><IOSText style={styles.healthLabel}>ClubSpot (Entrants)</IOSText>{renderHealth(health.clubspot)}</View>
+          <View style={styles.healthItem}><IOSText style={styles.healthLabel}>Racing Rules of Sailing</IOSText>{renderHealth(health.racingrules)}</View>
           {recentErrors.length > 0 && (
             <View style={{ marginTop: 8 }}>
               <IOSText style={styles.smallTitle}>Recent Fetch Errors</IOSText>
@@ -305,8 +362,8 @@ export function DataSourcesScreen() {
         {/* Data Quality & Sources */}
         <View style={styles.card}>
           <IOSText style={styles.cardTitle}>Data Quality & Reliability</IOSText>
-          <IOSText style={styles.cardBody}>• High Quality: OpenWeatherMap professional weather data, HKO official conditions</IOSText>
-          <IOSText style={styles.cardBody}>• Live Racing Data: Real-time results and notices from Racing Rules of Sailing</IOSText>
+          <IOSText style={styles.cardBody}>• High Quality: Open-Meteo weather & marine data, HKO official conditions</IOSText>
+          <IOSText style={styles.cardBody}>• Live Racing Data: Real-time entrants from ClubSpot</IOSText>
           <IOSText style={styles.cardBody}>• Medium Quality: Cached API responses during peak usage</IOSText>
           <IOSText style={styles.cardBody}>• Fallback: Simulated data when APIs are temporarily unavailable</IOSText>
           <IOSText style={styles.cardBody}>• Geographic Coverage: Hong Kong waters and Dragon Worlds racing area</IOSText>
@@ -315,9 +372,9 @@ export function DataSourcesScreen() {
         {/* Live Data Verification */}
         <View style={styles.card}>
           <IOSText style={styles.cardTitle}>Is It Live?</IOSText>
-          <IOSText style={styles.cardBody}>✓ OpenWeatherMap: Professional weather API with hourly forecasts</IOSText>
+          <IOSText style={styles.cardBody}>✓ Open-Meteo: Free weather & marine API with hourly forecasts</IOSText>
           <IOSText style={styles.cardBody}>✓ HKO: Real-time Hong Kong weather conditions and marine forecasts</IOSText>
-          <IOSText style={styles.cardBody}>✓ Racing Rules of Sailing: Live race results and official notices during events</IOSText>
+          <IOSText style={styles.cardBody}>✓ ClubSpot: Live entrant data for registered competitors</IOSText>
           <IOSText style={styles.cardBody}>✓ Automatic refresh: Weather every 15 minutes, race data every 5 minutes</IOSText>
           <IOSText style={styles.cardBody}>✓ Smart caching: Balance between real-time updates and API rate limits</IOSText>
           <IOSText style={styles.cardBody}>✓ Fallback systems: Continue functioning even when some sources are unavailable</IOSText>

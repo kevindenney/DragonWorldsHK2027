@@ -256,7 +256,7 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
             contentContainerStyle={[
               styles.scrollContainer,
               {
-                paddingBottom: Math.max(insets.bottom + 60, 140), // Extra padding for keyboard
+                paddingBottom: insets.bottom + 16,
               }
             ]}
             keyboardShouldPersistTaps="handled"
@@ -290,13 +290,6 @@ export function SimpleRegisterScreen({ navigation }: SimpleRegisterScreenProps) 
 
           {/* Form Section */}
           <View style={styles.formContainer}>
-            <View style={styles.welcomeSection}>
-              <Text style={styles.welcomeTitle}>Set Sail with Us</Text>
-              <Text style={styles.welcomeSubtitle}>
-                Be part of the official Dragon World Championships 2027 community
-              </Text>
-            </View>
-
             <View style={styles.formFields}>
               <SimpleAuthInput
                 label="Display Name"
@@ -418,12 +411,12 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm, // Reduced from lg to sm
-    // paddingBottom is now set dynamically in the component
+    paddingTop: spacing.xs,
+    justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    marginBottom: spacing.md, // Reduced from xl to md
+    marginBottom: spacing.sm,
     position: 'relative',
   },
   cancelButton: {
@@ -440,16 +433,16 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   logoContainer: {
-    width: 50, // Reduced from 70
-    height: 50, // Reduced from 70
-    marginBottom: spacing.sm, // Reduced from md to sm
+    width: 44,
+    height: 44,
+    marginBottom: spacing.xs,
     alignItems: 'center',
     justifyContent: 'center',
   },
   logo: {
-    width: 40, // Reduced from 56
-    height: 40, // Reduced from 56
-    tintColor: '#FFFFFF', // White logo on dark gradient
+    width: 36,
+    height: 36,
+    tintColor: '#FFFFFF',
   },
   appName: {
     ...typography.h1,
@@ -468,39 +461,21 @@ const styles = StyleSheet.create({
   formContainer: {
     backgroundColor: colors.background,
     borderRadius: 16,
-    padding: spacing.lg, // Reduced from xl to lg
-    marginBottom: spacing.sm, // Reduced from lg to sm
-    // Enhanced shadow for dark background
+    padding: spacing.md,
+    paddingTop: spacing.lg,
+    marginBottom: spacing.sm,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
   },
-  welcomeSection: {
-    alignItems: 'center',
-    marginBottom: spacing.md, // Reduced from lg to md
-  },
-  welcomeTitle: {
-    ...typography.h2,
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-    fontWeight: '600',
-  },
-  welcomeSubtitle: {
-    ...typography.body2,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    paddingHorizontal: spacing.md,
-  },
   formFields: {
     width: '100%',
   },
   registerButton: {
-    marginTop: spacing.md, // Reduced from lg to md
-    marginBottom: spacing.sm, // Reduced from lg to sm
+    marginTop: spacing.sm,
+    marginBottom: spacing.sm,
     ...shadows.button,
   },
   socialSection: {
@@ -548,7 +523,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: spacing.md, // Reduced from lg to md
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: colors.borderLight,
   },

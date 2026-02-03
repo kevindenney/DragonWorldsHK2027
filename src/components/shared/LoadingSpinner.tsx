@@ -86,7 +86,7 @@ export function LoadingScreen({ message = 'Loading...', showLogo = true, testID 
           <Image
             source={require('../../../assets/dragon-logo.png')}
             style={styles.logoImage}
-            resizeMode="cover"
+            resizeMode="contain"
           />
         </View>
       )}

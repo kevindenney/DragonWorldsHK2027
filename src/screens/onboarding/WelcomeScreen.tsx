@@ -110,8 +110,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSign
       style={styles.gradientOverlay}
     >
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-          {/* Logo Section - Takes up ~40% of screen */}
-          <View style={styles.logoSection}>
+          {/* Main Content - Centered */}
+          <View style={styles.mainContent}>
+            {/* Logo Section */}
+            <View style={styles.logoSection}>
             <Animated.View
               style={[
                 styles.logoContainer,
@@ -182,8 +184,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSign
               <Mail size={18} color="#FFFFFF" strokeWidth={2} style={styles.emailIcon} />
               <Text style={styles.emailButtonText}>Continue with Email</Text>
             </TouchableOpacity>
+          </Animated.View>
+          </View>
 
-            {/* Sign In Link */}
+          {/* Footer Section - Sign In Link + Terms */}
+          <View style={styles.footer}>
             <TouchableOpacity
               style={styles.signInLink}
               onPress={handleSignIn}
@@ -193,10 +198,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSign
                 Already have an account? <Text style={styles.signInLinkBold}>Sign In</Text>
               </Text>
             </TouchableOpacity>
-          </Animated.View>
-
-          {/* Footer */}
-          <View style={styles.footer}>
             <Text style={styles.footerText}>
               By continuing, you agree to our Terms of Service
             </Text>
@@ -215,11 +216,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
 
-  // Logo Section - ~40% of screen
+  // Main content wrapper - centered vertically
+  mainContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+
+  // Logo Section
   logoSection: {
-    flex: 0.35,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 16,
   },
   logoContainer: {
     shadowColor: '#000',
@@ -275,8 +282,6 @@ const styles = StyleSheet.create({
 
   // Buttons Section
   buttonsSection: {
-    flex: 0.45,
-    justifyContent: 'flex-start',
     paddingTop: 8,
   },
 
@@ -365,7 +370,8 @@ const styles = StyleSheet.create({
   // Sign In Link
   signInLink: {
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 12,
+    marginBottom: 8,
   },
   signInLinkText: {
     fontSize: 15,
@@ -379,7 +385,8 @@ const styles = StyleSheet.create({
 
   // Footer
   footer: {
-    paddingBottom: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
     alignItems: 'center',
   },
   footerText: {

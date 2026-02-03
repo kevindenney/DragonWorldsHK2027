@@ -100,7 +100,7 @@ export const sailingLocations: SailingLocation[] = [
       longitude: 114.1822
     },
     description: 'Historic yacht club (est. 1908) and Dragon World Championship 2027 headquarters. Asia\'s premier yacht club and regatta organizer.',
-    championshipRole: 'Championship headquarters for registration, measurement, daily briefings, and awards ceremonies',
+    championshipRole: 'Championship headquarters for registration and measurement',
     importance: 'primary',
     championshipSpecific: true,
     
@@ -108,14 +108,12 @@ export const sailingLocations: SailingLocation[] = [
     
     facilities: [
       'Boat measurement area',
-      'Registration office', 
+      'Registration office',
       'Race office',
-      'Daily briefing room',
       'Competitors\' lounge',
       'Equipment storage',
       'Boat launching facilities',
-      'Dining facilities',
-      'Awards ceremony venue'
+      'Dining facilities'
     ],
     
     contact: {

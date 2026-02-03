@@ -462,7 +462,7 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
         {/* Notices Content - Scrolls under the header */}
         <ScrollView
           style={styles.scrollContainer}
-          contentContainerStyle={[styles.scrollContent, { paddingTop: HEADER_HEIGHT + insets.top + 60 }]}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: HEADER_HEIGHT + insets.top + 100 }]}
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
           onScroll={scrollHandler.onScroll}
@@ -476,7 +476,7 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
               tintColor={colors.primary}
               colors={[colors.primary]}
               progressBackgroundColor={colors.surface}
-              progressViewOffset={HEADER_HEIGHT + insets.top + 60}
+              progressViewOffset={HEADER_HEIGHT + insets.top + 100}
             />
           }
         >

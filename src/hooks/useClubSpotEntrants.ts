@@ -73,7 +73,7 @@ export function useClubSpotEntrants(
 ): UseClubSpotEntrantsResult {
   const {
     enabled = true,
-    staleTime = 5 * 60 * 1000, // 5 minutes
+    staleTime = 24 * 60 * 60 * 1000, // 24 hours - entry lists don't change often
     forceDemoMode = false,
   } = options;
 
@@ -188,7 +188,7 @@ export function usePrefetchClubSpotEntrants() {
       await queryClient.prefetchQuery({
         queryKey: QUERY_KEYS.entrants(regattaId, eventId),
         queryFn: () => clubSpotServiceInstance.getEntrants(regattaId, eventId),
-        staleTime: 5 * 60 * 1000,
+        staleTime: 24 * 60 * 60 * 1000, // 24 hours
       });
     },
     [queryClient]
