@@ -24,6 +24,7 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
   preferences?: UserPreferences;
+  sailingProfile?: SailingProfile;
 }
 
 export interface UserPreferences {
@@ -31,6 +32,15 @@ export interface UserPreferences {
   newsletter: boolean;
   language: 'en' | 'zh';
   theme?: 'light' | 'dark';
+}
+
+/**
+ * Sailing profile information for sailors
+ */
+export interface SailingProfile {
+  sailNumber?: string;      // e.g., "d59"
+  boatClass?: string;       // e.g., "Dragon"
+  yachtClub?: string;       // e.g., "Royal Hong Kong Yacht Club"
 }
 
 export interface LoginCredentials {

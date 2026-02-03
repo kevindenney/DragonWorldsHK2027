@@ -23,6 +23,15 @@ export const COLLECTIONS = {
 } as const;
 
 /**
+ * Sailing profile information for sailors
+ */
+export interface SailingProfile {
+  sailNumber?: string;      // e.g., "d59"
+  boatClass?: string;       // e.g., "Dragon"
+  yachtClub?: string;       // e.g., "Royal Hong Kong Yacht Club"
+}
+
+/**
  * User document interface
  */
 export interface UserDocument {
@@ -42,6 +51,7 @@ export interface UserDocument {
     newsletter: boolean;
     language: string;
   };
+  sailingProfile?: SailingProfile;
 }
 
 /**

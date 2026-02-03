@@ -126,19 +126,9 @@ export class FirebaseAuthService {
    */
   async login(credentials: LoginCredentials): Promise<User> {
     try {
-
-      // Test connection first
-      const connectionTest = await this.testConnection();
-      if (!connectionTest.isConnected) {
-        throw new Error(`Firebase connection failed: ${connectionTest.error}`);
-      }
-
-      // Check service health
-      const healthCheck = await this.checkServiceHealth();
-      if (!healthCheck.isHealthy) {
-        throw new Error(`Firebase service unhealthy: ${JSON.stringify(healthCheck.details)}`);
-      }
-
+      // Note: Removed testConnection() and checkServiceHealth() pre-checks
+      // These were causing race conditions with the 15-second timeout in AuthProvider
+      // Firebase Auth already handles connection errors properly and returns appropriate error codes
 
       const userCredential = await signInWithEmailAndPassword(
         auth,

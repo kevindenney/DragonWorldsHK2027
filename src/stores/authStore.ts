@@ -208,8 +208,9 @@ export const useAuthStore = create<AuthState>()(
             createdAt: userData?.createdAt?.toDate() || new Date(),
             updatedAt: userData?.updatedAt?.toDate() || new Date(),
             preferences: userData?.preferences,
+            sailingProfile: userData?.sailingProfile,
           };
-          
+
           set({
             user,
             isAuthenticated: true,
@@ -217,7 +218,7 @@ export const useAuthStore = create<AuthState>()(
             error: null,
           });
         } catch (error: any) {
-          const errorMessage = error?.code === 'auth/user-not-found' 
+          const errorMessage = error?.code === 'auth/user-not-found'
             ? 'No account found with this email'
             : error?.code === 'auth/wrong-password'
             ? 'Incorrect password'
@@ -381,6 +382,7 @@ export const useAuthStore = create<AuthState>()(
             createdAt: userData?.createdAt?.toDate() || new Date(),
             updatedAt: new Date(),
             preferences: userData?.preferences,
+            sailingProfile: userData?.sailingProfile,
           };
 
           set({
@@ -598,8 +600,9 @@ export const useAuthStore = create<AuthState>()(
                   createdAt: userData?.createdAt?.toDate() || new Date(),
                   updatedAt: userData?.updatedAt?.toDate() || new Date(),
                   preferences: userData?.preferences,
+                  sailingProfile: userData?.sailingProfile,
                 };
-                
+
                 set({
                   user,
                   isAuthenticated: true,

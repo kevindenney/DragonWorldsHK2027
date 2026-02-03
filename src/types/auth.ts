@@ -51,6 +51,15 @@ export interface LinkedProvider {
 }
 
 /**
+ * Sailing profile information for sailors
+ */
+export interface SailingProfile {
+  sailNumber?: string;      // e.g., "d59"
+  boatClass?: string;       // e.g., "Dragon"
+  yachtClub?: string;       // e.g., "Royal Hong Kong Yacht Club"
+}
+
+/**
  * User profile interface
  */
 export interface UserProfile {
@@ -61,6 +70,7 @@ export interface UserProfile {
   gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
   timezone?: string;
   language?: string;
+  sailingProfile?: SailingProfile;
 }
 
 /**

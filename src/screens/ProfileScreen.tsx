@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, Settings } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import { IOSNavigationBar } from '../components/ios';
 import { AppleStyleProfile } from '../components/profile/AppleStyleProfile';
 import { RequireAuth } from '../components/auth/AuthGuard';
@@ -68,14 +68,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             icon: <ChevronLeft size={20} color={colors.primary} />,
             onPress: () => navigation.goBack()
           }}
-          rightActions={[
-            {
-              icon: <Settings size={20} color={colors.primary} />,
-              onPress: () => {
-                Alert.alert('Settings', 'Advanced settings will be available in a future update.');
-              }
-            }
-          ]}
         />
         
         <AppleStyleProfile

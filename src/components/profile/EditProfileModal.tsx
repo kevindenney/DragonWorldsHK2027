@@ -13,10 +13,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { X, Save, User, Mail, Phone, MapPin } from 'lucide-react-native';
+import { X, Save, User, Mail, Phone, MapPin, Sailboat, Anchor } from 'lucide-react-native';
 import { colors, spacing, typography, borderRadius, shadows } from '../../constants/theme';
 import { useAuth } from '../../auth/useAuth';
-import { User as UserType } from '../../types/auth';
+import { User as UserType, SailingProfile } from '../../auth/authTypes';
 
 interface EditProfileModalProps {
   visible: boolean;
@@ -24,11 +24,25 @@ interface EditProfileModalProps {
   testID?: string;
 }
 
+// Boat class options for the picker
+const BOAT_CLASSES = [
+  { label: 'Select boat class...', value: '' },
+  { label: 'Dragon', value: 'Dragon' },
+  { label: 'J/70', value: 'J/70' },
+  { label: 'Laser', value: 'Laser' },
+  { label: '49er', value: '49er' },
+  { label: 'Optimist', value: 'Optimist' },
+  { label: 'Other', value: 'Other' },
+];
+
 interface ProfileFormData {
   displayName: string;
   email: string;
   phoneNumber: string;
   location: string;
+  sailNumber: string;
+  boatClass: string;
+  yachtClub: string;
 }
 
 export const EditProfileModal: React.FC<EditProfileModalProps> = ({
@@ -42,6 +56,9 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     email: '',
     phoneNumber: '',
     location: '',
+    sailNumber: '',
+    boatClass: '',
+    yachtClub: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -53,7 +70,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         displayName: user.displayName || '',
         email: user.email || '',
         phoneNumber: user.phoneNumber || '',
-        location: user.profile?.location || '',
+        location: '', // Location field for future use
+        sailNumber: user.sailingProfile?.sailNumber || '',
+        boatClass: user.sailingProfile?.boatClass || '',
+        yachtClub: user.sailingProfile?.yachtClub || '',
       };
       setFormData(initialData);
       setHasChanges(false);
@@ -67,7 +87,9 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         formData.displayName !== (user.displayName || '') ||
         formData.email !== (user.email || '') ||
         formData.phoneNumber !== (user.phoneNumber || '') ||
-        formData.location !== (user.profile?.location || '');
+        formData.sailNumber !== (user.sailingProfile?.sailNumber || '') ||
+        formData.boatClass !== (user.sailingProfile?.boatClass || '') ||
+        formData.yachtClub !== (user.sailingProfile?.yachtClub || '');
 
       setHasChanges(hasModifications);
     }
@@ -108,9 +130,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       const updates: Partial<UserType> = {
         displayName: formData.displayName.trim(),
         phoneNumber: formData.phoneNumber.trim() || undefined,
-        profile: {
-          ...user?.profile,
-          location: formData.location.trim() || undefined,
+        sailingProfile: {
+          sailNumber: formData.sailNumber.trim() || undefined,
+          boatClass: formData.boatClass || undefined,
+          yachtClub: formData.yachtClub.trim() || undefined,
         },
       };
 
@@ -278,6 +301,77 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   />
                 </View>
               </View>
+
+              {/* Sailing Profile Section */}
+              <View style={styles.sectionDivider}>
+                <Text style={styles.sectionTitle}>Sailing Profile</Text>
+              </View>
+
+              {/* Sail Number */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Sail Number</Text>
+                <View style={styles.inputContainer}>
+                  <Sailboat size={20} color={colors.textMuted} />
+                  <TextInput
+                    style={styles.textInput}
+                    value={formData.sailNumber}
+                    onChangeText={(text) => handleInputChange('sailNumber', text)}
+                    placeholder="e.g., d59"
+                    placeholderTextColor={colors.textMuted}
+                    maxLength={20}
+                    autoCapitalize="characters"
+                    editable={!isLoading}
+                  />
+                </View>
+              </View>
+
+              {/* Boat Class */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Boat Class</Text>
+                <View style={styles.pickerContainer}>
+                  <Anchor size={20} color={colors.textMuted} />
+                  <View style={styles.pickerWrapper}>
+                    {BOAT_CLASSES.map((item) => (
+                      <TouchableOpacity
+                        key={item.value}
+                        style={[
+                          styles.pickerOption,
+                          formData.boatClass === item.value && styles.pickerOptionSelected,
+                        ]}
+                        onPress={() => handleInputChange('boatClass', item.value)}
+                        disabled={isLoading}
+                      >
+                        <Text
+                          style={[
+                            styles.pickerOptionText,
+                            formData.boatClass === item.value && styles.pickerOptionTextSelected,
+                            !item.value && styles.pickerOptionPlaceholder,
+                          ]}
+                        >
+                          {item.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </View>
+
+              {/* Yacht Club */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Yacht Club</Text>
+                <View style={styles.inputContainer}>
+                  <Anchor size={20} color={colors.textMuted} />
+                  <TextInput
+                    style={styles.textInput}
+                    value={formData.yachtClub}
+                    onChangeText={(text) => handleInputChange('yachtClub', text)}
+                    placeholder="e.g., Royal Hong Kong Yacht Club"
+                    placeholderTextColor={colors.textMuted}
+                    maxLength={100}
+                    editable={!isLoading}
+                  />
+                </View>
+              </View>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -375,5 +469,58 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textMuted,
     marginTop: -spacing.xs,
+  },
+  sectionDivider: {
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.lg,
+  },
+  sectionTitle: {
+    ...typography.h5,
+    color: colors.text,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+  },
+  pickerContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+  },
+  pickerWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  pickerOption: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  pickerOptionSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  pickerOptionText: {
+    ...typography.body2,
+    color: colors.text,
+  },
+  pickerOptionTextSelected: {
+    color: colors.background,
+    fontWeight: '600',
+  },
+  pickerOptionPlaceholder: {
+    color: colors.textMuted,
   },
 });

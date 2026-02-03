@@ -300,7 +300,7 @@ export function SponsorsScreen() {
   if (selectedSponsor) {
     return (
       <View style={styles.container}>
-        <View style={[styles.modalHeaderContainer, { paddingTop: insets.top + 56 }]}>
+        <View style={[styles.modalHeaderContainer, { paddingTop: insets.top + 12 }]}>
           <TouchableOpacity
             onPress={handleCloseModal}
             style={styles.backButton}

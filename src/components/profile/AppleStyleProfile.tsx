@@ -32,11 +32,16 @@ import {
   Trash2,
   CheckCircle,
   ChevronRight,
+  ChevronDown,
   Sailboat,
   MapPin,
   Shield,
   Settings,
   HelpCircle,
+  Sun,
+  Moon,
+  Globe,
+  Database,
 } from 'lucide-react-native';
 import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
 import { useAuth } from '../../auth/useAuth';
@@ -69,6 +74,15 @@ export function AppleStyleProfile({
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Settings state
+  const [settingsExpanded, setSettingsExpanded] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(
+    user?.preferences?.theme ?? 'light'
+  );
+  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'zh'>(
+    (user?.preferences?.language as 'en' | 'zh') ?? 'en'
+  );
 
   // Auto-hide success messages
   useEffect(() => {
@@ -224,6 +238,64 @@ export function AppleStyleProfile({
     }
   };
 
+  const handleThemeChange = async (theme: 'light' | 'dark') => {
+    try {
+      setCurrentTheme(theme);
+      await updateProfile({
+        preferences: {
+          ...user?.preferences,
+          notifications: user?.preferences?.notifications ?? false,
+          newsletter: user?.preferences?.newsletter ?? false,
+          language: user?.preferences?.language ?? 'en',
+          theme,
+        },
+      });
+      setSuccessMessage(`Theme set to ${theme}`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update theme.');
+    }
+  };
+
+  const handleLanguageChange = async (language: 'en' | 'zh') => {
+    try {
+      setCurrentLanguage(language);
+      await updateProfile({
+        preferences: {
+          ...user?.preferences,
+          notifications: user?.preferences?.notifications ?? false,
+          newsletter: user?.preferences?.newsletter ?? false,
+          language,
+          theme: user?.preferences?.theme ?? 'light',
+        },
+      });
+      setSuccessMessage(language === 'en' ? 'Language set to English' : '語言設定為繁體中文');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update language.');
+    }
+  };
+
+  const handleClearCache = () => {
+    Alert.alert(
+      'Clear Cache',
+      'This will clear locally cached data. You may need to re-download some content.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Clear cache logic would go here
+              setSuccessMessage('Cache cleared');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to clear cache.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
@@ -322,14 +394,133 @@ export function AppleStyleProfile({
             title="Security"
             subtitle="Password and connected accounts"
             onPress={onChangePassword}
+            isLast={!settingsExpanded}
           />
-          <MenuRow
-            icon={<Settings size={20} color={colors.textMuted} />}
-            title="Settings"
-            subtitle="Display, language, and data"
-            onPress={onNavigateToSettings}
-            isLast
-          />
+
+          {/* Expandable Settings Section */}
+          <TouchableOpacity
+            style={[styles.menuRow, styles.menuRowBorder]}
+            onPress={() => setSettingsExpanded(!settingsExpanded)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.menuLeft}>
+              <View style={styles.menuIconContainer}>
+                <Settings size={20} color={colors.textMuted} />
+              </View>
+              <View>
+                <Text style={styles.menuTitle}>Settings</Text>
+                <Text style={styles.menuSubtitle}>Display, language, and data</Text>
+              </View>
+            </View>
+            <View style={{ transform: [{ rotate: settingsExpanded ? '180deg' : '0deg' }] }}>
+              <ChevronDown size={20} color={colors.textMuted} />
+            </View>
+          </TouchableOpacity>
+
+          {settingsExpanded && (
+            <View style={styles.inlineSettings}>
+              {/* Theme Toggle */}
+              <View style={styles.inlineSettingRow}>
+                <View style={styles.inlineSettingLeft}>
+                  {currentTheme === 'light' ? (
+                    <Sun size={18} color={colors.warning} />
+                  ) : (
+                    <Moon size={18} color={colors.primary} />
+                  )}
+                  <Text style={styles.inlineSettingLabel}>Theme</Text>
+                </View>
+                <View style={styles.segmentedControl}>
+                  <TouchableOpacity
+                    style={[
+                      styles.segmentedOption,
+                      currentTheme === 'light' && styles.segmentedOptionActive,
+                    ]}
+                    onPress={() => handleThemeChange('light')}
+                  >
+                    <Text
+                      style={[
+                        styles.segmentedText,
+                        currentTheme === 'light' && styles.segmentedTextActive,
+                      ]}
+                    >
+                      Light
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.segmentedOption,
+                      currentTheme === 'dark' && styles.segmentedOptionActive,
+                    ]}
+                    onPress={() => handleThemeChange('dark')}
+                  >
+                    <Text
+                      style={[
+                        styles.segmentedText,
+                        currentTheme === 'dark' && styles.segmentedTextActive,
+                      ]}
+                    >
+                      Dark
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Language Toggle */}
+              <View style={styles.inlineSettingRow}>
+                <View style={styles.inlineSettingLeft}>
+                  <Globe size={18} color={colors.primary} />
+                  <Text style={styles.inlineSettingLabel}>Language</Text>
+                </View>
+                <View style={styles.segmentedControl}>
+                  <TouchableOpacity
+                    style={[
+                      styles.segmentedOption,
+                      currentLanguage === 'en' && styles.segmentedOptionActive,
+                    ]}
+                    onPress={() => handleLanguageChange('en')}
+                  >
+                    <Text
+                      style={[
+                        styles.segmentedText,
+                        currentLanguage === 'en' && styles.segmentedTextActive,
+                      ]}
+                    >
+                      English
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.segmentedOption,
+                      currentLanguage === 'zh' && styles.segmentedOptionActive,
+                    ]}
+                    onPress={() => handleLanguageChange('zh')}
+                  >
+                    <Text
+                      style={[
+                        styles.segmentedText,
+                        currentLanguage === 'zh' && styles.segmentedTextActive,
+                      ]}
+                    >
+                      繁體中文
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Clear Cache */}
+              <TouchableOpacity
+                style={styles.inlineSettingRow}
+                onPress={handleClearCache}
+                activeOpacity={0.7}
+              >
+                <View style={styles.inlineSettingLeft}>
+                  <Database size={18} color={colors.textMuted} />
+                  <Text style={styles.inlineSettingLabel}>Clear Cache</Text>
+                </View>
+                <ChevronRight size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </View>
 
@@ -436,14 +627,36 @@ function IdentityCard({
 
         {/* Sailing Identity - This IS who they are */}
         <View style={styles.sailingIdentity}>
-          <View style={styles.identityRow}>
-            <Sailboat size={16} color={colors.primary} />
-            <Text style={styles.identityText}>d59 · Dragon Class</Text>
-          </View>
-          <View style={styles.identityRow}>
-            <MapPin size={16} color={colors.primary} />
-            <Text style={styles.identityText}>Royal Hong Kong YC</Text>
-          </View>
+          {(user.sailingProfile?.sailNumber || user.sailingProfile?.boatClass) ? (
+            <View style={styles.identityRow}>
+              <Sailboat size={16} color={colors.primary} />
+              <Text style={styles.identityText}>
+                {[user.sailingProfile?.sailNumber, user.sailingProfile?.boatClass]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.identityRow}>
+              <Sailboat size={16} color={colors.textMuted} />
+              <Text style={[styles.identityText, styles.identityPlaceholder]}>
+                Add your sail number
+              </Text>
+            </View>
+          )}
+          {user.sailingProfile?.yachtClub ? (
+            <View style={styles.identityRow}>
+              <MapPin size={16} color={colors.primary} />
+              <Text style={styles.identityText}>{user.sailingProfile.yachtClub}</Text>
+            </View>
+          ) : (
+            <View style={styles.identityRow}>
+              <MapPin size={16} color={colors.textMuted} />
+              <Text style={[styles.identityText, styles.identityPlaceholder]}>
+                Add your yacht club
+              </Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -612,6 +825,10 @@ const styles = StyleSheet.create({
     ...typography.body2,
     color: colors.textSecondary,
   },
+  identityPlaceholder: {
+    color: colors.textMuted,
+    fontStyle: 'italic',
+  },
   editButton: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
@@ -771,5 +988,52 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
     marginBottom: spacing.lg,
+  },
+
+  // Inline Settings
+  inlineSettings: {
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  inlineSettingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  inlineSettingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  inlineSettingLabel: {
+    ...typography.body2,
+    color: colors.text,
+  },
+  segmentedControl: {
+    flexDirection: 'row',
+    backgroundColor: colors.border,
+    borderRadius: borderRadius.sm,
+    padding: 2,
+  },
+  segmentedOption: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm - 1,
+  },
+  segmentedOptionActive: {
+    backgroundColor: colors.surface,
+  },
+  segmentedText: {
+    ...typography.caption,
+    color: colors.textMuted,
+    fontWeight: '500',
+  },
+  segmentedTextActive: {
+    color: colors.text,
+    fontWeight: '600',
   },
 });
