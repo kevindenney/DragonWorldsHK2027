@@ -19,70 +19,43 @@ import {
   TouchableOpacity,
   Image,
   Alert,
-  Switch,
   ActivityIndicator,
-  Pressable,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import Constants from 'expo-constants';
 import {
   Mail,
-  Bell,
   LogOut,
   Camera,
   Trash2,
   CheckCircle,
-  ChevronRight,
-  ChevronDown,
   Sailboat,
   MapPin,
-  Shield,
-  Settings,
-  HelpCircle,
-  Sun,
-  Moon,
-  Globe,
-  Database,
+  Key,
+  Smartphone,
 } from 'lucide-react-native';
 import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
 import { useAuth } from '../../auth/useAuth';
 import { User as UserType } from '../../auth/authTypes';
 import { AuthButton } from '../auth/AuthButton';
 import { imageUploadService, UploadProgress } from '../../services/imageUploadService';
-import NotificationService from '../../services/notificationService';
 
 interface AppleStyleProfileProps {
   onEditProfile?: () => void;
-  onChangePassword?: () => void;
   onDeleteAccount?: () => void;
-  onNavigateToSettings?: () => void;
   testID?: string;
 }
 
 export function AppleStyleProfile({
   onEditProfile,
-  onChangePassword,
   onDeleteAccount,
-  onNavigateToSettings,
   testID,
 }: AppleStyleProfileProps) {
   const { user, logout, updateProfile } = useAuth();
 
-  const [notificationsEnabled, setNotificationsEnabled] = useState(
-    user?.preferences?.notifications ?? false
-  );
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
-  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  // Settings state
-  const [settingsExpanded, setSettingsExpanded] = useState(false);
-  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(
-    user?.preferences?.theme ?? 'light'
-  );
-  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'zh'>(
-    (user?.preferences?.language as 'en' | 'zh') ?? 'en'
-  );
 
   // Auto-hide success messages
   useEffect(() => {
@@ -162,140 +135,6 @@ export function AppleStyleProfile({
     }
   };
 
-  const handleNotificationToggle = async (value: boolean) => {
-    try {
-      setIsUpdatingProfile(true);
-      setNotificationsEnabled(value);
-
-      const notificationService = NotificationService.getInstance();
-
-      if (value) {
-        // User wants to enable notifications - request permission and register
-        await notificationService.initialize();
-        const token = await notificationService.registerForPushNotifications(user?.uid);
-
-        if (!token) {
-          // Permission was denied or device doesn't support notifications
-          setNotificationsEnabled(false);
-          Alert.alert(
-            'Notifications Not Available',
-            'Unable to enable notifications. Please check your device settings to allow notifications for this app.',
-            [{ text: 'OK' }]
-          );
-          return;
-        }
-
-        // Successfully registered - save preference
-        await updateProfile({
-          preferences: {
-            ...user?.preferences,
-            notifications: true,
-            newsletter: user?.preferences?.newsletter ?? false,
-            language: user?.preferences?.language ?? 'en',
-          },
-        });
-        setSuccessMessage('Race notifications enabled!');
-      } else {
-        // User wants to disable notifications
-        if (user?.uid) {
-          await notificationService.setNotificationsEnabled(user.uid, false);
-        }
-
-        await updateProfile({
-          preferences: {
-            ...user?.preferences,
-            notifications: false,
-            newsletter: user?.preferences?.newsletter ?? false,
-            language: user?.preferences?.language ?? 'en',
-          },
-        });
-        setSuccessMessage('Notifications disabled');
-      }
-    } catch (error) {
-      setNotificationsEnabled(!value);
-      Alert.alert('Error', 'Failed to update notification settings.');
-    } finally {
-      setIsUpdatingProfile(false);
-    }
-  };
-
-  const handleTestNotification = async () => {
-    try {
-      const notificationService = NotificationService.getInstance();
-      await notificationService.initialize();
-      await notificationService.sendLocalNotification(
-        '🏁 Race Starting Soon!',
-        'Dragon Class - Race 1 starts in 15 minutes. Head to the start area.',
-        {
-          type: 'race-start',
-          raceId: 'test-123',
-          priority: 'high'
-        }
-      );
-      setSuccessMessage('Test notification sent!');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to send test notification. Make sure notifications are enabled.');
-    }
-  };
-
-  const handleThemeChange = async (theme: 'light' | 'dark') => {
-    try {
-      setCurrentTheme(theme);
-      await updateProfile({
-        preferences: {
-          ...user?.preferences,
-          notifications: user?.preferences?.notifications ?? false,
-          newsletter: user?.preferences?.newsletter ?? false,
-          language: user?.preferences?.language ?? 'en',
-          theme,
-        },
-      });
-      setSuccessMessage(`Theme set to ${theme}`);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to update theme.');
-    }
-  };
-
-  const handleLanguageChange = async (language: 'en' | 'zh') => {
-    try {
-      setCurrentLanguage(language);
-      await updateProfile({
-        preferences: {
-          ...user?.preferences,
-          notifications: user?.preferences?.notifications ?? false,
-          newsletter: user?.preferences?.newsletter ?? false,
-          language,
-          theme: user?.preferences?.theme ?? 'light',
-        },
-      });
-      setSuccessMessage(language === 'en' ? 'Language set to English' : '語言設定為繁體中文');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to update language.');
-    }
-  };
-
-  const handleClearCache = () => {
-    Alert.alert(
-      'Clear Cache',
-      'This will clear locally cached data. You may need to re-download some content.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              // Clear cache logic would go here
-              setSuccessMessage('Cache cleared');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to clear cache.');
-            }
-          },
-        },
-      ]
-    );
-  };
-
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
@@ -335,45 +174,6 @@ export function AppleStyleProfile({
         uploadProgress={uploadProgress}
       />
 
-      {/* Quick Settings - Most common preferences */}
-      <View style={styles.section}>
-        <Text style={styles.sectionHeader}>Quick Settings</Text>
-        <View style={styles.card}>
-          <View style={styles.settingRow}>
-            <View style={styles.settingLeft}>
-              <View style={styles.iconContainer}>
-                <Bell size={20} color={colors.primary} />
-              </View>
-              <View>
-                <Text style={styles.settingTitle}>Race Notifications</Text>
-                <Text style={styles.settingSubtitle}>Start times, results, and updates</Text>
-              </View>
-            </View>
-            {isUpdatingProfile ? (
-              <ActivityIndicator size="small" color={colors.primary} />
-            ) : (
-              <Switch
-                value={notificationsEnabled}
-                onValueChange={handleNotificationToggle}
-                trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor="#fff"
-              />
-            )}
-          </View>
-          {/* Test Notification Button */}
-          {notificationsEnabled && (
-            <TouchableOpacity
-              style={styles.testNotificationButton}
-              onPress={handleTestNotification}
-              activeOpacity={0.7}
-            >
-              <Bell size={16} color={colors.primary} />
-              <Text style={styles.testNotificationText}>Send Test Notification</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
       {/* Contact Info */}
       <View style={styles.section}>
         <Text style={styles.sectionHeader}>Contact</Text>
@@ -385,155 +185,47 @@ export function AppleStyleProfile({
         </View>
       </View>
 
-      {/* Account & Security - Progressive disclosure */}
+      {/* Login Info */}
       <View style={styles.section}>
-        <Text style={styles.sectionHeader}>Account</Text>
+        <Text style={styles.sectionHeader}>Login</Text>
         <View style={styles.card}>
-          <MenuRow
-            icon={<Shield size={20} color={colors.textMuted} />}
-            title="Security"
-            subtitle="Password and connected accounts"
-            onPress={onChangePassword}
-            isLast={!settingsExpanded}
-          />
-
-          {/* Expandable Settings Section */}
-          <TouchableOpacity
-            style={[styles.menuRow, styles.menuRowBorder]}
-            onPress={() => setSettingsExpanded(!settingsExpanded)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.menuLeft}>
-              <View style={styles.menuIconContainer}>
-                <Settings size={20} color={colors.textMuted} />
+          {user.providers?.map((provider, index) => (
+            <View
+              key={provider}
+              style={[
+                styles.loginMethodRow,
+                index < (user.providers?.length || 1) - 1 && styles.loginMethodBorder,
+              ]}
+            >
+              <View style={styles.loginMethodLeft}>
+                {provider === 'email' ? (
+                  <Key size={18} color={colors.textMuted} />
+                ) : (
+                  <Smartphone size={18} color={colors.textMuted} />
+                )}
+                <Text style={styles.loginMethodText}>
+                  {provider === 'email'
+                    ? 'Email & Password'
+                    : provider === 'google.com'
+                    ? 'Google'
+                    : provider === 'apple.com'
+                    ? 'Apple'
+                    : provider}
+                </Text>
               </View>
-              <View>
-                <Text style={styles.menuTitle}>Settings</Text>
-                <Text style={styles.menuSubtitle}>Display, language, and data</Text>
+              <View style={styles.loginMethodBadge}>
+                <Text style={styles.loginMethodBadgeText}>Connected</Text>
               </View>
             </View>
-            <View style={{ transform: [{ rotate: settingsExpanded ? '180deg' : '0deg' }] }}>
-              <ChevronDown size={20} color={colors.textMuted} />
-            </View>
-          </TouchableOpacity>
-
-          {settingsExpanded && (
-            <View style={styles.inlineSettings}>
-              {/* Theme Toggle */}
-              <View style={styles.inlineSettingRow}>
-                <View style={styles.inlineSettingLeft}>
-                  {currentTheme === 'light' ? (
-                    <Sun size={18} color={colors.warning} />
-                  ) : (
-                    <Moon size={18} color={colors.primary} />
-                  )}
-                  <Text style={styles.inlineSettingLabel}>Theme</Text>
-                </View>
-                <View style={styles.segmentedControl}>
-                  <TouchableOpacity
-                    style={[
-                      styles.segmentedOption,
-                      currentTheme === 'light' && styles.segmentedOptionActive,
-                    ]}
-                    onPress={() => handleThemeChange('light')}
-                  >
-                    <Text
-                      style={[
-                        styles.segmentedText,
-                        currentTheme === 'light' && styles.segmentedTextActive,
-                      ]}
-                    >
-                      Light
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.segmentedOption,
-                      currentTheme === 'dark' && styles.segmentedOptionActive,
-                    ]}
-                    onPress={() => handleThemeChange('dark')}
-                  >
-                    <Text
-                      style={[
-                        styles.segmentedText,
-                        currentTheme === 'dark' && styles.segmentedTextActive,
-                      ]}
-                    >
-                      Dark
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+          ))}
+          {(!user.providers || user.providers.length === 0) && (
+            <View style={styles.loginMethodRow}>
+              <View style={styles.loginMethodLeft}>
+                <Key size={18} color={colors.textMuted} />
+                <Text style={styles.loginMethodText}>Email & Password</Text>
               </View>
-
-              {/* Language Toggle */}
-              <View style={styles.inlineSettingRow}>
-                <View style={styles.inlineSettingLeft}>
-                  <Globe size={18} color={colors.primary} />
-                  <Text style={styles.inlineSettingLabel}>Language</Text>
-                </View>
-                <View style={styles.segmentedControl}>
-                  <TouchableOpacity
-                    style={[
-                      styles.segmentedOption,
-                      currentLanguage === 'en' && styles.segmentedOptionActive,
-                    ]}
-                    onPress={() => handleLanguageChange('en')}
-                  >
-                    <Text
-                      style={[
-                        styles.segmentedText,
-                        currentLanguage === 'en' && styles.segmentedTextActive,
-                      ]}
-                    >
-                      English
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.segmentedOption,
-                      currentLanguage === 'zh' && styles.segmentedOptionActive,
-                    ]}
-                    onPress={() => handleLanguageChange('zh')}
-                  >
-                    <Text
-                      style={[
-                        styles.segmentedText,
-                        currentLanguage === 'zh' && styles.segmentedTextActive,
-                      ]}
-                    >
-                      繁體中文
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Clear Cache */}
-              <TouchableOpacity
-                style={styles.inlineSettingRow}
-                onPress={handleClearCache}
-                activeOpacity={0.7}
-              >
-                <View style={styles.inlineSettingLeft}>
-                  <Database size={18} color={colors.textMuted} />
-                  <Text style={styles.inlineSettingLabel}>Clear Cache</Text>
-                </View>
-                <ChevronRight size={18} color={colors.textMuted} />
-              </TouchableOpacity>
             </View>
           )}
-        </View>
-      </View>
-
-      {/* Help */}
-      <View style={styles.section}>
-        <View style={styles.card}>
-          <MenuRow
-            icon={<HelpCircle size={20} color={colors.textMuted} />}
-            title="Help & Support"
-            subtitle="FAQ, contact support"
-            onPress={() => Alert.alert('Help', 'Support options coming soon.')}
-            isLast
-          />
         </View>
       </View>
 
@@ -558,7 +250,9 @@ export function AppleStyleProfile({
       </View>
 
       {/* App Version */}
-      <Text style={styles.versionText}>Dragon Worlds HK 2027 v1.0.0</Text>
+      <Text style={styles.versionText}>
+        Dragon Worlds HK 2027 v{Constants.expoConfig?.version || '1.0.0'}
+      </Text>
     </ScrollView>
   );
 }
@@ -627,7 +321,7 @@ function IdentityCard({
 
         {/* Sailing Identity - This IS who they are */}
         <View style={styles.sailingIdentity}>
-          {(user.sailingProfile?.sailNumber || user.sailingProfile?.boatClass) ? (
+          {(user.sailingProfile?.sailNumber || user.sailingProfile?.boatClass) && (
             <View style={styles.identityRow}>
               <Sailboat size={16} color={colors.primary} />
               <Text style={styles.identityText}>
@@ -636,25 +330,11 @@ function IdentityCard({
                   .join(' · ')}
               </Text>
             </View>
-          ) : (
-            <View style={styles.identityRow}>
-              <Sailboat size={16} color={colors.textMuted} />
-              <Text style={[styles.identityText, styles.identityPlaceholder]}>
-                Add your sail number
-              </Text>
-            </View>
           )}
-          {user.sailingProfile?.yachtClub ? (
+          {user.sailingProfile?.yachtClub && (
             <View style={styles.identityRow}>
               <MapPin size={16} color={colors.primary} />
               <Text style={styles.identityText}>{user.sailingProfile.yachtClub}</Text>
-            </View>
-          ) : (
-            <View style={styles.identityRow}>
-              <MapPin size={16} color={colors.textMuted} />
-              <Text style={[styles.identityText, styles.identityPlaceholder]}>
-                Add your yacht club
-              </Text>
             </View>
           )}
         </View>
@@ -673,32 +353,6 @@ function IdentityCard({
 }
 
 
-interface MenuRowProps {
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-  onPress?: () => void;
-  isLast?: boolean;
-}
-
-function MenuRow({ icon, title, subtitle, onPress, isLast }: MenuRowProps) {
-  return (
-    <TouchableOpacity
-      style={[styles.menuRow, !isLast && styles.menuRowBorder]}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <View style={styles.menuLeft}>
-        <View style={styles.menuIconContainer}>{icon}</View>
-        <View>
-          <Text style={styles.menuTitle}>{title}</Text>
-          <Text style={styles.menuSubtitle}>{subtitle}</Text>
-        </View>
-      </View>
-      <ChevronRight size={20} color={colors.textMuted} />
-    </TouchableOpacity>
-  );
-}
 
 // ============================================
 // Styles
@@ -860,58 +514,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // Settings Row
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: spacing.md,
-  },
-  settingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: spacing.md,
-  },
-  iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: colors.primary + '12',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  settingTitle: {
-    ...typography.body1,
-    color: colors.text,
-    fontWeight: '500',
-  },
-  settingSubtitle: {
-    ...typography.caption,
-    color: colors.textMuted,
-    marginTop: 1,
-  },
-  testNotificationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.md,
-    backgroundColor: colors.primary + '10',
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.primary + '30',
-    borderStyle: 'dashed',
-  },
-  testNotificationText: {
-    ...typography.body2,
-    color: colors.primary,
-    fontWeight: '500',
-  },
-
   // Info Row
   infoRow: {
     flexDirection: 'row',
@@ -925,40 +527,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Menu Row
-  menuRow: {
+  // Login Method Row
+  loginMethodRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: spacing.md,
   },
-  menuRowBorder: {
+  loginMethodBorder: {
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
   },
-  menuLeft: {
+  loginMethodLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
     gap: spacing.md,
   },
-  menuIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuTitle: {
+  loginMethodText: {
     ...typography.body1,
     color: colors.text,
-    fontWeight: '500',
   },
-  menuSubtitle: {
+  loginMethodBadge: {
+    backgroundColor: colors.success + '15',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: borderRadius.sm,
+  },
+  loginMethodBadgeText: {
     ...typography.caption,
-    color: colors.textMuted,
-    marginTop: 1,
+    color: colors.success,
+    fontWeight: '500',
   },
 
   // Account Actions
@@ -990,50 +588,4 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
 
-  // Inline Settings
-  inlineSettings: {
-    backgroundColor: colors.background,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  inlineSettingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-  },
-  inlineSettingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  inlineSettingLabel: {
-    ...typography.body2,
-    color: colors.text,
-  },
-  segmentedControl: {
-    flexDirection: 'row',
-    backgroundColor: colors.border,
-    borderRadius: borderRadius.sm,
-    padding: 2,
-  },
-  segmentedOption: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm - 1,
-  },
-  segmentedOptionActive: {
-    backgroundColor: colors.surface,
-  },
-  segmentedText: {
-    ...typography.caption,
-    color: colors.textMuted,
-    fontWeight: '500',
-  },
-  segmentedTextActive: {
-    color: colors.text,
-    fontWeight: '600',
-  },
 });
