@@ -7,7 +7,8 @@ import {
   AlertTriangle,
   Scale,
   Settings,
-  FileText
+  FileText,
+  Megaphone
 } from 'lucide-react-native';
 
 import { colors, spacing, borderRadius } from '../../constants/theme';
@@ -63,6 +64,11 @@ const CATEGORY_INFO = {
     label: 'Admin',
     icon: Settings,
     color: colors.textSecondary
+  },
+  media_announcements: {
+    label: 'Media',
+    icon: Megaphone,
+    color: colors.accent
   }
 } as const;
 

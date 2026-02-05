@@ -276,18 +276,17 @@ export class RetentionManager {
   }
 
   private async checkWeatherConditionsForEvent(
-    userId: string, 
-    event: CalendarEvent, 
+    userId: string,
+    event: CalendarEvent,
     alertPrefs: WeatherAlertPreference
   ): Promise<void> {
     try {
       if (!event.location.coordinates) return;
 
-      const weatherData = await weatherManager.updateWeatherData({
-        location: event.location.coordinates
-      });
+      const weatherResult = await weatherManager.updateWeatherData(true);
+      if (!weatherResult.success || !weatherResult.data) return;
 
-      const currentConditions = weatherData.current;
+      const currentConditions = weatherResult.data.current;
       let alertsToSend: string[] = [];
 
       // Check thresholds
@@ -657,10 +656,11 @@ export class RetentionManager {
   // Activity Feed Management
   private async addActivityFeedItem(
     userId: string,
-    item: Omit<ActivityFeedItem, 'id' | 'timestamp' | 'interactions'>
+    item: Omit<ActivityFeedItem, 'id' | 'userId' | 'timestamp' | 'interactions'>
   ): Promise<void> {
     const feedItem: ActivityFeedItem = {
       id: this.generateId(),
+      userId,
       timestamp: new Date().toISOString(),
       interactions: { likes: [], comments: [] },
       ...item
@@ -924,15 +924,3 @@ export class RetentionManager {
 
 // Export singleton instance
 export const retentionManager = new RetentionManager();
-
-// Export types
-export type {
-  PersonalRacingCalendar,
-  CalendarEvent,
-  WeatherAlertPreference,
-  SailingConnection,
-  PerformanceMetric,
-  Achievement,
-  ChampionshipMemory,
-  ActivityFeedItem
-};

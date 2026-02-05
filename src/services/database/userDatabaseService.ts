@@ -20,7 +20,7 @@ import {
   defaultUserProfile,
   defaultWeatherPreferences,
 } from '../../types/database';
-import { User, UserPreferences, UserRole, UserStatus, AuthProvider } from '../../types/auth';
+import { User, UserPreferences, UserRole, UserStatus, AuthProviderType } from '../../types/auth';
 
 /**
  * User-specific database service

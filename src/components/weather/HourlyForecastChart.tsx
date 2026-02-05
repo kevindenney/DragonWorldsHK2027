@@ -386,14 +386,14 @@ export const HourlyForecastChart: React.FC<HourlyForecastChartProps> = ({
             <View style={styles.hourMetric}>
               <IOSText style={styles.metricLabel}>Temperature</IOSText>
               <IOSText style={styles.metricValue}>
-                {Math.round(convertTemperature(displayData[selectedHourIndex].temperature, 'C', useWeatherUnits().temperature))}°{useWeatherUnits().temperature}
+                {Math.round(convertTemperature(displayData[selectedHourIndex].temperature, useWeatherUnits().temperature))}°{useWeatherUnits().temperature}
               </IOSText>
             </View>
 
             <View style={styles.hourMetric}>
               <IOSText style={styles.metricLabel}>Wind</IOSText>
               <IOSText style={styles.metricValue}>
-                {Math.round(convertWindSpeed(displayData[selectedHourIndex].windSpeed, 'kts', useWeatherUnits().windSpeed))} {useWeatherUnits().windSpeed}
+                {Math.round(convertWindSpeed(displayData[selectedHourIndex].windSpeed, useWeatherUnits().windSpeed))} {useWeatherUnits().windSpeed}
               </IOSText>
             </View>
 

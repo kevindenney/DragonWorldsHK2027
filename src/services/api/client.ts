@@ -1,10 +1,10 @@
 import { apiConfig } from '../../config/firebase';
-import { 
-  User, 
-  OAuthLoginResponse, 
-  AuthProvider, 
+import {
+  User,
+  OAuthLoginResponse,
+  AuthProviderType,
   LinkedProvider,
-  AccountLinkingRequest 
+  AccountLinkingRequest
 } from '../../types/auth';
 
 /**
@@ -57,7 +57,7 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
     
-    const config: RequestInit = {
+    const config: RequestInit & { timeout?: number } = {
       ...options,
       headers: {
         ...this.defaultHeaders,
@@ -249,7 +249,7 @@ export class AuthApiClient extends ApiClient {
   /**
    * Unlink OAuth provider from account
    */
-  async unlinkProvider(provider: AuthProvider): Promise<ApiResponse<User>> {
+  async unlinkProvider(provider: AuthProviderType): Promise<ApiResponse<User>> {
     return this.delete(`/auth/oauth/unlink/${provider}`);
   }
 
@@ -267,7 +267,7 @@ export class AuthApiClient extends ApiClient {
   /**
    * Set primary OAuth provider
    */
-  async setPrimaryProvider(provider: AuthProvider): Promise<ApiResponse<User>> {
+  async setPrimaryProvider(provider: AuthProviderType): Promise<ApiResponse<User>> {
     return this.put('/auth/oauth/primary', { provider });
   }
 }

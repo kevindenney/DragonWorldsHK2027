@@ -48,7 +48,8 @@ export class AccessibilityManager {
       } catch (eventListenerError) {
 
         // Check if this is the specific Hermes property error
-        if (eventListenerError.message?.includes('getter') || eventListenerError.message?.includes('unconfigurable')) {
+        const errorMessage = eventListenerError instanceof Error ? eventListenerError.message : '';
+        if (errorMessage.includes('getter') || errorMessage.includes('unconfigurable')) {
           this.eventListenersSupported = false;
           this.setupPollingFallback();
         }
@@ -315,10 +316,11 @@ export class AccessibilityManager {
     }
 
     // Clean up event listeners if supported
+    // Note: removeEventListener may not exist in newer RN versions, use try-catch as safety
     if (this.eventListenersSupported) {
       try {
-        AccessibilityInfo.removeEventListener('screenReaderChanged', this.handleScreenReaderChange);
-        AccessibilityInfo.removeEventListener('reduceMotionChanged', this.handleReduceMotionChange);
+        (AccessibilityInfo as any).removeEventListener?.('screenReaderChanged', this.handleScreenReaderChange);
+        (AccessibilityInfo as any).removeEventListener?.('reduceMotionChanged', this.handleReduceMotionChange);
       } catch (error) {
       }
     }

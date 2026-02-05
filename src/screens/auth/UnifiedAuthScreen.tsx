@@ -194,7 +194,7 @@ export const UnifiedAuthScreen: React.FC<UnifiedAuthScreenProps> = ({ navigation
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert(
         mode === 'signin' ? 'Sign In Failed' : 'Sign Up Failed',
-        error.message || 'An error occurred during authentication'
+        (error instanceof Error ? error.message : 'An error occurred during authentication')
       );
     }
   };
@@ -247,7 +247,7 @@ export const UnifiedAuthScreen: React.FC<UnifiedAuthScreenProps> = ({ navigation
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert(
         'Authentication Failed',
-        error.message || `Failed to ${mode === 'signin' ? 'sign in' : 'sign up'} with ${provider}`
+        (error instanceof Error ? error.message : `Failed to ${mode === 'signin' ? 'sign in' : 'sign up'} with ${provider}`)
       );
     }
   };

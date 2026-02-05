@@ -86,6 +86,19 @@ export const CATEGORY_CONFIG: Record<RegattaCategory, CategoryInfo> = {
     lastUpdated: '',
     isExpanded: false,
     priority: 6
+  },
+  [RegattaCategory.MEDIA_ANNOUNCEMENTS]: {
+    category: RegattaCategory.MEDIA_ANNOUNCEMENTS,
+    displayName: 'Media & Announcements',
+    description: 'Press Releases, Video Updates, Podcasts, and Media Coverage',
+    icon: 'megaphone',
+    color: '#5856D6',
+    documentCount: 0,
+    notificationCount: 0,
+    unreadCount: 0,
+    lastUpdated: '',
+    isExpanded: false,
+    priority: 7
   }
 };
 
@@ -125,7 +138,13 @@ export const DOCUMENT_TYPE_TO_CATEGORY: Record<DocumentType, RegattaCategory> = 
   'general_notices': RegattaCategory.ADMINISTRATIVE,
   'contact_info': RegattaCategory.ADMINISTRATIVE,
   'venue_info': RegattaCategory.ADMINISTRATIVE,
-  'other': RegattaCategory.ADMINISTRATIVE
+  'other': RegattaCategory.ADMINISTRATIVE,
+
+  // Media & announcements
+  'video': RegattaCategory.MEDIA_ANNOUNCEMENTS,
+  'podcast': RegattaCategory.MEDIA_ANNOUNCEMENTS,
+  'press_release': RegattaCategory.MEDIA_ANNOUNCEMENTS,
+  'media_advisory': RegattaCategory.MEDIA_ANNOUNCEMENTS
 };
 
 // Notification type to category mapping
@@ -163,7 +182,13 @@ export const NOTIFICATION_TYPE_TO_CATEGORY: Record<NotificationType, RegattaCate
   'announcement': RegattaCategory.ADMINISTRATIVE,
   'venue_info': RegattaCategory.ADMINISTRATIVE,
   'contact_update': RegattaCategory.ADMINISTRATIVE,
-  'general': RegattaCategory.ADMINISTRATIVE
+  'general': RegattaCategory.ADMINISTRATIVE,
+
+  // Media & announcements
+  'press_release': RegattaCategory.MEDIA_ANNOUNCEMENTS,
+  'podcast_episode': RegattaCategory.MEDIA_ANNOUNCEMENTS,
+  'video_release': RegattaCategory.MEDIA_ANNOUNCEMENTS,
+  'media_interview': RegattaCategory.MEDIA_ANNOUNCEMENTS
 };
 
 /**

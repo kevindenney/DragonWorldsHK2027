@@ -235,7 +235,7 @@ export const AuthInput = forwardRef<AuthInputRef, AuthInputProps>(
             ref={inputRef}
             style={[
               styles.input,
-              leftIcon && styles.inputWithLeftIcon,
+              !!leftIcon && styles.inputWithLeftIcon,
               isPassword && styles.inputWithRightIcon,
             ]}
             value={currentValue}
@@ -303,18 +303,12 @@ export const AuthInput = forwardRef<AuthInputRef, AuthInputProps>(
         </Animated.View>
 
         {shouldShowError && (
-          <Animated.View
-            style={styles.errorContainer}
-            entering={() => ({
-              opacity: [0, 1],
-              transform: [{ translateY: [-10, 0] }],
-            })}
-          >
+          <View style={styles.errorContainer}>
             <AlertCircle size={16} color={colors.error} />
             <Text style={styles.errorText} accessibilityLiveRegion="polite">
               {error}
             </Text>
-          </Animated.View>
+          </View>
         )}
 
         {helpText && !shouldShowError && (
@@ -393,7 +387,7 @@ const styles = StyleSheet.create({
     color: colors.error,
   },
   staticLabel: {
-    ...typography.labelMedium,
+    ...typography.caption,
     color: colors.textSecondary,
     fontSize: 12,
     fontWeight: '600',

@@ -1,14 +1,15 @@
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  Modal, 
-  TouchableOpacity, 
-  StyleSheet, 
-  ViewStyle, 
+import {
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  StyleSheet,
+  ViewStyle,
+  StyleProp,
   Dimensions,
   Platform,
-  SafeAreaView 
+  SafeAreaView
 } from 'react-native';
 import { X } from 'lucide-react-native';
 import { colors, typography } from '../../constants/theme';
@@ -24,8 +25,9 @@ export interface IOSModalProps {
   presentationStyle?: IOSModalPresentationStyle;
   children: React.ReactNode;
   showCloseButton?: boolean;
+  showsHandleIndicator?: boolean;
   animationType?: 'slide' | 'fade' | 'none';
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   testID?: string;
 }
 
@@ -89,7 +91,7 @@ export const IOSModal: React.FC<IOSModalProps> = ({
     <Modal
       visible={visible}
       animationType={animationType}
-      presentationStyle={Platform.OS === 'ios' ? presentationStyle : 'fullScreen'}
+      presentationStyle={Platform.OS === 'ios' ? (presentationStyle === 'sheet' ? 'pageSheet' : presentationStyle) as 'fullScreen' | 'pageSheet' | 'formSheet' | 'overFullScreen' : 'fullScreen'}
       onRequestClose={onClose}
       testID={testID}
     >

@@ -1,9 +1,8 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { MainTabParamList } from '../../types/navigation';
 import { TabBarVisibilityProvider } from '../../contexts/TabBarVisibilityContext';
 import { FloatingTabBar } from '../../components/navigation/FloatingTabBar';
-import { useWalkthroughStore, type WalkthroughSequence } from '../../stores/walkthroughStore';
 
 // Add screen loading logging
 
@@ -17,25 +16,6 @@ import { MoreStackNavigator } from './MoreStackNavigator';
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 function TabNavigatorContent() {
-  const renderCountRef = React.useRef(0);
-  const lastRenderTime = React.useRef(Date.now());
-  const { startSequence, shouldShowSequence } = useWalkthroughStore();
-
-  renderCountRef.current += 1;
-  const currentTime = Date.now();
-  const timeSinceLastRender = currentTime - lastRenderTime.current;
-  lastRenderTime.current = currentTime;
-
-  // Create walkthrough trigger for each tab
-  const triggerWalkthrough = useCallback((sequence: WalkthroughSequence) => {
-    // Small delay to allow screen to render and measure targets
-    setTimeout(() => {
-      if (shouldShowSequence(sequence)) {
-        startSequence(sequence);
-      }
-    }, 500);
-  }, [startSequence, shouldShowSequence]);
-
   React.useEffect(() => {
     return () => {
     };
@@ -55,7 +35,6 @@ function TabNavigatorContent() {
         listeners={{
           focus: () => {
             console.log('[Tab] Schedule screen focused');
-            triggerWalkthrough('schedule');
           },
           blur: () => console.log('[Tab] Schedule screen blurred'),
         }}
@@ -67,7 +46,6 @@ function TabNavigatorContent() {
         listeners={{
           focus: () => {
             console.log('[Tab] NoticeBoard screen focused');
-            triggerWalkthrough('notices');
           },
           blur: () => console.log('[Tab] NoticeBoard screen blurred'),
         }}
@@ -78,7 +56,6 @@ function TabNavigatorContent() {
         listeners={{
           focus: () => {
             console.log('[Tab] Results screen focused');
-            triggerWalkthrough('results');
           },
           blur: () => console.log('[Tab] Results screen blurred'),
         }}
@@ -89,7 +66,6 @@ function TabNavigatorContent() {
         listeners={{
           focus: () => {
             console.log('[Tab] Forms screen focused');
-            triggerWalkthrough('forms');
           },
           blur: () => console.log('[Tab] Forms screen blurred'),
         }}
@@ -100,7 +76,6 @@ function TabNavigatorContent() {
         listeners={{
           focus: () => {
             console.log('[Tab] More screen focused');
-            triggerWalkthrough('more');
           },
           blur: () => console.log('[Tab] More screen blurred'),
         }}

@@ -195,3 +195,44 @@ export const isDaylight = (time: Date): boolean => {
   const hour = hkTime.getHours();
   return hour >= 6 && hour < 19; // 6 AM to 7 PM considered daylight
 };
+
+/**
+ * Formats a timestamp as a human-readable relative time string
+ * @param timestamp - Date string, number (milliseconds), or Date object
+ * @returns Human-readable relative time (e.g., "just now", "5 mins ago", "2 hours ago")
+ */
+export const formatRelativeTime = (timestamp: string | number | Date): string => {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  // Handle future dates or invalid dates
+  if (diffInSeconds < 0 || isNaN(diffInSeconds)) {
+    return 'just now';
+  }
+
+  // Less than 60 seconds
+  if (diffInSeconds < 60) {
+    return 'just now';
+  }
+
+  // Less than 60 minutes
+  if (diffInSeconds < 3600) {
+    const mins = Math.floor(diffInSeconds / 60);
+    return `${mins} min${mins > 1 ? 's' : ''} ago`;
+  }
+
+  // Less than 24 hours
+  if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600);
+    return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  }
+
+  // More than 24 hours - show date and time
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+};

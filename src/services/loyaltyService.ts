@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { subscriptionService, SubscriptionTier } from './subscriptionService';
+import { subscriptionService, SubscriptionTier, SubscriptionTierId } from './subscriptionService';
 import { retentionManager } from './retentionManager';
 import { analyticsService } from './analyticsService';
 import { notificationService } from './notificationService';
@@ -64,7 +64,7 @@ export interface SailingReward {
   };
   eligibility: {
     minimumTier: string;
-    subscriptionTiers: SubscriptionTier[];
+    subscriptionTiers: SubscriptionTierId[];
     sailingExperience?: string[];
     regions?: string[];
   };
@@ -916,16 +916,3 @@ export class LoyaltyService {
 
 // Export singleton instance
 export const loyaltyService = new LoyaltyService();
-
-// Export types
-export type {
-  LoyaltyPoints,
-  LoyaltyTier,
-  LoyaltyBenefit,
-  PointsTransaction,
-  SailingReward,
-  SeasonalChallenge,
-  ChallengeRequirement,
-  LoyaltyRedemption,
-  ReferralProgram
-};

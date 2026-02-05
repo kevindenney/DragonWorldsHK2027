@@ -3,7 +3,7 @@ import { Text, TextProps, StyleSheet } from 'react-native';
 import { colors } from '../../constants/theme';
 
 // Apple HIG Typography Scale
-export type IOSTextStyle = 
+export type IOSTextStyle =
   | 'largeTitle'    // 34pt
   | 'title1'        // 28pt
   | 'title2'        // 22pt
@@ -13,6 +13,7 @@ export type IOSTextStyle =
   | 'callout'       // 16pt
   | 'subheadline'   // 15pt
   | 'footnote'      // 13pt
+  | 'caption'       // 12pt (alias for caption1)
   | 'caption1'      // 12pt
   | 'caption2';     // 11pt
 
@@ -120,6 +121,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '400', // Regular
+  },
+  caption: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '400', // Regular (alias for caption1)
   },
   caption1: {
     fontSize: 12,

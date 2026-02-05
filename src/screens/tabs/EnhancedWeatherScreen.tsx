@@ -53,7 +53,7 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
   const accessLevel = useAccessLevel();
   const canAccessProfessionalAnalysis = useCanAccessFeature('detailedAnalysis');
   const canAccessMarineData = useCanAccessFeature('marineConditions');
-  const canAccessRacingAnalysis = useCanAccessFeature('racingAnalysis');
+  const canAccessRacingAnalysis = useCanAccessFeature('racingInsights');
   
   const userType = useUserType();
   const needsVerification = useNeedsVerification();

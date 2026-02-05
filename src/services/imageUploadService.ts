@@ -6,6 +6,7 @@
 import { ref, uploadBytesResumable, getDownloadURL, StorageReference } from 'firebase/storage';
 import { storage } from '../config/firebase';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 export interface UploadProgress {
   bytesTransferred: number;
@@ -204,13 +205,13 @@ export class ImageUploadService {
   async compressImage(imageUri: string, maxWidth: number = 800, quality: number = 0.8): Promise<string> {
     try {
 
-      // Use ImagePicker's image manipulation API
-      const manipulatedImage = await ImagePicker.manipulateAsync(
+      // Use ImageManipulator for image manipulation
+      const manipulatedImage = await ImageManipulator.manipulateAsync(
         imageUri,
         [{ resize: { width: maxWidth } }],
         {
           compress: quality,
-          format: ImagePicker.SaveFormat.JPEG
+          format: ImageManipulator.SaveFormat.JPEG
         }
       );
 

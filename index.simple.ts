@@ -1,6 +1,18 @@
 // Dragon Worlds HK 2027 - Simplified React Native Entry Point
 console.log('🏁 [index.ts] Initializing Dragon Worlds HK 2027 app');
 
+// Type declarations for React Native global polyfills
+declare const global: typeof globalThis & {
+  distance?: number;
+  document?: any;
+  window?: any;
+  navigator?: any;
+  ErrorUtils?: {
+    getGlobalHandler?: () => ((error: Error, isFatal?: boolean) => void) | undefined;
+    setGlobalHandler?: (handler: (error: Error, isFatal?: boolean) => void) => void;
+  };
+};
+
 // HERMES-SAFE: Minimal polyfills without property descriptor manipulation
 console.log('🌐 [index.ts] Installing minimal React Native polyfills...');
 
@@ -19,7 +31,7 @@ if (typeof global !== 'undefined') {
   if (typeof global.document === 'undefined') {
     console.log('🔧 [index.ts] Installing simple document polyfill');
     global.document = {
-      createElement: (tag) => ({ tagName: tag.toUpperCase(), style: {} }),
+      createElement: (tag: string) => ({ tagName: tag.toUpperCase(), style: {} }),
       getElementById: () => null,
       querySelector: () => null,
       addEventListener: () => {},
@@ -43,7 +55,7 @@ if (typeof global !== 'undefined') {
 
 // Simple error handler for property errors (no complex overrides)
 const originalErrorHandler = global.ErrorUtils?.getGlobalHandler?.();
-global.ErrorUtils?.setGlobalHandler?.((error, isFatal) => {
+global.ErrorUtils?.setGlobalHandler?.((error: Error, isFatal?: boolean) => {
   // Handle the specific runtime property error
   if (error.message?.includes('[runtime not ready]: TypeError: property is not configurable')) {
     console.warn('🛡️ [PropertyGuard] Runtime property error intercepted and suppressed');

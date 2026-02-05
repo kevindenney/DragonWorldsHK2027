@@ -46,14 +46,14 @@ interface NoticeBoardFeedProps {
 type NoticeFilter = 'all' | 'urgent' | 'protests' | 'weather' | 'course' | 'schedule';
 type SortOption = 'newest' | 'priority' | 'category';
 
-export const NoticeBoardFeed: React.FC<NoticeBoardFeedProps> = ({
+export function NoticeBoardFeed({
   eventId = 'dragon-worlds-2027',
   onNoticePress,
   onDownloadDocument,
   onSubmitProtest,
   userRole = 'participant',
   useLiveData = false,
-}) => {
+}: NoticeBoardFeedProps): React.ReactElement {
   // State
   const [notices, setNotices] = useState<OfficialNotification[]>([]);
   const [bookmarkedNotices, setBookmarkedNotices] = useState<string[]>([]);
@@ -487,7 +487,7 @@ export const NoticeBoardFeed: React.FC<NoticeBoardFeedProps> = ({
         <IOSSegmentedControl
           values={['All', 'Urgent', 'Protests', 'Weather', 'Course', 'Schedule']}
           selectedIndex={['all', 'urgent', 'protests', 'weather', 'course', 'schedule'].indexOf(filter)}
-          onChange={(index) => {
+          onChange={(index: number) => {
             const filters: NoticeFilter[] = ['all', 'urgent', 'protests', 'weather', 'course', 'schedule'];
             setFilter(filters[index]);
           }}

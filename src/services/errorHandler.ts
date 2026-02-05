@@ -7,7 +7,7 @@ import { deploymentConfig, getBuildInfo, isProduction } from '../config/deployme
 // Error types and interfaces
 export interface AppError {
   id: string;
-  type: 'network' | 'api' | 'storage' | 'permission' | 'subscription' | 'weather' | 'general';
+  type: 'network' | 'api' | 'storage' | 'permission' | 'subscription' | 'weather' | 'general' | 'ui';
   severity: 'low' | 'medium' | 'high' | 'critical';
   message: string;
   code?: string | number;
@@ -553,12 +553,4 @@ export const handleStorageError = (error: any, source: string): string => {
     retryable: false,
     userFacing: false
   });
-};
-
-// Export types
-export type {
-  AppError,
-  NetworkStatus,
-  OfflineAction,
-  RetryConfig
 };

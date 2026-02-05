@@ -282,10 +282,10 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
 
   // Category counts for filter chips - based on all notices (not filtered) to show total counts
   const categoryCounts = useMemo((): CategoryCount[] => {
-    const categoryMap = new Map<RegattaCategory | 'all', { count: number; unreadCount: number }>();
+    const categoryMap = new Map<RegattaCategory | 'all' | 'administrative', { count: number; unreadCount: number }>();
 
     // Initialize with all possible categories
-    const allCategories: (RegattaCategory | 'all')[] = [
+    const allCategories: (RegattaCategory | 'all' | 'administrative')[] = [
       'all', 'pre_event', 'daily_operations', 'competition_management',
       'protests_hearings', 'safety_regulatory', 'administrative'
     ];

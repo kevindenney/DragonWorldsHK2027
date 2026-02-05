@@ -50,9 +50,12 @@ export const CarrotWeatherCard: React.FC<CarrotWeatherCardProps> = ({
   const scale = useSharedValue(1);
 
   const handlePress = () => {
-    scale.value = withSpring(0.98, {}, () => {
+    // Scale down briefly then back up (simplified without callback)
+    scale.value = withSpring(0.98);
+    // Use setTimeout to trigger scale back since wrapper doesn't support callbacks
+    setTimeout(() => {
       scale.value = withSpring(1);
-    });
+    }, 100);
     onPress?.();
   };
 
@@ -121,7 +124,6 @@ export const CarrotWeatherCard: React.FC<CarrotWeatherCardProps> = ({
   return (
     <Animated.View
       style={[styles.container]}
-      entering={FadeInDown.duration(600)}
     >
       <TouchableOpacity
         onPress={handlePress}

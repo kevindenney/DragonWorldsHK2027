@@ -86,7 +86,7 @@ export const LivePositionsMap: React.FC<LivePositionsMapProps> = ({
   // Initialize animations for each boat
   useEffect(() => {
     positions.forEach(position => {
-      if (!boatAnimations.has(position.sailNumber)) {
+      if (!boatAnimations.has(position.sailNumber) && position.latitude !== undefined && position.longitude !== undefined) {
         boatAnimations.set(
           position.sailNumber,
           new Animated.ValueXY({
@@ -102,7 +102,7 @@ export const LivePositionsMap: React.FC<LivePositionsMapProps> = ({
   useEffect(() => {
     positions.forEach(position => {
       const animation = boatAnimations.get(position.sailNumber);
-      if (animation) {
+      if (animation && position.latitude !== undefined && position.longitude !== undefined) {
         Animated.timing(animation, {
           toValue: {
             x: position.latitude,
@@ -133,9 +133,11 @@ export const LivePositionsMap: React.FC<LivePositionsMapProps> = ({
   const centerOnFleet = () => {
     if (positions.length === 0 || !mapRef.current) return;
 
-    const latitudes = positions.map(p => p.latitude);
-    const longitudes = positions.map(p => p.longitude);
-    
+    const latitudes = positions.map(p => p.latitude).filter((lat): lat is number => lat !== undefined);
+    const longitudes = positions.map(p => p.longitude).filter((lng): lng is number => lng !== undefined);
+
+    if (latitudes.length === 0 || longitudes.length === 0) return;
+
     const minLat = Math.min(...latitudes);
     const maxLat = Math.max(...latitudes);
     const minLng = Math.min(...longitudes);
@@ -305,7 +307,7 @@ export const LivePositionsMap: React.FC<LivePositionsMapProps> = ({
       return (
         <Polyline
           key={`trail-${position.sailNumber}`}
-          coordinates={position.trail.map(point => ({
+          coordinates={position.trail.map((point: { latitude: number; longitude: number }) => ({
             latitude: point.latitude,
             longitude: point.longitude
           }))}

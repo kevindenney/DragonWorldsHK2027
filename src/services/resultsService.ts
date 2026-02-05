@@ -54,12 +54,15 @@ export interface RaceResult {
   elapsedTime?: string;
   correctedTime?: string;
   position?: number;
+  finishPosition?: number; // Alias for position
   points: number;
   status: 'racing' | 'finished' | 'dnf' | 'dns' | 'dsq' | 'ocs' | 'retired';
   penalties?: Penalty[];
   splits?: RaceSplit[];
   isProvisional: boolean;
   lastUpdated: string;
+  courseProgress?: number; // Progress through the course (0-100%)
+  gapToLeader?: string; // Time gap to leader
 }
 
 export interface Penalty {
@@ -159,12 +162,21 @@ export interface FleetPosition {
   latitude?: number;
   longitude?: number;
   position?: number;
+  status?: 'racing' | 'finished' | 'dnf' | 'dns' | 'dsq' | 'ocs' | 'retired';
   lastMark?: string;
   nextMark?: string;
   distanceToFinish?: number;
   estimatedFinishTime?: string;
   lastUpdate: string;
+  courseProgress?: number; // Progress through the course (0-100%)
+  // Live tracking properties
+  heading?: number; // Compass heading in degrees
+  speed?: number; // Speed in knots
+  trail?: Array<{ latitude: number; longitude: number; timestamp: string }>; // Position history
 }
+
+// Type alias for live race position tracking
+export type LiveRacePosition = FleetPosition;
 
 export interface StartSequencePhase {
   phase: 'warning' | 'preparatory' | 'start';
@@ -230,6 +242,9 @@ class ResultsService {
   private lastFetchTime: Map<string, number> = new Map();
   private cacheDuration = 300000; // 5 minutes in milliseconds
 
+  // Dev mode toggle to force mock data
+  private forceMockData: boolean = false;
+
   constructor(userStore: UserStoreType) {
     this.userStore = userStore;
     this.config = {
@@ -249,6 +264,13 @@ class ResultsService {
     // Normalize event ID (support both app event IDs and cloud function event IDs)
     const cloudEventId = EVENT_ID_MAP[eventId] || eventId;
     const cacheKey = cloudEventId;
+
+    // Dev mode: force mock data if enabled
+    if (__DEV__ && this.forceMockData) {
+      // Update last fetch time for consistency with timestamp display
+      this.lastFetchTime.set(cacheKey, Date.now());
+      return this.getBundledChampionship(cloudEventId);
+    }
 
     // Check cache validity
     if (!forceRefresh && this.isCacheValid(cacheKey)) {
@@ -418,6 +440,34 @@ class ResultsService {
   }
 
   /**
+   * Set whether to force mock data (dev mode only)
+   */
+  setForceMockData(enabled: boolean): void {
+    if (__DEV__) {
+      this.forceMockData = enabled;
+      // Clear cache when toggling to ensure fresh data on next fetch
+      this.clearCache();
+    }
+  }
+
+  /**
+   * Get whether mock data is being forced
+   */
+  getForceMockData(): boolean {
+    return this.forceMockData;
+  }
+
+  /**
+   * Get the last fetch time for a specific event
+   * @param eventId - The event ID
+   * @returns Timestamp of last fetch, or null if never fetched
+   */
+  getLastFetchTime(eventId: string): number | null {
+    const cloudEventId = EVENT_ID_MAP[eventId] || eventId;
+    return this.lastFetchTime.get(cloudEventId) || null;
+  }
+
+  /**
    * Get live race data for current race
    */
   async getLiveRaceData(): Promise<LiveRaceData | null> {
@@ -534,17 +584,17 @@ class ResultsService {
 
       return sailors.map((sailor, index) => {
         const raceResults: { [raceNumber: number]: RaceResultSummary } = {};
-        const results = [];
-        
+        const results: number[] = [];
+
         // Generate results for 6 races
         for (let race = 1; race <= 6; race++) {
           const position = Math.max(1, Math.min(20, index + 1 + Math.floor(Math.random() * 10) - 5));
           const points = position <= 15 ? position : position + 5;
-          
+
           raceResults[race] = {
             position,
             points,
-            status: 'finished',
+            status: 'finished' as const,
             isDiscarded: false
           };
           results.push(points);
@@ -556,6 +606,9 @@ class ResultsService {
         const totalPoints = results.reduce((sum, points) => sum + points, 0);
         const netPoints = bestResults.reduce((sum, points) => sum + points, 0);
 
+        // Determine trend based on position
+        const trend: 'up' | 'down' | 'same' = index < 3 ? 'up' : index > 6 ? 'down' : 'same';
+
         return {
           sailNumber: sailor.sailNumber,
           helmName: sailor.helmName,
@@ -565,14 +618,14 @@ class ResultsService {
           netPoints,
           position: index + 1,
           raceResults,
-          trend: index < 3 ? 'up' : index > 6 ? 'down' : 'same',
+          trend,
           trendChange: Math.floor(Math.random() * 3),
           isQualified: netPoints < 100,
           racesCompleted: 6,
           bestResults,
           worstResult: Math.max(...results)
         };
-      }).sort((a, b) => a.netPoints - b.netPoints).map((sailor, index) => ({
+      }).sort((a, b) => a.netPoints - b.netPoints).map((sailor, index): ChampionshipStandings => ({
         ...sailor,
         position: index + 1
       }));

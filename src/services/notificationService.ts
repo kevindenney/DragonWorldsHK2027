@@ -3,7 +3,7 @@ import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { db, isFirestoreReady } from '../config/firebase';
 
 /**
  * Service for managing push notifications with Firebase Cloud Messaging
@@ -13,6 +13,16 @@ export class NotificationService {
   private expoPushToken: string | null = null;
   private notificationListener: any = null;
   private responseListener: any = null;
+
+  /**
+   * Get the Firestore instance, throwing if not available
+   */
+  private getDb() {
+    if (!db) {
+      throw new Error('Firestore is not initialized');
+    }
+    return db;
+  }
 
   static getInstance(): NotificationService {
     if (!NotificationService.instance) {
@@ -102,7 +112,7 @@ export class NotificationService {
    */
   private async updateUserPushToken(userId: string, token: string): Promise<void> {
     try {
-      const userRef = doc(db, 'users', userId);
+      const userRef = doc(this.getDb(), 'users', userId);
       await updateDoc(userRef, {
         fcmToken: token,
         tokenUpdatedAt: new Date().toISOString(),
@@ -203,6 +213,72 @@ export class NotificationService {
   }
 
   /**
+   * Send a race-related notification
+   */
+  async sendRaceNotification(notification: {
+    id: string;
+    type: string;
+    raceId: string;
+    title: string;
+    message: string;
+    scheduledTime: string;
+    location?: string;
+    requiresSubscription: boolean;
+  }): Promise<void> {
+    await this.sendLocalNotification(notification.title, notification.message, {
+      id: notification.id,
+      type: notification.type,
+      raceId: notification.raceId,
+      scheduledTime: notification.scheduledTime,
+      location: notification.location,
+    });
+  }
+
+  /**
+   * Send a weather alert notification
+   */
+  async sendWeatherAlert(alert: {
+    id: string;
+    type: string;
+    severity: string;
+    title: string;
+    message: string;
+    threshold: number;
+    currentValue: number;
+    location: string;
+    validFrom: string;
+    validTo: string;
+    requiresSubscription: boolean;
+  }): Promise<void> {
+    await this.sendLocalNotification(alert.title, alert.message, {
+      id: alert.id,
+      type: alert.type,
+      severity: alert.severity,
+      location: alert.location,
+      validFrom: alert.validFrom,
+      validTo: alert.validTo,
+    });
+  }
+
+  /**
+   * Send TacticalWind promotion notification
+   */
+  async sendTacticalWindPromotion(): Promise<void> {
+    await this.sendLocalNotification(
+      'Enhance Your Racing',
+      'Discover TacticalWind Pro for advanced wind analysis and routing!',
+      { type: 'promotion', source: 'tacticalwind' }
+    );
+  }
+
+  /**
+   * Clear all scheduled notifications
+   */
+  async clearAllScheduledNotifications(): Promise<void> {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+  }
+
+  /**
    * Clear all notifications
    */
   async clearAllNotifications(): Promise<void> {
@@ -222,7 +298,7 @@ export class NotificationService {
    */
   async setNotificationsEnabled(userId: string, enabled: boolean): Promise<void> {
     try {
-      const userRef = doc(db, 'users', userId);
+      const userRef = doc(this.getDb(), 'users', userId);
       await updateDoc(userRef, {
         notificationsEnabled: enabled,
         notificationSettingsUpdatedAt: new Date().toISOString()
@@ -244,7 +320,7 @@ export class NotificationService {
     general?: boolean;
   }): Promise<void> {
     try {
-      const userRef = doc(db, 'users', userId);
+      const userRef = doc(this.getDb(), 'users', userId);
       await updateDoc(userRef, {
         notificationPreferences: preferences,
         notificationSettingsUpdatedAt: new Date().toISOString()
@@ -272,8 +348,37 @@ export class NotificationService {
     if (this.responseListener) {
       Notifications.removeNotificationSubscription(this.responseListener);
     }
-    
+  }
+
+  /**
+   * Monitor subscription status and send relevant notifications
+   */
+  async monitorSubscriptionStatus(status: {
+    isActive: boolean;
+    isTrial: boolean;
+    daysRemaining: number;
+  }): Promise<void> {
+    // Send notification if trial is ending soon
+    if (status.isTrial && status.daysRemaining <= 1) {
+      await this.sendLocalNotification(
+        'Trial Ending Soon',
+        'Your trial period ends tomorrow. Upgrade to continue accessing premium features.',
+        { type: 'subscription', action: 'trial_ending' }
+      );
+    }
+
+    // Send notification if subscription is expiring
+    if (status.isActive && !status.isTrial && status.daysRemaining <= 3) {
+      await this.sendLocalNotification(
+        'Subscription Expiring',
+        `Your subscription expires in ${status.daysRemaining} day${status.daysRemaining > 1 ? 's' : ''}. Renew to keep your premium features.`,
+        { type: 'subscription', action: 'expiring', daysRemaining: status.daysRemaining }
+      );
+    }
   }
 }
+
+// Export singleton instance
+export const notificationService = new NotificationService();
 
 export default NotificationService;

@@ -1,22 +1,26 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, ActivityIndicator, StyleProp } from 'react-native';
 import { colors, typography } from '../../constants/theme';
 
 // Apple HIG Button Types
-export type IOSButtonVariant = 'filled' | 'tinted' | 'gray' | 'plain';
+export type IOSButtonVariant = 'filled' | 'tinted' | 'gray' | 'plain' | 'primary' | 'secondary';
 export type IOSButtonSize = 'large' | 'medium' | 'small';
 
 export interface IOSButtonProps {
-  title: string;
-  onPress: () => void;
+  title?: string;
+  onPress?: () => void;
   variant?: IOSButtonVariant;
   size?: IOSButtonSize;
   disabled?: boolean;
   loading?: boolean;
   fullWidth?: boolean;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
+  icon?: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
+  titleStyle?: StyleProp<TextStyle>; // Alias for textStyle
   testID?: string;
+  color?: string;
+  accessibilityLabel?: string;
 }
 
 export const IOSButton: React.FC<IOSButtonProps> = ({
@@ -27,9 +31,13 @@ export const IOSButton: React.FC<IOSButtonProps> = ({
   disabled = false,
   loading = false,
   fullWidth = false,
+  icon,
   style,
   textStyle,
+  titleStyle,
   testID,
+  color,
+  accessibilityLabel,
 }) => {
   const buttonStyle = [
     styles.base,
@@ -45,7 +53,9 @@ export const IOSButton: React.FC<IOSButtonProps> = ({
     styles[`${variant}Text`],
     styles[`${size}Text`],
     disabled && styles.disabledText,
+    color && { color },
     textStyle,
+    titleStyle, // Alias for textStyle
   ];
 
   return (
@@ -57,14 +67,18 @@ export const IOSButton: React.FC<IOSButtonProps> = ({
       testID={testID}
       accessibilityRole="button"
       accessibilityState={{ disabled: disabled || loading }}
+      accessibilityLabel={accessibilityLabel || title || 'Button'}
     >
       {loading ? (
-        <ActivityIndicator 
-          size="small" 
-          color={variant === 'filled' ? colors.background : colors.primary} 
+        <ActivityIndicator
+          size="small"
+          color={variant === 'filled' ? colors.background : colors.primary}
         />
       ) : (
-        <Text style={textStyleCombined}>{title}</Text>
+        <>
+          {icon}
+          {title && <Text style={textStyleCombined}>{title}</Text>}
+        </>
       )}
     </TouchableOpacity>
   );
@@ -107,6 +121,14 @@ const styles = StyleSheet.create({
   plain: {
     backgroundColor: 'transparent',
   },
+  primary: {
+    backgroundColor: colors.primary,
+  },
+  secondary: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
 
   // Full width
   fullWidth: {
@@ -138,6 +160,12 @@ const styles = StyleSheet.create({
   },
   plainText: {
     color: colors.primary,
+  },
+  primaryText: {
+    color: colors.background,
+  },
+  secondaryText: {
+    color: colors.text,
   },
 
   // Text sizes

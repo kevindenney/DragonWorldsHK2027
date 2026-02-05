@@ -1,0 +1,110 @@
+# Authentication Subflow for Dragon Worlds HK 2027
+# This flow registers a test user for other flows to use
+#
+# Usage: Run this flow first to authenticate
+# Test credentials: test@maestro.test / TestPass123!
+#
+# Password requirements: 8+ chars, uppercase, lowercase, number
+
+appId: com.denneyke.dragonworldshk2027
+name: Auth Subflow
+
+---
+
+# Register new test user
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+# Tap Continue with Email
+- tapOn: "Continue with Email"
+
+# Wait for registration screen - "Join the Fleet"
+- extendedWaitUntil:
+    visible: "Join the Fleet"
+    timeout: 5000
+
+# Fill in Display Name using testID
+- tapOn:
+    id: "register-displayname"
+- inputText: "Test User"
+
+# Fill in Email using testID
+- tapOn:
+    id: "register-email"
+- inputText: "test@maestro.test"
+
+# Dismiss keyboard
+- hideKeyboard
+- waitForAnimationToEnd
+
+# For password - tap show/hide toggle first to dismiss autofill
+- tapOn:
+    id: "register-password-password-toggle"
+- waitForAnimationToEnd
+
+# Now tap on password field
+- tapOn:
+    id: "register-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+# Hide keyboard
+- hideKeyboard
+- waitForAnimationToEnd
+
+# For confirm password - tap show/hide toggle first
+- tapOn:
+    id: "register-confirm-password-password-toggle"
+- waitForAnimationToEnd
+
+# Tap on confirm password field
+- tapOn:
+    id: "register-confirm-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+# Hide keyboard
+- hideKeyboard
+- waitForAnimationToEnd
+
+# Tap Join the Fleet button
+- tapOn:
+    id: "register-submit"
+
+# Wait for main app to load
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 30000
+
+# Dismiss welcome tooltips if present
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Got it"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Done"
+    optional: true
+- waitForAnimationToEnd
+
+# Close any remaining tooltip by tapping X
+- tapOn:
+    text: "×"
+    optional: true
+
+# Verify authenticated state - tab bar visible
+- assertVisible: "Schedule"

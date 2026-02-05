@@ -78,12 +78,17 @@ export interface Achievement {
 }
 
 export interface UserPreferences {
-  language: string;
-  timeZone: string;
-  notifications: NotificationPreferences;
-  privacy: PrivacySettings;
-  display: DisplayPreferences;
-  sailing: SailingPreferences;
+  language?: string;
+  timeZone?: string;
+  notifications?: NotificationPreferences;
+  privacy?: PrivacySettings;
+  display?: DisplayPreferences;
+  sailing?: SailingPreferences;
+  // Flat notification preferences (alternative to nested structure)
+  weatherAlerts?: boolean;
+  raceNotifications?: boolean;
+  socialUpdates?: boolean;
+  marketingEmails?: boolean;
 }
 
 export interface NotificationPreferences {
@@ -133,7 +138,7 @@ export interface SailingPreferences {
 
 export interface Subscription {
   id: string;
-  type: 'basic' | 'professional' | 'elite';
+  type: 'free' | 'basic' | 'professional' | 'elite';
   status: 'active' | 'cancelled' | 'expired' | 'trial';
   startDate: string;
   endDate: string;
@@ -159,7 +164,10 @@ export type VerificationStatus = 'verified' | 'pending' | 'unverified' | 'reject
 export type SailingRole = 'skipper' | 'crew' | 'tactician' | 'coach' | 'boat-captain' | 'shore-team';
 export type SailingInterest = 'fleet-racing' | 'match-racing' | 'team-racing' | 'cruising' | 'ocean-racing';
 
-interface UserState {
+// Type alias for backwards compatibility
+export type UserStore = UserState;
+
+export interface UserState {
   // State
   profile: UserProfile | null;
   preferences: UserPreferences | null;
@@ -635,47 +643,51 @@ export const useUserStore = create<UserState>()(
       },
 
       updateNotificationPreferences: (updates: Partial<NotificationPreferences>) => {
-        set(state => ({
-          preferences: state.preferences
-            ? {
-                ...state.preferences,
-                notifications: { ...state.preferences.notifications, ...updates }
-              }
-            : defaultPreferences
-        }));
+        set(state => {
+          const prefs = state.preferences ?? defaultPreferences;
+          return {
+            preferences: {
+              ...prefs,
+              notifications: { ...prefs.notifications, ...updates }
+            }
+          } as Partial<UserState>;
+        });
       },
 
       updatePrivacySettings: (updates: Partial<PrivacySettings>) => {
-        set(state => ({
-          preferences: state.preferences
-            ? {
-                ...state.preferences,
-                privacy: { ...state.preferences.privacy, ...updates }
-              }
-            : defaultPreferences
-        }));
+        set(state => {
+          const prefs = state.preferences ?? defaultPreferences;
+          return {
+            preferences: {
+              ...prefs,
+              privacy: { ...prefs.privacy, ...updates }
+            }
+          } as Partial<UserState>;
+        });
       },
 
       updateDisplayPreferences: (updates: Partial<DisplayPreferences>) => {
-        set(state => ({
-          preferences: state.preferences
-            ? {
-                ...state.preferences,
-                display: { ...state.preferences.display, ...updates }
-              }
-            : defaultPreferences
-        }));
+        set(state => {
+          const prefs = state.preferences ?? defaultPreferences;
+          return {
+            preferences: {
+              ...prefs,
+              display: { ...prefs.display, ...updates }
+            }
+          } as Partial<UserState>;
+        });
       },
 
       updateSailingPreferences: (updates: Partial<SailingPreferences>) => {
-        set(state => ({
-          preferences: state.preferences
-            ? {
-                ...state.preferences,
-                sailing: { ...state.preferences.sailing, ...updates }
-              }
-            : defaultPreferences
-        }));
+        set(state => {
+          const prefs = state.preferences ?? defaultPreferences;
+          return {
+            preferences: {
+              ...prefs,
+              sailing: { ...prefs.sailing, ...updates }
+            }
+          } as Partial<UserState>;
+        });
       },
 
       // Sailing credentials

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, ViewStyle, Animated } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ViewStyle, StyleProp, Animated } from 'react-native';
 import { IOSText } from './IOSText';
 
 export interface IOSSegmentedControlOption {
@@ -8,18 +8,24 @@ export interface IOSSegmentedControlOption {
 }
 
 export interface IOSSegmentedControlProps {
-  options: IOSSegmentedControlOption[];
-  selectedValue: string;
-  onValueChange: (value: string) => void;
-  style?: ViewStyle;
+  options?: IOSSegmentedControlOption[];
+  selectedValue?: string;
+  onValueChange?: (value: string) => void;
+  // Alternative API for simpler usage
+  values?: string[];
+  selectedIndex?: number;
+  onChange?: (index: number) => void;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const IOSSegmentedControl: React.FC<IOSSegmentedControlProps> = ({
-  options,
+  options = [],
   selectedValue,
   onValueChange,
   style
 }) => {
+  if (!options.length) return null;
+
   return (
     <View style={[styles.container, style]}>
       {options.map((option, index) => {
@@ -36,7 +42,7 @@ export const IOSSegmentedControl: React.FC<IOSSegmentedControlProps> = ({
               isFirst && styles.firstSegment,
               isLast && styles.lastSegment
             ]}
-            onPress={() => onValueChange(option.value)}
+            onPress={() => onValueChange?.(option.value)}
             activeOpacity={0.6}
           >
             <Animated.View style={styles.segmentContent}>

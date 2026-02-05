@@ -1,5 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Race, Boat, Result } from '../../stores';
+import type { Race, Competitor, RaceResult } from '../../stores';
+
+// API-specific types
+interface Boat extends Competitor {}
+interface Result extends RaceResult {}
 
 const BASE_URL = 'https://api.dragonworlds.hk'; // Replace with actual API endpoint
 

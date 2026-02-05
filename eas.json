@@ -113,6 +113,24 @@
         "EXPO_USE_HERMES": "false",
         "FORCE_JSC": "true"
       }
+    },
+    "simulator": {
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium",
+        "simulator": true,
+        "buildConfiguration": "Release"
+      },
+      "android": {
+        "resourceClass": "medium",
+        "buildType": "apk"
+      },
+      "channel": "simulator",
+      "env": {
+        "NODE_ENV": "production",
+        "API_URL": "https://api.dragonworlds.com",
+        "WEATHER_API_URL": "https://weather-api.dragonworlds.com"
+      }
     }
   },
   "submit": {

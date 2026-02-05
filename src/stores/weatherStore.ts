@@ -23,6 +23,9 @@ export interface WeatherCondition {
   pressure: number;
   humidity: number;
   conditions: string; // e.g., "Partly Cloudy"
+  uvIndex?: number;
+  lastUpdated?: string;
+  feelsLike?: number;
 }
 
 export interface MarineCondition {
@@ -30,13 +33,26 @@ export interface MarineCondition {
   swellPeriod: number;
   swellDirection: number;
   tideHeight: number;
-  tideTime: string;
-  tideType: 'high' | 'low';
+  tideTime?: string;
+  tideType?: 'high' | 'low';
   current: {
     speed: number;
     direction: number;
   };
-  seaTemperature: number;
+  seaTemperature?: number;
+  // Additional properties for location weather service
+  wavePeriod?: number;
+  waveDirection?: number;
+  tideTrend?: 'rising' | 'falling';
+  waterTemperature?: number;
+  lastUpdated?: string;
+  // Tide object for convenience
+  tide?: {
+    height: number;
+    trend?: 'rising' | 'falling';
+    nextHigh?: { time: string; height: number };
+    nextLow?: { time: string; height: number };
+  };
 }
 
 export interface WeatherForecast {
@@ -231,6 +247,13 @@ interface WeatherState {
   toggleWindStations: () => void;
   toggleWaveStations: () => void;
   toggleTideStations: () => void;
+  // Additional map layer toggles
+  toggleNauticalMapVisible: () => void;
+  toggleRadarVisible: () => void;
+  toggleSatelliteVisible: () => void;
+  // Visibility state
+  radarVisible: boolean;
+  satelliteVisible: boolean;
 
   // HKO Real-time Data Actions
   updateHKOWeatherBuoys: (buoys: HKOWeatherBuoy[]) => void;
@@ -459,6 +482,8 @@ export const useWeatherStore = create<WeatherState>()(
       windStationsVisible: false,
       waveStationsVisible: false,
       tideStationsVisible: false,
+      radarVisible: false,
+      satelliteVisible: false,
 
       // HKO Real-time Data Initial State
       hkoWeatherBuoys: [],
@@ -816,6 +841,7 @@ export const useWeatherStore = create<WeatherState>()(
           const hourlyData: HourlyForecastData[] = [];
           const openMeteoWeather = apiResult?.data?.openmeteo_weather;
           const openMeteoMarine = apiResult?.data?.openmeteo;
+          const ow = apiResult?.data?.ow; // OpenWeatherMap fallback
 
           // Use Open-Meteo Weather data if available (primary source)
           if (openMeteoWeather?.data?.weather?.length) {
@@ -993,6 +1019,19 @@ export const useWeatherStore = create<WeatherState>()(
 
       toggleTideStations: () => {
         set(state => ({ tideStationsVisible: !state.tideStationsVisible }));
+      },
+
+      // Additional map layer toggles
+      toggleNauticalMapVisible: () => {
+        set(state => ({ nauticalMapVisible: !state.nauticalMapVisible }));
+      },
+
+      toggleRadarVisible: () => {
+        set(state => ({ radarVisible: !state.radarVisible }));
+      },
+
+      toggleSatelliteVisible: () => {
+        set(state => ({ satelliteVisible: !state.satelliteVisible }));
       },
 
       // HKO Real-time Data Action Implementations

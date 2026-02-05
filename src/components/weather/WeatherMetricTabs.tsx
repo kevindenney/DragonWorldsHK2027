@@ -157,7 +157,7 @@ export const WeatherMetricTabs: React.FC<WeatherMetricTabsProps> = ({
                 <View style={styles.tabContent}>
                   {/* Icon */}
                   <View style={styles.iconContainer}>
-                    {React.cloneElement(metric.icon as React.ReactElement, {
+                    {React.cloneElement(metric.icon as React.ReactElement<{ color: string; size: number }>, {
                       color: isSelected ? metric.color : colors.textMuted,
                       size: 16
                     })}

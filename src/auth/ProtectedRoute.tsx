@@ -1,7 +1,17 @@
 import React, { ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useAuth, isAuthenticated } from './useAuth';
-import { User, UserRole, UserStatus } from '../types/auth';
+import { useAuth } from './useAuth';
+import { User, UserStatus } from './authTypes';
+
+// Define UserRole type to match the role field in authTypes.User
+type UserRole = 'user' | 'admin' | 'superadmin' | 'participant' | 'official';
+
+/**
+ * Helper function to check if user is authenticated
+ */
+function isUserAuthenticated(auth: ReturnType<typeof useAuth>): auth is ReturnType<typeof useAuth> & { user: User } {
+  return auth.isAuthenticated && auth.user !== null;
+}
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -58,7 +68,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   loadingComponent,
   requireEmailVerification = false,
   requiredRoles = [],
-  requiredStatus = ['active'],
+  requiredStatus = [UserStatus.ACTIVE],
   onAuthRequired,
   redirectToLogin = false,
 }) => {
@@ -70,7 +80,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Check if user is authenticated
-  if (!isAuthenticated(auth)) {
+  if (!isUserAuthenticated(auth)) {
     // Trigger auth required callback
     if (redirectToLogin && onAuthRequired) {
       onAuthRequired();
@@ -162,8 +172,8 @@ export const useAuthRequirements = (requirements: {
 }) => {
   const auth = useAuth();
   const reasons: string[] = [];
-  
-  if (!isAuthenticated(auth)) {
+
+  if (!isUserAuthenticated(auth)) {
     reasons.push('Authentication required');
     return { canAccess: false, reasons };
   }
@@ -174,12 +184,19 @@ export const useAuthRequirements = (requirements: {
     reasons.push('Email verification required');
   }
 
-  if (requirements.requiredRoles?.length && !requirements.requiredRoles.includes(user.role)) {
-    reasons.push(`Required role: ${requirements.requiredRoles.join(' or ')}`);
+  if (requirements.requiredRoles?.length) {
+    // Map role to UserRole enum if needed
+    const userRoleEnum = user.role as UserRole;
+    if (!requirements.requiredRoles.includes(userRoleEnum)) {
+      reasons.push(`Required role: ${requirements.requiredRoles.join(' or ')}`);
+    }
   }
 
-  if (requirements.requiredStatus?.length && !requirements.requiredStatus.includes(user.status)) {
-    reasons.push(`Required status: ${requirements.requiredStatus.join(' or ')}`);
+  if (requirements.requiredStatus?.length) {
+    const userStatusEnum = user.status as UserStatus;
+    if (!requirements.requiredStatus.includes(userStatusEnum)) {
+      reasons.push(`Required status: ${requirements.requiredStatus.join(' or ')}`);
+    }
   }
 
   return {
@@ -220,13 +237,14 @@ interface EmailVerificationRequiredProps {
 }
 
 const EmailVerificationRequiredComponent: React.FC<EmailVerificationRequiredProps> = ({ user }) => {
-  const { sendEmailVerification } = useAuth();
-  
+  const { resendEmailVerification } = useAuth();
+
   const handleResendVerification = async () => {
     try {
-      await sendEmailVerification();
+      await resendEmailVerification?.();
       // Could show a toast or alert here
     } catch (error) {
+      // Silently handle error
     }
   };
 

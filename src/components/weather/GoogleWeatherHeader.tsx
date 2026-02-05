@@ -150,9 +150,9 @@ export const GoogleWeatherHeader: React.FC<GoogleWeatherHeaderProps> = ({
   const displayTimestamp = timestamp || formatTimestamp();
   
   // Convert values based on unit preferences
-  const displayTemperature = convertTemperature(temperature, 'C', units.temperature);
-  const displayWindSpeed = convertWindSpeed(windSpeed, 'kts', units.windSpeed);
-  const displaySeaTemperature = convertTemperature(seaTemperature, 'C', units.temperature);
+  const displayTemperature = convertTemperature(temperature, units.temperature);
+  const displayWindSpeed = convertWindSpeed(windSpeed, units.windSpeed);
+  const displaySeaTemperature = convertTemperature(seaTemperature, units.temperature);
 
   return (
     <View style={styles.container}>

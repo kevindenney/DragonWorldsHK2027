@@ -115,7 +115,9 @@ export interface OfficialNotification {
   affectedRaces?: number[];
   attachments?: EventDocument[];
   metadata?: NotificationMetadata;
-  version: string;
+  version?: string;
+  source?: string; // Source identifier (e.g., 'ccr2024')
+  sourceUrl?: string; // URL to original source document
   amendmentHistory?: Array<{
     version: string;
     changes: string;
@@ -369,10 +371,11 @@ export interface NoticeBoardEvent {
   };
   status: 'upcoming' | 'active' | 'completed' | 'cancelled';
   entryCount: number;
-  classes: string[];
-  languages: string[];
+  classes?: string[];
+  languages?: string[];
   lastUpdated: string;
-  noticeBoard: {
+  // Nested structure for full notice board
+  noticeBoard?: {
     documents: EventDocument[];
     notifications: OfficialNotification[];
     protests: ProtestSubmission[];
@@ -383,6 +386,15 @@ export interface NoticeBoardEvent {
     weatherNotices: WeatherNotice[];
     mediaItems: MediaItem[];
   };
+  // Flattened structure for simpler API responses
+  documents?: EventDocument[];
+  notifications?: OfficialNotification[];
+  protests?: ProtestSubmission[];
+  hearings?: Hearing[];
+  scoringInquiries?: ScoringInquiry[];
+  penalties?: OnWaterPenalty[];
+  courseChanges?: CourseChange[];
+  weatherNotices?: WeatherNotice[];
 }
 
 export interface NoticeBoardServiceConfig {

@@ -17,6 +17,7 @@ export const UrlTile = ({ children, ...props }: any) => <View {...props}>{childr
 
 // Constants
 export const PROVIDER_GOOGLE = 'google';
+export const PROVIDER_APPLE = 'apple';
 export const PROVIDER_DEFAULT = 'default';
 
 // Type stubs
@@ -25,6 +26,19 @@ export interface Region {
   longitude: number;
   latitudeDelta: number;
   longitudeDelta: number;
+}
+
+export interface MapPressEvent {
+  nativeEvent: {
+    coordinate: {
+      latitude: number;
+      longitude: number;
+    };
+    position?: {
+      x: number;
+      y: number;
+    };
+  };
 }
 
 // Default export

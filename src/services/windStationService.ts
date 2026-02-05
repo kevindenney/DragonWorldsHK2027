@@ -344,7 +344,7 @@ class WindStationService {
       });
 
       // Process wind data based on source - prioritize Open-Meteo Weather API
-      let windData;
+      let windData: any;
       let dataQuality: 'high' | 'medium' | 'low' = 'low';
 
       if (weatherData.data.openmeteo_weather && weatherData.data.openmeteo_weather.data.wind.length > 0) {
@@ -396,7 +396,7 @@ class WindStationService {
     } catch (error) {
       // Handle weather API errors with silent flag support
       const errorMessage = handleWeatherAPIError(error, 'windStationService.getWindStationAtCoordinate');
-      if (!(error && typeof error === 'object' && error.silent === true)) {
+      if (!(error && typeof error === 'object' && (error as any).silent === true)) {
       }
       
       // Return fallback data

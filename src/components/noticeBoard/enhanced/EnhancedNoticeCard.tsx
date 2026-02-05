@@ -162,7 +162,6 @@ export const EnhancedNoticeCard: React.FC<EnhancedNoticeCardProps> = ({
 
   return (
     <Animated.View
-      entering={FadeInDown.delay(100).springify()}
       style={[
         styles.container,
         compact && styles.compactContainer,

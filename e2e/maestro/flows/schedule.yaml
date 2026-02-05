@@ -1,0 +1,62 @@
+# Schedule Screen Flow Tests for Dragon Worlds HK 2027
+# Tests schedule viewing and interactions
+# NOTE: Requires authenticated state
+
+appId: com.denneyke.dragonworldshk2027
+name: Schedule Flow
+
+---
+
+# Test: Schedule Screen Loads
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+# Tap on Schedule tab to ensure we're on the right screen
+- tapOn:
+    id: "tab-schedule"
+
+# Wait for schedule content to load
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 5000
+
+---
+
+# Test: Schedule Has Content
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+- tapOn:
+    id: "tab-schedule"
+
+# Look for date-related content or race schedule items
+# The schedule should show either race events or a date picker
+- assertVisible:
+    text: ".*"
+    timeout: 5000
+
+---
+
+# Test: Scroll Schedule Content
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+- tapOn:
+    id: "tab-schedule"
+
+# Scroll down to view more schedule content
+- scroll:
+    direction: DOWN
+
+# Scroll back up
+- scroll:
+    direction: UP

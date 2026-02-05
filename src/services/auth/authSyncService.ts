@@ -2,7 +2,7 @@ import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 import { userProfileService } from '../userProfileService';
 import { userDatabaseService } from '../database';
-import { User, AuthProvider, UserStatus } from '../../types/auth';
+import { User, AuthProviderType, UserStatus } from '../../types/auth';
 import { toFirestoreTimestamp } from '../../types/database';
 
 /**
@@ -36,6 +36,7 @@ export class AuthSyncService {
    */
   private initializeSync(): void {
     // Listen to Firebase Auth state changes and sync with Firestore
+    if (!auth) return; // Skip if auth not initialized
     onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         await this.syncAuthState(firebaseUser);
@@ -174,7 +175,7 @@ export class AuthSyncService {
 
     return (
       currentProviders.length !== profileProviders.length ||
-      !currentProviders.every(provider => profileProviders.includes(provider as AuthProvider))
+      !currentProviders.every(provider => profileProviders.includes(provider as AuthProviderType))
     );
   }
 
@@ -201,7 +202,7 @@ export class AuthSyncService {
 
     // Update existing providers and add new ones
     const updatedProviders = currentProviders.map(providerData => {
-      const provider = providerData.providerId as AuthProvider;
+      const provider = providerData.providerId as AuthProviderType;
       const existingProvider = existingLinkedProviders.find(lp => lp.provider === provider);
 
       return {
@@ -229,26 +230,26 @@ export class AuthSyncService {
   /**
    * Detect the authentication provider used for sign-in
    */
-  private detectAuthProvider(firebaseUser: FirebaseUser): AuthProvider {
+  private detectAuthProvider(firebaseUser: FirebaseUser): AuthProviderType {
     // Check provider data for the most recent sign-in
     if (firebaseUser.providerData.length > 0) {
       const providerId = firebaseUser.providerData[0].providerId;
-      
+
       switch (providerId) {
         case 'google.com':
-          return AuthProvider.EMAIL; // Google temporarily disabled
+          return AuthProviderType.EMAIL; // Google temporarily disabled
         case 'apple.com':
-          return AuthProvider.APPLE;
+          return AuthProviderType.APPLE;
         case 'facebook.com':
-          return AuthProvider.FACEBOOK;
+          return AuthProviderType.FACEBOOK;
         case 'github.com':
-          return AuthProvider.GITHUB;
+          return AuthProviderType.GITHUB;
         default:
-          return AuthProvider.EMAIL;
+          return AuthProviderType.EMAIL;
       }
     }
 
-    return AuthProvider.EMAIL;
+    return AuthProviderType.EMAIL;
   }
 
   /**

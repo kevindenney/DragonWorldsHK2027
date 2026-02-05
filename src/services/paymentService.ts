@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import { subscriptionService, SubscriptionTier } from './subscriptionService';
+import { subscriptionService, SubscriptionTier, SubscriptionTierId } from './subscriptionService';
 import { errorHandler } from './errorHandler';
 import { analyticsService } from './analyticsService';
 import { paymentGatewayService, PaymentResult, SubscriptionPayment, OneTimePayment } from './paymentGatewayService';
@@ -72,7 +72,7 @@ export interface CrossSellProduct {
   provider: string;
   commissionRate: number;
   targetAudience: {
-    subscriptionTiers: SubscriptionTier[];
+    subscriptionTiers: SubscriptionTierId[];
     sailingExperience: string[];
     regions: string[];
   };
@@ -385,7 +385,7 @@ export class PaymentService {
   // Enhanced subscription purchase with regional pricing and promotions
   async purchaseSubscription(
     userId: string,
-    tierId: SubscriptionTier,
+    tierId: SubscriptionTierId,
     regionCode: string,
     promotionalOfferId?: string,
     paymentMethodId?: string
@@ -716,8 +716,8 @@ export class PaymentService {
 
   // Get regional pricing
   private getRegionalPricing(
-    tierId: SubscriptionTier | null, 
-    regionCode: string, 
+    tierId: SubscriptionTierId | null,
+    regionCode: string,
     basePrice?: number,
     baseCurrency?: string
   ): { price: number; currency: string } {
@@ -737,7 +737,7 @@ export class PaymentService {
     };
   }
 
-  private getBaseTierPrice(tierId: SubscriptionTier | null): number {
+  private getBaseTierPrice(tierId: SubscriptionTierId | null): number {
     switch (tierId) {
       case 'basic': return 9.99;
       case 'professional': return 24.99;
@@ -748,8 +748,8 @@ export class PaymentService {
 
   // Get valid promotional offer
   private getValidPromotionalOffer(
-    offerId: string, 
-    tierId: SubscriptionTier, 
+    offerId: string,
+    tierId: SubscriptionTierId,
     userId: string
   ): PromotionalOffer | null {
     const offer = this.promotionalOffers.find(o => 
@@ -785,7 +785,7 @@ export class PaymentService {
     );
   }
 
-  getCrossSellProducts(subscriptionTier?: SubscriptionTier): CrossSellProduct[] {
+  getCrossSellProducts(subscriptionTier?: SubscriptionTierId): CrossSellProduct[] {
     return this.crossSellProducts.filter(product => 
       product.isActive &&
       (!subscriptionTier || product.targetAudience.subscriptionTiers.includes(subscriptionTier))
@@ -1012,14 +1012,3 @@ export class PaymentService {
 
 // Export singleton instance
 export const paymentService = new PaymentService();
-
-// Export types
-export type {
-  PaymentMethod,
-  BillingAddress,
-  PurchaseTransaction,
-  PromotionalOffer,
-  CrossSellProduct,
-  VIPAccessPass,
-  RegionalPricing
-};

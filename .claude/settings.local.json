@@ -153,7 +153,15 @@
       "Bash(tee:*)",
       "Bash(npx expo-doctor:*)",
       "Bash(EXPO_NO_DEV_CLIENT=1 npx expo prebuild:*)",
-      "Bash(security find-identity:*)"
+      "Bash(security find-identity:*)",
+      "Bash(bash:*)",
+      "Bash(brew tap:*)",
+      "Bash(maestro:*)",
+      "Bash(npm run build:simulator:*)",
+      "Bash(xcrun simctl:*)",
+      "Bash(xcrun simctl install:*)",
+      "Bash(tar:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": []

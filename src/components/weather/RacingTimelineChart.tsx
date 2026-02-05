@@ -96,7 +96,7 @@ export const RacingTimelineChart: React.FC<RacingTimelineChartProps> = ({
         }
       } else if (currentWindow) {
         // End of window
-        const avgScore = currentWindow.scores.reduce((sum, score) => sum + score, 0) / currentWindow.scores.length;
+        const avgScore = currentWindow.scores.reduce((sum: number, score: number) => sum + score, 0) / currentWindow.scores.length;
         windows.push({
           start: currentWindow.start,
           end: currentWindow.end,
@@ -108,10 +108,11 @@ export const RacingTimelineChart: React.FC<RacingTimelineChartProps> = ({
 
     // Handle window that extends to end
     if (currentWindow) {
-      const avgScore = currentWindow.scores.reduce((sum, score) => sum + score, 0) / currentWindow.scores.length;
+      const window = currentWindow as { start: number; end: number; scores: number[] };
+      const avgScore = window.scores.reduce((sum: number, score: number) => sum + score, 0) / window.scores.length;
       windows.push({
-        start: currentWindow.start,
-        end: currentWindow.end,
+        start: window.start,
+        end: window.end,
         score: avgScore
       });
     }

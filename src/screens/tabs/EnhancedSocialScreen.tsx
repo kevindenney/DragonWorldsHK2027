@@ -211,7 +211,7 @@ export const EnhancedSocialScreen: React.FC<SocialScreenProps> = ({ navigation }
   };
 
   const filteredGroups = getFilteredGroups();
-  const joinedGroupIds = joinedGroups.map(g => g.id);
+  const joinedGroupIds = joinedGroups.map((g: { id: string }) => g.id);
   const liveDiscussion = activeDiscussions.find(d => d.isLive);
 
   return (
@@ -278,7 +278,7 @@ export const EnhancedSocialScreen: React.FC<SocialScreenProps> = ({ navigation }
         {joinedGroups.length > 0 && (
           <IOSSection style={styles.section}>
             <IOSText style={styles.sectionTitle}>My Groups</IOSText>
-            {joinedGroups.slice(0, 3).map((group) => (
+            {joinedGroups.slice(0, 3).map((group: { id: string }) => (
               <WhatsAppGroupCard
                 key={group.id}
                 group={group}

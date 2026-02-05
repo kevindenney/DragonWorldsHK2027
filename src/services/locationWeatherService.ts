@@ -310,7 +310,8 @@ class LocationWeatherService {
           swellPeriod: 8 + Math.random() * 8,
           swellDirection: Math.random() * 360,
           lastUpdated: new Date().toISOString(),
-          dataQuality: 'high'
+          dataQuality: 'high',
+          isHKOData: false
         });
       }
     }

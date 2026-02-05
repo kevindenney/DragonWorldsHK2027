@@ -1,0 +1,7 @@
+# Common Maestro utilities for Dragon Worlds HK 2027
+# Reusable actions and assertions
+
+# Wait for app to be ready
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000

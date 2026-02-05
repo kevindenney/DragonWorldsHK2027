@@ -914,10 +914,10 @@ export const useSocialStore = create<SocialState>()(
 
 // Selectors
 export const useWhatsAppGroups = () => useSocialStore(state => state.whatsappGroups);
-export const useJoinedGroups = () => useSocialStore(state => {
+export const useJoinedGroups = (): WhatsAppGroup[] => useSocialStore(state => {
   const { whatsappGroups, joinedGroups } = state;
   return whatsappGroups.filter(group => joinedGroups.includes(group.id));
-}, (a, b) => {
+}, (a: WhatsAppGroup[], b: WhatsAppGroup[]) => {
   // Custom equality function to prevent unnecessary re-renders
   return a.length === b.length && a.every((group, index) => group.id === b[index]?.id);
 });
@@ -930,14 +930,14 @@ export const useSocialError = () => useSocialStore(state => state.error);
 export const useGroupsByCategory = (category: GroupCategory) =>
   useSocialStore(state => state.getGroupsByCategory(category));
 
-export const useAvailableGroups = () => 
+export const useAvailableGroups = (): WhatsAppGroup[] =>
   useSocialStore(state => {
     const { whatsappGroups, joinedGroups, blockedGroups } = state;
-    return whatsappGroups.filter(group => 
-      !joinedGroups.includes(group.id) && 
+    return whatsappGroups.filter(group =>
+      !joinedGroups.includes(group.id) &&
       !blockedGroups.includes(group.id)
     );
-  }, (a, b) => {
+  }, (a: WhatsAppGroup[], b: WhatsAppGroup[]) => {
     // Custom equality function to prevent unnecessary re-renders
     return a.length === b.length && a.every((group, index) => group.id === b[index]?.id);
   });

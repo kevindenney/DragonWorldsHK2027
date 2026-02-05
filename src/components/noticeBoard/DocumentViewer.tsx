@@ -220,7 +220,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     <SafeAreaView style={styles.container} edges={['top']}>
       <IOSNavigationBar
         title="Document"
-        style="regular"
+        style="default"
         leftAction={{
           icon: <ChevronLeft size={20} color={colors.primary} />,
           onPress: () => navigation.goBack()

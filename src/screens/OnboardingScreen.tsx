@@ -37,7 +37,7 @@ const userTypeOptions: UserTypeOption[] = [
   {
     id: 'participant',
     title: 'Yes - I\'m Racing',
-    subtitle: 'Registered competitor in Dragon Worlds HK 2027',
+    subtitle: 'Registered competitor in the 2026 Asia Pacific or 2027 World Championship',
     icon: Anchor,
     benefits: [
       'Professional weather data',
@@ -142,8 +142,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, 
 
   const handleLearnMore = () => {
     Alert.alert(
-      'Dragon Class World Championships',
-      'The Dragon Class is one of the most prestigious keelboat classes in sailing. The World Championships feature the best sailors from around the globe competing in Hong Kong\'s legendary harbors.\n\nThis app provides comprehensive coverage, professional weather data, and exclusive access to the sailing community.',
+      'Dragon Class Championships',
+      'The Dragon Class is one of the most prestigious keelboat classes in sailing. Hong Kong will host both the Asia Pacific Championship in 2026 and the World Championship in 2027, featuring the best sailors from around the globe competing in Hong Kong\'s legendary harbors.\n\nThis app provides comprehensive coverage, professional weather data, and exclusive access to the sailing community.',
       [{ text: 'Got it' }]
     );
   };

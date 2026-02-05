@@ -1,0 +1,218 @@
+# Full User Journey Test
+# Complete end-to-end test covering authentication and all app features
+#
+# This is the comprehensive test that covers the entire user experience
+
+appId: com.denneyke.dragonworldshk2027
+name: Full User Journey
+
+---
+
+# =====================
+# AUTHENTICATION
+# =====================
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+# Register new user
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible: "Join the Fleet"
+    timeout: 5000
+
+# Fill registration form
+- tapOn:
+    id: "register-displayname"
+- inputText: "Journey Test"
+
+- tapOn:
+    id: "register-email"
+- inputText: "journey@maestro.test"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+# Password (with iOS Strong Password workaround)
+- tapOn:
+    id: "register-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-confirm-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-confirm-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-submit"
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 30000
+
+# =====================
+# TAB BAR VERIFICATION
+# =====================
+
+- assertVisible:
+    id: "tab-schedule"
+- assertVisible:
+    id: "tab-noticeboard"
+- assertVisible:
+    id: "tab-results"
+- assertVisible:
+    id: "tab-forms"
+- assertVisible:
+    id: "tab-more"
+
+# =====================
+# 1. SCHEDULE TAB
+# =====================
+
+# Already on Schedule
+- assertVisible: "Schedule"
+- assertVisible: "APAC 2026"
+
+# Tap on an event
+- tapOn:
+    text: "Registration"
+    optional: true
+- waitForAnimationToEnd
+- pressKey: Escape
+- waitForAnimationToEnd
+
+# =====================
+# 2. NOTICES TAB
+# =====================
+
+- tapOn:
+    id: "tab-noticeboard"
+- waitForAnimationToEnd
+
+- assertVisible: "Notices"
+
+# Tap on a notice
+- tapOn:
+    text: "Notice"
+    optional: true
+- waitForAnimationToEnd
+- pressKey: Escape
+- waitForAnimationToEnd
+
+# =====================
+# 3. RESULTS TAB
+# =====================
+
+- tapOn:
+    id: "tab-results"
+- waitForAnimationToEnd
+
+- assertVisible: "Results"
+- assertVisible: "Asia Pacific Championship"
+
+# =====================
+# 4. FORMS TAB
+# =====================
+
+- tapOn:
+    id: "tab-forms"
+- waitForAnimationToEnd
+
+- assertVisible: "Forms"
+
+# =====================
+# 5. MORE TAB
+# =====================
+
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+- assertVisible: "More"
+
+# Wait for menu items to load
+- extendedWaitUntil:
+    visible: "RACING"
+    timeout: 5000
+
+# Visit Entrants (first item under RACING)
+- tapOn:
+    id: "more-menu-entrants"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+# Visit Weather
+- tapOn:
+    id: "more-menu-weather"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+# Visit Contacts
+- tapOn:
+    id: "more-menu-contacts"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+# =====================
+# FINAL NAVIGATION
+# =====================
+
+# Navigate through all tabs one more time
+- tapOn:
+    id: "tab-schedule"
+- waitForAnimationToEnd
+- assertVisible: "Schedule"
+
+- tapOn:
+    id: "tab-noticeboard"
+- waitForAnimationToEnd
+- assertVisible: "Notices"
+
+- tapOn:
+    id: "tab-results"
+- waitForAnimationToEnd
+- assertVisible: "Results"
+
+- tapOn:
+    id: "tab-forms"
+- waitForAnimationToEnd
+- assertVisible: "Forms"
+
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- assertVisible: "More"
+
+# Return to Schedule
+- tapOn:
+    id: "tab-schedule"
+- waitForAnimationToEnd
+- assertVisible: "Schedule"
+
+# =====================
+# JOURNEY COMPLETE!
+# =====================

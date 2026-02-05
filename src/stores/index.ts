@@ -1,6 +1,22 @@
 // Zustand Store Index - Dragon World Championships App
 // Centralized export of all application stores with TypeScript support
 
+// Local imports for store functions used in this file
+import { useScheduleStore as _useScheduleStore } from './scheduleStore';
+import { useWeatherStore as _useWeatherStore } from './weatherStore';
+import { useSocialStore as _useSocialStore } from './socialStore';
+import { useResultsStore as _useResultsStore } from './resultsStore';
+import { useSponsorStore as _useSponsorStore } from './sponsorStore';
+import { useUserStore as _useUserStore } from './userStore';
+
+// Local references for internal use
+const useScheduleStore = _useScheduleStore;
+const useWeatherStore = _useWeatherStore;
+const useSocialStore = _useSocialStore;
+const useResultsStore = _useResultsStore;
+const useSponsorStore = _useSponsorStore;
+const useUserStore = _useUserStore;
+
 // Store exports
 export { useScheduleStore } from './scheduleStore';
 export type { 

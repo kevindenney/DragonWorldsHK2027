@@ -161,7 +161,6 @@ const GroupCard: React.FC<{ group: WhatsAppGroup }> = ({ group }) => (
 
 // Enhanced Social Screen - Forward to new implementation
 export { EnhancedSocialScreen as SocialScreen } from './EnhancedSocialScreen';
-export { default } from './EnhancedSocialScreen';
 
 export function _OriginalSocialScreen({ navigation }: SocialScreenProps) {
   // Mock chat data

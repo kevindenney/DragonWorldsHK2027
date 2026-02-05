@@ -26,7 +26,8 @@ import {
 } from 'lucide-react-native';
 
 import { IOSText, IOSCard, IOSButton, IOSBadge, IOSSegmentedControl } from '../ios';
-import type { Competitor, RaceResult } from '../../types/noticeBoard';
+import type { Competitor } from '../../types/noticeBoard';
+import type { RaceResult } from '../../services/resultsService';
 
 interface CompetitorProfileProps {
   competitor: Competitor;
@@ -452,7 +453,7 @@ export const CompetitorProfile: React.FC<CompetitorProfileProps> = ({
         <IOSSegmentedControl
           values={['Overview', 'Results', 'Performance']}
           selectedIndex={activeTab === 'overview' ? 0 : activeTab === 'results' ? 1 : 2}
-          onChange={(index) => setActiveTab(index === 0 ? 'overview' : index === 1 ? 'results' : 'performance')}
+          onChange={(index: number) => setActiveTab(index === 0 ? 'overview' : index === 1 ? 'results' : 'performance')}
           style={styles.segmentedControl}
         />
       </View>

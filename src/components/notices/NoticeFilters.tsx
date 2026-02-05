@@ -11,7 +11,8 @@ import {
   Users,
   Flag,
   MapPin,
-  Settings
+  Settings,
+  Megaphone
 } from 'lucide-react-native';
 
 import { colors, spacing, borderRadius } from '../../constants/theme';
@@ -54,7 +55,8 @@ export const NoticeFilters: React.FC<NoticeFiltersProps> = ({
     competition_management: { label: 'Competition', icon: Flag, color: colors.success },
     protests_hearings: { label: 'Protests', icon: Scale, color: colors.warning },
     safety_regulatory: { label: 'Safety', icon: AlertTriangle, color: colors.error },
-    administrative: { label: 'Admin', icon: Settings, color: colors.textSecondary }
+    administrative: { label: 'Admin', icon: Settings, color: colors.textSecondary },
+    media_announcements: { label: 'Media', icon: Megaphone, color: colors.accent }
   };
 
   // Read status options

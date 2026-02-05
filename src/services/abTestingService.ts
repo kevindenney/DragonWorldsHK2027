@@ -29,6 +29,7 @@ export interface ABVariant {
   description: string;
   isControl: boolean;
   trafficSplit: number; // 0-100 percentage within test
+  trafficAllocation?: number; // Alternative name for traffic allocation
   configuration: VariantConfiguration;
   metrics: VariantMetrics;
   screenshot?: string;
@@ -1219,24 +1220,3 @@ export class ABTestingService {
 
 // Export singleton instance
 export const abTestingService = new ABTestingService();
-
-// Export types
-export type {
-  ABTest,
-  ABVariant,
-  VariantConfiguration,
-  ConfigurationChange,
-  VariantTargeting,
-  VariantMetrics,
-  TestSegmentation,
-  UserSegment,
-  StatisticalSettings,
-  TestResults,
-  ResultsSummary,
-  VariantComparison,
-  TestParticipation,
-  ConversionEvent,
-  TestTemplate,
-  TestingStrategy,
-  SuccessCriteria
-};

@@ -28,11 +28,12 @@ export interface UnifiedTideStation extends TideStation {
   dailyPredictions: TidePrediction[];
   tidePattern: 'semidiurnal' | 'diurnal' | 'mixed';
   harmonicConstants: {
-    M2: number; // Principal lunar semi-diurnal
-    S2: number; // Principal solar semi-diurnal
-    K1: number; // Lunar diurnal
-    O1: number; // Lunar diurnal
+    M2: { amplitude: number; phase: number }; // Principal lunar semi-diurnal
+    S2: { amplitude: number; phase: number }; // Principal solar semi-diurnal
+    K1: { amplitude: number; phase: number }; // Lunar diurnal
+    O1: { amplitude: number; phase: number }; // Lunar diurnal
   };
+  meanSeaLevel?: number;
 }
 
 // Hong Kong specific tide patterns and constants

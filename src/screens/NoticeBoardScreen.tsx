@@ -101,6 +101,16 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
   const [dataSource, setDataSource] = useState<'demo' | 'racing_rules' | 'ccr2024'>('demo');
   const [notificationService] = useState(() => NotificationService.getInstance());
 
+  // Tab change handler for quick actions
+  const handleTabChange = useCallback((tab: string) => {
+    // Navigate to the appropriate section based on tab
+    if (tab === 'documents') {
+      navigation.navigate('Documents', { eventId });
+    } else if (tab === 'notifications') {
+      navigation.navigate('Notifications', { eventId });
+    }
+  }, [navigation, eventId]);
+
   // Monitor offline status
   useEffect(() => {
     const unsubscribe = offlineManager.onStatusChange((status) => {
@@ -120,17 +130,21 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
       
       if (eventData) {
         setEvent(eventData);
-        
+
+        // Guard against missing noticeBoard data
+        const noticeBoard = eventData.noticeBoard;
+        if (!noticeBoard) return;
+
         // Update search engine with new data
         searchEngine.updateIndex(
-          eventData.noticeBoard.documents,
-          eventData.noticeBoard.notifications
+          noticeBoard.documents,
+          noticeBoard.notifications
         );
-        
+
         // Update category counts
         const updatedCategories = updateCategoryCounts(
-          eventData.noticeBoard.documents,
-          eventData.noticeBoard.notifications
+          noticeBoard.documents,
+          noticeBoard.notifications
         );
         setCategories(updatedCategories);
         

@@ -6,8 +6,8 @@ import Animated, {
   withTiming, 
   withSpring 
 } from '../../../utils/reanimatedWrapper';
-import { 
-  ChevronDown, 
+import {
+  ChevronDown,
   ChevronRight,
   AlertCircle,
   Clock,
@@ -16,7 +16,8 @@ import {
   Trophy,
   Scale,
   Shield,
-  Settings
+  Settings,
+  Megaphone
 } from 'lucide-react-native';
 
 import { IOSText, IOSBadge } from '../../ios';
@@ -40,6 +41,7 @@ const CATEGORY_ICONS: Record<RegattaCategory, React.ComponentType<any>> = {
   [RegattaCategory.PROTESTS_HEARINGS]: Scale,
   [RegattaCategory.SAFETY_REGULATORY]: Shield,
   [RegattaCategory.ADMINISTRATIVE]: Settings,
+  [RegattaCategory.MEDIA_ANNOUNCEMENTS]: Megaphone,
 };
 
 export const CategoryHeader: React.FC<CategoryHeaderProps> = ({
@@ -199,9 +201,8 @@ export const CategoryHeader: React.FC<CategoryHeaderProps> = ({
 
       {/* Expandable metadata section */}
       {isExpanded && (
-        <Animated.View 
+        <Animated.View
           style={styles.metadata}
-          entering={undefined} // Will be handled by parent
         >
           <View style={styles.metadataRow}>
             <View style={styles.metadataItem}>

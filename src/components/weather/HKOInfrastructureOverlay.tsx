@@ -187,7 +187,7 @@ export const HKOInfrastructureOverlay: React.FC<HKOInfrastructureOverlayProps> =
           stationType="forecast"
           status="active"
           lastUpdate={forecast.lastUpdated}
-          onPress={() => handleStationPress(forecast.areaId, 'forecast')}
+          onPress={() => handleStationPress(forecast.areaId ?? '', 'forecast')}
         />
       ))}
 

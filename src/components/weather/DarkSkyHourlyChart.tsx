@@ -151,14 +151,13 @@ export const DarkSkyHourlyChart: React.FC<DarkSkyHourlyChartProps> = ({
           const racingWindow = showRacingFocus ? getRacingWindow(data) : null;
           
           return (
-            <Animated.View 
+            <Animated.View
               key={data.time}
               style={[
                 styles.hourlyCard,
                 racingWindow && !racingWindow.suitable && styles.unsuitableCard,
                 racingWindow && racingWindow.suitable && styles.suitableCard
               ]}
-              entering={FadeInRight.delay(index * 50)}
             >
               {/* Time */}
               <Text style={styles.hourlyTime}>

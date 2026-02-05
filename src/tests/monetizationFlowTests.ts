@@ -552,7 +552,7 @@ export class MonetizationFlowTester {
       {
         name: 'Generate training plan',
         test: async () => {
-          const plan = await racingAssistantService.generateTrainingPlan(this.testUserId, 'advanced');
+          const plan = await racingAssistantService.generateTrainingPlan(this.testUserId, 8, ['advanced']);
           return plan.exercises.length > 0;
         }
       },

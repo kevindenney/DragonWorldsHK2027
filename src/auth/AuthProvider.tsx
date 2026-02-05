@@ -140,7 +140,7 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
 
             // Timeout for Firebase service loading (5 seconds to allow for cold start)
             const firebaseLoadPromise = getFirebaseAuthService();
-            const timeoutPromise = new Promise((_, reject) => {
+            const timeoutPromise = new Promise<never>((_, reject) => {
               setTimeout(() => reject(new Error('Firebase service loading timed out')), 5000);
             });
 
@@ -157,7 +157,7 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
               }
             }, 2000);
 
-            const unsubscribe = firebaseAuthService.onAuthStateChanged((user) => {
+            const unsubscribe = firebaseAuthService.onAuthStateChanged((user: User | null) => {
               listenerFired = true;
               clearTimeout(listenerTimeout);
 
@@ -267,7 +267,7 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       const loginDuration = Date.now() - loginStartTime;
 
       // User state will be updated via onAuthStateChanged listener
-    } catch (error) {
+    } catch (error: unknown) {
       const loginDuration = Date.now() - loginStartTime;
 
       // Ultra-safe error logging - completely bulletproof
@@ -277,12 +277,13 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
         let errorName = 'unknown';
         let errorStack = 'No stack available';
 
-        try { errorMessage = error?.message || String(error); } catch {}
-        try { errorCode = error?.code || 'unknown'; } catch {}
-        try { errorName = error?.name || 'unknown'; } catch {}
+        const err = error as Record<string, unknown>;
+        try { errorMessage = (err?.message as string) || String(error); } catch {}
+        try { errorCode = (err?.code as string) || 'unknown'; } catch {}
+        try { errorName = (err?.name as string) || 'unknown'; } catch {}
         try {
-          if (error && error.stack) {
-            const stackStr = String(error.stack);
+          if (err && err.stack) {
+            const stackStr = String(err.stack);
             errorStack = stackStr.length > 300 ? stackStr.slice(0, 300) : stackStr;
           }
         } catch {}
@@ -325,7 +326,7 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       const regDuration = Date.now() - regStartTime;
 
       // User state will be updated via onAuthStateChanged listener
-    } catch (error) {
+    } catch (error: unknown) {
       const regDuration = Date.now() - regStartTime;
 
       // Ultra-safe error logging - completely bulletproof
@@ -335,12 +336,13 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
         let errorName = 'unknown';
         let errorStack = 'No stack available';
 
-        try { errorMessage = error?.message || String(error); } catch {}
-        try { errorCode = error?.code || 'unknown'; } catch {}
-        try { errorName = error?.name || 'unknown'; } catch {}
+        const err = error as Record<string, unknown>;
+        try { errorMessage = (err?.message as string) || String(error); } catch {}
+        try { errorCode = (err?.code as string) || 'unknown'; } catch {}
+        try { errorName = (err?.name as string) || 'unknown'; } catch {}
         try {
-          if (error && error.stack) {
-            const stackStr = String(error.stack);
+          if (err && err.stack) {
+            const stackStr = String(err.stack);
             errorStack = stackStr.length > 300 ? stackStr.slice(0, 300) : stackStr;
           }
         } catch {}
@@ -515,10 +517,11 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
         {children}
       </AuthContext.Provider>
     );
-  } catch (error) {
+  } catch (error: unknown) {
 
     // Check if this is the Hermes property error
-    if (error.message?.includes('property is not configurable')) {
+    const err = error as Error | undefined;
+    if (err?.message?.includes('property is not configurable')) {
     }
 
     throw error;

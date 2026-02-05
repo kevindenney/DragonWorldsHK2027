@@ -114,7 +114,7 @@ export const MarineConditionsCard: React.FC<MarineConditionsCardProps> = ({
   const racingImpact = showRacingImpact ? getRacingImpact() : null;
 
   return (
-    <Animated.View style={styles.container} entering={FadeInDown.delay(200)}>
+    <Animated.View style={styles.container}>
       <Text style={styles.title}>Marine Conditions</Text>
       
       {/* Wave Analysis */}

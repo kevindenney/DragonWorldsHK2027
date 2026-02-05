@@ -525,10 +525,3 @@ export class OfflineManager {
 }
 
 export const offlineManager = new OfflineManager();
-
-export type {
-  OfflineAction,
-  CachedData,
-  OfflineStatus,
-  SyncResult
-};

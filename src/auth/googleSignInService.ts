@@ -1,4 +1,4 @@
-import { GoogleSignin, GoogleSigninButton, statusCodes } from '@react-native-google-signin/google-signin';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { Platform } from 'react-native';
 
 interface GoogleUser {
@@ -65,14 +65,18 @@ export class GoogleSignInService {
       await this.initialize();
 
 
-      // Check current sign-in status
+      // Check current sign-in status using hasPreviousSignIn (synchronous)
       try {
-        const isSignedIn = await GoogleSignin.isSignedIn();
+        const hasPreviousSignIn = GoogleSignin.hasPreviousSignIn();
 
-        if (isSignedIn) {
-          const currentUser = await GoogleSignin.getCurrentUser();
+        if (hasPreviousSignIn) {
+          const currentUser = GoogleSignin.getCurrentUser();
+          if (currentUser) {
+            console.log('[GoogleSignIn] Found existing user:', currentUser.user.email);
+          }
         }
       } catch (error) {
+        // Silently continue if check fails
       }
 
       // Check if device has Google Play Services (Android)
@@ -83,22 +87,15 @@ export class GoogleSignInService {
       const response = await GoogleSignin.signIn();
 
 
-      // Handle the new API structure in version 16+
-      let userData, idToken, serverAuthCode;
-
-      if (response.type === 'success') {
-        // New API structure (v16+)
-        userData = response.data.user;
-        idToken = response.data.idToken;
-        serverAuthCode = response.data.serverAuthCode;
-      } else if (response.user) {
-        // Legacy API structure
-        userData = response.user;
-        idToken = response.idToken;
-        serverAuthCode = response.serverAuthCode;
-      } else {
-        throw new Error('Google Sign-In returned unknown response structure');
+      // Handle the response based on type
+      if (response.type === 'cancelled') {
+        throw new Error('Google sign-in was cancelled');
       }
+
+      // response.type === 'success'
+      // data is of type User which has: { user, scopes, idToken, serverAuthCode }
+      const { data } = response;
+      const userData = data.user;
 
 
       // Validate user data structure
@@ -120,19 +117,20 @@ export class GoogleSignInService {
           familyName: userData.familyName,
           givenName: userData.givenName,
         },
-        idToken: idToken,
-        accessToken: serverAuthCode, // Note: using serverAuthCode as accessToken for compatibility
+        idToken: data.idToken,
+        accessToken: data.serverAuthCode, // Note: using serverAuthCode as accessToken for compatibility
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { code?: string; message?: string };
 
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+      if (err.code === statusCodes.SIGN_IN_CANCELLED) {
         throw new Error('Google sign-in was cancelled');
-      } else if (error.code === statusCodes.IN_PROGRESS) {
+      } else if (err.code === statusCodes.IN_PROGRESS) {
         throw new Error('Google sign-in is already in progress');
-      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+      } else if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
         throw new Error('Google Play Services not available');
       } else {
-        throw new Error(error.message || 'Google sign-in failed');
+        throw new Error(err.message || 'Google sign-in failed');
       }
     }
   }
@@ -146,10 +144,13 @@ export class GoogleSignInService {
     }
   }
 
-  async isSignedIn(): Promise<boolean> {
+  /**
+   * Check if user has previously signed in (synchronous)
+   */
+  isSignedIn(): boolean {
     try {
-      await this.initialize();
-      return await GoogleSignin.isSignedIn();
+      // Note: hasPreviousSignIn is synchronous in v14+
+      return GoogleSignin.hasPreviousSignIn();
     } catch (error) {
       return false;
     }
@@ -158,23 +159,17 @@ export class GoogleSignInService {
   async getCurrentUser(): Promise<GoogleUser | null> {
     try {
       await this.initialize();
-      const response = await GoogleSignin.getCurrentUser();
 
-      if (!response) {
+      // getCurrentUser returns User | null directly
+      // User has structure: { user: {...}, scopes, idToken, serverAuthCode }
+      const userResponse = GoogleSignin.getCurrentUser();
+
+      if (!userResponse) {
         return null;
       }
 
-      // Handle both new API structure (v16+) and legacy structure
-      let userData;
-      if (response.data && response.data.user) {
-        // New API structure (v16+)
-        userData = response.data.user;
-      } else if (response.user) {
-        // Legacy API structure
-        userData = response.user;
-      } else {
-        return null;
-      }
+      // Extract the nested user data
+      const userData = userResponse.user;
 
       return {
         id: userData.id,

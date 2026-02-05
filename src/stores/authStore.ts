@@ -25,6 +25,8 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import { Platform } from 'react-native';
+import * as AuthSession from 'expo-auth-session';
+import { makeRedirectUri } from 'expo-auth-session';
 
 // Configure Google Sign-In
 GoogleSignin.configure({
@@ -66,6 +68,7 @@ const handleGoogleOAuth = async () => {
 
     // Create Firebase credential from Google ID token
     const credential = GoogleAuthProvider.credential(idToken);
+    if (!auth) throw new Error('Firebase Auth is not initialized');
     const userCredential = await signInWithCredential(auth, credential);
 
     console.log('🔐 [GOOGLE AUTH] Firebase sign-in successful:', userCredential.user.email);
@@ -119,6 +122,7 @@ const handleAppleOAuth = async () => {
       const credential = provider.credential({
         idToken: result.params.id_token,
       });
+      if (!auth) throw new Error('Firebase Auth is not initialized');
       return await signInWithCredential(auth, credential);
     } else {
       throw new Error('Apple sign-in was cancelled or failed');
@@ -180,6 +184,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true, error: null });
           
+          if (!auth) throw new Error('Firebase Auth is not initialized');
           const userCredential = await signInWithEmailAndPassword(
             auth,
             credentials.email,
@@ -241,6 +246,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true, error: null });
 
+          if (!auth) throw new Error('Firebase Auth is not initialized');
           const userCredential = await createUserWithEmailAndPassword(
             auth,
             credentials.email,
@@ -412,7 +418,8 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         try {
           set({ isLoading: true, error: null });
-          
+
+          if (!auth) throw new Error('Firebase Auth is not initialized');
           await signOut(auth);
           
           set({
@@ -438,7 +445,8 @@ export const useAuthStore = create<AuthState>()(
       resetPassword: async (email: string) => {
         try {
           set({ isLoading: true, error: null });
-          
+
+          if (!auth) throw new Error('Firebase Auth is not initialized');
           await sendPasswordResetEmail(auth, email);
           
           set({
@@ -466,7 +474,7 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: true, error: null });
           
           const currentUser = get().user;
-          const firebaseUser = auth.currentUser;
+          const firebaseUser = auth?.currentUser;
           
           if (!currentUser || !firebaseUser) {
             throw new Error('No user logged in');
@@ -487,7 +495,7 @@ export const useAuthStore = create<AuthState>()(
               await setDoc(userDocRef, {
                 ...updates,
                 updatedAt: new Date(),
-              }, { merge: true });
+              } as Partial<UserDocument>, { merge: true });
             }
           } catch (error) {
           }
@@ -573,8 +581,9 @@ export const useAuthStore = create<AuthState>()(
           // Mark as initializing to prevent concurrent calls
           set({ initializing: true });
           set({ isLoading: true });
-          
+
           // Set up Firebase auth state listener
+          if (!auth) throw new Error('Firebase Auth is not initialized');
           const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             try {
               if (firebaseUser) {

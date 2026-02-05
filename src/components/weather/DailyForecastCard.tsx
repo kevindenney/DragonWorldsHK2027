@@ -201,10 +201,10 @@ export const DailyForecastCard: React.FC<DailyForecastCardProps> = ({
                     styles.highTemp,
                     isToday && styles.todayTemp
                   ]}>
-                    {Math.round(convertTemperature(forecast.high, 'C', useWeatherUnits().temperature))}°
+                    {Math.round(convertTemperature(forecast.high, useWeatherUnits().temperature))}°
                   </IOSText>
                   <IOSText style={styles.lowTemp}>
-                    {Math.round(convertTemperature(forecast.low, 'C', useWeatherUnits().temperature))}°
+                    {Math.round(convertTemperature(forecast.low, useWeatherUnits().temperature))}°
                   </IOSText>
                 </View>
 
@@ -223,7 +223,7 @@ export const DailyForecastCard: React.FC<DailyForecastCardProps> = ({
                     <View style={styles.marineItem}>
                       <Wind size={12} color={colors.accent} />
                       <IOSText style={styles.marineText}>
-                        {Math.round(convertWindSpeed(forecast.windSpeed, 'kts', useWeatherUnits().windSpeed))} {useWeatherUnits().windSpeed} {getWindDirectionAbbr(forecast.windDirection)}
+                        {Math.round(convertWindSpeed(forecast.windSpeed, useWeatherUnits().windSpeed))} {useWeatherUnits().windSpeed} {getWindDirectionAbbr(forecast.windDirection)}
                       </IOSText>
                     </View>
 

@@ -79,9 +79,12 @@ export interface EventData {
     start: string;
     end: string;
   };
+  status?: 'upcoming' | 'active' | 'completed' | 'cancelled';
   totalRaces: number;
   completedRaces: number;
   totalCompetitors: number;
+  entryCount?: number;
+  description?: string;
   lastUpdated: Timestamp;
 }
 
@@ -795,7 +798,7 @@ class FirebaseRaceDataService {
         throw new Error('Firestore not ready');
       }
       
-      const raceResultsRef = doc(firestore, 'raceResults', 'ccr2024');
+      const raceResultsRef = doc(firestore!, 'raceResults', 'ccr2024');
       const docSnap = await getDoc(raceResultsRef);
       
       if (!docSnap.exists()) {
@@ -937,7 +940,7 @@ class FirebaseRaceDataService {
             discardedIndices = droppedRaces.map(d => d.index);
             
             // Calculate net points by dropping worst races
-            netPoints = raceResults.reduce((sum, points, idx) => {
+            netPoints = raceResults.reduce((sum: number, points: number, idx: number) => {
               const isDropped = discardedIndices.includes(idx);
               return isDropped ? sum : sum + points;
             }, 0);

@@ -10,7 +10,7 @@ export interface ContactInfo {
 }
 
 export interface TransportInfo {
-  type: 'mtr' | 'bus' | 'taxi' | 'ferry' | 'walking';
+  type: 'mtr' | 'bus' | 'taxi' | 'ferry' | 'walking' | 'shuttle';
   route: string;
   schedule?: string;
   cost?: string;

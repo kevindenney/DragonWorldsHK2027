@@ -5,7 +5,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   ViewStyle,
-  TextStyle
+  TextStyle,
+  StyleProp
 } from 'react-native';
 import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
 
@@ -15,7 +16,7 @@ export interface SimpleAuthButtonProps {
   variant?: 'primary' | 'secondary' | 'outline' | 'text' | 'inverse';
   loading?: boolean;
   disabled?: boolean;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   textStyle?: TextStyle;
   testID?: string;
 }
@@ -32,17 +33,33 @@ export function SimpleAuthButton({
 }: SimpleAuthButtonProps) {
   const isDisabled = disabled || loading;
 
+  const variantButtonStyles = {
+    primary: styles.buttonPrimary,
+    secondary: styles.buttonSecondary,
+    outline: styles.buttonOutline,
+    text: styles.buttonText,
+    inverse: styles.buttonInverse,
+  };
+
+  const variantTextStyles = {
+    primary: styles.textPrimary,
+    secondary: styles.textSecondary,
+    outline: styles.textOutline,
+    text: styles.textText,
+    inverse: styles.textInverse,
+  };
+
   const buttonStyle = [
     styles.button,
     variant !== 'text' && shadows.button,
-    styles[`button${variant.charAt(0).toUpperCase() + variant.slice(1)}`],
+    variantButtonStyles[variant],
     isDisabled && styles.buttonDisabled,
     style,
   ];
 
   const textStyleCombined = [
     styles.text,
-    styles[`text${variant.charAt(0).toUpperCase() + variant.slice(1)}`],
+    variantTextStyles[variant],
     isDisabled && styles.textDisabled,
     textStyle,
   ];

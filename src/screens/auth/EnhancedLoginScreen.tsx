@@ -86,7 +86,7 @@ export function EnhancedLoginScreen({ navigation }: EnhancedLoginScreenProps) {
     try {
       await login({ email, password });
     } catch (error) {
-      Alert.alert('Unable to Sign In', error.message || 'Please check your credentials and try again.');
+      Alert.alert('Unable to Sign In', (error instanceof Error ? error.message : 'Please check your credentials and try again.'));
     }
   };
 
@@ -94,7 +94,7 @@ export function EnhancedLoginScreen({ navigation }: EnhancedLoginScreenProps) {
     try {
       await loginWithProvider(provider);
     } catch (error) {
-      Alert.alert('Social Login Error', error.message || `${provider} login failed`);
+      Alert.alert('Social Login Error', (error instanceof Error ? error.message : `${provider} login failed`));
     }
   };
 

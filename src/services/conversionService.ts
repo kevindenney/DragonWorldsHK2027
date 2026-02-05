@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { subscriptionService, SubscriptionTier } from './subscriptionService';
+import { subscriptionService, SubscriptionTier, SubscriptionTierId } from './subscriptionService';
 import { notificationService } from './notificationService';
 import { errorHandler } from './errorHandler';
 
@@ -12,8 +12,12 @@ export interface ConversionEvent {
   context: {
     source: string; // Where the conversion event originated
     feature?: string; // Feature that triggered the event
-    subscriptionTier?: SubscriptionTier;
+    subscriptionTier?: SubscriptionTierId;
     value?: number; // Purchase value
+    paywallId?: string; // Paywall that triggered the event
+    trigger?: string; // Trigger type for cross-promotion
+    segment?: string; // User segment ID
+    offer?: string; // Offer code
   };
   metadata?: Record<string, any>;
 }
@@ -143,7 +147,7 @@ export class ConversionService {
 
   private async onSubscriptionPurchase(event: ConversionEvent): Promise<void> {
     // Send TacticalWind Pro cross-promotion
-    if (event.context.subscriptionTier === SubscriptionTier.BASIC) {
+    if (event.context.subscriptionTier === 'basic') {
       setTimeout(() => {
         notificationService.sendTacticalWindPromotion();
       }, 24 * 60 * 60 * 1000); // 24 hours after purchase
@@ -470,11 +474,3 @@ export class ConversionService {
 
 // Export singleton instance
 export const conversionService = new ConversionService();
-
-// Export types
-export type {
-  ConversionEvent,
-  ConversionFunnel,
-  PaywallConfig,
-  ConversionMetrics
-};

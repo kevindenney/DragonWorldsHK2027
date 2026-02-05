@@ -1,0 +1,14 @@
+# Maestro Configuration for Dragon Worlds HK 2027
+# https://maestro.mobile.dev/
+
+appId: com.denneyke.dragonworldshk2027
+name: Dragon Worlds HK 2027
+
+# Default settings for all flows
+onFlowStart:
+  - launchApp:
+      clearState: true
+
+# Environment configuration
+env:
+  APP_NAME: "Dragon Worlds HK 2027"

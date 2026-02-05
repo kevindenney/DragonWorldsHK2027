@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { analyticsService } from './analyticsService';
-import { subscriptionService, SubscriptionTier } from './subscriptionService';
+import { subscriptionService, SubscriptionTier, SubscriptionTierId } from './subscriptionService';
 import { loyaltyService } from './loyaltyService';
 
 // Enhanced sponsor revenue interfaces for Phase 6
@@ -47,7 +47,7 @@ export interface SponsorPlacement {
 }
 
 export interface SponsorTargeting {
-  subscriptionTiers: SubscriptionTier[];
+  subscriptionTiers: SubscriptionTierId[];
   sailingExperience: string[];
   regions: string[];
   demographics: {
@@ -81,7 +81,7 @@ export interface SponsorAnalytics {
   audience: {
     uniqueUsers: number;
     demographics: Record<string, number>;
-    subscriptionTierBreakdown: Record<SubscriptionTier, number>;
+    subscriptionTierBreakdown: Record<SubscriptionTierId, number>;
   };
   performance: {
     topPerformingPlacements: string[];
@@ -149,7 +149,7 @@ export interface PremiumSponsorFeature {
   sponsorId: string;
   featureType: 'weather_branding' | 'race_commentary' | 'exclusive_content' | 'premium_alerts' | 'custom_dashboard' | 'vip_experiences';
   userAccess: {
-    subscriptionTiers: SubscriptionTier[];
+    subscriptionTiers: SubscriptionTierId[];
     loyaltyTiers: string[];
     participantTypes: string[];
   };
@@ -193,7 +193,7 @@ export interface SponsorROIReport {
   };
   audienceInsights: {
     demographics: Record<string, number>;
-    subscriptionTiers: Record<SubscriptionTier, number>;
+    subscriptionTiers: Record<SubscriptionTierId, number>;
     sailingExperience: Record<string, number>;
     topRegions: string[];
     engagementPatterns: Record<string, number>;
@@ -1002,7 +1002,7 @@ export class SponsorRevenueService {
     return undefined;
   }
 
-  private async getUserTier(userId: string): Promise<SubscriptionTier> {
+  private async getUserTier(userId: string): Promise<SubscriptionTierId> {
     const subscriptionStatus = subscriptionService.getSubscriptionStatus();
     return subscriptionStatus?.currentTier || 'free';
   }
@@ -1020,7 +1020,7 @@ export class SponsorRevenueService {
 
   private matchesTargeting(
     targeting: SponsorTargeting,
-    userTier: SubscriptionTier,
+    userTier: SubscriptionTierId,
     userProfile: any
   ): boolean {
     // Check subscription tier
@@ -1157,7 +1157,7 @@ export class SponsorRevenueService {
     return Array.from(this.sponsorPackages.values()).filter(pkg => pkg.isActive);
   }
 
-  getPremiumFeatures(userTier: SubscriptionTier): PremiumSponsorFeature[] {
+  getPremiumFeatures(userTier: SubscriptionTierId): PremiumSponsorFeature[] {
     return this.premiumFeatures.filter(feature => 
       feature.userAccess.subscriptionTiers.includes(userTier)
     );
@@ -1205,17 +1205,3 @@ export class SponsorRevenueService {
 
 // Export singleton instance
 export const sponsorRevenueService = new SponsorRevenueService();
-
-// Export types
-export type {
-  SponsorPackage,
-  SponsorFeature,
-  SponsorPlacement,
-  SponsorTargeting,
-  SponsorAnalytics,
-  SponsorContract,
-  PerformanceBonus,
-  DynamicSponsorContent,
-  PremiumSponsorFeature,
-  SponsorROIReport
-};

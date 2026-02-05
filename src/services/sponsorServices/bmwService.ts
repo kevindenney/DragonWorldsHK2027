@@ -103,7 +103,7 @@ export interface TransportBooking {
   updatedAt: string;
 }
 
-export interface BMWService {
+export interface BMWServiceInfo {
   id: string;
   name: string;
   description: string;
@@ -551,7 +551,7 @@ class BMWService {
   /**
    * Get available BMW services
    */
-  async getServices(): Promise<BMWService[]> {
+  async getServices(): Promise<BMWServiceInfo[]> {
     return [
       {
         id: 'airport_transfer',

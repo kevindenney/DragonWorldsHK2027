@@ -17,7 +17,6 @@ import { useAuth } from '../../auth/useAuth';
 import { TabNavigator } from './TabNavigator';
 import { WelcomeScreen, FeatureTourScreen, GuestModeScreen, OnboardingScreen, AccountCreationScreen } from '../../screens/onboarding';
 import { useUserStore } from '../../stores/userStore';
-import { WalkthroughProvider } from '../../components/walkthrough/WalkthroughProvider';
 
 const Stack = createStackNavigator();
 
@@ -144,7 +143,6 @@ const MainApp = () => {
 
   try {
     return (
-      <WalkthroughProvider>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen
           name="MainTabs"
@@ -213,7 +211,6 @@ const MainApp = () => {
         }}
       />
     </Stack.Navigator>
-      </WalkthroughProvider>
     );
   } catch (error) {
     throw error;

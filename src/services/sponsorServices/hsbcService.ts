@@ -9,7 +9,7 @@ export interface HSBCLocation {
     latitude: number;
     longitude: number;
   };
-  services: HSBCService[];
+  services: HSBCServiceInfo[];
   hours: {
     [key: string]: string; // day of week -> hours
   };
@@ -27,7 +27,7 @@ export interface HSBCLocation {
   privateAccess: boolean;
 }
 
-export interface HSBCService {
+export interface HSBCServiceInfo {
   id: string;
   name: string;
   description: string;
@@ -265,7 +265,7 @@ class HSBCService {
   /**
    * Get available HSBC services
    */
-  async getAvailableServices(): Promise<HSBCService[]> {
+  async getAvailableServices(): Promise<HSBCServiceInfo[]> {
     return [
       {
         id: 'currency_exchange',

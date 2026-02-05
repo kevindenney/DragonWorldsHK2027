@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { AlertTriangle, RefreshCw, ArrowLeft, Bug } from 'lucide-react-native';
+import Animated, { FadeIn } from '../../utils/reanimatedWrapper';
 import { colors, typography, spacing, shadows } from '../../constants/theme';
 import { errorHandler } from '../../services/errorHandler';
 
@@ -221,9 +222,8 @@ export function SimpleError({
   testID 
 }: SimpleErrorProps) {
   return (
-    <Animated.View 
+    <Animated.View
       style={styles.simpleErrorContainer}
-      entering={FadeIn.duration(200)}
       testID={testID}
     >
       <View style={styles.simpleErrorContent}>

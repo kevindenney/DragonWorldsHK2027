@@ -28,7 +28,7 @@ import {
   FieldValue,
   QueryDocumentSnapshot,
 } from 'firebase/firestore';
-import { firestore } from '../../config/firebase';
+import { firestore, isFirestoreReady } from '../../config/firebase';
 import {
   CollectionName,
   FirestoreUser,
@@ -92,6 +92,19 @@ export interface PaginatedResult<T> {
  */
 export class FirestoreService {
   /**
+   * Get the Firestore instance, throwing if not available
+   */
+  private getFirestore() {
+    if (!firestore) {
+      throw new FirestoreServiceError(
+        'service_unavailable',
+        'Firestore is not initialized. Please check your Firebase configuration.'
+      );
+    }
+    return firestore;
+  }
+
+  /**
    * Get a document by ID
    */
   async getDocument<T>(
@@ -100,7 +113,7 @@ export class FirestoreService {
     validator?: (data: unknown) => T
   ): Promise<T | null> {
     try {
-      const docRef = doc(firestore, collectionName, docId);
+      const docRef = doc(this.getFirestore(), collectionName, docId);
       const docSnap = await getDoc(docRef);
 
       if (!docSnap.exists()) {
@@ -135,7 +148,7 @@ export class FirestoreService {
     validator?: (data: unknown) => T
   ): Promise<PaginatedResult<T>> {
     try {
-      const collectionRef = collection(firestore, collectionName);
+      const collectionRef = collection(this.getFirestore(), collectionName);
       const constraints: QueryConstraint[] = [];
 
       if (options?.where) {
@@ -199,7 +212,7 @@ export class FirestoreService {
     validator?: (data: unknown) => T
   ): Promise<T> {
     try {
-      const collectionRef = collection(firestore, collectionName);
+      const collectionRef = collection(this.getFirestore(), collectionName);
       
       // Add timestamps
       const documentData = {
@@ -240,7 +253,7 @@ export class FirestoreService {
     validator?: (data: unknown) => T
   ): Promise<T> {
     try {
-      const docRef = doc(firestore, collectionName, docId);
+      const docRef = doc(this.getFirestore(), collectionName, docId);
 
       // Add update timestamp
       const updateData = {
@@ -276,7 +289,7 @@ export class FirestoreService {
    */
   async deleteDocument(collectionName: string, docId: string): Promise<void> {
     try {
-      const docRef = doc(firestore, collectionName, docId);
+      const docRef = doc(this.getFirestore(), collectionName, docId);
       await deleteDoc(docRef);
     } catch (error) {
       this.handleError(error, 'Failed to delete document');
@@ -292,7 +305,7 @@ export class FirestoreService {
     callback: (data: T | null) => void,
     validator?: (data: unknown) => T
   ): Unsubscribe {
-    const docRef = doc(firestore, collectionName, docId);
+    const docRef = doc(this.getFirestore(), collectionName, docId);
     
     return onSnapshot(docRef, (docSnap) => {
       if (!docSnap.exists()) {
@@ -325,7 +338,7 @@ export class FirestoreService {
     callback: (data: T[]) => void,
     validator?: (data: unknown) => T
   ): Unsubscribe {
-    const collectionRef = collection(firestore, collectionName);
+    const collectionRef = collection(this.getFirestore(), collectionName);
     const constraints: QueryConstraint[] = [];
 
     if (options?.where) {
@@ -373,13 +386,14 @@ export class FirestoreService {
     data?: any;
   }>): Promise<void> {
     try {
-      const batch = writeBatch(firestore);
+      const batch = writeBatch(this.getFirestore());
 
+      const db = this.getFirestore();
       operations.forEach(operation => {
         if (operation.type === 'create') {
-          const docRef = operation.docId 
-            ? doc(firestore, operation.collectionName, operation.docId)
-            : doc(collection(firestore, operation.collectionName));
+          const docRef = operation.docId
+            ? doc(db, operation.collectionName, operation.docId)
+            : doc(collection(db, operation.collectionName));
           
           batch.set(docRef, {
             ...operation.data,
@@ -387,13 +401,13 @@ export class FirestoreService {
             updatedAt: toFirestoreTimestamp(),
           });
         } else if (operation.type === 'update' && operation.docId) {
-          const docRef = doc(firestore, operation.collectionName, operation.docId);
+          const docRef = doc(db, operation.collectionName, operation.docId);
           batch.update(docRef, {
             ...operation.data,
             updatedAt: toFirestoreTimestamp(),
           });
         } else if (operation.type === 'delete' && operation.docId) {
-          const docRef = doc(firestore, operation.collectionName, operation.docId);
+          const docRef = doc(db, operation.collectionName, operation.docId);
           batch.delete(docRef);
         }
       });
@@ -411,7 +425,7 @@ export class FirestoreService {
     updateFunction: (transaction: any) => Promise<T>
   ): Promise<T> {
     try {
-      return await runTransaction(firestore, updateFunction);
+      return await runTransaction(this.getFirestore(), updateFunction);
     } catch (error) {
       this.handleError(error, 'Transaction failed');
     }
@@ -425,7 +439,7 @@ export class FirestoreService {
     whereConditions?: QueryOptions['where']
   ): Promise<number> {
     try {
-      const collectionRef = collection(firestore, collectionName);
+      const collectionRef = collection(this.getFirestore(), collectionName);
       const constraints: QueryConstraint[] = [];
 
       if (whereConditions) {
@@ -448,7 +462,7 @@ export class FirestoreService {
    */
   async documentExists(collectionName: string, docId: string): Promise<boolean> {
     try {
-      const docRef = doc(firestore, collectionName, docId);
+      const docRef = doc(this.getFirestore(), collectionName, docId);
       const docSnap = await getDoc(docRef);
       return docSnap.exists();
     } catch (error) {

@@ -1,0 +1,109 @@
+# Notices Tab Deep Test
+# Tests notices list, filtering, and detail view
+
+appId: com.denneyke.dragonworldshk2027
+name: Notices Deep Test
+
+---
+
+# =====================
+# AUTHENTICATION
+# =====================
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible: "Join the Fleet"
+    timeout: 5000
+
+- tapOn:
+    id: "register-displayname"
+- inputText: "Notices Test"
+
+- tapOn:
+    id: "register-email"
+- inputText: "notices@maestro.test"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-confirm-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-confirm-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-submit"
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 30000
+
+# =====================
+# NAVIGATE TO NOTICES
+# =====================
+
+- tapOn:
+    id: "tab-noticeboard"
+- waitForAnimationToEnd
+
+- assertVisible: "Notices"
+- assertVisible: "APAC 2026"
+
+# =====================
+# NOTICE FILTERS
+# =====================
+
+# Tap on Pre-Event filter
+- tapOn:
+    text: "Pre-Event"
+    optional: true
+- waitForAnimationToEnd
+
+# Tap back to All
+- tapOn:
+    text: "All"
+    optional: true
+- waitForAnimationToEnd
+
+# =====================
+# NOTICE INTERACTION
+# =====================
+
+# Tap on a notice
+- tapOn:
+    text: "Notice"
+    optional: true
+- waitForAnimationToEnd
+
+# Navigate back
+- pressKey: Escape
+- waitForAnimationToEnd
+
+- assertVisible: "Notices"
+
+# Test complete!

@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { weatherManager } from './weatherManager';
 import { retentionManager } from './retentionManager';
 import { analyticsService } from './analyticsService';
-import { subscriptionService, SubscriptionTier } from './subscriptionService';
+import { subscriptionService, SubscriptionTier, SubscriptionTierId } from './subscriptionService';
 import { loyaltyService } from './loyaltyService';
 
 // AI Racing Assistant interfaces for Phase 6
@@ -483,8 +483,12 @@ export class RacingAssistantService {
   ): Promise<WindPrediction[]> {
     try {
       // Get weather data from weather manager
-      const weatherData = await weatherManager.updateWeatherData({ location });
-      
+      const weatherResult = await weatherManager.updateWeatherData(true);
+      if (!weatherResult.success || !weatherResult.data) {
+        return [];
+      }
+      const weatherData = weatherResult.data;
+
       const predictions: WindPrediction[] = [];
 
       // Generate predictions for next few hours
@@ -1058,7 +1062,7 @@ export class RacingAssistantService {
     return Math.abs(actualWindSpeed - requiredWindSpeed) <= 5; // 5 knot tolerance
   }
 
-  private getMaxRecommendations(tier: SubscriptionTier): number {
+  private getMaxRecommendations(tier: SubscriptionTierId): number {
     switch (tier) {
       case 'elite': return 10;
       case 'professional': return 6;
@@ -1144,22 +1148,3 @@ export class RacingAssistantService {
 
 // Export singleton instance
 export const racingAssistantService = new RacingAssistantService();
-
-// Export types
-export type {
-  RacingInsight,
-  ActionItem,
-  WeatherCondition,
-  PerformanceAnalysis,
-  PerformanceCategory,
-  PerformanceTrend,
-  TacticalRecommendation,
-  RacingScenario,
-  TrainingPlan,
-  TrainingWeek,
-  TrainingSession,
-  WindPrediction,
-  RacePreparationChecklist,
-  ChecklistCategory,
-  ChecklistItem
-};

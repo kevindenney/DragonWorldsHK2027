@@ -1,0 +1,92 @@
+# Forms Tab Deep Test
+# Tests forms display and interactions
+
+appId: com.denneyke.dragonworldshk2027
+name: Forms Deep Test
+
+---
+
+# =====================
+# AUTHENTICATION
+# =====================
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible: "Join the Fleet"
+    timeout: 5000
+
+- tapOn:
+    id: "register-displayname"
+- inputText: "Forms Test"
+
+- tapOn:
+    id: "register-email"
+- inputText: "forms@maestro.test"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-confirm-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-confirm-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-submit"
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 30000
+
+# =====================
+# NAVIGATE TO FORMS
+# =====================
+
+- tapOn:
+    id: "tab-forms"
+- waitForAnimationToEnd
+
+- assertVisible: "Forms"
+- assertVisible: "APAC 2026"
+
+# =====================
+# FORMS INTERACTION
+# =====================
+
+# Tap on a form if available
+- tapOn:
+    text: "Request"
+    optional: true
+- waitForAnimationToEnd
+
+- pressKey: Escape
+- waitForAnimationToEnd
+
+- assertVisible: "Forms"
+
+# Test complete!

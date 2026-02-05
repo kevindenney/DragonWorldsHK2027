@@ -1,0 +1,71 @@
+# Results Screen Flow Tests for Dragon Worlds HK 2027
+# Tests results viewing and navigation
+# NOTE: Requires authenticated state
+
+appId: com.denneyke.dragonworldshk2027
+name: Results Flow
+
+---
+
+# Test: Results Screen Loads
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+# Navigate to Results tab
+- tapOn:
+    id: "tab-results"
+
+# Wait for results screen to load
+- extendedWaitUntil:
+    visible: "Results"
+    timeout: 5000
+
+# Assert Results screen is visible
+- assertVisible: "Results"
+
+---
+
+# Test: Results List Content
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+- tapOn:
+    id: "tab-results"
+
+- extendedWaitUntil:
+    visible: "Results"
+    timeout: 5000
+
+# Scroll through results list
+- scroll:
+    direction: DOWN
+
+- scroll:
+    direction: UP
+
+---
+
+# Test: Pull to Refresh Results
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+- tapOn:
+    id: "tab-results"
+
+- extendedWaitUntil:
+    visible: "Results"
+    timeout: 5000
+
+# Pull down to refresh
+- swipe:
+    direction: DOWN
+    duration: 500

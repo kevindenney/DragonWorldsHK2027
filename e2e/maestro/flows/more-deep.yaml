@@ -1,0 +1,219 @@
+# More Tab Deep Test
+# Tests every sub-menu item in the More section
+
+appId: com.denneyke.dragonworldshk2027
+name: More Tab Deep Test
+
+---
+
+# =====================
+# AUTHENTICATION
+# =====================
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible: "Join the Fleet"
+    timeout: 5000
+
+- tapOn:
+    id: "register-displayname"
+- inputText: "More Test"
+
+- tapOn:
+    id: "register-email"
+- inputText: "more@maestro.test"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-confirm-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-confirm-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-submit"
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 30000
+
+# =====================
+# NAVIGATE TO MORE
+# =====================
+
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+- assertVisible: "More"
+
+# Wait for menu items to load
+- extendedWaitUntil:
+    visible: "RACING"
+    timeout: 5000
+
+# =====================
+# 1. ENTRANTS
+# =====================
+
+- tapOn:
+    id: "more-menu-entrants"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "RACING"
+    timeout: 5000
+
+# =====================
+# 2. VENUE MAP
+# =====================
+
+- tapOn:
+    id: "more-menu-map"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "RACING"
+    timeout: 5000
+
+# =====================
+# 3. CONTAINER SHIPPING
+# =====================
+
+- tapOn:
+    id: "more-menu-shipping"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "RACING"
+    timeout: 5000
+
+# =====================
+# 4. NEWS
+# =====================
+
+- tapOn:
+    id: "more-menu-news"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "RACING"
+    timeout: 5000
+
+# =====================
+# 5. CONTACTS
+# =====================
+
+- tapOn:
+    id: "more-menu-contacts"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "RACING"
+    timeout: 5000
+
+# =====================
+# 6. WEATHER
+# =====================
+
+- tapOn:
+    id: "more-menu-weather"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "RACING"
+    timeout: 5000
+
+# =====================
+# 7. SPONSORS
+# =====================
+
+- tapOn:
+    id: "more-menu-sponsors"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "RACING"
+    timeout: 5000
+
+# =====================
+# 8. DATA SOURCES
+# =====================
+
+- tapOn:
+    id: "more-menu-data-sources"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "RACING"
+    timeout: 5000
+
+# =====================
+# 9. ABOUT
+# =====================
+
+- tapOn:
+    id: "more-menu-about-regattaflow"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+# =====================
+# VERIFY BACK ON MORE
+# =====================
+
+- assertVisible: "More"
+
+# Test complete!

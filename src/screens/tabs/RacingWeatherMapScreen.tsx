@@ -183,7 +183,7 @@ export function RacingWeatherMapScreen({ navigation }: WeatherScreenProps) {
   useEffect(() => {
     const loadWindStations = async () => {
       try {
-        const stations = await windStationService.getStations();
+        const stations = await windStationService.getWindStations();
         setWindStations(stations);
       } catch (error) {
         setWindStations([]);
@@ -412,7 +412,7 @@ Temperature: ${point.temperature.toFixed(1)}°C
           rotateEnabled={true}
           zoomEnabled={true}
           scrollEnabled={true}
-          onRegionChangeComplete={(region) => {
+          onRegionChangeComplete={(region: { latitudeDelta: number }) => {
             const zoomLevel = Math.round(Math.log(360 / region.latitudeDelta) / Math.LN2);
             setMapZoomLevel(zoomLevel);
           }}

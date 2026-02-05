@@ -26,7 +26,8 @@ import {
   IOSBadge,
   IOSSection
 } from '../ios';
-import { LoadingSpinner, SimpleError } from '../shared';
+import { LoadingSpinner } from '../shared/LoadingSpinner';
+import { SimpleError } from '../shared/SimpleError';
 import NoticeBoardService from '../../services/noticeBoardService';
 import { useUserStore } from '../../stores/userStore';
 import type { Competitor } from '../../types/noticeBoard';

@@ -1,0 +1,79 @@
+# Onboarding Flow Tests for Dragon Worlds HK 2027
+# Tests the welcome screen and authentication flow
+
+appId: com.denneyke.dragonworldshk2027
+name: Onboarding Flow
+
+---
+
+# Test: Welcome Screen Elements
+- launchApp:
+    clearState: true
+
+# Wait for welcome screen to load
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+# Assert welcome screen text is visible
+- assertVisible: "Welcome to"
+- assertVisible: "Dragon Worlds"
+
+# Assert authentication options are visible
+- assertVisible: "Continue with Email"
+
+# Check for Google Sign-In option (platform dependent)
+- assertVisible:
+    text: "Continue with Google"
+    optional: true
+
+# Check for Apple Sign-In option (iOS only)
+- assertVisible:
+    text: "Continue with Apple"
+    optional: true
+
+# Assert sign-in link is visible
+- assertVisible:
+    text: ".*Already have an account.*"
+
+---
+
+# Test: Navigate to Email Registration
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+# Tap on Continue with Email
+- tapOn: "Continue with Email"
+
+# Wait for registration screen
+- extendedWaitUntil:
+    visible: "Join the Fleet"
+    timeout: 5000
+
+# Assert registration form elements
+- assertVisible: "Join the Fleet"
+
+---
+
+# Test: Navigate to Login Screen
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+# Tap on Sign In link
+- tapOn: "Already have an account?"
+
+# Wait for login screen
+- extendedWaitUntil:
+    visible: "Sign In"
+    timeout: 5000
+
+# Assert login form is visible
+- assertVisible: "Sign In"

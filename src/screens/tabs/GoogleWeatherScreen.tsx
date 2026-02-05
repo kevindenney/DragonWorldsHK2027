@@ -36,7 +36,7 @@ import { WeatherMetricTabs } from '../../components/weather/WeatherMetricTabs';
 import { HourlyForecastChart, MetricType, HourlyForecastData } from '../../components/weather/HourlyForecastChart';
 import { DailyForecastCard, DailyForecastData } from '../../components/weather/DailyForecastCard';
 import { LocationPickerModal, LocationData } from '../../components/weather/LocationPickerModal';
-import { DaySelector, type DayData } from '../../components/weather/DaySelector';
+import { DaySelector, type DayForecastData as DayData } from '../../components/weather/DaySelector';
 import { UnitConverter } from '../../components/weather/UnitConverter';
 
 // Hooks and Services

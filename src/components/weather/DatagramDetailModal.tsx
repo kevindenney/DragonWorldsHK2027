@@ -77,16 +77,16 @@ const DatagramDetailModal: React.FC<DatagramDetailModalProps> = ({
   }, [visible]);
 
   const gestureHandler = useAnimatedGestureHandler({
-    onStart: (_, context: any) => {
+    onStart: (_: { translationY: number }, context: { startY: number }) => {
       context.startY = translateY.value;
     },
-    onActive: (event, context) => {
+    onActive: (event: { translationY: number }, context: { startY: number }) => {
       const newY = context.startY + event.translationY;
       if (newY > 0) {
         translateY.value = newY;
       }
     },
-    onEnd: (event) => {
+    onEnd: (event: { translationY: number; velocityY: number }) => {
       const shouldClose = event.translationY > 100 || event.velocityY > 500;
       if (shouldClose) {
         translateY.value = withTiming(SCREEN_HEIGHT, { duration: 300 });
@@ -232,8 +232,8 @@ const DatagramDetailModal: React.FC<DatagramDetailModalProps> = ({
       stroke: colors.primary,
     },
     // Custom props for better time display
-    formatYLabel: (value) => value,
-    formatXLabel: (value) => value,
+    formatYLabel: (value: string) => value,
+    formatXLabel: (value: string) => value,
     // Show fewer horizontal lines
     count: 4,
   };

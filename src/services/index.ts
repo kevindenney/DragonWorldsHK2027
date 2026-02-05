@@ -8,10 +8,15 @@ export { default as userProfileService } from './userProfileService';
 export * from './userProfileService';
 
 // Core services
+import { newsService as _newsService } from './newsService';
+export { newsService } from './newsService';
+const newsService = _newsService;
+export type { NewsItem } from './newsService';
+
+import { weatherAPI as _weatherAPI } from './weatherAPI';
 export { weatherAPI } from './weatherAPI';
+const weatherAPI = _weatherAPI;
 export type {
-  PredictWindResponse,
-  PredictWindData,
   WaveData,
   WeatherData,
   TideData,
@@ -21,25 +26,26 @@ export type {
   WeatherCache
 } from './weatherAPI';
 
+import { subscriptionService as _subscriptionService } from './subscriptionService';
 export { subscriptionService } from './subscriptionService';
+const subscriptionService = _subscriptionService;
 export type {
   SubscriptionTier,
   SubscriptionFeature,
   SubscriptionStatus,
   ParticipantVerification,
-  PurchaseRequest,
-  VerificationResult,
-  SubscriptionMetrics
+  PurchaseResult
 } from './subscriptionService';
 
+import { weatherManager as _weatherManager } from './weatherManager';
 export { weatherManager } from './weatherManager';
+const weatherManager = _weatherManager;
 export type {
   ProcessedWeatherData,
-  WeatherAlert,
-  AlertCondition,
-  WeatherUpdateOptions
+  WeatherAlert
 } from './weatherManager';
 
+import { notificationService as _notificationService } from './notificationService';
 export { notificationService } from './notificationService';
 export type {
   NotificationPreferences,
@@ -48,8 +54,11 @@ export type {
   SubscriptionNotification,
   NotificationSchedule
 } from './notificationService';
+const notificationService = _notificationService;
 
+import { errorHandler as _errorHandler } from './errorHandler';
 export { errorHandler } from './errorHandler';
+const errorHandler = _errorHandler;
 export type {
   AppError,
   NetworkStatus,

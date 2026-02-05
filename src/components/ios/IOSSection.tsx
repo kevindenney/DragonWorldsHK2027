@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { IOSText } from './IOSText';
 import { colors } from '../../constants/theme';
 
@@ -8,7 +8,7 @@ export interface IOSSectionProps {
   subtitle?: string;
   footer?: string;
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   contentStyle?: ViewStyle;
   spacing?: 'compact' | 'regular' | 'loose';
   testID?: string;
@@ -94,7 +94,7 @@ export const IOSSection: React.FC<IOSSectionProps> = ({
 export interface IOSContentGroupProps {
   children: React.ReactNode;
   spacing?: number; // Custom spacing in points
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const IOSContentGroup: React.FC<IOSContentGroupProps> = ({

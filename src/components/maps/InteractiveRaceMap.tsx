@@ -49,8 +49,7 @@ export const InteractiveRaceMap: React.FC<InteractiveRaceMapProps> = ({
   selectedLocationId,
   onLocationSelect,
 }) => {
-  const userStore = useUserStore();
-  const garminService = useMemo(() => new GarminService(userStore), []);
+  const garminService = useMemo(() => new GarminService(useUserStore), []);
   
   const [mapState, setMapState] = useState<MapState>({
     charts: [],

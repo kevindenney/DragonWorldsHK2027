@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Linking, Alert } from 'react-native';
-import { subscriptionService, SubscriptionTier } from './subscriptionService';
+import { subscriptionService, SubscriptionTier, SubscriptionTierId } from './subscriptionService';
 import { notificationService } from './notificationService';
 import { errorHandler } from './errorHandler';
 import { conversionService } from './conversionService';
@@ -23,7 +23,7 @@ export interface CrossPromotionTrigger {
   type: 'weather_paywall' | 'results_screen' | 'post_race' | 'subscription_upgrade' | 'feature_usage';
   name: string;
   conditions: {
-    minSubscriptionTier?: SubscriptionTier;
+    minSubscriptionTier?: SubscriptionTierId;
     userSegment?: UserSegment;
     weatherCheckCount?: number;
     raceParticipation?: boolean;
@@ -49,7 +49,7 @@ export interface UserSegment {
   id: string;
   name: string;
   criteria: {
-    subscriptionTier?: SubscriptionTier[];
+    subscriptionTier?: SubscriptionTierId[];
     weatherCheckFrequency?: 'low' | 'medium' | 'high';
     raceParticipation?: boolean;
     socialEngagement?: 'low' | 'medium' | 'high';
@@ -439,7 +439,7 @@ export class CrossPromotionService {
       type: 'weather_paywall',
       name: 'Weather Paywall Cross-Promotion',
       conditions: {
-        minSubscriptionTier: SubscriptionTier.FREE,
+        minSubscriptionTier: 'free',
         timeSinceLastPromotion: 24
       },
       priority: 10,
@@ -464,7 +464,7 @@ export class CrossPromotionService {
       name: 'Post-Race Tactical Analysis',
       conditions: {
         raceParticipation: true,
-        minSubscriptionTier: SubscriptionTier.BASIC,
+        minSubscriptionTier: 'basic',
         timeSinceLastPromotion: 72
       },
       priority: 9,
@@ -498,7 +498,7 @@ export class CrossPromotionService {
       name: 'Weather Focused',
       criteria: {
         weatherCheckFrequency: 'high',
-        subscriptionTier: [SubscriptionTier.PROFESSIONAL, SubscriptionTier.ELITE]
+        subscriptionTier: ['professional', 'elite']
       }
     });
   }
@@ -636,12 +636,3 @@ export class CrossPromotionService {
 
 // Export singleton instance
 export const crossPromotionService = new CrossPromotionService();
-
-// Export types
-export type {
-  TacticalWindUser,
-  CrossPromotionTrigger,
-  SpecialOffer,
-  UserSegment,
-  CrossPromotionAnalytics
-};

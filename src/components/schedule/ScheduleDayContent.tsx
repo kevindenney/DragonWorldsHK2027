@@ -11,18 +11,16 @@
  * - Smooth fade animation when content changes
  */
 
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   StyleSheet,
-  Animated,
 } from 'react-native';
 import { Calendar, SunMedium } from 'lucide-react-native';
 import { IOSText } from '../ios/IOSText';
 import { ActivityItem } from './ActivityItem';
 import { colors, spacing } from '../../constants/theme';
-import type { Day, Activity, ActivityType } from '../../data/scheduleData';
-import { useWalkthroughStore } from '../../stores/walkthroughStore';
+import type { Day } from '../../data/scheduleData';
 
 interface ScheduleDayContentProps {
   day: Day | null;
@@ -31,17 +29,6 @@ interface ScheduleDayContentProps {
 export const ScheduleDayContent: React.FC<ScheduleDayContentProps> = ({
   day,
 }) => {
-  const firstActivityRef = useRef<View>(null);
-  const { registerTarget, unregisterTarget } = useWalkthroughStore();
-
-  // Register first activity as walkthrough target
-  useEffect(() => {
-    registerTarget('activity-item', firstActivityRef);
-    return () => {
-      unregisterTarget('activity-item');
-    };
-  }, [registerTarget, unregisterTarget]);
-
   // Get all activities for the day
   const activities = useMemo(() => {
     if (!day) return [];
@@ -86,16 +73,11 @@ export const ScheduleDayContent: React.FC<ScheduleDayContentProps> = ({
       {/* Activities List */}
       <View style={styles.activitiesContainer}>
         {activities.map((activity, index) => (
-          <View
+          <ActivityItem
             key={`${day.id}-${index}-${activity.time}-${activity.activity}`}
-            ref={index === 0 ? firstActivityRef : undefined}
-            collapsable={false}
-          >
-            <ActivityItem
-              activity={activity}
-              activityDate={day.date}
-            />
-          </View>
+            activity={activity}
+            activityDate={day.date}
+          />
         ))}
       </View>
     </View>

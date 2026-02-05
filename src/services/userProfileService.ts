@@ -8,7 +8,7 @@ import {
   UserProfile,
   UserRole,
   UserStatus,
-  AuthProvider,
+  AuthProviderType,
   ProfileUpdateRequest,
   LinkedProvider,
 } from '../types/auth';
@@ -71,7 +71,7 @@ export class UserProfileService {
   /**
    * Create user profile on first sign-in
    */
-  async createUserProfileOnSignIn(firebaseUser: FirebaseUser, provider: AuthProvider): Promise<User> {
+  async createUserProfileOnSignIn(firebaseUser: FirebaseUser, provider: AuthProviderType): Promise<User> {
     try {
       // Check if user profile already exists
       const existingUser = await userDatabaseService.getUserProfile(firebaseUser.uid);
@@ -374,7 +374,7 @@ export class UserProfileService {
   /**
    * Handle OAuth provider linking
    */
-  async linkAuthProvider(provider: AuthProvider, firebaseUser: FirebaseUser): Promise<User> {
+  async linkAuthProviderType(provider: AuthProviderType, firebaseUser: FirebaseUser): Promise<User> {
     if (!this.currentUser) {
       throw new UserProfileServiceError('not_authenticated', 'User must be authenticated');
     }
@@ -411,7 +411,7 @@ export class UserProfileService {
   /**
    * Handle OAuth provider unlinking
    */
-  async unlinkAuthProvider(provider: AuthProvider): Promise<User> {
+  async unlinkAuthProviderType(provider: AuthProviderType): Promise<User> {
     if (!this.currentUser) {
       throw new UserProfileServiceError('not_authenticated', 'User must be authenticated');
     }
@@ -452,7 +452,7 @@ export class UserProfileService {
    */
   private createLinkedProviderFromFirebaseUser(
     firebaseUser: FirebaseUser,
-    provider: AuthProvider,
+    provider: AuthProviderType,
     isPrimary: boolean = true
   ): LinkedProvider[] {
     const now = toFirestoreTimestamp();

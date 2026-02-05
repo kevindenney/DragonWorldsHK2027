@@ -122,7 +122,7 @@ export default function MetricDetailSheet({
             const { RACE_AREAS } = require('../config/raceAreas');
             const { RACE_AREA_TIDE_MAP } = require('../config/raceAreaTides');
 
-            const area = RACE_AREAS.find(a => a.key === areaKey);
+            const area = RACE_AREAS.find((a: { key: string }) => a.key === areaKey);
             if (!area) {
               return bundle.hourly.tideHeightM[startIndex + index]; // fallback
             }

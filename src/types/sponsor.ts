@@ -1,4 +1,4 @@
-export type SponsorTier = 'lead' | 'premiere' | 'major' | 'supporting';
+export type SponsorTier = 'lead' | 'premiere' | 'major' | 'supporting' | 'organiser' | 'co-organiser' | 'partner';
 
 export interface SponsorLocation {
   name: string;
@@ -29,7 +29,7 @@ export interface HongKongActivity {
   id: string;
   title: string;
   description: string;
-  type: 'cultural' | 'dining' | 'shopping' | 'sightseeing' | 'entertainment' | 'business';
+  type: 'cultural' | 'dining' | 'shopping' | 'sightseeing' | 'entertainment' | 'business' | 'social';
   sponsorId: string;
   website?: string;
   bookingRequired: boolean;
@@ -46,12 +46,14 @@ export interface Sponsor {
   logo?: string; // URL or local asset path
   website?: string;
   primaryColor?: string; // Brand color for theming
+  bookingUrl?: string; // URL for booking services
 
   // Contact information
   contact: {
     phone?: string;
     email?: string;
     address?: string;
+    website?: string;
   };
 
   // Business information

@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { analyticsService } from './analyticsService';
-import { subscriptionService, SubscriptionTier } from './subscriptionService';
+import { subscriptionService, SubscriptionTier, SubscriptionTierId } from './subscriptionService';
 import { loyaltyService } from './loyaltyService';
 import { retentionManager } from './retentionManager';
 import { notificationService } from './notificationService';
@@ -100,7 +100,7 @@ export interface RecommendedAction {
 
 export interface SubscriptionValueModel {
   userId: string;
-  currentTier: SubscriptionTier;
+  currentTier: SubscriptionTierId;
   perceivedValue: number; // 0-100
   actualUsage: UsageMetrics;
   valueGaps: ValueGap[];
@@ -123,7 +123,7 @@ export interface UsageMetrics {
 
 export interface ValueGap {
   feature: string;
-  availableInTier: SubscriptionTier;
+  availableInTier: SubscriptionTierId;
   currentAccess: boolean;
   usageIntent: number; // 0-100 (how much user wants this feature)
   valueScore: number; // 0-100 (perceived value of feature)
@@ -131,7 +131,7 @@ export interface ValueGap {
 }
 
 export interface UpgradeRecommendation {
-  targetTier: SubscriptionTier;
+  targetTier: SubscriptionTierId;
   confidence: number;
   reasoning: string[];
   timing: 'immediate' | 'within_week' | 'within_month' | 'seasonal';
@@ -753,7 +753,7 @@ export class PredictiveAnalyticsService {
     };
   }
 
-  private calculatePerceivedValue(tier: SubscriptionTier, usage: UsageMetrics): number {
+  private calculatePerceivedValue(tier: SubscriptionTierId, usage: UsageMetrics): number {
     // Mock calculation
     let baseValue = 60;
     
@@ -764,7 +764,7 @@ export class PredictiveAnalyticsService {
     return Math.min(100, baseValue);
   }
 
-  private async identifyValueGaps(userId: string, currentTier: SubscriptionTier, usage: UsageMetrics): Promise<ValueGap[]> {
+  private async identifyValueGaps(userId: string, currentTier: SubscriptionTierId, usage: UsageMetrics): Promise<ValueGap[]> {
     const gaps: ValueGap[] = [];
 
     if (currentTier === 'free' && usage.weatherChecksPerSession > 5) {
@@ -794,7 +794,7 @@ export class PredictiveAnalyticsService {
 
   private generateUpgradeRecommendations(
     userId: string,
-    currentTier: SubscriptionTier,
+    currentTier: SubscriptionTierId,
     valueGaps: ValueGap[]
   ): UpgradeRecommendation[] {
     const recommendations: UpgradeRecommendation[] = [];
@@ -950,7 +950,7 @@ export class PredictiveAnalyticsService {
     };
   }
 
-  private getNextTier(currentTier: SubscriptionTier): SubscriptionTier {
+  private getNextTier(currentTier: SubscriptionTierId): SubscriptionTierId {
     switch (currentTier) {
       case 'free': return 'basic';
       case 'basic': return 'professional';
@@ -1049,9 +1049,9 @@ export class PredictiveAnalyticsService {
     return Math.min(100, risk);
   }
 
-  private predictLifetimeValue(userId: string, currentTier: SubscriptionTier, usage: UsageMetrics): number {
+  private predictLifetimeValue(userId: string, currentTier: SubscriptionTierId, usage: UsageMetrics): number {
     // Mock LTV calculation
-    const tierValues = {
+    const tierValues: Record<SubscriptionTierId, number> = {
       'free': 0,
       'basic': 120,
       'professional': 300,
@@ -1159,22 +1159,3 @@ export class PredictiveAnalyticsService {
 
 // Export singleton instance
 export const predictiveAnalyticsService = new PredictiveAnalyticsService();
-
-// Export types
-export type {
-  ChurnRiskProfile,
-  ChurnFactor,
-  ChurnIntervention,
-  InterventionContent,
-  PreventionStrategy,
-  PreventionTactic,
-  UserEngagementPrediction,
-  EngagementDriver,
-  RecommendedAction,
-  SubscriptionValueModel,
-  UsageMetrics,
-  ValueGap,
-  UpgradeRecommendation,
-  RetentionRecommendation,
-  PredictiveModel
-};

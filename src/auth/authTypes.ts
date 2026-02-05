@@ -11,16 +11,36 @@ export enum UserStatus {
   PENDING_VERIFICATION = 'pending_verification',
 }
 
+// Define role type that is compatible with UserRole enum values
+export type UserRoleType = 'user' | 'admin' | 'superadmin' | 'participant' | 'official';
+
+export interface LinkedProvider {
+  providerId: string;
+  displayName?: string;
+  email?: string;
+  photoURL?: string;
+}
+
+export interface UserProfile {
+  location?: string;
+  bio?: string;
+  website?: string;
+}
+
 export interface User {
   uid: string;
   email: string;
   displayName?: string;
+  name?: string; // Alias for displayName
   photoURL?: string;
   emailVerified: boolean;
   phoneNumber?: string;
-  role: 'participant' | 'official' | 'admin';
+  role: UserRoleType;
   status: UserStatus;
   providers: string[];
+  linkedProviders?: LinkedProvider[];
+  profile?: UserProfile;
+  sailNumber?: string; // Convenience property for sailors
   createdAt: Date;
   updatedAt: Date;
   preferences?: UserPreferences;
@@ -28,10 +48,15 @@ export interface User {
 }
 
 export interface UserPreferences {
-  notifications: boolean;
-  newsletter: boolean;
-  language: 'en' | 'zh';
+  notifications?: boolean;
+  newsletter?: boolean;
+  language?: 'en' | 'zh';
   theme?: 'light' | 'dark';
+  // Additional preferences used in auth screens
+  weatherAlerts?: boolean;
+  raceNotifications?: boolean;
+  socialUpdates?: boolean;
+  marketingEmails?: boolean;
 }
 
 /**
@@ -60,7 +85,8 @@ export const AuthProvider = {
   GOOGLE: 'google',
   APPLE: 'apple',
   FACEBOOK: 'facebook',
-  EMAIL: 'email'
+  EMAIL: 'email',
+  GITHUB: 'github'
 };
 
 // Type derived from the const object

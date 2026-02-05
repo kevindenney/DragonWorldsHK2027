@@ -321,8 +321,8 @@ export class WeatherManager {
     const windGust = windData.windGust || windSpeed;
     const gustFactor = windGust / windSpeed;
     
-    let suitability: WeatherForecastPeriod['racing']['suitability'] = 'good';
-    let windCategory: WeatherForecastPeriod['racing']['windCategory'] = 'moderate';
+    let suitability: 'excellent' | 'good' | 'moderate' | 'poor' | 'dangerous' = 'good';
+    let windCategory: 'light' | 'moderate' | 'fresh' | 'strong' | 'gale' = 'moderate';
     const tacticalNotes: string[] = [];
     
     // Determine wind category and suitability
@@ -686,12 +686,3 @@ export class WeatherManager {
 
 // Export singleton instance
 export const weatherManager = new WeatherManager();
-
-// Export types
-export type {
-  ProcessedWeatherData,
-  WeatherForecastPeriod,
-  WeatherAlert,
-  UpdateSchedule,
-  DataAccessRules
-};

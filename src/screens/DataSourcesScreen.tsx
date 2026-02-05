@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, ScrollView, StyleSheet, Linking, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, ScrollView, StyleSheet, Linking, TouchableOpacity, ActivityIndicator, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IOSText } from '../components/ios';
-import { Thermometer, Wind, Waves, Anchor, ExternalLink, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react-native';
+import { Thermometer, Wind, Waves, Anchor, ExternalLink, CheckCircle2, AlertTriangle, XCircle, Code } from 'lucide-react-native';
 import { useWeatherStore } from '../stores/weatherStore';
 import { DevelopedByAttribution } from '../components/branding/PoweredByRegattaFlow';
+import { resultsService } from '../services/resultsService';
 
 const open = async (url: string) => {
   try {
@@ -380,6 +381,9 @@ export function DataSourcesScreen() {
           <IOSText style={styles.cardBody}>✓ Fallback systems: Continue functioning even when some sources are unavailable</IOSText>
         </View>
 
+        {/* Dev Mode Settings - only visible in development */}
+        {__DEV__ && <DevModeSettings />}
+
         {/* Links note */}
         <View style={styles.note}>
           <ExternalLink size={14} color="#6C757D" />
@@ -422,6 +426,40 @@ function StoreSources() {
           • Tide: {active.tide.source} ({new Date(active.tide.at).toLocaleTimeString()})
         </IOSText>
       )}
+    </View>
+  );
+}
+
+function DevModeSettings() {
+  const [forceMockData, setForceMockData] = useState(resultsService.getForceMockData());
+
+  const handleToggle = (value: boolean) => {
+    setForceMockData(value);
+    resultsService.setForceMockData(value);
+  };
+
+  return (
+    <View style={styles.card}>
+      <View style={styles.devModeHeader}>
+        <Code size={18} color="#FF9500" />
+        <IOSText style={styles.devModeTitle}>Developer Settings</IOSText>
+      </View>
+      <IOSText style={styles.devModeNote}>These settings are only visible in development builds.</IOSText>
+
+      <View style={styles.devToggleRow}>
+        <View style={styles.devToggleInfo}>
+          <IOSText style={styles.devToggleLabel}>Force Mock Results Data</IOSText>
+          <IOSText style={styles.devToggleDesc}>
+            Show populated mock championship data instead of fetching from live API
+          </IOSText>
+        </View>
+        <Switch
+          value={forceMockData}
+          onValueChange={handleToggle}
+          trackColor={{ false: '#E5E5EA', true: '#34C759' }}
+          thumbColor="#FFFFFF"
+        />
+      </View>
     </View>
   );
 }
@@ -567,5 +605,44 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#FF3B30',
     fontWeight: '600',
+  },
+  devModeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  devModeTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FF9500',
+  },
+  devModeNote: {
+    fontSize: 12,
+    color: '#6C757D',
+    fontStyle: 'italic',
+    marginBottom: 12,
+  },
+  devToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5EA',
+  },
+  devToggleInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  devToggleLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    marginBottom: 4,
+  },
+  devToggleDesc: {
+    fontSize: 12,
+    color: '#6C757D',
   },
 });

@@ -1,0 +1,71 @@
+# Notices Flow Tests for Dragon Worlds HK 2027
+# Tests notice board viewing and interactions
+# NOTE: Requires authenticated state
+
+appId: com.denneyke.dragonworldshk2027
+name: Notices Flow
+
+---
+
+# Test: Notices Screen Loads
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+# Navigate to Notices tab
+- tapOn:
+    id: "tab-noticeboard"
+
+# Wait for notice board to load
+- extendedWaitUntil:
+    visible: "Notices"
+    timeout: 5000
+
+# Assert Notices screen is visible
+- assertVisible: "Notices"
+
+---
+
+# Test: Notices List Content
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+- tapOn:
+    id: "tab-noticeboard"
+
+- extendedWaitUntil:
+    visible: "Notices"
+    timeout: 5000
+
+# Scroll through notices list
+- scroll:
+    direction: DOWN
+
+- scroll:
+    direction: UP
+
+---
+
+# Test: Pull to Refresh Notices
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+- tapOn:
+    id: "tab-noticeboard"
+
+- extendedWaitUntil:
+    visible: "Notices"
+    timeout: 5000
+
+# Pull down to refresh (swipe down gesture)
+- swipe:
+    direction: DOWN
+    duration: 500

@@ -14,7 +14,7 @@ import {
   QuerySnapshot,
   DocumentData 
 } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { db, isFirestoreReady } from '../config/firebase';
 
 /**
  * Real data service for Firebase/Firestore integration
@@ -23,6 +23,17 @@ import { db } from '../config/firebase';
 export class RealDataService {
   private apiBaseUrl: string;
   private listeners: Map<string, () => void> = new Map();
+  private baseUrl: string = 'https://www.racingrulesofsailing.org';
+
+  /**
+   * Get the Firestore instance, throwing if not available
+   */
+  private getDb() {
+    if (!db) {
+      throw new Error('Firestore is not initialized');
+    }
+    return db;
+  }
 
   constructor() {
     // Use Firebase Cloud Functions URL for manual triggering
@@ -49,7 +60,7 @@ export class RealDataService {
     try {
       
       const noticesQuery = query(
-        collection(db, 'notices'),
+        collection(this.getDb(), 'notices'),
         where('eventId', '==', eventId),
         orderBy('publishedAt', 'desc')
       );
@@ -66,8 +77,8 @@ export class RealDataService {
               title: data.title,
               content: data.content,
               type: data.type || 'announcement',
-              priority: data.priority || 'normal',
-              publishedAt: data.publishedAt instanceof Timestamp 
+              priority: data.priority || 'medium',
+              publishedAt: data.publishedAt instanceof Timestamp
                 ? data.publishedAt.toDate().toISOString()
                 : data.publishedAt,
               author: data.author || 'Race Committee',
@@ -130,7 +141,7 @@ export class RealDataService {
    */
   async getUserNoticeStatus(userId: string, noticeId: string): Promise<{isRead: boolean, isBookmarked: boolean} | null> {
     try {
-      const statusDoc = await getDoc(doc(db, 'userNoticeStatus', `${userId}_${noticeId}`));
+      const statusDoc = await getDoc(doc(this.getDb(), 'userNoticeStatus', `${userId}_${noticeId}`));
       
       if (statusDoc.exists()) {
         const data = statusDoc.data();
@@ -151,7 +162,7 @@ export class RealDataService {
    */
   async markNoticeAsRead(userId: string, noticeId: string): Promise<void> {
     try {
-      const statusRef = doc(db, 'userNoticeStatus', `${userId}_${noticeId}`);
+      const statusRef = doc(this.getDb(), 'userNoticeStatus', `${userId}_${noticeId}`);
       await setDoc(statusRef, {
         userId,
         noticeId,
@@ -170,7 +181,7 @@ export class RealDataService {
    */
   async toggleNoticeBookmark(userId: string, noticeId: string): Promise<boolean> {
     try {
-      const statusRef = doc(db, 'userNoticeStatus', `${userId}_${noticeId}`);
+      const statusRef = doc(this.getDb(), 'userNoticeStatus', `${userId}_${noticeId}`);
       const statusDoc = await getDoc(statusRef);
       
       const currentBookmark = statusDoc.exists() ? statusDoc.data()?.isBookmarked || false : false;
@@ -199,7 +210,7 @@ export class RealDataService {
   ): () => void {
     try {
       const bookmarksQuery = query(
-        collection(db, 'userNoticeStatus'),
+        collection(this.getDb(), 'userNoticeStatus'),
         where('userId', '==', userId),
         where('isBookmarked', '==', true)
       );

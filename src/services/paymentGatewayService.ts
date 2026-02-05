@@ -1,6 +1,14 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Type declaration for window with Stripe
+declare global {
+  interface Window {
+    Stripe?: any;
+    stripeInstance?: any;
+  }
+}
+
 export interface PaymentMethod {
   id: string;
   type: 'stripe' | 'apple_pay' | 'google_pay' | 'card';
@@ -100,7 +108,8 @@ class PaymentGatewayService {
 
   private async initializeStripeNative(): Promise<void> {
     try {
-      const { initStripe } = await import('@stripe/stripe-react-native');
+      const stripeModule = await import('@stripe/stripe-react-native') as any;
+      const { initStripe } = stripeModule;
       await initStripe({
         publishableKey: this.stripePublishableKey,
         merchantIdentifier: 'merchant.com.dragonworldshk2027',
@@ -240,7 +249,8 @@ class PaymentGatewayService {
 
   private async confirmStripeNative(paymentIntent: PaymentIntent, paymentMethodId: string): Promise<PaymentResult> {
     try {
-      const { confirmPayment } = await import('@stripe/stripe-react-native');
+      const stripeModule = await import('@stripe/stripe-react-native') as any;
+      const { confirmPayment } = stripeModule;
       
       const result = await confirmPayment(paymentIntent.clientSecret!, {
         paymentMethodType: 'Card',
@@ -271,7 +281,8 @@ class PaymentGatewayService {
     }
 
     try {
-      const { isApplePaySupported, presentApplePay } = await import('@stripe/stripe-react-native');
+      const stripeModule = await import('@stripe/stripe-react-native') as any;
+      const { isApplePaySupported, presentApplePay } = stripeModule;
       
       const isSupported = await isApplePaySupported();
       if (!isSupported) {
@@ -311,7 +322,8 @@ class PaymentGatewayService {
     }
 
     try {
-      const { isGooglePaySupported, initGooglePay, presentGooglePay } = await import('@stripe/stripe-react-native');
+      const stripeModule = await import('@stripe/stripe-react-native') as any;
+      const { isGooglePaySupported, initGooglePay, presentGooglePay } = stripeModule;
       
       const isSupported = await isGooglePaySupported();
       if (!isSupported) {
@@ -423,17 +435,19 @@ class PaymentGatewayService {
     
     if (Platform.OS === 'ios') {
       try {
-        const { isApplePaySupported } = await import('@stripe/stripe-react-native');
+        const stripeModule = await import('@stripe/stripe-react-native') as any;
+        const { isApplePaySupported } = stripeModule;
         if (await isApplePaySupported()) {
           methods.push('apple_pay');
         }
       } catch (error) {
       }
     }
-    
+
     if (Platform.OS === 'android') {
       try {
-        const { isGooglePaySupported } = await import('@stripe/stripe-react-native');
+        const stripeModule = await import('@stripe/stripe-react-native') as any;
+        const { isGooglePaySupported } = stripeModule;
         if (await isGooglePaySupported()) {
           methods.push('google_pay');
         }

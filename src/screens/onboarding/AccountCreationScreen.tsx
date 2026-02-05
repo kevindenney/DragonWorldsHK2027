@@ -139,7 +139,7 @@ export const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({ on
         displayName,
         firstName: displayName.split(' ')[0] || displayName,
         lastName: displayName.split(' ').slice(1).join(' ') || '',
-        onboardingType: selectedOnboardingType,
+        onboardingType: selectedOnboardingType ?? undefined,
         needsVerification: false,
         joinedAt: new Date().toISOString(),
         preferences: {
@@ -160,7 +160,7 @@ export const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({ on
       completeOnboarding(mappedUserType, userData);
       onComplete(mappedUserType, userData);
     } catch (error) {
-      Alert.alert('Registration Failed', error.message || 'An error occurred during registration');
+      Alert.alert('Registration Failed', (error instanceof Error ? error.message : 'An error occurred during registration'));
     }
   };
 
@@ -180,7 +180,7 @@ export const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({ on
       const mappedUserType = userTypeMapping[selectedOnboardingType || 'spectator'];
 
       const userData: Partial<UserProfile> = {
-        onboardingType: selectedOnboardingType,
+        onboardingType: selectedOnboardingType ?? undefined,
         needsVerification: false,
         joinedAt: new Date().toISOString(),
         preferences: {
@@ -195,7 +195,7 @@ export const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({ on
       completeOnboarding(mappedUserType, userData);
       onComplete(mappedUserType, userData);
     } catch (error) {
-      Alert.alert('Sign Up Failed', error.message || `Failed to sign up with ${provider}`);
+      Alert.alert('Sign Up Failed', (error instanceof Error ? error.message : `Failed to sign up with ${provider}`));
     }
   };
 

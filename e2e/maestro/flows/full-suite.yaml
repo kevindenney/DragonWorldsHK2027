@@ -1,0 +1,138 @@
+# Full E2E Test Suite for Dragon Worlds HK 2027
+# Tests authentication and navigation to ALL tabs
+#
+# Usage: maestro test e2e/maestro/flows/full-suite.yaml
+
+appId: com.denneyke.dragonworldshk2027
+name: Full E2E Suite
+
+---
+
+# =====================
+# AUTHENTICATION
+# =====================
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible: "Join the Fleet"
+    timeout: 5000
+
+# Fill registration form
+- tapOn:
+    id: "register-displayname"
+- inputText: "Test User"
+
+- tapOn:
+    id: "register-email"
+- inputText: "test@maestro.test"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+# Password (with iOS Strong Password workaround)
+- tapOn:
+    id: "register-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-confirm-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-confirm-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-submit"
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 30000
+
+# =====================
+# TAB BAR VERIFICATION
+# =====================
+
+- assertVisible:
+    id: "tab-schedule"
+- assertVisible:
+    id: "tab-noticeboard"
+- assertVisible:
+    id: "tab-results"
+- assertVisible:
+    id: "tab-forms"
+- assertVisible:
+    id: "tab-more"
+
+# =====================
+# SCHEDULE TAB
+# =====================
+
+- assertVisible: "Schedule"
+- assertVisible: "APAC 2026"
+
+# =====================
+# NOTICES TAB
+# =====================
+
+- tapOn:
+    id: "tab-noticeboard"
+- waitForAnimationToEnd
+- assertVisible: "Notices"
+
+# =====================
+# RESULTS TAB
+# =====================
+
+- tapOn:
+    id: "tab-results"
+- waitForAnimationToEnd
+- assertVisible: "Results"
+
+# =====================
+# FORMS TAB
+# =====================
+
+- tapOn:
+    id: "tab-forms"
+- waitForAnimationToEnd
+- assertVisible: "Forms"
+
+# =====================
+# MORE TAB
+# =====================
+
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- assertVisible: "More"
+- assertVisible: "RACING"
+
+# =====================
+# BACK TO SCHEDULE
+# =====================
+
+- tapOn:
+    id: "tab-schedule"
+- waitForAnimationToEnd
+- assertVisible: "Schedule"
+
+# All tabs verified!

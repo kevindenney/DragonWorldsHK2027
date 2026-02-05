@@ -40,6 +40,9 @@ export type { IOSSectionProps, IOSContentGroupProps } from './IOSSection';
 export { IOSSegmentedControl } from './IOSSegmentedControl';
 export type { IOSSegmentedControlProps, IOSSegmentedControlOption } from './IOSSegmentedControl';
 
+export { IOSSearchBar } from './IOSSearchBar';
+export type { IOSSearchBarProps } from './IOSSearchBar';
+
 // Type definitions and HIG specifications
 export type {
   IOSComponentBase,

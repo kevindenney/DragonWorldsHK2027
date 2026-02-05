@@ -1,29 +1,36 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { IOSText } from './IOSText';
 import { colors } from '../../constants/theme';
 
 export type IOSBadgeVariant = 'filled' | 'tinted' | 'outlined';
-export type IOSBadgeColor = 'systemBlue' | 'systemRed' | 'systemGreen' | 'systemOrange' | 'systemGray';
+export type IOSBadgeColor = 'systemBlue' | 'systemRed' | 'systemGreen' | 'systemOrange' | 'systemGray' | (string & {});
 export type IOSBadgeSize = 'small' | 'medium' | 'large';
 
 export interface IOSBadgeProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  text?: string; // Alias for children
   variant?: IOSBadgeVariant;
   color?: IOSBadgeColor;
   size?: IOSBadgeSize;
-  style?: ViewStyle;
+  textColor?: string;
+  onPress?: () => void;
+  dismissible?: boolean;
+  style?: StyleProp<ViewStyle>;
   testID?: string;
 }
 
 export const IOSBadge: React.FC<IOSBadgeProps> = ({
   children,
+  text,
   variant = 'filled',
   color = 'systemBlue',
   size = 'medium',
   style,
   testID,
 }) => {
+  // Use text prop if provided, otherwise use children
+  const content = text ?? children;
   const getColorValues = (colorName: IOSBadgeColor) => {
     switch (colorName) {
       case 'systemBlue':
@@ -105,7 +112,7 @@ export const IOSBadge: React.FC<IOSBadgeProps> = ({
         weight="semibold"
         style={styles.text}
       >
-        {children}
+        {content}
       </IOSText>
     </View>
   );

@@ -54,8 +54,10 @@ export function AuthGuard({
 
   useEffect(() => {
     if (hasCheckedAuth && isAuthenticated && user && requiredRoles.length > 0) {
-      if (!requiredRoles.includes(user.role)) {
-        onInsufficientPermissions?.(user.role);
+      // Compare enum values as strings for compatibility
+      const roleValues = requiredRoles.map(r => String(r));
+      if (!roleValues.includes(user.role)) {
+        onInsufficientPermissions?.(user.role as unknown as UserRole);
       }
     }
   }, [hasCheckedAuth, isAuthenticated, user, requiredRoles, onInsufficientPermissions]);
@@ -108,10 +110,11 @@ export function AuthGuard({
   }
 
   // Check role-based permissions
-  if (requiredRoles.length > 0 && !requiredRoles.includes(user.role)) {
+  const roleValues = requiredRoles.map(r => String(r));
+  if (requiredRoles.length > 0 && !roleValues.includes(user.role)) {
     return (
-      <PermissionDenied 
-        userRole={user.role}
+      <PermissionDenied
+        userRole={user.role as unknown as UserRole}
         requiredRoles={requiredRoles}
         testID={`${testID}-permission-denied`}
       />
@@ -455,7 +458,8 @@ export function useAuthGuard() {
   const hasRole = (roles: UserRole | UserRole[]): boolean => {
     if (!isAuthenticated || !user) return false;
     const roleArray = Array.isArray(roles) ? roles : [roles];
-    return roleArray.includes(user.role);
+    const roleValues = roleArray.map(r => String(r));
+    return roleValues.includes(user.role);
   };
 
   const hasPermission = (permission: string): boolean => {

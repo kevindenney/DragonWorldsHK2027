@@ -1,0 +1,173 @@
+# Navigation Flow Tests for Dragon Worlds HK 2027
+# Tests bottom tab navigation between main screens
+#
+# PREREQUISITE: Run auth-subflow.yaml first to authenticate
+# These tests require the user to already be logged in.
+#
+# Tab testIDs:
+# - tab-schedule
+# - tab-noticeboard (displays as "Notices")
+# - tab-results
+# - tab-forms
+# - tab-more
+
+appId: com.denneyke.dragonworldshk2027
+name: Navigation Flow
+
+---
+
+# Test: Tab Bar Visibility
+- launchApp
+
+# Wait for main app to load
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+# Dismiss any welcome tooltips
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Got it"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Done"
+    optional: true
+- waitForAnimationToEnd
+
+# Verify tab bar is visible by checking testIDs
+- assertVisible:
+    id: "tab-schedule"
+- assertVisible:
+    id: "tab-noticeboard"
+- assertVisible:
+    id: "tab-results"
+- assertVisible:
+    id: "tab-forms"
+- assertVisible:
+    id: "tab-more"
+
+---
+
+# Test: Navigate to Notices Tab
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+# Dismiss tooltips
+- tapOn:
+    text: "Next"
+    optional: true
+- tapOn:
+    text: "Next"
+    optional: true
+- tapOn:
+    text: "Got it"
+    optional: true
+
+# Tap on Notices tab using testID
+- tapOn:
+    id: "tab-noticeboard"
+
+# Wait for notices to load
+- extendedWaitUntil:
+    visible: "Notice Board"
+    timeout: 5000
+
+---
+
+# Test: Navigate to Results Tab
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+# Dismiss tooltips
+- tapOn:
+    text: "Next"
+    optional: true
+- tapOn:
+    text: "Next"
+    optional: true
+- tapOn:
+    text: "Got it"
+    optional: true
+
+# Tap on Results tab using testID
+- tapOn:
+    id: "tab-results"
+
+# Wait for results screen
+- extendedWaitUntil:
+    visible: "Results"
+    timeout: 5000
+
+---
+
+# Test: Navigate to Forms Tab
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+# Dismiss tooltips
+- tapOn:
+    text: "Next"
+    optional: true
+- tapOn:
+    text: "Next"
+    optional: true
+- tapOn:
+    text: "Got it"
+    optional: true
+
+# Tap on Forms tab using testID
+- tapOn:
+    id: "tab-forms"
+
+# Wait for forms screen
+- extendedWaitUntil:
+    visible: "Forms"
+    timeout: 5000
+
+---
+
+# Test: Navigate to More Tab
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+# Dismiss tooltips
+- tapOn:
+    text: "Next"
+    optional: true
+- tapOn:
+    text: "Next"
+    optional: true
+- tapOn:
+    text: "Got it"
+    optional: true
+
+# Tap on More tab using testID
+- tapOn:
+    id: "tab-more"
+
+# Wait for More screen and verify options
+- extendedWaitUntil:
+    visible: "Entrants"
+    timeout: 5000
+
+- assertVisible: "Entrants"

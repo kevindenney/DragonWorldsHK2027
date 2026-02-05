@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, StyleProp, TextStyle } from 'react-native';
 import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
 
 export interface AuthButtonProps {
@@ -11,7 +11,7 @@ export interface AuthButtonProps {
   disabled?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   textStyle?: TextStyle;
   testID?: string;
 }
@@ -31,11 +31,25 @@ export function AuthButton({
 }: AuthButtonProps) {
   const isDisabled = disabled || loading;
 
+  const sizeButtonStyles = {
+    small: styles.buttonSmall,
+    medium: styles.buttonMedium,
+    large: styles.buttonLarge,
+  };
+
+  const variantButtonStyles = {
+    primary: styles.buttonPrimary,
+    secondary: styles.buttonSecondary,
+    outline: styles.buttonOutline,
+    text: styles.buttonText,
+    danger: styles.buttonDanger,
+  };
+
   const getButtonStyle = (): ViewStyle[] => {
-    const baseStyle = [
+    const baseStyle: ViewStyle[] = [
       styles.button,
-      styles[`button${size.charAt(0).toUpperCase() + size.slice(1)}`],
-      styles[`button${variant.charAt(0).toUpperCase() + variant.slice(1)}`],
+      sizeButtonStyles[size],
+      variantButtonStyles[variant],
     ];
 
     if (isDisabled) {
@@ -51,11 +65,25 @@ export function AuthButton({
     return baseStyle;
   };
 
+  const sizeTextStyles = {
+    small: styles.textSmall,
+    medium: styles.textMedium,
+    large: styles.textLarge,
+  };
+
+  const variantTextStyles = {
+    primary: styles.textPrimary,
+    secondary: styles.textSecondary,
+    outline: styles.textOutline,
+    text: styles.textText,
+    danger: styles.textDanger,
+  };
+
   const getTextStyle = (): TextStyle[] => {
-    const baseStyle = [
+    const baseStyle: TextStyle[] = [
       styles.text,
-      styles[`text${size.charAt(0).toUpperCase() + size.slice(1)}`],
-      styles[`text${variant.charAt(0).toUpperCase() + variant.slice(1)}`],
+      sizeTextStyles[size],
+      variantTextStyles[variant],
     ];
 
     if (isDisabled) {

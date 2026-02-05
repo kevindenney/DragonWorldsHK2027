@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '../../hooks/useAuth';
-import { AuthProvider, LoginCredentials } from '../../types/auth';
+import { AuthProviderType, LoginCredentials } from '../../types/auth';
 import { validateEmail } from '../../services/auth/authUtils';
 
 interface LoginScreenProps {
@@ -64,7 +64,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     }
   };
 
-  const handleOAuthLogin = async (provider: AuthProvider) => {
+  const handleOAuthLogin = async (provider: AuthProviderType) => {
     try {
       clearError();
       await loginWithProvider(provider);
@@ -176,7 +176,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
           <TouchableOpacity
             style={[styles.oauthButton, styles.googleButton]}
-            onPress={() => handleOAuthLogin(AuthProvider.GOOGLE)}
+            onPress={() => handleOAuthLogin(AuthProviderType.GOOGLE)}
             disabled={isLoading}
           >
             <Text style={styles.oauthButtonText}>Continue with Google</Text>
@@ -185,7 +185,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
           {Platform.OS === 'ios' && (
             <TouchableOpacity
               style={[styles.oauthButton, styles.appleButton]}
-              onPress={() => handleOAuthLogin(AuthProvider.APPLE)}
+              onPress={() => handleOAuthLogin(AuthProviderType.APPLE)}
               disabled={isLoading}
             >
               <Text style={[styles.oauthButtonText, styles.appleButtonText]}>

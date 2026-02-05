@@ -232,7 +232,7 @@ export const GuestModeScreen: React.FC<GuestModeScreenProps> = ({
             Welcome to Dragon Worlds
           </IOSText>
           <IOSText style={styles.introDescription} textStyle="body" color="secondaryLabel">
-            Choose how you'd like to experience the championship. You can always upgrade later.
+            Choose how you'd like to experience the 2026 Asia Pacific and 2027 World Championships. You can always upgrade later.
           </IOSText>
         </Animated.View>
 

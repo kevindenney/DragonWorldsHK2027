@@ -63,7 +63,9 @@ export function UserProfile({
   const { user, logout, updateProfile } = useAuth();
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(
-    user?.preferences?.notifications?.push || false
+    typeof user?.preferences?.notifications === 'boolean'
+      ? user?.preferences?.notifications
+      : (user?.preferences?.notifications as any)?.push || false
   );
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
@@ -352,7 +354,7 @@ export function UserProfile({
         <ProfileField
           icon={<Calendar size={20} color={colors.textMuted} />}
           label="Member since"
-          value={formatDate(user.createdAt)}
+          value={formatDate(user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt)}
         />
       </ProfileSection>
 
@@ -365,7 +367,7 @@ export function UserProfile({
           showArrow
         />
         
-        <ConnectedAccounts providers={user.linkedProviders || []} />
+        <ConnectedAccounts providers={(user.linkedProviders || []) as LinkedProvider[]} />
       </ProfileSection>
 
       <ProfileSection title="Preferences">
@@ -717,7 +719,7 @@ interface SettingsItemProps {
   icon: React.ReactNode;
   title: string;
   subtitle?: string;
-  onPress: () => void;
+  onPress?: () => void;
   showArrow?: boolean;
 }
 

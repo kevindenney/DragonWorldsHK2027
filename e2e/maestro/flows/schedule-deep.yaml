@@ -1,0 +1,97 @@
+# Schedule Tab Deep Test
+# Tests schedule browsing, event details, and navigation
+
+appId: com.denneyke.dragonworldshk2027
+name: Schedule Deep Test
+
+---
+
+# =====================
+# AUTHENTICATION (if needed)
+# =====================
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible: "Join the Fleet"
+    timeout: 5000
+
+- tapOn:
+    id: "register-displayname"
+- inputText: "Schedule Test"
+
+- tapOn:
+    id: "register-email"
+- inputText: "schedule@maestro.test"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-confirm-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-confirm-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-submit"
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 30000
+
+# =====================
+# SCHEDULE TAB TESTS
+# =====================
+
+- assertVisible: "Schedule"
+- assertVisible: "APAC 2026"
+
+# Verify date selector
+- assertVisible: "NOVEMBER 2026"
+
+# Tap on an event if visible
+- tapOn:
+    text: "Registration"
+    optional: true
+- waitForAnimationToEnd
+
+# Navigate back
+- pressKey: Escape
+- waitForAnimationToEnd
+
+# Switch events
+- tapOn:
+    text: "Worlds 2027"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn: "APAC 2026"
+- waitForAnimationToEnd
+
+- assertVisible: "APAC 2026"
+
+# Test complete!

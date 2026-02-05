@@ -8,17 +8,21 @@ export interface TideStation {
   name: string;
   coordinate: LocationCoordinate;
   currentHeight: number;
+  predictedHeight?: number;
   trend: 'rising' | 'falling' | 'stable';
-  nextTide: {
+  nextTide?: {
     type: 'high' | 'low';
     time: string;
     height: number;
   };
   lastUpdated: string;
   dataQuality: 'high' | 'medium' | 'low';
+  // Additional tide prediction fields
+  nextHigh?: { time: string; height: number };
+  nextLow?: { time: string; height: number };
   // HKO-specific fields
   hkoStationId?: string;
-  isHKOData: boolean;
+  isHKOData?: boolean;
   stationType?: 'coastal' | 'harbor' | 'offshore';
   tidalRange?: number;
   meanSeaLevel?: number;

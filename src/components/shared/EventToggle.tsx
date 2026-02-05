@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -20,7 +20,7 @@ export interface EventToggleProps {
   selectedEventId: string;
   onEventChange: (eventId: string) => void;
   badgeCounts?: Record<string, number>;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const EventToggle: React.FC<EventToggleProps> = ({

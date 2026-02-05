@@ -23,7 +23,7 @@ import {
   LoginCredentials,
   RegistrationData,
   AuthError,
-  AuthProvider,
+  AuthProviderType,
   AuthErrorCodes,
   ProfileUpdateRequest,
   UserRole,
@@ -35,6 +35,9 @@ class AuthService {
   private unsubscribeAuth: Unsubscribe | null = null;
 
   constructor() {
+    if (!auth) {
+      throw new Error('Firebase Auth not initialized');
+    }
     this.auth = auth;
   }
 
@@ -51,15 +54,15 @@ class AuthService {
     const providerIds = firebaseUser.providerData.map(p => {
       switch (p.providerId) {
         case 'google.com':
-          return AuthProvider.EMAIL; // Google temporarily disabled
+          return AuthProviderType.EMAIL; // Google temporarily disabled
         case 'apple.com':
-          return AuthProvider.APPLE;
+          return AuthProviderType.APPLE;
         case 'facebook.com':
-          return AuthProvider.FACEBOOK;
+          return AuthProviderType.FACEBOOK;
         case 'github.com':
-          return AuthProvider.GITHUB;
+          return AuthProviderType.GITHUB;
         default:
-          return AuthProvider.EMAIL;
+          return AuthProviderType.EMAIL;
       }
     });
 
@@ -67,26 +70,26 @@ class AuthService {
       uid: firebaseUser.uid,
       email: firebaseUser.email || '',
       displayName: firebaseUser.displayName || '',
-      photoURL: firebaseUser.photoURL,
-      phoneNumber: firebaseUser.phoneNumber,
+      photoURL: firebaseUser.photoURL ?? undefined,
+      phoneNumber: firebaseUser.phoneNumber ?? undefined,
       emailVerified: firebaseUser.emailVerified,
       role: UserRole.USER,
       status: firebaseUser.emailVerified ? UserStatus.ACTIVE : UserStatus.PENDING_VERIFICATION,
       providers: providerIds,
       linkedProviders: firebaseUser.providerData.map(provider => ({
-        provider: providerIds.find(p => provider.providerId.includes(p.toLowerCase())) || AuthProvider.EMAIL,
+        provider: providerIds.find(p => provider.providerId.includes(p.toLowerCase())) || AuthProviderType.EMAIL,
         providerId: provider.providerId,
         providerUid: provider.uid,
-        email: provider.email,
-        displayName: provider.displayName,
-        photoURL: provider.photoURL,
+        email: provider.email ?? undefined,
+        displayName: provider.displayName ?? undefined,
+        photoURL: provider.photoURL ?? undefined,
         linkedAt: new Date().toISOString(),
         lastUsed: new Date().toISOString(),
         isVerified: true,
         isPrimary: provider.providerId === firebaseUser.providerId,
         canUnlink: firebaseUser.providerData.length > 1,
       })),
-      primaryProvider: providerIds[0] || AuthProvider.EMAIL,
+      primaryProvider: providerIds[0] || AuthProviderType.EMAIL,
       profile: {
         bio: undefined,
         website: undefined,

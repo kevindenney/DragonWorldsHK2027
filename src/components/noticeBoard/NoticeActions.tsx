@@ -100,7 +100,7 @@ export const NoticeActions: React.FC<NoticeActionsProps> = ({
       const submissionData = {
         ...formData,
         eventId,
-        submittedBy: userStore.getState().user?.name || 'Unknown',
+        submittedBy: userStore.profile?.displayName || 'Unknown',
         submissionTime: new Date().toISOString()
       };
 
@@ -333,16 +333,16 @@ const GenericActionForm: React.FC<GenericActionFormProps> = ({
 }) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const userStore = useUserStore();
-  const user = userStore.getState().user;
+  const profile = userStore.profile;
 
   // Initialize form with user data
   React.useEffect(() => {
     setFormData({
-      competitor_name: user?.name || '',
-      sail_number: user?.sailNumber || '',
+      competitor_name: profile?.displayName || '',
+      sail_number: profile?.sailingExperience?.sailNumber || '',
       event_id: eventId,
     });
-  }, [user, eventId]);
+  }, [profile, eventId]);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, ViewStyle, Animated } from 'react-native';
+import { View, StyleSheet, ViewStyle, StyleProp, Animated } from 'react-native';
 
 import { colors, spacing, borderRadius } from '../../constants/theme';
 
@@ -7,7 +7,7 @@ interface SkeletonLoaderProps {
   width?: number | string;
   height?: number;
   borderRadius?: number;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   testID?: string;
 }
 
@@ -50,7 +50,7 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
           height,
           borderRadius: skeletonBorderRadius,
           opacity,
-        },
+        } as any,
         style,
       ]}
       testID={testID}

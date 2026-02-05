@@ -119,10 +119,10 @@ export const WindSpeedTrendChart: React.FC<WindSpeedTrendChartProps> = ({
   }, [data]);
 
   const gestureHandler = useAnimatedGestureHandler({
-    onStart: (event) => {
+    onStart: (event: { x: number }) => {
       isDragging.value = true;
     },
-    onActive: (event) => {
+    onActive: (event: { x: number }) => {
       panX.value = Math.max(0, Math.min(CHART_WIDTH, event.x - CHART_PADDING));
     },
     onEnd: () => {

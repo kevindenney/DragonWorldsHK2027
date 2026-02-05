@@ -1,5 +1,5 @@
 import { logger } from '@firebase/logger';
-import { db } from '../config/firebase';
+import { db, isFirestoreReady } from '../config/firebase';
 import { 
   collection, 
   query, 
@@ -68,6 +68,16 @@ export class DocumentProcessingService {
   private cacheDuration = 5 * 60 * 1000; // 5 minutes
 
   /**
+   * Get the Firestore instance, throwing if not available
+   */
+  private getDb() {
+    if (!db) {
+      throw new Error('Firestore is not initialized');
+    }
+    return db;
+  }
+
+  /**
    * Get all documents for an event
    */
   async getEventDocuments(eventId: string): Promise<ProcessedDocument[]> {
@@ -82,7 +92,7 @@ export class DocumentProcessingService {
 
       logger.log('📄 Fetching documents for event:', eventId);
       
-      const documentsRef = collection(db, 'events', eventId, 'documents');
+      const documentsRef = collection(this.getDb(), 'events', eventId, 'documents');
       const q = query(
         documentsRef,
         orderBy('priority', 'desc'),
@@ -166,7 +176,7 @@ export class DocumentProcessingService {
 
       logger.log('📄 Fetching document content for:', documentId);
       
-      const contentRef = doc(db, 'document_content', documentId);
+      const contentRef = doc(this.getDb(), 'document_content', documentId);
       const contentSnap = await getDoc(contentRef);
       
       if (!contentSnap.exists()) {
@@ -346,7 +356,7 @@ export class DocumentProcessingService {
     callback: (documents: ProcessedDocument[]) => void
   ): () => void {
     try {
-      const documentsRef = collection(db, 'events', eventId, 'documents');
+      const documentsRef = collection(this.getDb(), 'events', eventId, 'documents');
       const q = query(
         documentsRef,
         orderBy('priority', 'desc'),

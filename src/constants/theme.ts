@@ -10,17 +10,23 @@ export interface ColorPalette {
   secondaryDark: string;
   accent: string;
   background: string;
+  backgroundLight: string;
+  backgroundDark: string;
+  backgroundSecondary: string;
   surface: string;
+  surfaceSecondary: string;
   text: string;
   textSecondary: string;
   textMuted: string;
   success: string;
   warning: string;
+  warningLight: string;
   error: string;
   info: string;
   border: string;
   borderLight: string;
   shadow: string;
+  white: string;
 }
 
 export interface SponsorColors {
@@ -39,6 +45,11 @@ export interface TypographyStyle {
   letterSpacing?: number;
 }
 
+export interface FontFamilies {
+  default: string;
+  mono: string;
+}
+
 export interface Typography {
   h1: TypographyStyle;
   h2: TypographyStyle;
@@ -51,6 +62,11 @@ export interface Typography {
   caption: TypographyStyle;
   overline: TypographyStyle;
   button: TypographyStyle;
+  fontFamily: FontFamilies;
+  // Label styles
+  labelSmall?: TypographyStyle;
+  labelMedium?: TypographyStyle;
+  labelLarge?: TypographyStyle;
 }
 
 export interface Spacing {
@@ -61,6 +77,7 @@ export interface Spacing {
   xl: number;
   xxl: number;
   xxxl: number;
+  screenPadding?: number;
 }
 
 export interface BorderRadius {
@@ -78,6 +95,9 @@ export interface Shadows {
   medium: object;
   large: object;
   card: object;
+  cardSmall?: object;
+  cardMedium?: object;
+  cardLarge?: object;
   button: object;
   modal: object;
 }
@@ -142,17 +162,23 @@ export const colors: ColorPalette = {
   
   // Sailing whites and grays
   background: '#FFFFFF',
+  backgroundLight: '#F8FAFB',
+  backgroundDark: '#1A1A2E',
+  backgroundSecondary: '#F5F7FA',
   surface: '#F8FAFB',
+  surfaceSecondary: '#EDF2F7',
   text: '#1A1A1A',
   textSecondary: '#4A5568',
   textMuted: '#718096',
-  
+  white: '#FFFFFF',
+
   // Status colors
   success: '#10B981', // Green flag
   warning: '#F59E0B', // Yellow flag
+  warningLight: '#FEF3C7',
   error: '#EF4444',   // Red flag
   info: '#3B82F6',    // Blue flag
-  
+
   // Borders and dividers
   border: '#E2E8F0',
   borderLight: '#F1F5F9',
@@ -278,6 +304,14 @@ export const typography: Typography = {
     lineHeight: 20,
     fontWeight: '600',
     letterSpacing: 0.75,
+  },
+  fontFamily: {
+    default: fontFamily,
+    mono: Platform.select({
+      ios: 'Menlo',
+      android: 'monospace',
+      default: 'monospace',
+    }),
   },
 };
 

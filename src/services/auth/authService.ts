@@ -18,6 +18,8 @@ import {
 } from 'firebase/auth';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 import { auth } from '../../config/firebase';
 import { authApi, userApi } from '../api/client';
@@ -31,7 +33,7 @@ import {
   AuthError,
   AuthErrorCodes,
   AuthErrorCode,
-  AuthProvider,
+  AuthProviderType,
   OAuthLoginResponse,
   AccountLinkingRequest,
 } from '../../types/auth';
@@ -60,6 +62,7 @@ class AuthService {
    */
   private initializeAuth() {
     // Listen for Firebase auth state changes
+    if (!auth) return; // Skip if auth not initialized
     onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         await this.handleAuthStateChange(firebaseUser);
@@ -209,6 +212,7 @@ class AuthService {
       this.updateAuthState({ isLoading: true, error: null });
 
       // Create user in Firebase
+      if (!auth) throw new Error('Firebase Auth is not initialized');
       const credential = await createUserWithEmailAndPassword(
         auth,
         data.email,
@@ -251,6 +255,7 @@ class AuthService {
       this.updateAuthState({ isLoading: true, error: null });
 
       // Sign in with Firebase
+      if (!auth) throw new Error('Firebase Auth is not initialized');
       const result = await signInWithEmailAndPassword(
         auth,
         credentials.email,
@@ -293,22 +298,26 @@ class AuthService {
 
   /**
    * Google Sign-In for web
+   * NOTE: This method requires an ID token obtained from OAuth flow.
+   * For proper web implementation, use signInWithPopup or signInWithRedirect.
    */
   private async signInWithGoogleWeb(): Promise<OAuthLoginResponse> {
-    const provider = new GoogleAuthProvider();
-    provider.addScope('email');
-    provider.addScope('profile');
+    // For web, we would typically use signInWithPopup or signInWithRedirect
+    // This is a simplified version that requires an external OAuth flow
+    throw new Error('Web Google Sign-In requires OAuth flow implementation');
 
-    const result = await signInWithCredential(auth, provider);
-    const idToken = await result.user.getIdToken();
-
-    // Authenticate with backend
-    const response = await authApi.loginWithGoogle(idToken);
-    if (!response.success || !response.data) {
-      throw new Error(response.error || 'Google sign-in failed');
-    }
-
-    return response.data;
+    // Note: Code below is unreachable but kept as placeholder for future implementation
+    // const provider = new GoogleAuthProvider();
+    // provider.addScope('email');
+    // provider.addScope('profile');
+    // if (!auth) throw new Error('Firebase Auth is not initialized');
+    // const result = await signInWithPopup(auth, provider);
+    // const idToken = await result.user.getIdToken();
+    // const response = await authApi.loginWithGoogle(idToken);
+    // if (!response.success || !response.data) {
+    //   throw new Error(response.error || 'Google sign-in failed');
+    // }
+    // return response.data;
   }
 
   /**
@@ -319,18 +328,21 @@ class AuthService {
     await GoogleSignin.hasPlayServices();
 
     // Get user info and id token
-    const userInfo = await GoogleSignin.signIn();
-    
-    if (!userInfo.idToken) {
+    // Note: v13 API returns { data: { user, idToken } } structure
+    const signInResult = await GoogleSignin.signIn();
+    const idToken = (signInResult as any).data?.idToken || (signInResult as any).idToken;
+
+    if (!idToken) {
       throw new Error('Google sign-in failed: No ID token received');
     }
 
     // Create credential and sign in with Firebase
-    const googleCredential = GoogleAuthProvider.credential(userInfo.idToken);
+    if (!auth) throw new Error('Firebase Auth is not initialized');
+    const googleCredential = GoogleAuthProvider.credential(idToken);
     await signInWithCredential(auth, googleCredential);
 
     // Authenticate with backend
-    const response = await authApi.loginWithGoogle(userInfo.idToken);
+    const response = await authApi.loginWithGoogle(idToken);
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Google sign-in failed');
     }
@@ -349,22 +361,15 @@ class AuthService {
 
       this.updateAuthState({ isLoading: true, error: null });
 
-      // Perform Apple Sign-In request
-      const appleAuthRequestResponse = await appleAuth.performRequest({
-        requestedOperation: appleAuth.Operation.LOGIN,
-        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+      // Perform Apple Sign-In request using Expo API
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        ],
       });
 
-      // Get credential state
-      const credentialState = await appleAuth.getCredentialStateForUser(
-        appleAuthRequestResponse.user
-      );
-
-      if (credentialState !== appleAuth.State.AUTHORIZED) {
-        throw new Error('Apple Sign-In was not authorized');
-      }
-
-      const { identityToken } = appleAuthRequestResponse;
+      const { identityToken } = credential;
       if (!identityToken) {
         throw new Error('Apple Sign-In failed: No identity token received');
       }
@@ -406,7 +411,7 @@ class AuthService {
       }
 
       // Sign out from Firebase
-      await signOut(auth);
+      if (auth) await signOut(auth);
     } catch (error) {
       // Force clear local state even if sign out fails
       await this.clearStoredAuthData();
@@ -419,6 +424,7 @@ class AuthService {
    */
   async resetPassword(request: PasswordResetRequest): Promise<void> {
     try {
+      if (!auth) throw new Error('Firebase Auth is not initialized');
       await sendPasswordResetEmail(auth, request.email);
       await authApi.resetPassword(request.email);
     } catch (error) {
@@ -494,7 +500,7 @@ class AuthService {
   /**
    * Unlink OAuth provider from account
    */
-  async unlinkProvider(provider: AuthProvider): Promise<User> {
+  async unlinkProvider(provider: AuthProviderType): Promise<User> {
     try {
       if (!this.currentAuthState.firebaseUser) {
         throw new Error('No user signed in');

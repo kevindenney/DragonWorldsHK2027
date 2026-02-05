@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle, StyleProp, TextStyle } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
 import { colors, typography } from '../../constants/theme';
 
@@ -16,7 +16,7 @@ export interface IOSListItem {
 
 export interface IOSListProps {
   items: IOSListItem[];
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   showSeparators?: boolean;
   inset?: boolean;
   testID?: string;
@@ -89,7 +89,7 @@ export const IOSList: React.FC<IOSListProps> = ({
             style={[
               styles.separator,
               inset && styles.insetSeparator,
-              item.icon && styles.iconInsetSeparator,
+              !!item.icon && styles.iconInsetSeparator,
             ]} 
           />
         )}
@@ -113,7 +113,7 @@ export interface IOSListSectionProps {
   title?: string;
   footer?: string;
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const IOSListSection: React.FC<IOSListSectionProps> = ({

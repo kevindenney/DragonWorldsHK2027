@@ -1,4 +1,4 @@
-import { UserStore } from '../stores/userStore';
+import { useUserStore, UserState } from '../stores/userStore';
 
 export interface GarminChartData {
   chartId: string;
@@ -96,9 +96,9 @@ export interface GarminServiceConfig {
 
 class GarminService {
   private config: GarminServiceConfig;
-  private userStore: typeof UserStore;
+  private userStore: typeof useUserStore;
 
-  constructor(userStore: typeof UserStore) {
+  constructor(userStore: typeof useUserStore) {
     this.userStore = userStore;
     this.config = {
       baseUrl: process.env.EXPO_PUBLIC_GARMIN_API_URL || 'https://api.garmin.com/marine/v1',

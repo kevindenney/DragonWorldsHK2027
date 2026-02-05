@@ -7,6 +7,7 @@ import { AppNavigationContainer } from './src/services/navigation/NavigationCont
 import { Text, View, StyleSheet } from 'react-native';
 import { validateRuntimeConfiguration, logEnvironmentVariables } from './src/utils/configValidator';
 import { useUserStore } from './src/stores/userStore';
+import { useTrackUnreadNews } from './src/services/api/newsApi';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -138,10 +139,17 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider>
+          <NewsUnreadTracker />
           <AppNavigationContainer />
           <StatusBar style="auto" />
         </SafeAreaProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
+}
+
+// Component to track unread news and update badge count
+function NewsUnreadTracker() {
+  useTrackUnreadNews();
+  return null;
 }

@@ -3,16 +3,7 @@ export { default as authService } from './authService';
 
 // Context and hooks
 export { AuthProvider, AuthContext } from './AuthContext';
-export { 
-  useAuth, 
-  useAuthUser, 
-  useAuthLoading, 
-  useAuthError, 
-  useAuthActions, 
-  useHasProvider, 
-  useLastActivity,
-  isAuthenticated 
-} from './useAuth';
+export { useAuth } from './useAuth';
 
 // Route protection
 export { 

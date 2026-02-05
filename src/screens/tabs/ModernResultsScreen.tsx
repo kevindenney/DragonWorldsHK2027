@@ -3,7 +3,7 @@
  * Matches the provided design with dual regatta support and realistic sailing data
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -15,8 +15,11 @@ import {
   Linking,
   Alert,
   ActivityIndicator,
+  AppState,
+  AppStateStatus,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   Trophy,
   Users,
@@ -27,7 +30,10 @@ import {
   BookOpen,
   Clock,
   AlertCircle,
+  CheckCircle2,
+  FlaskConical,
 } from 'lucide-react-native';
+import { formatRelativeTime } from '../../utils/timeUtils';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
 import { Championship, ChampionshipCompetitor, RACING_CLASS_COLORS } from '../../data/mockChampionshipData';
 import { resultsService } from '../../services/resultsService';
@@ -53,11 +59,40 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
   const [championship, setChampionship] = useState<Championship | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  const [timestampKey, setTimestampKey] = useState(0); // Forces re-render of relative time
+  const appState = useRef(AppState.currentState);
 
   // Fetch championship data when event changes
   useEffect(() => {
     loadChampionship();
   }, [selectedEvent]);
+
+  // Auto-update timestamp display every 60 seconds when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      if (!lastUpdated) return;
+
+      // Update timestamp display every minute
+      const interval = setInterval(() => {
+        setTimestampKey(prev => prev + 1);
+      }, 60000);
+
+      // Listen for app state changes to pause/resume updates
+      const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+        if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+          // App came to foreground, trigger timestamp update
+          setTimestampKey(prev => prev + 1);
+        }
+        appState.current = nextAppState;
+      });
+
+      return () => {
+        clearInterval(interval);
+        subscription.remove();
+      };
+    }, [lastUpdated])
+  );
 
   const loadChampionship = async (forceRefresh: boolean = false) => {
     setLoading(true);
@@ -68,6 +103,9 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
       const eventId = selectedEvent === EVENTS.WORLDS_2027.id ? '13242' : '13241';
       const result = await resultsService.getChampionship(eventId, forceRefresh);
       setChampionship(result);
+      // Update last fetch time
+      const fetchTime = resultsService.getLastFetchTime(eventId);
+      setLastUpdated(fetchTime);
     } catch (err) {
       setError('Failed to load results. Please try again.');
     } finally {
@@ -140,18 +178,28 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
     };
 
     return (
-      <View style={styles.liveResultsContainer}>
-        <TouchableOpacity style={styles.liveResultsButton} onPress={handleLiveResultsPress}>
-          <Play size={16} color={colors.textInverted} />
-          <Text style={styles.liveResultsText}>Live Results</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.racingRulesButton} onPress={handleRacingRulesPress}>
-          <BookOpen size={16} color={colors.primary} />
-          <Text style={styles.racingRulesText}>Rules</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
-          <RefreshCw size={20} color={colors.textSecondary} />
-        </TouchableOpacity>
+      <View style={styles.liveResultsWrapper}>
+        <View style={styles.liveResultsContainer}>
+          <TouchableOpacity style={styles.liveResultsButton} onPress={handleLiveResultsPress}>
+            <Play size={16} color={colors.textInverted} />
+            <Text style={styles.liveResultsText}>Live Results</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.racingRulesButton} onPress={handleRacingRulesPress}>
+            <BookOpen size={16} color={colors.primary} />
+            <Text style={styles.racingRulesText}>Rules</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
+            <RefreshCw size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
+        {lastUpdated && (
+          <View style={styles.lastUpdatedContainer}>
+            <CheckCircle2 size={12} color={colors.success} />
+            <Text style={styles.lastUpdatedText}>
+              Updated: {formatRelativeTime(lastUpdated)}
+            </Text>
+          </View>
+        )}
       </View>
     );
   };
@@ -369,6 +417,16 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
         {/* Live Results Controls */}
         <LiveResultsControls />
 
+        {/* Dev Mode Banner - only visible when force mock data is enabled */}
+        {__DEV__ && resultsService.getForceMockData() && (
+          <View style={styles.devModeBanner}>
+            <FlaskConical size={14} color={colors.warning} />
+            <Text style={styles.devModeBannerText}>
+              Dev Mode: Using Mock Data
+            </Text>
+          </View>
+        )}
+
         {/* Loading State */}
         {loading && !refreshing && <LoadingState />}
 
@@ -459,15 +517,47 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: spacing.xl,
   },
-  liveResultsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
+  liveResultsWrapper: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
     backgroundColor: colors.background,
+  },
+  liveResultsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
     gap: spacing.sm,
+  },
+  lastUpdatedContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+    gap: 4,
+  },
+  lastUpdatedText: {
+    ...typography.labelSmall,
+    color: colors.textTertiary,
+  },
+  devModeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.warning + '15',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.sm,
+    borderRadius: borderRadius.md,
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.warning + '30',
+  },
+  devModeBannerText: {
+    ...typography.labelSmall,
+    color: colors.warning,
+    fontWeight: '600',
   },
   championshipCard: {
     margin: spacing.lg,

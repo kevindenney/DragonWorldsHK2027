@@ -318,7 +318,7 @@ export const LiveRaceTracker: React.FC<LiveRaceTrackerProps> = ({
       <IOSSegmentedControl
         values={['Leaders', 'Fleet', 'Progress']}
         selectedIndex={viewMode === 'leaders' ? 0 : viewMode === 'fleet' ? 1 : 2}
-        onChange={(index) => setViewMode(index === 0 ? 'leaders' : index === 1 ? 'fleet' : 'progress')}
+        onChange={(index: number) => setViewMode(index === 0 ? 'leaders' : index === 1 ? 'fleet' : 'progress')}
         style={styles.segmentedControl}
       />
     </View>

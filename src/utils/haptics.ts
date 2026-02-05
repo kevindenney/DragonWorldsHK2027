@@ -95,6 +95,18 @@ class HapticManager {
     }
   }
 
+  // Alias methods for compatibility
+  async impactAsync(style?: Haptics.ImpactFeedbackStyle): Promise<void> {
+    if (!this.isHapticEnabled()) return;
+    try {
+      await Haptics.impactAsync(style || Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {}
+  }
+
+  async keyPress(): Promise<void> {
+    await this.impact(HapticFeedbackType.LIGHT);
+  }
+
   // Convenience methods for common interactions
   async buttonPress(): Promise<void> {
     await this.impact(HapticFeedbackType.LIGHT);
@@ -225,17 +237,17 @@ export function useHaptics() {
 }
 
 // HOC for adding haptic feedback to touchable components
-export function withHaptics<P extends object>(
+export function withHaptics<P extends { onPress?: () => void }>(
   Component: React.ComponentType<P>,
   hapticType: keyof typeof HapticFeedbackType = 'LIGHT'
 ) {
-  return React.forwardRef<any, P & { onPress?: () => void }>((props, ref) => {
+  return React.forwardRef<any, P>((props, ref) => {
     const handlePress = React.useCallback(async () => {
       await haptics.impact(HapticFeedbackType[hapticType]);
       props.onPress?.();
     }, [props.onPress]);
 
-    return React.createElement(Component, { ...props, ref, onPress: handlePress });
+    return React.createElement(Component, { ...props, ref, onPress: handlePress } as P & { ref: any });
   });
 }
 

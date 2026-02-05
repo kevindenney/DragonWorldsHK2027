@@ -28,7 +28,7 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDa
 
   const handleLocationPress = () => {
     if (activity.mapLocationId) {
-      navigation.navigate('Map' as never, { locationId: activity.mapLocationId } as never);
+      (navigation as any).navigate('Map', { locationId: activity.mapLocationId });
     }
   };
 
@@ -40,7 +40,7 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDa
   const handleNavigateToMap = () => {
     setShowActionSheet(false);
     if (activity.mapLocationId) {
-      navigation.navigate('Map' as never, { locationId: activity.mapLocationId } as never);
+      (navigation as any).navigate('Map', { locationId: activity.mapLocationId });
     }
   };
 
@@ -93,7 +93,7 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDa
   const handleDetailModalNavigateToMap = () => {
     setShowDetailModal(false);
     if (activity.mapLocationId) {
-      navigation.navigate('Map' as never, { locationId: activity.mapLocationId } as never);
+      (navigation as any).navigate('Map', { locationId: activity.mapLocationId });
     }
   };
 

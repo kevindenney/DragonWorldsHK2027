@@ -88,7 +88,7 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
   const contactsStore = useContactsStore();
   
   // Extract data directly from stores to prevent individual hook subscriptions
-  const allGroups = socialStore.whatsAppGroups;
+  const allGroups = socialStore.whatsappGroups;
   const joinedGroups = socialStore.joinedGroups;
   const activeDiscussions = socialStore.activeDiscussions;
   const socialLoading = socialStore.loading;
@@ -241,7 +241,7 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
     
     if (searchQuery && searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(group => 
+      filtered = filtered.filter((group: { title: string; description: string }) =>
         group.title.toLowerCase().includes(query) ||
         group.description.toLowerCase().includes(query)
       );
@@ -251,7 +251,7 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
   };
 
   const filteredGroups = getFilteredGroups();
-  const joinedGroupIds = (joinedGroups || []).map(g => g.id);
+  const joinedGroupIds = (joinedGroups || []) as string[];
   const liveDiscussion = (activeDiscussions || []).find(d => d.isLive);
   const loading = socialLoading || contactsLoading;
   const error = socialError || contactsError;
@@ -328,7 +328,7 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
                 </IOSText>
               </IOSCard>
             ) : (
-              filteredGroups.map((group) => (
+              filteredGroups.map((group: { id: string; title: string; description: string }) => (
                 <WhatsAppGroupCard
                   key={group.id}
                   group={group}

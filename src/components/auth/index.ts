@@ -15,8 +15,10 @@ export type { AuthButtonProps } from './AuthButton';
 // export type { PasswordResetFormProps, ChangePasswordFormProps } from './PasswordResetForm'; // Temporarily disabled
 
 // Social Login Components
+import { commonProviderSets as _commonProviderSets } from './SocialLoginButton';
 export { SocialLoginButton, SocialLoginGroup, commonProviderSets } from './SocialLoginButton';
 export type { SocialLoginButtonProps, SocialLoginGroupProps } from './SocialLoginButton';
+const commonProviderSets = _commonProviderSets;
 
 // User Profile & Dashboard
 // export { UserProfile } from './UserProfile'; // Temporarily disabled

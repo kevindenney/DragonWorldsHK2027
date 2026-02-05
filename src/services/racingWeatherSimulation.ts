@@ -330,13 +330,6 @@ export class RacingWeatherSimulation {
 export const racingWeatherSimulation = new RacingWeatherSimulation();
 
 /**
- * Export Types for External Use
- */
-export type {
-  HongKongWeatherPattern
-};
-
-/**
  * Living Document Export Notes:
  * 
  * This service provides realistic weather simulation for the Dragon Worlds Hong Kong 2027

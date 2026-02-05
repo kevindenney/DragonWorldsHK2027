@@ -1,0 +1,91 @@
+# Results Tab Deep Test
+# Tests results display and standings
+
+appId: com.denneyke.dragonworldshk2027
+name: Results Deep Test
+
+---
+
+# =====================
+# AUTHENTICATION
+# =====================
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible: "Join the Fleet"
+    timeout: 5000
+
+- tapOn:
+    id: "register-displayname"
+- inputText: "Results Test"
+
+- tapOn:
+    id: "register-email"
+- inputText: "results@maestro.test"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-confirm-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-confirm-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-submit"
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 30000
+
+# =====================
+# NAVIGATE TO RESULTS
+# =====================
+
+- tapOn:
+    id: "tab-results"
+- waitForAnimationToEnd
+
+# Wait for Results screen to fully load
+- extendedWaitUntil:
+    visible: "Results"
+    timeout: 10000
+
+# =====================
+# RESULTS CONTENT
+# =====================
+
+- assertVisible: "APAC 2026"
+- assertVisible: "Live Results"
+- assertVisible: "Rules"
+- assertVisible: "Asia Pacific Championship"
+
+# Note: "Live Results" opens an external browser, so we don't tap it
+# Test basic Results screen content is displayed correctly
+
+# Test complete!

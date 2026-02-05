@@ -54,7 +54,18 @@
     "test:integration": "jest src/__tests__/firebase/emulator.integration.test.ts --testTimeout=30000",
     "dev:api": "vercel dev",
     "deploy:api": "vercel --prod",
-    "test:api": "curl \"http://localhost:3000/api/scrape-race-data?eventId=dragon-worlds-2027&type=event\""
+    "test:api": "curl \"http://localhost:3000/api/scrape-race-data?eventId=dragon-worlds-2027&type=event\"",
+    "maestro:test": "maestro test e2e/maestro/flows/",
+    "maestro:test:onboarding": "maestro test e2e/maestro/flows/onboarding.yaml",
+    "maestro:test:navigation": "maestro test e2e/maestro/flows/navigation.yaml",
+    "maestro:test:schedule": "maestro test e2e/maestro/flows/schedule.yaml",
+    "maestro:test:notices": "maestro test e2e/maestro/flows/notices.yaml",
+    "maestro:test:results": "maestro test e2e/maestro/flows/results.yaml",
+    "maestro:test:more": "maestro test e2e/maestro/flows/more.yaml",
+    "maestro:record": "maestro record",
+    "maestro:studio": "maestro studio",
+    "build:simulator": "eas build --profile simulator --platform ios",
+    "build:simulator:android": "eas build --profile simulator --platform android"
   },
   "dependencies": {
     "@babel/runtime": "^7.28.4",

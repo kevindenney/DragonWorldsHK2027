@@ -2,8 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 // TypeScript interfaces for subscription management
+export type SubscriptionTierId = 'free' | 'basic' | 'professional' | 'elite';
+
 export interface SubscriptionTier {
-  id: 'free' | 'basic' | 'professional' | 'elite';
+  id: SubscriptionTierId;
   name: string;
   price: number;
   currency: 'USD' | 'HKD' | 'EUR' | 'GBP';
@@ -72,6 +74,10 @@ export interface SubscriptionStatus {
   cancelledAt?: string;
   trialEndsAt?: string;
   gracePeriodEndsAt?: string;
+  // Convenience properties for status checking
+  active?: boolean;
+  isTrial?: boolean;
+  tier?: SubscriptionTierId;
 }
 
 export interface PaymentProvider {
@@ -564,13 +570,13 @@ export class SubscriptionService {
   // Clean up expired data
   async cleanup(): Promise<void> {
     const now = new Date();
-    
+
     // Check if subscription expired
     if (this.currentStatus && new Date(this.currentStatus.endDate) < now) {
       this.currentStatus.status = 'expired';
       await this.saveSubscriptionStatus();
     }
-    
+
     // Check if participant verification expired
     if (this.participantVerification && new Date(this.participantVerification.expiresAt) < now) {
       this.participantVerification.status = 'rejected'; // Expired
@@ -580,21 +586,35 @@ export class SubscriptionService {
       await this.saveParticipantVerification();
     }
   }
+
+  // Get subscription metrics for analytics
+  getMetrics(): {
+    currentTier: SubscriptionTierId;
+    status: string;
+    daysRemaining: number;
+    isActive: boolean;
+    isTrial: boolean;
+  } {
+    const now = new Date();
+    const endDate = this.currentStatus ? new Date(this.currentStatus.endDate) : now;
+    const daysRemaining = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+
+    return {
+      currentTier: this.currentStatus?.currentTier || 'free',
+      status: this.currentStatus?.status || 'expired',
+      daysRemaining,
+      isActive: this.currentStatus?.status === 'active' || this.currentStatus?.status === 'trial',
+      isTrial: this.currentStatus?.status === 'trial',
+    };
+  }
+
+  // Clear subscription cache
+  async clearCache(): Promise<void> {
+    await AsyncStorage.multiRemove(['subscription_status', 'participant_verification']);
+    this.currentStatus = null;
+    this.participantVerification = null;
+  }
 }
 
 // Export singleton instance
 export const subscriptionService = new SubscriptionService();
-
-// Export types
-export type {
-  SubscriptionTier,
-  SubscriptionFeature,
-  SubscriptionLimits,
-  ParticipantVerification,
-  ParticipantBenefit,
-  SubscriptionStatus,
-  PaymentProvider,
-  PurchaseResult,
-  Product,
-  ChampionshipAccess
-};

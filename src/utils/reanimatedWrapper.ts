@@ -5,7 +5,8 @@
  * Provides comprehensive React Navigation compatibility
  */
 
-import { Animated, Easing } from 'react-native';
+import { Animated, Easing, ViewProps, TextProps, ScrollViewProps, ImageProps } from 'react-native';
+import React, { forwardRef } from 'react';
 
 // Global gesture handler state for React Navigation compatibility
 const globalGestureState = {
@@ -16,13 +17,63 @@ const globalGestureState = {
   time: 0
 };
 
+// Create wrapper components that accept reanimated-style props (entering, exiting, etc.) as no-ops
+// This allows code using reanimated API to work with RN Animated without modification
+type AnimatedViewProps = ViewProps & {
+  entering?: any;
+  exiting?: any;
+  layout?: any;
+};
 
-// Use React Native's Animated API
+type AnimatedTextProps = TextProps & {
+  entering?: any;
+  exiting?: any;
+  layout?: any;
+};
+
+type AnimatedScrollViewProps = ScrollViewProps & {
+  entering?: any;
+  exiting?: any;
+  layout?: any;
+};
+
+type AnimatedImageProps = ImageProps & {
+  entering?: any;
+  exiting?: any;
+  layout?: any;
+};
+
+// Wrapper components that strip reanimated-specific props
+const AnimatedViewWrapper = forwardRef<any, AnimatedViewProps>(
+  ({ entering, exiting, layout, ...props }, ref) => {
+    return React.createElement(Animated.View, { ...props, ref });
+  }
+);
+
+const AnimatedTextWrapper = forwardRef<any, AnimatedTextProps>(
+  ({ entering, exiting, layout, ...props }, ref) => {
+    return React.createElement(Animated.Text, { ...props, ref });
+  }
+);
+
+const AnimatedScrollViewWrapper = forwardRef<any, AnimatedScrollViewProps>(
+  ({ entering, exiting, layout, ...props }, ref) => {
+    return React.createElement(Animated.ScrollView, { ...props, ref });
+  }
+);
+
+const AnimatedImageWrapper = forwardRef<any, AnimatedImageProps>(
+  ({ entering, exiting, layout, ...props }, ref) => {
+    return React.createElement(Animated.Image, { ...props, ref });
+  }
+);
+
+// Use React Native's Animated API with wrapper components
 const AnimatedDefault = {
-  View: Animated.View,
-  Text: Animated.Text,
-  ScrollView: Animated.ScrollView,
-  Image: Animated.Image,
+  View: AnimatedViewWrapper,
+  Text: AnimatedTextWrapper,
+  ScrollView: AnimatedScrollViewWrapper,
+  Image: AnimatedImageWrapper,
   createAnimatedComponent: Animated.createAnimatedComponent,
   Value: Animated.Value,
   timing: Animated.timing,
@@ -42,24 +93,47 @@ const AnimatedDefault = {
 };
 
 // Animation functions that return style objects for entering animations
-// These mimic the behavior of reanimated's entering animations with chainable duration method
-const createAnimationFunction = () => {
-  const animationFn = () => ({});
-  animationFn.duration = (ms: number) => {
-    const durationFn = () => ({});
-    durationFn.delay = (delayMs: number) => ({});
-    return durationFn;
+// These mimic the behavior of reanimated's entering animations with chainable methods
+interface ChainableAnimation {
+  (): object;
+  duration: (ms: number) => ChainableAnimation;
+  delay: (ms: number) => ChainableAnimation;
+  springify: () => ChainableAnimation;
+  damping: (value: number) => ChainableAnimation;
+  stiffness: (value: number) => ChainableAnimation;
+}
+
+const createAnimationFunction = (): ChainableAnimation => {
+  const createChainableFn = (): ChainableAnimation => {
+    const fn = (() => ({})) as ChainableAnimation;
+    fn.duration = (_ms: number) => createChainableFn();
+    fn.delay = (_ms: number) => createChainableFn();
+    fn.springify = () => createChainableFn();
+    fn.damping = (_value: number) => createChainableFn();
+    fn.stiffness = (_value: number) => createChainableFn();
+    return fn;
   };
-  return animationFn;
+  return createChainableFn();
 };
 
 const FadeInDown = createAnimationFunction();
 const FadeInUp = createAnimationFunction();
+const FadeInRight = createAnimationFunction();
+const FadeInLeft = createAnimationFunction();
 const FadeIn = createAnimationFunction();
 const FadeOut = createAnimationFunction();
+const FadeOutUp = createAnimationFunction();
+const FadeOutDown = createAnimationFunction();
 const SlideInUp = createAnimationFunction();
 const SlideInDown = createAnimationFunction();
 const SlideInRight = createAnimationFunction();
+
+// Extrapolation constants (reanimated compatibility)
+const Extrapolate = {
+  CLAMP: 'clamp' as const,
+  EXTEND: 'extend' as const,
+  IDENTITY: 'identity' as const,
+};
 
 // Enhanced Animated Value that mimics reanimated's SharedValue with full React Navigation compatibility
 class SharedValueImpl {
@@ -370,11 +444,16 @@ export default AnimatedDefault;
 export {
   FadeInDown,
   FadeInUp,
+  FadeInRight,
+  FadeInLeft,
   FadeIn,
   FadeOut,
+  FadeOutUp,
+  FadeOutDown,
   SlideInUp,
   SlideInDown,
   SlideInRight,
+  Extrapolate,
   useSharedValue,
   useAnimatedStyle,
   useAnimatedGestureHandler,

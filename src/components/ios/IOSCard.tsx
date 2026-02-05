@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle, Platform, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ViewStyle, StyleProp, Platform, TouchableOpacity } from 'react-native';
 import { colors } from '../../constants/theme';
 
 export type IOSCardVariant = 'elevated' | 'filled' | 'outlined';
@@ -8,7 +8,7 @@ export interface IOSCardProps {
   children: React.ReactNode;
   variant?: IOSCardVariant;
   padding?: number;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   testID?: string;
   onPress?: () => void;
 }
@@ -46,7 +46,7 @@ export const IOSCard: React.FC<IOSCardProps> = ({
     <View
       style={cardStyle}
       testID={testID}
-      accessibilityRole={Platform.OS === 'ios' ? 'region' : 'none'}
+      accessibilityRole={Platform.OS === 'ios' ? 'summary' : 'none'}
     >
       {children}
     </View>

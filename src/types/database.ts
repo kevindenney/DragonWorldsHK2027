@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { 
-  UserRole, 
-  UserStatus, 
-  AuthProvider,
+import {
+  UserRole,
+  UserStatus,
+  AuthProviderType,
   User,
   UserProfile,
   UserPreferences,
@@ -43,7 +43,7 @@ export const UserPreferencesSchema = z.object({
   oauth: z.object({
     autoSyncProfile: z.boolean(),
     allowMultipleAccounts: z.boolean(),
-    preferredProvider: z.nativeEnum(AuthProvider).optional(),
+    preferredProvider: z.nativeEnum(AuthProviderType).optional(),
   }),
 }).strict();
 
@@ -51,7 +51,7 @@ export const UserPreferencesSchema = z.object({
  * Zod schema for LinkedProvider validation
  */
 export const LinkedProviderSchema = z.object({
-  provider: z.nativeEnum(AuthProvider),
+  provider: z.nativeEnum(AuthProviderType),
   providerId: z.string().min(1),
   providerUid: z.string().min(1),
   email: z.string().email().optional(),
@@ -62,7 +62,7 @@ export const LinkedProviderSchema = z.object({
   isVerified: z.boolean(),
   isPrimary: z.boolean(),
   canUnlink: z.boolean(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 }).strict();
 
 /**
@@ -88,9 +88,9 @@ export const UserSchema = z.object({
   emailVerified: z.boolean(),
   role: z.nativeEnum(UserRole),
   status: z.nativeEnum(UserStatus),
-  providers: z.array(z.nativeEnum(AuthProvider)),
+  providers: z.array(z.nativeEnum(AuthProviderType)),
   linkedProviders: z.array(LinkedProviderSchema),
-  primaryProvider: z.nativeEnum(AuthProvider),
+  primaryProvider: z.nativeEnum(AuthProviderType),
   profile: UserProfileSchema,
   preferences: UserPreferencesSchema,
   metadata: UserMetadataSchema,
@@ -114,10 +114,10 @@ export const CreateUserProfileSchema = UserSchema.omit({
 
 /**
  * Schema for updating user profile
+ * Note: emailVerified can be updated by auth services after Firebase confirms verification
  */
 export const UpdateUserProfileSchema = UserSchema.omit({
   uid: true,
-  emailVerified: true, // Cannot be updated directly
 }).partial();
 
 /**
@@ -176,7 +176,7 @@ export const UserSessionSchema = z.object({
   actions: z.array(z.object({
     action: z.string(),
     timestamp: z.string(),
-    data: z.record(z.any()).optional(),
+    data: z.record(z.string(), z.any()).optional(),
   })).optional(),
 });
 
@@ -189,7 +189,7 @@ export const UserActivitySchema = z.object({
   uid: z.string(),
   action: z.string(),
   timestamp: z.string(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
   sessionId: z.string().optional(),
   ipAddress: z.string().optional(),
   userAgent: z.string().optional(),
@@ -206,7 +206,7 @@ export const UserNotificationSchema = z.object({
   type: z.enum(['race_update', 'weather_alert', 'system', 'marketing']),
   title: z.string(),
   message: z.string(),
-  data: z.record(z.any()).optional(),
+  data: z.record(z.string(), z.any()).optional(),
   sentAt: z.string(),
   readAt: z.string().optional(),
   deliveredAt: z.string().optional(),
@@ -251,6 +251,7 @@ export const EnhancedUserProfileSchema = UserProfileSchema.extend({
  * Weather preferences for users
  */
 export const WeatherPreferencesSchema = z.object({
+  uid: z.string().optional(), // User ID for linking preferences
   units: z.object({
     temperature: z.enum(['celsius', 'fahrenheit']),
     windSpeed: z.enum(['knots', 'kmh', 'mph', 'ms']),
@@ -522,7 +523,7 @@ export const DataSourceSchema = z.object({
   status: z.enum(['active', 'inactive', 'error']),
   errorMessage: z.string().optional(),
   updateFrequency: z.number().optional(), // minutes
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export interface DataSource extends z.infer<typeof DataSourceSchema> {}
@@ -584,7 +585,7 @@ export const createDefaultRacingEvent = (overrides: Partial<RacingEvent> = {}): 
  * Utility functions for race data
  */
 export const calculateTotalPoints = (raceResults: (number | string)[]): number => {
-  return raceResults.reduce((total, result) => {
+  return raceResults.reduce<number>((total, result) => {
     if (typeof result === 'number') {
       return total + result;
     }

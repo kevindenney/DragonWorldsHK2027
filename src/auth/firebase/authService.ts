@@ -68,12 +68,13 @@ export class FirebaseAuthService {
       // Test auth configuration by attempting to get current user
       try {
         await auth.authStateReady();
-      } catch (error) {
-        return { isConnected: false, error: `Auth state not ready: ${error.message}` };
+      } catch (error: unknown) {
+        const err = error as Error;
+        return { isConnected: false, error: `Auth state not ready: ${err.message}` };
       }
 
-      // Check if we're using emulator
-      const isUsingEmulator = auth.config?.emulator || false;
+      // Check if we're using emulator (simplified check)
+      const isUsingEmulator = false; // Emulator detection handled elsewhere
 
       // Test basic auth functionality by checking if we can access auth methods
       if (typeof signInWithEmailAndPassword !== 'function') {
@@ -100,7 +101,7 @@ export class FirebaseAuthService {
           email: auth.currentUser.email,
           emailVerified: auth.currentUser.emailVerified
         } : null,
-        emulatorMode: auth?.config?.emulator || false,
+        emulatorMode: false, // Emulator detection handled elsewhere
         authMethods: {
           signIn: typeof signInWithEmailAndPassword === 'function',
           signUp: typeof createUserWithEmailAndPassword === 'function',
@@ -133,6 +134,10 @@ export class FirebaseAuthService {
       // These were causing race conditions with the 15-second timeout in AuthProvider
       // Firebase Auth already handles connection errors properly and returns appropriate error codes
 
+      if (!auth) {
+        throw new Error('Firebase Auth not initialized');
+      }
+
       const userCredential = await signInWithEmailAndPassword(
         auth,
         credentials.email,
@@ -160,6 +165,9 @@ export class FirebaseAuthService {
    */
   async register(credentials: RegisterCredentials): Promise<User> {
     try {
+      if (!auth) {
+        throw new Error('Firebase Auth not initialized');
+      }
 
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -252,6 +260,10 @@ export class FirebaseAuthService {
       // Create Firebase credential from Google ID token
       const credential = GoogleAuthProvider.credential(googleResult.idToken, googleResult.accessToken);
 
+      if (!auth) {
+        throw new Error('Firebase Auth not initialized');
+      }
+
       // Sign in to Firebase with the credential
       const userCredential = await signInWithCredential(auth, credential);
       const firebaseUser = userCredential.user;
@@ -333,6 +345,10 @@ export class FirebaseAuthService {
         rawNonce: rawNonce,
       });
 
+      if (!auth) {
+        throw new Error('Firebase Auth not initialized');
+      }
+
       // Sign in to Firebase with the credential
       const userCredential = await signInWithCredential(auth, credential);
       const firebaseUser = userCredential.user;
@@ -392,6 +408,9 @@ export class FirebaseAuthService {
    */
   async logout(): Promise<void> {
     try {
+      if (!auth) {
+        throw new Error('Firebase Auth not initialized');
+      }
       await signOut(auth);
     } catch (error: any) {
       throw this.handleAuthError(error);
@@ -403,6 +422,9 @@ export class FirebaseAuthService {
    */
   async resetPassword(email: string): Promise<void> {
     try {
+      if (!auth) {
+        throw new Error('Firebase Auth not initialized');
+      }
       await sendPasswordResetEmail(auth, email);
     } catch (error: any) {
       throw this.handleAuthError(error);
@@ -414,6 +436,9 @@ export class FirebaseAuthService {
    */
   async updateUserProfile(updates: Partial<User>): Promise<User> {
     try {
+      if (!auth) {
+        throw new Error('Firebase Auth not initialized');
+      }
       const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('No user logged in');
@@ -451,6 +476,9 @@ export class FirebaseAuthService {
    */
   async resendEmailVerification(): Promise<void> {
     try {
+      if (!auth) {
+        throw new Error('Firebase Auth not initialized');
+      }
       const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('No user logged in');
@@ -466,6 +494,9 @@ export class FirebaseAuthService {
    * Set up authentication state listener
    */
   onAuthStateChanged(callback: (user: User | null) => void): () => void {
+    if (!auth) {
+      throw new Error('Firebase Auth not initialized');
+    }
     return onAuthStateChanged(auth, async (firebaseUser) => {
 
       if (firebaseUser) {
@@ -492,6 +523,9 @@ export class FirebaseAuthService {
    * Get current authenticated user
    */
   getCurrentUser(): User | null {
+    if (!auth) {
+      return null;
+    }
     const firebaseUser = auth.currentUser;
     return firebaseUser ? convertFirebaseUser(firebaseUser) : null;
   }

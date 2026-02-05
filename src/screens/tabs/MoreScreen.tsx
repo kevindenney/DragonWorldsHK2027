@@ -26,16 +26,15 @@ import { IOSText } from '../../components/ios/IOSText';
 import { ProfileButton } from '../../components/navigation/ProfileButton';
 import { FloatingBackButton } from '../../components/navigation/FloatingBackButton';
 import { colors } from '../../constants/theme';
-import { useWalkthroughStore } from '../../stores/walkthroughStore';
-import { useWalkthroughTargetSafe } from '../../hooks/useWalkthroughTarget';
 import type { RootStackParamList } from '../../types/navigation';
+import { useNewsStore } from '../../stores/newsStore';
 
 interface MoreOption {
   id: string;
   title: string;
   iconName: keyof typeof Ionicons.glyphMap;
   component?: React.ComponentType<any>;
-  action?: 'navigation' | 'auth' | 'reset-walkthrough';
+  action?: 'navigation' | 'auth';
   navigationTarget?: keyof RootStackParamList;
   accessibilityLabel: string;
   section: string;
@@ -120,31 +119,30 @@ const getMoreOptions = (): MoreOption[] => {
       accessibilityLabel: 'Information about RegattaFlow',
       section: 'App',
     },
-    // DEBUG section - remove in production
-    {
-      id: 'reset-walkthrough',
-      title: 'Reset Walkthrough',
-      iconName: 'refresh-outline',
-      action: 'reset-walkthrough',
-      accessibilityLabel: 'Reset walkthrough tutorial for testing',
-      section: 'Debug',
-    },
   ];
 
   return options;
 };
+
+// Badge component for unread count
+function RowBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+
+  const displayText = count > 99 ? '99+' : String(count);
+
+  return (
+    <View style={styles.rowBadge}>
+      <Text style={styles.rowBadgeText}>{displayText}</Text>
+    </View>
+  );
+}
 
 export function MoreScreen() {
   const [selectedOption, setSelectedOption] = React.useState<string | null>(null);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { isAuthenticated, user } = useAuth();
   const insets = useSafeAreaInsets();
-  const resetWalkthrough = useWalkthroughStore(state => state.resetAllProgress);
-
-  // Walkthrough target refs
-  const headerRef = useWalkthroughTargetSafe('more-header');
-  const profileRef = useWalkthroughTargetSafe('more-profile');
-  const appSectionRef = useWalkthroughTargetSafe('more-app-section');
+  const unreadCount = useNewsStore((state) => state.unreadCount);
 
   // Simple approach: Reset to root when coming from other tabs OR when More tab is pressed while already on More
   const wasOnDifferentTab = React.useRef(false);
@@ -168,7 +166,7 @@ export function MoreScreen() {
     });
 
     // Also listen for tab press events when already on More tab
-    const tabPressListener = parentNavigation.addListener('tabPress', (e) => {
+    const tabPressListener = parentNavigation.addListener('tabPress' as any, (e: any) => {
       const state = parentNavigation.getState();
       const currentRoute = state.routes[state.index];
 
@@ -206,14 +204,7 @@ export function MoreScreen() {
 
     // Handle different option types
     if (option.action === 'navigation' && option.navigationTarget) {
-      navigation.navigate(option.navigationTarget);
-    } else if (option.action === 'reset-walkthrough') {
-      resetWalkthrough();
-      Alert.alert(
-        'Walkthrough Reset',
-        'The walkthrough has been reset. Navigate to the Schedule tab to see it again.',
-        [{ text: 'OK' }]
-      );
+      navigation.navigate(option.navigationTarget as any);
     } else if (option.component) {
       setSelectedOption(option.id);
     }
@@ -228,6 +219,7 @@ export function MoreScreen() {
   const renderRow = (option: MoreOption, isFirst: boolean, isLast: boolean) => (
     <TouchableOpacity
       key={option.id}
+      testID={`more-menu-${option.id}`}
       style={[
         styles.row,
         isFirst && styles.rowFirst,
@@ -251,6 +243,8 @@ export function MoreScreen() {
           {option.title}
         </Text>
       </View>
+      {/* Show badge for News row when there are unread articles */}
+      {option.id === 'news' && <RowBadge count={unreadCount} />}
       {!option.destructive && (
         <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
       )}
@@ -258,8 +252,8 @@ export function MoreScreen() {
   );
 
   // Render a section group
-  const renderSection = (sectionName: string, options: MoreOption[], sectionRef?: React.RefObject<View | null>) => (
-    <View key={sectionName} style={styles.section} ref={sectionRef}>
+  const renderSection = (sectionName: string, options: MoreOption[]) => (
+    <View key={sectionName} style={styles.section}>
       <Text style={styles.sectionHeader}>{sectionName.toUpperCase()}</Text>
       <View style={styles.sectionGroup}>
         {options.map((option, index) =>
@@ -304,14 +298,12 @@ export function MoreScreen() {
   return (
     <View style={styles.container}>
       {/* iOS-style large title header */}
-      <View ref={headerRef} style={[styles.header, { paddingTop: insets.top + 8 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerContent}>
           <IOSText textStyle="title1" weight="bold" style={styles.headerTitle}>
             More
           </IOSText>
-          <View ref={profileRef}>
-            <ProfileButton size={36} />
-          </View>
+          <ProfileButton size={36} />
         </View>
       </View>
 
@@ -323,9 +315,7 @@ export function MoreScreen() {
         {sectionOrder.map(sectionName => {
           const sectionOptions = groupedOptions[sectionName];
           if (!sectionOptions || sectionOptions.length === 0) return null;
-          // Pass ref for App section to enable walkthrough highlighting
-          const sectionRef = sectionName === 'App' ? appSectionRef : undefined;
-          return renderSection(sectionName, sectionOptions, sectionRef);
+          return renderSection(sectionName, sectionOptions);
         })}
       </ScrollView>
     </View>
@@ -419,5 +409,21 @@ const styles = StyleSheet.create({
   },
   rowTitleDestructive: {
     color: colors.error,
+  },
+  rowBadge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FF3B30',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    marginRight: 8,
+  },
+  rowBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });

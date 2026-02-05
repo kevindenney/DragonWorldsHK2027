@@ -135,9 +135,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSign
           <Animated.View style={[styles.contentSection, { opacity: contentOpacity }]}>
             <Text style={styles.welcomeText}>Welcome to</Text>
             <Text style={styles.titleText}>Dragon Worlds</Text>
-            <Text style={styles.subtitleText}>Hong Kong 2027</Text>
+            <Text style={styles.subtitleText}>Hong Kong 2026 & 2027</Text>
             <Text style={styles.descriptionText}>
-              The official app for the Dragon Class World Championships
+              The official app for the Dragon Class Asia Pacific Championship 2026 and World Championship 2027
             </Text>
           </Animated.View>
 

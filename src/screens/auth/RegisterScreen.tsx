@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '../../hooks/useAuth';
-import { AuthProvider, RegisterCredentials } from '../../types/auth';
+import { AuthProviderType, RegisterCredentials } from '../../types/auth';
 import { validateEmail, validatePassword } from '../../services/auth/authUtils';
 
 interface RegisterScreenProps {
@@ -26,6 +26,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
     email: '',
     password: '',
     displayName: '',
+    acceptTerms: false,
   });
   
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -96,7 +97,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
     }
   };
 
-  const handleOAuthLogin = async (provider: AuthProvider) => {
+  const handleOAuthLogin = async (provider: AuthProviderType) => {
     try {
       clearError();
       await loginWithProvider(provider);
@@ -282,7 +283,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
 
           <TouchableOpacity
             style={[styles.oauthButton, styles.googleButton]}
-            onPress={() => handleOAuthLogin(AuthProvider.GOOGLE)}
+            onPress={() => handleOAuthLogin(AuthProviderType.GOOGLE)}
             disabled={isLoading}
           >
             <Text style={styles.oauthButtonText}>Continue with Google</Text>
@@ -291,7 +292,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
           {Platform.OS === 'ios' && (
             <TouchableOpacity
               style={[styles.oauthButton, styles.appleButton]}
-              onPress={() => handleOAuthLogin(AuthProvider.APPLE)}
+              onPress={() => handleOAuthLogin(AuthProviderType.APPLE)}
               disabled={isLoading}
             >
               <Text style={[styles.oauthButtonText, styles.appleButtonText]}>

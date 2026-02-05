@@ -25,7 +25,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Animated, ViewStyle, TextStyle } from 'react-native';
+import { View, Text, StyleSheet, Animated, ViewStyle, StyleProp, TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
 
@@ -49,7 +49,7 @@ interface CollapsibleHeaderProps {
   /** Whether to include safe area top padding (default: true) */
   includeSafeArea?: boolean;
   /** Custom container style */
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   /** Custom title style */
   titleStyle?: TextStyle;
   /** Custom subtitle style */

@@ -26,7 +26,7 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
   const [mapMode, setMapMode] = useState<'racing' | 'navigation' | 'services'>('racing');
   const [selectedLocation, setSelectedLocation] = useState<LocationDetails | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [garminService] = useState(() => new GarminService({ profile, userType }));
+  const [garminService] = useState(() => new GarminService({ profile, userType } as any));
 
   const mapModeOptions = [
     { label: 'Racing', value: 'racing' },
@@ -57,9 +57,9 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
         longitude: 114.1650
       };
       
-      const targetCoordinate = 'coordinates' in selectedLocation.location 
-        ? selectedLocation.location.coordinates
-        : selectedLocation.location.coordinates[0];
+      const targetCoordinate = 'coordinates' in selectedLocation.location
+        ? (selectedLocation.location as any).coordinates
+        : (selectedLocation.location as any).coordinates[0];
         
       const route = await garminService.calculateRoute(currentLocation, targetCoordinate);
       
@@ -162,9 +162,9 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
           />
         </View>
         
-        {location.description && (
+        {(location as any).description && (
           <IOSText style={styles.locationDescription}>
-            {location.description}
+            {(location as any).description}
           </IOSText>
         )}
         

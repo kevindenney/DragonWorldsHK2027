@@ -335,7 +335,7 @@ export const WaveHeightVisualization: React.FC<WaveHeightVisualizationProps> = (
               {
                 transform: [
                   { rotate: `${analysis.swellDirection}deg` },
-                  ...swellArrowStyle.transform
+                  ...((swellArrowStyle as any).transform || [])
                 ]
               }
             ]}

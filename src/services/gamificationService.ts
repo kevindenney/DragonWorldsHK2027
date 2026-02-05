@@ -133,6 +133,7 @@ export interface UserProgress {
   nextLevelXP: number;
   totalAchievements: number;
   rareAchievements: number;
+  achievementScore: number;
   currentStreak: number;
   longestStreak: number;
   badges: UserBadge[];
@@ -1196,20 +1197,3 @@ export class GamificationService {
 
 // Export singleton instance
 export const gamificationService = new GamificationService();
-
-// Export types
-export type {
-  Achievement,
-  AchievementRequirement,
-  AchievementReward,
-  UserAchievement,
-  Leaderboard,
-  LeaderboardEntry,
-  Badge,
-  UserBadge,
-  Challenge,
-  ChallengeRequirement,
-  ChallengeReward,
-  UserProgress,
-  UserStats
-};

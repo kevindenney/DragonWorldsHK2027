@@ -221,7 +221,7 @@ export const CompetitorDirectory: React.FC<CompetitorDirectoryProps> = ({
         <IOSSegmentedControl
           values={['List', 'Compact']}
           selectedIndex={viewMode === 'list' ? 0 : 1}
-          onChange={(index) => setViewMode(index === 0 ? 'list' : 'compact')}
+          onChange={(index: number) => setViewMode(index === 0 ? 'list' : 'compact')}
           style={styles.viewModeControl}
         />
 

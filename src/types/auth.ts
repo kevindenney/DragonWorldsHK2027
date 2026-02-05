@@ -20,6 +20,8 @@ export enum UserRole {
   USER = 'user',
   ADMIN = 'admin',
   SUPER_ADMIN = 'superadmin',
+  PARTICIPANT = 'participant',
+  OFFICIAL = 'official',
 }
 
 /**
@@ -71,6 +73,10 @@ export interface UserProfile {
   timezone?: string;
   language?: string;
   sailingProfile?: SailingProfile;
+  hsbc?: {
+    isPremier?: boolean;
+    membershipLevel?: string;
+  };
 }
 
 /**

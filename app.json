@@ -3,9 +3,7 @@
     "name": "Dragon Worlds HK 2027",
     "slug": "dragonworldshk2027",
     "version": "1.0.0",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

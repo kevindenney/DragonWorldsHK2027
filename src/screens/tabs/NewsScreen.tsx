@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,75 +10,89 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Newspaper, Calendar, User, ExternalLink, ChevronRight } from 'lucide-react-native';
+import { Newspaper, Calendar, User, ExternalLink, ChevronRight, AlertCircle } from 'lucide-react-native';
 import { colors } from '../../constants/theme';
-
-interface NewsItem {
-  id: string;
-  title: string;
-  date: string;
-  author: string;
-  summary: string;
-  url?: string;
-}
-
-// Bundled news data from dragonworld2027.com/news
-const BUNDLED_NEWS: NewsItem[] = [
-  {
-    id: '1',
-    title: 'Hopewell Hotel Named Official Hospitality Partner',
-    date: '12 January 2026',
-    author: 'Virgile Simon Bertrand',
-    summary: 'Hopewell Hotel has been designated as the Official Hospitality Partner for the 2027 Hong Kong Dragon World Championship. The organizing committee emphasized this event marks a historic milestone as "the first to be held in Asia," highlighting Hong Kong\'s maritime heritage and tourism potential.',
-    url: 'https://www.dragonworld2027.com/news/hopewell-hotel-named-official-hospitality-partner',
-  },
-  {
-    id: '2',
-    title: 'Registration Now Open',
-    date: '17 December 2025',
-    author: 'Virgile Simon Bertrand',
-    summary: 'Registration for the championship is now available. The event runs from Saturday, November 21 to Sunday, November 29, 2026. It is organized by the Sailing Federation of Hong Kong, China, alongside the Royal Hong Kong Yacht Club, International Dragon Association, and Hong Kong Dragon Association.',
-    url: 'https://www.dragonworld2027.com/news/registration-now-open',
-  },
-  {
-    id: '3',
-    title: 'Lily Xu Announced as Event Ambassador',
-    date: '15 December 2025',
-    author: 'Virgile Simon Bertrand',
-    summary: 'Olympic gold medalist Lily Xu Lijia serves as the official Event Ambassador. Following her celebrated Laser Radial career—including bronze at 2008 Beijing and gold at 2012 London Olympics—she has recently engaged in Dragon sailing, competing across Europe and Hong Kong, including the 2025 Dragon Gold Cup.',
-    url: 'https://www.dragonworld2027.com/news/lily-xu-announced-as-event-ambassador',
-  },
-  {
-    id: '4',
-    title: 'Karl Kwok Named Event Ambassador',
-    date: '7 November 2025',
-    author: 'Virgile Simon Bertrand',
-    summary: 'Mr. Karl Kwok, an accomplished offshore racer, was announced as an event ambassador. His achievements include winning the 1997 Sydney to Hobart Yacht Race and the 2009 Transatlantic Maxi Yacht Cup. He remains "the first Chinese skipper in history" to secure these prestigious international victories.',
-    url: 'https://www.dragonworld2027.com/news/karl-kwok-named-event-ambassador',
-  },
-];
+import { useNews, useRefreshNews, NewsItem } from '../../services/api/newsApi';
+import { useNewsStore } from '../../stores/newsStore';
+import { useToastStore } from '../../stores/toastStore';
+import { ArticleWebView } from '../../components/news/ArticleWebView';
+import { Toast } from '../../components/shared/Toast';
 
 export function NewsScreen() {
-  const [news, setNews] = useState<NewsItem[]>(BUNDLED_NEWS);
-  const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const { data: news = [], isLoading, isError, isFetching } = useNews();
+  const refreshNews = useRefreshNews();
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    // In production, this would fetch fresh data from the website
-    // For now, we just simulate a refresh
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+  // News store for tracking unread articles
+  const { seenArticleIds, markArticlesAsSeen, updateUnreadCount, clearUnread } = useNewsStore();
+
+  // Toast store for notifications
+  const showToast = useToastStore((state) => state.showToast);
+
+  // State for WebView
+  const [selectedArticle, setSelectedArticle] = useState<{ url: string; title: string } | null>(null);
+
+  // Track previous news count for detecting new articles
+  const previousNewsRef = useRef<string[]>([]);
+
+  // Mark all articles as seen when the screen is viewed
+  useEffect(() => {
+    if (news.length > 0) {
+      const articleIds = news.map((item) => item.id);
+      markArticlesAsSeen(articleIds);
+    }
+  }, [news, markArticlesAsSeen]);
+
+  // Clear unread count when screen is focused
+  useEffect(() => {
+    clearUnread();
+  }, [clearUnread]);
+
+  const handleRefresh = useCallback(async () => {
+    try {
+      // Store current article IDs before refresh
+      const currentIds = news.map((item) => item.id);
+      previousNewsRef.current = currentIds;
+
+      const freshNews = await refreshNews();
+
+      // Check for new articles
+      if (freshNews && freshNews.length > 0) {
+        const freshIds = freshNews.map((item) => item.id);
+        const seenSet = new Set(seenArticleIds);
+        const newArticles = freshIds.filter((id) => !seenSet.has(id));
+
+        if (newArticles.length > 0) {
+          // Show toast for new articles
+          const message = newArticles.length === 1
+            ? '1 new article'
+            : `${newArticles.length} new articles`;
+          showToast(message, 'success');
+
+          // Update the seen articles and clear unread (since we're on the screen)
+          markArticlesAsSeen(freshIds);
+        } else if (previousNewsRef.current.length > 0) {
+          // No new articles found
+          showToast('News is up to date', 'info');
+        }
+      }
+    } catch (error) {
+      // Error handling is managed by React Query
+      if (__DEV__) {
+        console.log('News refresh error:', error);
+      }
+      showToast('Failed to refresh news', 'error');
+    }
+  }, [refreshNews, news, seenArticleIds, showToast, markArticlesAsSeen]);
+
+  const handleNewsPress = (item: NewsItem) => {
+    if (item.url) {
+      // Open in-app WebView instead of external browser
+      setSelectedArticle({ url: item.url, title: item.title });
+    }
   };
 
-  const handleNewsPress = async (item: NewsItem) => {
-    if (item.url) {
-      const canOpen = await Linking.canOpenURL(item.url);
-      if (canOpen) {
-        await Linking.openURL(item.url);
-      }
-    }
+  const handleCloseWebView = () => {
+    setSelectedArticle(null);
   };
 
   const handleViewAllPress = async () => {
@@ -123,6 +137,9 @@ export function NewsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Toast notifications */}
+      <Toast />
+
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>News</Text>
@@ -135,16 +152,31 @@ export function NewsScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isFetching}
             onRefresh={handleRefresh}
             tintColor={colors.primary}
           />
         }
       >
-        {loading ? (
+        {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
             <Text style={styles.loadingText}>Loading news...</Text>
+          </View>
+        ) : isError && news.length === 0 ? (
+          <View style={styles.errorContainer}>
+            <AlertCircle size={48} color="#FF3B30" />
+            <Text style={styles.errorTitle}>Unable to Load News</Text>
+            <Text style={styles.errorText}>
+              Pull down to try again, or visit the website directly.
+            </Text>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={handleViewAllPress}
+            >
+              <Text style={styles.retryButtonText}>Visit Website</Text>
+              <ExternalLink size={16} color="#FFFFFF" />
+            </TouchableOpacity>
           </View>
         ) : news.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -175,6 +207,13 @@ export function NewsScreen() {
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacer} />
       </ScrollView>
+
+      {/* Article WebView Bottom Sheet */}
+      <ArticleWebView
+        url={selectedArticle?.url || null}
+        title={selectedArticle?.title || ''}
+        onClose={handleCloseWebView}
+      />
     </SafeAreaView>
   );
 }
@@ -236,6 +275,40 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     textAlign: 'center',
     lineHeight: 22,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 24,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  errorText: {
+    fontSize: 15,
+    color: '#8E8E93',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 10,
+    gap: 8,
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   newsCard: {
     backgroundColor: '#FFFFFF',

@@ -1,14 +1,14 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
+import {
   CreditCard,
   DollarSign,
   MapPin,
   Phone,
   Utensils,
-  Spa,
-  Concierge,
+  Heart,
+  HelpCircle,
   Map,
   Trophy,
   FileText,
@@ -20,6 +20,10 @@ import {
   Anchor,
   Calendar
 } from 'lucide-react-native';
+
+// Aliases for icons that don't exist in lucide
+const Spa = Heart; // Using Heart as alternative for Spa
+const Concierge = HelpCircle; // Using HelpCircle as alternative for Concierge
 import { colors, spacing } from '../../constants/theme';
 import {
   IOSNavigationBar,

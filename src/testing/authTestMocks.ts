@@ -5,7 +5,18 @@
  * for testing the authentication system.
  */
 
-import { jest } from '@jest/globals';
+// Use Jest globals with flexible typing for test mocks
+const jest = (globalThis as any).jest || {
+  fn: () => {
+    const mockFn = function(...args: any[]) { return mockFn._mockImplementation?.(...args); };
+    mockFn._mockImplementation = null as any;
+    mockFn.mockReturnValue = (val: any) => { mockFn._mockImplementation = () => val; return mockFn; };
+    mockFn.mockResolvedValue = (val: any) => { mockFn._mockImplementation = () => Promise.resolve(val); return mockFn; };
+    mockFn.mockImplementation = (impl: any) => { mockFn._mockImplementation = impl; return mockFn; };
+    mockFn.mockReset = () => { mockFn._mockImplementation = null; };
+    return mockFn;
+  }
+};
 
 // Mock user types matching the actual implementation
 export interface MockUser {

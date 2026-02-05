@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle, Linking } from 'react-native';
+import { View, StyleSheet, ViewStyle, StyleProp, Linking } from 'react-native';
 // Animated import removed to fix Hermes property configuration error
 import {
   Bell,
@@ -44,7 +44,7 @@ type NoticeItem = (OfficialNotification | EventDocument) & {
 interface NoticeCardProps {
   notice: NoticeItem;
   onPress: (notice: NoticeItem) => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   compact?: boolean;
 }
 

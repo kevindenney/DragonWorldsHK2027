@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   TouchableOpacity,
@@ -17,7 +17,7 @@ import {
   LucideIcon,
 } from 'lucide-react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { useWalkthroughStore } from '../../stores/walkthroughStore';
+import { useNewsStore } from '../../stores/newsStore';
 // Tab bar stays always visible per Apple HIG - no visibility context needed
 
 interface TabConfig {
@@ -67,6 +67,8 @@ const COLORS = {
   background: '#FFFFFF',
   border: 'rgba(0, 0, 0, 0.08)',
   shadow: '#000000',
+  badge: '#FF3B30',
+  badgeText: '#FFFFFF',
 };
 
 const DIMENSIONS = {
@@ -77,18 +79,22 @@ const DIMENSIONS = {
   bottomOffset: 20,
 };
 
+// Badge component for unread indicators
+function TabBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+
+  const displayText = count > 99 ? '99+' : String(count);
+
+  return (
+    <View style={styles.badgeContainer}>
+      <Text style={styles.badgeText}>{displayText}</Text>
+    </View>
+  );
+}
+
 export function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const moreTabRef = useRef<View>(null);
-  const { registerTarget, unregisterTarget } = useWalkthroughStore();
-
-  // Register More tab as walkthrough target
-  useEffect(() => {
-    registerTarget('tab-bar-more', moreTabRef);
-    return () => {
-      unregisterTarget('tab-bar-more');
-    };
-  }, [registerTarget, unregisterTarget]);
+  const unreadCount = useNewsStore((state) => state.unreadCount);
 
   const handleTabPress = async (
     routeName: string,
@@ -141,60 +147,47 @@ export function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarP
           const IconComponent = config.icon;
           const color = isFocused ? COLORS.active : COLORS.inactive;
 
-          // Add ref to More tab for walkthrough highlighting
-          const isMoreTab = route.name === 'More';
-
-          const tabContent = (
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={config.accessibilityLabel}
-              testID={`tab-${route.name.toLowerCase()}`}
-              onPress={() =>
-                handleTabPress(
-                  route.name,
-                  isFocused,
-                  route.key
-                )
-              }
-              onLongPress={() => handleTabLongPress(route.key)}
-              style={styles.tabButton}
-            >
-              <View style={styles.tabContent}>
-                <IconComponent
-                  color={color}
-                  size={DIMENSIONS.iconSize}
-                  strokeWidth={isFocused ? 2.5 : 2}
-                />
-                <Text
-                  style={[
-                    styles.tabLabel,
-                    { color },
-                    isFocused && styles.tabLabelActive,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {config.label}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          );
-
-          // Wrap More tab in a View with ref for walkthrough
-          if (isMoreTab) {
-            return (
-              <View
-                key={route.key}
-                ref={moreTabRef}
-                collapsable={false}
-                style={styles.tabWrapper}
+          return (
+            <View key={route.key} style={styles.tabWrapper}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityState={isFocused ? { selected: true } : {}}
+                accessibilityLabel={config.accessibilityLabel}
+                testID={`tab-${route.name.toLowerCase()}`}
+                onPress={() =>
+                  handleTabPress(
+                    route.name,
+                    isFocused,
+                    route.key
+                  )
+                }
+                onLongPress={() => handleTabLongPress(route.key)}
+                style={styles.tabButton}
               >
-                {tabContent}
-              </View>
-            );
-          }
-
-          return <View key={route.key} style={styles.tabWrapper}>{tabContent}</View>;
+                <View style={styles.tabContent}>
+                  <View style={styles.iconWrapper}>
+                    <IconComponent
+                      color={color}
+                      size={DIMENSIONS.iconSize}
+                      strokeWidth={isFocused ? 2.5 : 2}
+                    />
+                    {/* Show badge on More tab when there are unread news */}
+                    {route.name === 'More' && <TabBadge count={unreadCount} />}
+                  </View>
+                  <Text
+                    style={[
+                      styles.tabLabel,
+                      { color },
+                      isFocused && styles.tabLabelActive,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {config.label}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          );
         })}
       </View>
     </View>
@@ -253,6 +246,27 @@ const styles = StyleSheet.create({
   },
   tabWrapper: {
     flex: 1,
+  },
+  iconWrapper: {
+    position: 'relative',
+  },
+  badgeContainer: {
+    position: 'absolute',
+    top: -6,
+    right: -10,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: COLORS.badge,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: COLORS.badgeText,
+    fontSize: 10,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 

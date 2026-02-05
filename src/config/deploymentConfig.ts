@@ -51,7 +51,7 @@ export interface AppConfig {
 
 // Get current environment from Expo Constants
 const getEnvironment = (): Environment => {
-  const releaseChannel = Constants.expoConfig?.releaseChannel;
+  const releaseChannel = (Constants.expoConfig as any)?.releaseChannel;
   const extra = Constants.expoConfig?.extra;
   
   if (__DEV__) {

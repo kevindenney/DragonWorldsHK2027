@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { subscriptionService, SubscriptionTier } from './subscriptionService';
+import { subscriptionService, SubscriptionTier, SubscriptionTierId } from './subscriptionService';
 import { errorHandler } from './errorHandler';
 
 // Analytics interfaces
@@ -26,7 +26,7 @@ export interface FeatureUsageMetric {
   usageCount: number;
   uniqueUsers: number;
   averageSessionTime: number;
-  subscriptionTierBreakdown: Record<SubscriptionTier, number>;
+  subscriptionTierBreakdown: Record<SubscriptionTierId, number>;
   popularScreens: string[];
   timeDistribution: {
     morning: number; // 6-12
@@ -83,7 +83,7 @@ export interface SponsorROIMetric {
     totalUsers: number;
     uniqueUsers: number;
     demographics: {
-      subscriptionTiers: Record<SubscriptionTier, number>;
+      subscriptionTiers: Record<SubscriptionTierId, number>;
       engagementLevels: Record<string, number>;
     };
   };
@@ -93,7 +93,7 @@ export interface RevenueMetric {
   subscriptionRevenue: {
     monthly: number;
     annual: number;
-    byTier: Record<SubscriptionTier, number>;
+    byTier: Record<SubscriptionTierId, number>;
   };
   crossSellRevenue: {
     tacticalWind: number;
@@ -371,10 +371,10 @@ export class AnalyticsService {
           uniqueUsers: 0,
           averageSessionTime: 0,
           subscriptionTierBreakdown: {
-            [SubscriptionTier.FREE]: 0,
-            [SubscriptionTier.BASIC]: 0,
-            [SubscriptionTier.PROFESSIONAL]: 0,
-            [SubscriptionTier.ELITE]: 0
+            free: 0,
+            basic: 0,
+            professional: 0,
+            elite: 0
           },
           popularScreens: [],
           timeDistribution: { morning: 0, afternoon: 0, evening: 0, night: 0 }
@@ -391,7 +391,7 @@ export class AnalyticsService {
       else featureMetric.timeDistribution.night++;
 
       // Track subscription tier usage
-      const tier = metric.properties?.subscription_tier as SubscriptionTier;
+      const tier = metric.properties?.subscription_tier as SubscriptionTierId | undefined;
       if (tier && featureMetric.subscriptionTierBreakdown[tier] !== undefined) {
         featureMetric.subscriptionTierBreakdown[tier]++;
       }
@@ -488,10 +488,10 @@ export class AnalyticsService {
             uniqueUsers: 0,
             demographics: {
               subscriptionTiers: {
-                [SubscriptionTier.FREE]: 0,
-                [SubscriptionTier.BASIC]: 0,
-                [SubscriptionTier.PROFESSIONAL]: 0,
-                [SubscriptionTier.ELITE]: 0
+                free: 0,
+                basic: 0,
+                professional: 0,
+                elite: 0
               },
               engagementLevels: {}
             }
@@ -635,16 +635,17 @@ export class AnalyticsService {
     // For now, returning mock data based on analytics patterns
     
     const subscriptionMetrics = await subscriptionService.getMetrics();
-    
+    const estimatedMonthlyRevenue = subscriptionMetrics.isActive ? 10000 : 0;
+
     return {
       subscriptionRevenue: {
-        monthly: subscriptionMetrics.totalRevenue || 10000,
-        annual: (subscriptionMetrics.totalRevenue || 10000) * 12,
+        monthly: (subscriptionMetrics as any).totalRevenue || estimatedMonthlyRevenue,
+        annual: ((subscriptionMetrics as any).totalRevenue || estimatedMonthlyRevenue) * 12,
         byTier: {
-          [SubscriptionTier.FREE]: 0,
-          [SubscriptionTier.BASIC]: 2000,
-          [SubscriptionTier.PROFESSIONAL]: 5000,
-          [SubscriptionTier.ELITE]: 3000
+          free: 0,
+          basic: 2000,
+          professional: 5000,
+          elite: 3000
         }
       },
       crossSellRevenue: {
@@ -754,10 +755,10 @@ export class AnalyticsService {
         uniqueUsers: 0,
         averageSessionTime: 0,
         subscriptionTierBreakdown: {
-          [SubscriptionTier.FREE]: 0,
-          [SubscriptionTier.BASIC]: 0,
-          [SubscriptionTier.PROFESSIONAL]: 0,
-          [SubscriptionTier.ELITE]: 0
+          free: 0,
+          basic: 0,
+          professional: 0,
+          elite: 0
         },
         popularScreens: [],
         timeDistribution: { morning: 0, afternoon: 0, evening: 0, night: 0 }
@@ -790,10 +791,10 @@ export class AnalyticsService {
           uniqueUsers: 0,
           demographics: {
             subscriptionTiers: {
-              [SubscriptionTier.FREE]: 0,
-              [SubscriptionTier.BASIC]: 0,
-              [SubscriptionTier.PROFESSIONAL]: 0,
-              [SubscriptionTier.ELITE]: 0
+              free: 0,
+              basic: 0,
+              professional: 0,
+              elite: 0
             },
             engagementLevels: {}
           }
@@ -895,15 +896,3 @@ export class AnalyticsService {
 
 // Export singleton instance
 export const analyticsService = new AnalyticsService();
-
-// Export types
-export type {
-  UserEngagementMetric,
-  ConversionFunnelStep,
-  FeatureUsageMetric,
-  WeatherCheckPattern,
-  SocialInteractionMetric,
-  SponsorROIMetric,
-  RevenueMetric,
-  BusinessIntelligenceReport
-};

@@ -95,14 +95,14 @@ class MarineWarningService {
     try {
 
       // Get HKO marine warnings
-      const hkoWarnings = await hkoAPI.getMarineWarnings();
+      const hkoWarnings = await hkoAPI.getWeatherWarnings();
 
       // Get current marine forecasts for local warning analysis
-      const marineForecasts = await hkoAPI.getMarineForecasts();
+      const marineForecasts = await hkoAPI.getMarineForecastAreas();
 
       // Process HKO warnings
-      hkoWarnings.forEach(warning => {
-        const marineWarning = this.convertHKOWarningToMarineWarning(warning);
+      hkoWarnings.forEach((warning) => {
+        const marineWarning = this.convertHKOWarningToMarineWarning(warning as HKOMarineWarning);
         this.warnings.set(marineWarning.id, marineWarning);
 
         // Check if this warning should trigger an alert
@@ -110,7 +110,7 @@ class MarineWarningService {
       });
 
       // Analyze current conditions for potential warnings
-      marineForecasts.forEach(forecast => {
+      marineForecasts.forEach((forecast: Record<string, unknown>) => {
         const localWarnings = this.analyzeLocalConditions(forecast);
         localWarnings.forEach(warning => {
           this.warnings.set(warning.id, warning);

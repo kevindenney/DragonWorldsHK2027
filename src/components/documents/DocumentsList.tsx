@@ -14,7 +14,7 @@ import {
   TextInput,
   Alert
 } from 'react-native';
-import Animated, { FadeInDown } from '../../utils/reanimatedWrapper';
+import Animated from '../../utils/reanimatedWrapper';
 import {
   FileText,
   Download,
@@ -201,7 +201,6 @@ export function DocumentsList({ eventId, category }: DocumentsListProps) {
   const renderDocumentCard = (doc: Document, index: number) => (
     <Animated.View
       key={doc.id}
-      entering={FadeInDown.delay(index * 50)}
       style={styles.documentCard}
     >
       <TouchableOpacity

@@ -3,9 +3,18 @@ import {
   getAuth,
   Auth,
   connectAuthEmulator,
-  initializeAuth,
-  getReactNativePersistence
+  initializeAuth
 } from 'firebase/auth';
+
+// Type declaration for getReactNativePersistence - may not be available in all Firebase versions
+let getReactNativePersistence: ((storage: any) => any) | undefined;
+try {
+  // Try to import from firebase/auth (available in some versions)
+  const firebaseAuth = require('firebase/auth');
+  getReactNativePersistence = firebaseAuth.getReactNativePersistence;
+} catch {
+  // If not available, persistence won't be set (uses default)
+}
 import { getFirestore, Firestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage, FirebaseStorage, connectStorageEmulator } from 'firebase/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -59,7 +68,7 @@ function validateFirebaseConfig(config: FirebaseConfig): { isValid: boolean; isE
   const errors: string[] = [];
 
   // Check if we're likely using emulator mode (missing API key but have project ID)
-  const isEmulatorMode = !config.apiKey && config.projectId;
+  const isEmulatorMode = !config.apiKey && !!config.projectId;
 
   if (missingFields.length > 0) {
     requiredFields.forEach(field => {
@@ -164,9 +173,13 @@ if (app) {
     // Initialize Auth with persistence for React Native
     if (Platform.OS !== 'web') {
       try {
-        auth = initializeAuth(app, {
-          persistence: getReactNativePersistence(AsyncStorage)
-        });
+        if (getReactNativePersistence) {
+          auth = initializeAuth(app, {
+            persistence: getReactNativePersistence(AsyncStorage)
+          });
+        } else {
+          auth = getAuth(app);
+        }
       } catch (error) {
         // Auth might already be initialized
         auth = getAuth(app);
@@ -191,6 +204,18 @@ if (app) {
 }
 
 export { auth, firestore, storage };
+
+/**
+ * Get non-null auth instance (throws if auth is not initialized)
+ */
+export function getAuthInstance(): Auth {
+  if (!auth) {
+    throw new Error('Firebase Auth is not initialized');
+  }
+  return auth;
+}
+// Alias for backwards compatibility
+export const db = firestore;
 export const isFirestoreReady = () => Boolean(firestore);
 
 // Analytics disabled for mobile - only available on web

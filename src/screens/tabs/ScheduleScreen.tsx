@@ -13,9 +13,8 @@
  * - EventInfoSheet for progressive disclosure of event details
  */
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, ScrollView, StyleSheet, RefreshControl, Animated } from 'react-native';
-import { TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IOSText } from '../../components/ios/IOSText';
 import { FloatingEventSwitch } from '../../components/navigation/FloatingEventSwitch';
@@ -28,7 +27,6 @@ import { EventInfoSheet } from '../../components/schedule/EventInfoSheet';
 import { colors, spacing } from '../../constants/theme';
 import { eventSchedules } from '../../data/scheduleData';
 import { useToolbarVisibility } from '../../contexts/TabBarVisibilityContext';
-import { useWalkthroughStore } from '../../stores/walkthroughStore';
 import type { ScheduleScreenProps } from '../../types/navigation';
 
 const HEADER_HEIGHT = 250; // Height of header section including month/year, date picker, and day title
@@ -40,28 +38,6 @@ export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
   const [showEventInfo, setShowEventInfo] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const insets = useSafeAreaInsets();
-
-  // Walkthrough target refs
-  const headerRef = useRef<View>(null);
-  const eventSwitchRef = useRef<View>(null);
-  const datePickerRef = useRef<View>(null);
-  const scheduleContentRef = useRef<View>(null);
-  const { registerTarget, unregisterTarget } = useWalkthroughStore();
-
-  // Register walkthrough targets
-  useEffect(() => {
-    registerTarget('schedule-header', headerRef);
-    registerTarget('event-switch', eventSwitchRef);
-    registerTarget('date-picker', datePickerRef);
-    registerTarget('schedule-content', scheduleContentRef);
-
-    return () => {
-      unregisterTarget('schedule-header');
-      unregisterTarget('event-switch');
-      unregisterTarget('date-picker');
-      unregisterTarget('schedule-content');
-    };
-  }, [registerTarget, unregisterTarget]);
 
   // Toolbar auto-hide
   const { toolbarTranslateY, createScrollHandler } = useToolbarVisibility();
@@ -147,9 +123,7 @@ export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
         }
       >
         {/* Day Content - Activities visible immediately */}
-        <View ref={scheduleContentRef} collapsable={false}>
-          <ScheduleDayContent day={selectedDay} />
-        </View>
+        <ScheduleDayContent day={selectedDay} />
 
         {/* Bottom Padding */}
         <View style={styles.bottomPadding} />
@@ -166,35 +140,31 @@ export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
         ]}
       >
         {/* Title Row */}
-        <View ref={headerRef} collapsable={false} style={styles.header}>
+        <View style={styles.header}>
           <View style={styles.headerContent}>
             <IOSText textStyle="title1" weight="bold" style={styles.headerTitle}>
               Schedule
             </IOSText>
             <ProfileButton size={36} />
           </View>
-          <View ref={eventSwitchRef} collapsable={false}>
-            <FloatingEventSwitch
-              options={[
-                { label: 'APAC 2026', shortLabel: 'APAC 2026', value: EVENTS.APAC_2026.id },
-                { label: 'Worlds 2027', shortLabel: 'Worlds 2027', value: EVENTS.WORLDS_2027.id }
-              ]}
-              selectedValue={selectedEvent}
-              onValueChange={setSelectedEvent}
-            />
-          </View>
+          <FloatingEventSwitch
+            options={[
+              { label: 'APAC 2026', shortLabel: 'APAC 2026', value: EVENTS.APAC_2026.id },
+              { label: 'Worlds 2027', shortLabel: 'Worlds 2027', value: EVENTS.WORLDS_2027.id }
+            ]}
+            selectedValue={selectedEvent}
+            onValueChange={setSelectedEvent}
+          />
         </View>
 
         {/* Date Picker with Day Title */}
-        <View ref={datePickerRef} collapsable={false}>
-          <HorizontalDatePicker
-            days={currentEvent.days}
-            selectedDayId={selectedDayId}
-            onDaySelect={handleDaySelect}
-            selectedDayTitle={selectedDay?.title}
-            monthYear={monthYear}
-          />
-        </View>
+        <HorizontalDatePicker
+          days={currentEvent.days}
+          selectedDayId={selectedDayId}
+          onDaySelect={handleDaySelect}
+          selectedDayTitle={selectedDay?.title}
+          monthYear={monthYear}
+        />
       </Animated.View>
 
       {/* Event Info Sheet - Progressive Disclosure */}

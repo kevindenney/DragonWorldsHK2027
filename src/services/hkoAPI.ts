@@ -33,10 +33,12 @@ export interface HKOWeatherBuoy {
   windGust?: number;
   visibility?: number;
   updateTime: string;
+  lastUpdated?: string;
   status: 'online' | 'offline' | 'maintenance';
 }
 
 export interface HKOTideStation {
+  id: string;
   code: string;
   name: string;
   latitude: number;
@@ -44,6 +46,14 @@ export interface HKOTideStation {
   currentHeight?: number;
   predictedHeight?: number;
   type?: 'high' | 'low' | 'normal';
+  trend?: 'rising' | 'falling' | 'slack';
+  tidalRange?: number;
+  meanSeaLevel?: number;
+  nextTide?: {
+    type: 'high' | 'low';
+    time: string;
+    height: number;
+  };
   nextHigh?: {
     time: string;
     height: number;
@@ -53,6 +63,7 @@ export interface HKOTideStation {
     height: number;
   };
   updateTime: string;
+  lastUpdated?: string;
 }
 
 export interface HKODriftingBuoy {
@@ -60,16 +71,21 @@ export interface HKODriftingBuoy {
   identifier: string; // e.g., "AMOHK33"
   latitude: number;
   longitude: number;
+  coordinate?: { latitude: number; longitude: number }; // Convenience alias
   seaLevelPressure?: number;
   seaSurfaceTemperature?: number;
   driftSpeed?: number;
   driftDirection?: number;
+  isActive?: boolean;
   updateTime: string;
+  lastUpdated?: string; // Alias for updateTime
 }
 
 export interface HKOMarineForecastArea {
   id: string;
+  areaId?: string; // Alias for id
   name: string;
+  areaName?: string; // Alias for name
   bounds: {
     north: number;
     south: number;
@@ -80,6 +96,7 @@ export interface HKOMarineForecastArea {
     latitude: number;
     longitude: number;
   };
+  centerCoordinate?: { latitude: number; longitude: number }; // Alias for center
   forecast: {
     windSpeed: number;
     windDirection: number;
@@ -88,19 +105,34 @@ export interface HKOMarineForecastArea {
     visibility: number;
     weather: string;
   };
+  windSpeed?: number; // Convenience alias
+  windDirection?: number; // Convenience alias
+  conditions?: string; // Weather conditions summary
   warnings?: string[];
   updateTime: string;
+  lastUpdated?: string;
 }
 
 export interface HKOMarineWarning {
+  id: string;
   type: string;
   code: string;
   name: string;
+  title: string;
+  description: string;
   message: string;
   severity: 'advisory' | 'warning' | 'emergency';
+  affectedAreas: string[];
+  maxWindSpeed?: number;
+  maxWaveHeight?: number;
+  minVisibility?: number;
   issuedTime: string;
+  issuedAt?: string; // Alias for issuedTime
   validFrom: string;
   validTo: string;
+  validUntil?: string; // Alias for validTo
+  lastUpdated?: string;
+  isActive?: boolean;
 }
 
 export interface HKOCurrentWeatherResponse {
@@ -184,20 +216,20 @@ const WEATHER_BUOYS: Omit<HKOWeatherBuoy, 'updateTime' | 'status'>[] = [
 
 // 14 Real-time Tide Stations across Hong Kong waters
 const TIDE_STATIONS: Omit<HKOTideStation, 'updateTime'>[] = [
-  { code: 'CCH', name: 'Cheung Chau', latitude: 22.2100, longitude: 114.0300 },
-  { code: 'CLK', name: 'Chek Lap Kok', latitude: 22.3026, longitude: 113.9194 },
-  { code: 'CMW', name: 'Chi Ma Wan', latitude: 22.2333, longitude: 114.0167 },
-  { code: 'KCT', name: 'Kwai Chung', latitude: 22.3500, longitude: 114.1167 },
-  { code: 'KLW', name: 'Ko Lau Wan', latitude: 22.3000, longitude: 114.2833 },
-  { code: 'LOP', name: 'Lok On Pai', latitude: 22.3667, longitude: 114.0667 },
-  { code: 'MWC', name: 'Ma Wan', latitude: 22.3500, longitude: 114.0583 },
-  { code: 'QUB', name: 'Quarry Bay', latitude: 22.2883, longitude: 114.2117 },
-  { code: 'SPW', name: 'Shek Pik', latitude: 22.2167, longitude: 113.8833 },
-  { code: 'TAO', name: 'Tai O', latitude: 22.2533, longitude: 113.8633 },
-  { code: 'TBT', name: 'Tsim Bei Tsui', latitude: 22.4917, longitude: 113.9717 },
-  { code: 'TMW', name: 'Tai Miu Wan', latitude: 22.3583, longitude: 114.3600 },
-  { code: 'TPK', name: 'Tai Po Kau', latitude: 22.4467, longitude: 114.1833 },
-  { code: 'WAG', name: 'Waglan Island', latitude: 22.1817, longitude: 114.3033 }
+  { id: 'CCH', code: 'CCH', name: 'Cheung Chau', latitude: 22.2100, longitude: 114.0300 },
+  { id: 'CLK', code: 'CLK', name: 'Chek Lap Kok', latitude: 22.3026, longitude: 113.9194 },
+  { id: 'CMW', code: 'CMW', name: 'Chi Ma Wan', latitude: 22.2333, longitude: 114.0167 },
+  { id: 'KCT', code: 'KCT', name: 'Kwai Chung', latitude: 22.3500, longitude: 114.1167 },
+  { id: 'KLW', code: 'KLW', name: 'Ko Lau Wan', latitude: 22.3000, longitude: 114.2833 },
+  { id: 'LOP', code: 'LOP', name: 'Lok On Pai', latitude: 22.3667, longitude: 114.0667 },
+  { id: 'MWC', code: 'MWC', name: 'Ma Wan', latitude: 22.3500, longitude: 114.0583 },
+  { id: 'QUB', code: 'QUB', name: 'Quarry Bay', latitude: 22.2883, longitude: 114.2117 },
+  { id: 'SPW', code: 'SPW', name: 'Shek Pik', latitude: 22.2167, longitude: 113.8833 },
+  { id: 'TAO', code: 'TAO', name: 'Tai O', latitude: 22.2533, longitude: 113.8633 },
+  { id: 'TBT', code: 'TBT', name: 'Tsim Bei Tsui', latitude: 22.4917, longitude: 113.9717 },
+  { id: 'TMW', code: 'TMW', name: 'Tai Miu Wan', latitude: 22.3583, longitude: 114.3600 },
+  { id: 'TPK', code: 'TPK', name: 'Tai Po Kau', latitude: 22.4467, longitude: 114.1833 },
+  { id: 'WAG', code: 'WAG', name: 'Waglan Island', latitude: 22.1817, longitude: 114.3033 }
 ];
 
 // 10 Marine Forecast Areas in South China Sea and Western North Pacific
@@ -359,12 +391,16 @@ export class HKOAPI {
         warnings.push({
           id: 'warning-001',
           type: 'gale',
+          code: 'GALE-001',
+          name: 'Gale Warning',
           severity: 'warning',
           title: 'Gale Warning for Hong Kong Waters',
           description: 'Gale force winds expected in eastern Hong Kong waters. Mariners should exercise caution.',
+          message: 'Gale force winds expected. Mariners should exercise caution.',
           affectedAreas: ['Eastern Waters', 'Victoria Harbour'],
           validFrom: now.toISOString(),
           validTo: new Date(now.getTime() + 6 * 60 * 60 * 1000).toISOString(),
+          issuedTime: now.toISOString(),
           issuedAt: now.toISOString(),
           lastUpdated: now.toISOString(),
           isActive: true,

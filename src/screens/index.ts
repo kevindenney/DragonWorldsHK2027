@@ -3,6 +3,5 @@ export * from './tabs';
 export * from './modals';
 export * from './auth';
 
-// Onboarding and splash screens
-export { SplashScreen } from './SplashScreen';
+// Onboarding screens
 export { OnboardingScreen } from './OnboardingScreen';

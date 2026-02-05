@@ -1,0 +1,136 @@
+# More Screen Flow Tests for Dragon Worlds HK 2027
+# Tests More tab navigation and sub-screen access
+# NOTE: Requires authenticated state
+
+appId: com.denneyke.dragonworldshk2027
+name: More Flow
+
+---
+
+# Test: More Screen Loads
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+# Navigate to More tab
+- tapOn:
+    id: "tab-more"
+
+# Wait for More screen to load
+- extendedWaitUntil:
+    visible: "More"
+    timeout: 5000
+
+# Assert More screen header is visible
+- assertVisible: "More"
+- assertVisible: "RACING"
+
+---
+
+# Test: Navigate to Entrants
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+- tapOn:
+    id: "tab-more"
+
+- extendedWaitUntil:
+    visible: "More"
+    timeout: 5000
+
+# Tap on Entrants option
+- tapOn: "Entrants"
+
+# Wait for Entrants screen
+- waitForAnimationToEnd
+
+# Navigate back
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+---
+
+# Test: Navigate to Venue Map
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+- tapOn:
+    id: "tab-more"
+
+- extendedWaitUntil:
+    visible: "More"
+    timeout: 5000
+
+# Tap on Venue Map option
+- tapOn: "Venue Map"
+
+# Wait for Venue Map screen
+- waitForAnimationToEnd
+
+# Navigate back
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+---
+
+# Test: Navigate to Weather
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+- tapOn:
+    id: "tab-more"
+
+- extendedWaitUntil:
+    visible: "More"
+    timeout: 5000
+
+# Tap on Weather option
+- tapOn: "Weather"
+
+# Wait for Weather screen
+- waitForAnimationToEnd
+
+# Navigate back
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+---
+
+# Test: Navigate to Contacts
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+- tapOn:
+    id: "tab-more"
+
+- extendedWaitUntil:
+    visible: "More"
+    timeout: 5000
+
+# Tap on Contacts option
+- tapOn: "Contacts"
+
+# Wait for Contacts screen
+- waitForAnimationToEnd
+
+# Navigate back
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd

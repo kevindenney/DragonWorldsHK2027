@@ -1,8 +1,8 @@
 import React from 'react';
-import { TouchableOpacity, Text, View, StyleSheet, Platform, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, Text, View, StyleSheet, Platform, ActivityIndicator, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import { AntDesign, FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
-import { AuthProvider } from '../../auth/authTypes';
+import { AuthProvider, AuthProviderType } from '../../auth/authTypes';
 
 // DEBUG: Log AuthProvider import to validate type and properties
 
@@ -51,8 +51,8 @@ const socialConfigs = {
 }; // Removed 'as const' to avoid Hermes property descriptor conflicts
 
 export interface SocialLoginButtonProps {
-  provider: AuthProvider;
-  onPress: (provider: AuthProvider) => void;
+  provider: AuthProviderType;
+  onPress: (provider: AuthProviderType) => void;
   disabled?: boolean;
   loading?: boolean;
   variant?: 'filled' | 'outlined';
@@ -87,9 +87,22 @@ export function SocialLoginButton({
   const buttonText = customText || `Continue with ${config.name}`;
   const isDisabled = disabled || loading;
 
-  const getButtonStyle = () => {
-    const baseStyle = [styles.button, styles[`button${size.charAt(0).toUpperCase() + size.slice(1)}`]];
-    
+  // Style maps for dynamic sizing
+  const sizeButtonStyles = {
+    small: styles.buttonSmall,
+    medium: styles.buttonMedium,
+    large: styles.buttonLarge,
+  };
+
+  const sizeTextStyles = {
+    small: styles.textSmall,
+    medium: styles.textMedium,
+    large: styles.textLarge,
+  };
+
+  const getButtonStyle = (): StyleProp<ViewStyle> => {
+    const baseStyle: StyleProp<ViewStyle>[] = [styles.button, sizeButtonStyles[size]];
+
     if (variant === 'filled') {
       baseStyle.push({
         backgroundColor: isDisabled ? colors.border : config.backgroundColor,
@@ -111,9 +124,9 @@ export function SocialLoginButton({
     return baseStyle;
   };
 
-  const getTextStyle = () => {
-    const baseStyle = [styles.text, styles[`text${size.charAt(0).toUpperCase() + size.slice(1)}`]];
-    
+  const getTextStyle = (): StyleProp<TextStyle> => {
+    const baseStyle: StyleProp<TextStyle>[] = [styles.text, sizeTextStyles[size]];
+
     if (variant === 'filled') {
       baseStyle.push({
         color: isDisabled ? colors.textMuted : config.textColor,
@@ -159,7 +172,7 @@ export function SocialLoginButton({
           showIcon && (
             <View style={styles.iconContainer}>
               <config.iconComponent
-                name={config.iconName}
+                name={config.iconName as any}
                 size={18}
                 color={config.iconColor}
               />
@@ -176,11 +189,11 @@ export function SocialLoginButton({
 }
 
 export interface SocialLoginGroupProps {
-  providers: AuthProvider[];
-  onPress: (provider: AuthProvider) => void;
+  providers: AuthProviderType[];
+  onPress: (provider: AuthProviderType) => void;
   disabled?: boolean;
   loading?: boolean;
-  loadingProvider?: AuthProvider;
+  loadingProvider?: AuthProviderType;
   variant?: 'filled' | 'outlined';
   size?: 'small' | 'medium' | 'large';
   title?: string;

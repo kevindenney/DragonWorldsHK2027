@@ -140,7 +140,7 @@ class PerformanceMonitor {
         this.endTiming(metricName);
         return result;
       } catch (error) {
-        this.endTiming(metricName, { error: error.message });
+        this.endTiming(metricName, { error: error instanceof Error ? error.message : 'Unknown error' });
         throw error;
       }
     };
@@ -161,9 +161,9 @@ class PerformanceMonitor {
       this.endTiming(operationName, { success: true });
       return result;
     } catch (error) {
-      this.endTiming(operationName, { 
-        success: false, 
-        error: error.message 
+      this.endTiming(operationName, {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
       throw error;
     }
@@ -220,7 +220,7 @@ export const withPerformanceTracking = <T extends any[], R>(
       performanceMonitor.endTiming(name);
       return result;
     } catch (error) {
-      performanceMonitor.endTiming(name, { error: error.message });
+      performanceMonitor.endTiming(name, { error: error instanceof Error ? error.message : 'Unknown error' });
       throw error;
     }
   };

@@ -3,6 +3,12 @@ import { Alert, Platform, Linking } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import type { Activity } from '../data/scheduleData';
 
+// Define local Alarm interface since expo-calendar doesn't export it directly
+interface CalendarAlarm {
+  relativeOffset?: number;
+  absoluteDate?: string;
+}
+
 // Enhanced logging for debugging calendar issues
 const logCalendarDebug = (message: string, data?: any) => {
 };
@@ -29,7 +35,7 @@ export interface CalendarEvent {
   endDate: Date;
   location?: string;
   notes?: string;
-  alarms?: Calendar.Alarm[];
+  alarms?: CalendarAlarm[];
 }
 
 /**
@@ -79,7 +85,8 @@ export const requestCalendarPermissions = async (): Promise<boolean> => {
     logCalendarError('Error requesting calendar permissions', error);
 
     // Check if this is the specific missing plist error
-    if (error?.message?.includes('MissingCalendarPListValueException')) {
+    const errorMessage = (error as Error)?.message;
+    if (errorMessage?.includes('MissingCalendarPListValueException')) {
       Alert.alert(
         'Configuration Error',
         'Calendar feature requires app rebuild with proper configuration. Please contact support.',
@@ -105,11 +112,11 @@ export const getDefaultCalendarId = async (): Promise<string | null> => {
 
     // Find the default calendar or the first writable calendar
     let defaultCalendar = calendars.find(
-      cal => cal.source?.name === 'Default' && cal.allowsModifications
+      (cal: { source?: { name?: string }; allowsModifications?: boolean }) => cal.source?.name === 'Default' && cal.allowsModifications
     );
 
     if (!defaultCalendar) {
-      defaultCalendar = calendars.find(cal => cal.allowsModifications);
+      defaultCalendar = calendars.find((cal: { allowsModifications?: boolean }) => cal.allowsModifications);
     }
 
     return defaultCalendar?.id || null;
@@ -197,7 +204,7 @@ export const createCalendarEventFromActivity = (
   }
 
   // Add reminders based on activity type
-  const alarms: Calendar.Alarm[] = [];
+  const alarms: CalendarAlarm[] = [];
 
   if (activity.type === 'racing') {
     // 30 minutes before racing events
@@ -293,7 +300,8 @@ export const addActivityToCalendar = async (
     logCalendarError('Error adding event to calendar', error);
 
     // Check if this is the specific missing plist error
-    if (error?.message?.includes('MissingCalendarPListValueException')) {
+    const errorMessage = (error as Error)?.message;
+    if (errorMessage?.includes('MissingCalendarPListValueException')) {
       logCalendarError('Detected MissingCalendarPListValueException, showing fallback');
       showCalendarFallbackOptions(activity, activityDate);
     } else {
@@ -353,7 +361,7 @@ export const testCalendarModule = async (): Promise<void> => {
     try {
       const calendars = await Calendar.getCalendarsAsync();
       logCalendarDebug('Available calendars:', calendars.length);
-      logCalendarDebug('Calendar details:', calendars.map(cal => ({
+      logCalendarDebug('Calendar details:', calendars.map((cal: { id: string; title: string; source?: { name?: string }; allowsModifications?: boolean }) => ({
         id: cal.id,
         title: cal.title,
         source: cal.source?.name,

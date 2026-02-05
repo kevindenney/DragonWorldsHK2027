@@ -633,17 +633,17 @@ export const useContactsError = () => useContactsStore(state => state.error);
 // Computed selectors with custom equality functions to prevent unnecessary re-renders
 export const useFilteredContacts = () => useContactsStore(
   state => state.getFilteredContacts(),
-  (a, b) => {
+  (a: Array<{ id: string }>, b: Array<{ id: string }>) => {
     if (a.length !== b.length) return false;
-    return a.every((contact, index) => contact.id === b[index]?.id);
+    return a.every((contact: { id: string }, index: number) => contact.id === b[index]?.id);
   }
 );
 
 export const useFilteredEmergencyContacts = () => useContactsStore(
   state => state.getFilteredEmergencyContacts(),
-  (a, b) => {
+  (a: Array<{ id: string }>, b: Array<{ id: string }>) => {
     if (a.length !== b.length) return false;
-    return a.every((contact, index) => contact.id === b[index]?.id);
+    return a.every((contact: { id: string }, index: number) => contact.id === b[index]?.id);
   }
 );
 

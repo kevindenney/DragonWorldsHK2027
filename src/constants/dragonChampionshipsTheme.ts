@@ -296,7 +296,36 @@ export const dragonLightBorderRadius = {
 
 // Shadow system for light theme depth
 export const dragonLightShadows = {
+  // Standard shadow sizes
+  small: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  medium: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  large: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 5,
+  },
   // Card shadows
+  card: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   cardSmall: {
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -318,7 +347,7 @@ export const dragonLightShadows = {
     shadowRadius: 8,
     elevation: 5,
   },
-  
+
   // Button shadows
   button: {
     shadowColor: '#007AFF',
