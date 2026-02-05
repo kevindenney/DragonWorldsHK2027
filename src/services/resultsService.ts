@@ -256,17 +256,25 @@ class ResultsService {
   }
 
   /**
-   * Get championship data with caching and fallback to bundled data
+   * Get championship data with caching
    * @param eventId - The event ID (e.g., 'asia-pacific-2026' or '13241')
    * @param forceRefresh - Bypass cache and fetch fresh data
+   * @returns Championship data, or null if unavailable
+   * @throws Error if network fails and no cache is available
+   *
+   * NOTE: This method does NOT fall back to mock data on errors.
+   * - Empty results (no races posted yet) → returns Championship with 0 competitors
+   * - Network/API errors → throws error (UI should show error state)
+   * - Dev mode with forceMockData → returns bundled mock data (for testing only)
    */
   async getChampionship(eventId: string, forceRefresh: boolean = false): Promise<Championship> {
     // Normalize event ID (support both app event IDs and cloud function event IDs)
     const cloudEventId = EVENT_ID_MAP[eventId] || eventId;
     const cacheKey = cloudEventId;
 
-    // Dev mode: force mock data if enabled
+    // Dev mode: force mock data if enabled (for UI testing only)
     if (__DEV__ && this.forceMockData) {
+      console.log('[ResultsService] Dev mode: returning mock data');
       // Update last fetch time for consistency with timestamp display
       this.lastFetchTime.set(cacheKey, Date.now());
       return this.getBundledChampionship(cloudEventId);
@@ -276,28 +284,35 @@ class ResultsService {
     if (!forceRefresh && this.isCacheValid(cacheKey)) {
       const cached = this.cache.get(cacheKey);
       if (cached) {
+        console.log(`[ResultsService] Returning cached data for ${eventId}`);
         return cached;
       }
     }
 
     try {
+      console.log(`[ResultsService] Fetching live results for ${eventId}...`);
       const championship = await this.fetchLiveResults(cloudEventId);
 
       // Update cache
       this.cache.set(cacheKey, championship);
       this.lastFetchTime.set(cacheKey, Date.now());
 
+      console.log(`[ResultsService] Got ${championship.competitors.length} competitors for ${eventId}`);
       return championship;
     } catch (error) {
+      console.error(`[ResultsService] Error fetching ${eventId}:`, error);
 
-      // Return cached data if available (even if expired)
+      // Return cached data if available (even if expired) - this is acceptable
+      // because it's real data from a previous successful fetch
       const cachedData = this.cache.get(cacheKey);
       if (cachedData) {
+        console.log(`[ResultsService] Returning expired cache for ${eventId}`);
         return cachedData;
       }
 
-      // Fallback to bundled mock data
-      return this.getBundledChampionship(cloudEventId);
+      // DO NOT fall back to mock data - propagate the error so UI can show error state
+      // This prevents users from seeing fake results when there's a real network issue
+      throw error;
     }
   }
 
@@ -440,7 +455,19 @@ class ResultsService {
   }
 
   /**
-   * Set whether to force mock data (dev mode only)
+   * Forces the results service to use bundled mock data instead of API data.
+   * This is useful for UI testing and development when the live API is unavailable.
+   *
+   * @param enabled - Whether to force mock data (true) or use normal API behavior (false)
+   * @note Only works in development builds (__DEV__). No-op in production.
+   * @note Clears the cache when toggled to ensure fresh data on next fetch.
+   *
+   * @example
+   * // Enable mock data for testing
+   * resultsService.setForceMockData(true);
+   *
+   * // Disable to return to normal behavior
+   * resultsService.setForceMockData(false);
    */
   setForceMockData(enabled: boolean): void {
     if (__DEV__) {
@@ -451,16 +478,32 @@ class ResultsService {
   }
 
   /**
-   * Get whether mock data is being forced
+   * Returns whether mock data is currently being forced.
+   *
+   * @returns true if mock data is being forced, false otherwise
+   * @note Always returns false in production builds.
+   *
+   * @example
+   * if (resultsService.getForceMockData()) {
+   *   console.log('Using mock data');
+   * }
    */
   getForceMockData(): boolean {
     return this.forceMockData;
   }
 
   /**
-   * Get the last fetch time for a specific event
-   * @param eventId - The event ID
-   * @returns Timestamp of last fetch, or null if never fetched
+   * Gets the timestamp of the last successful data fetch for a specific event.
+   * Useful for displaying "last updated" information in the UI.
+   *
+   * @param eventId - The championship event ID (e.g., 'asia-pacific-2026' or '13241')
+   * @returns Unix timestamp in milliseconds of last fetch, or null if never fetched
+   *
+   * @example
+   * const lastFetch = resultsService.getLastFetchTime('asia-pacific-2026');
+   * if (lastFetch) {
+   *   console.log(`Last updated: ${formatRelativeTime(lastFetch)}`);
+   * }
    */
   getLastFetchTime(eventId: string): number | null {
     const cloudEventId = EVENT_ID_MAP[eventId] || eventId;

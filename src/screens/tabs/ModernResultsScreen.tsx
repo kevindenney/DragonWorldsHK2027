@@ -107,7 +107,20 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
       const fetchTime = resultsService.getLastFetchTime(eventId);
       setLastUpdated(fetchTime);
     } catch (err) {
-      setError('Failed to load results. Please try again.');
+      // Capture more descriptive error messages
+      let errorMessage = 'Failed to load results. Please check your internet connection and try again.';
+      if (err instanceof Error) {
+        if (err.message.includes('Network request failed')) {
+          errorMessage = 'Network error. Please check your internet connection.';
+        } else if (err.message.includes('timeout')) {
+          errorMessage = 'Request timed out. The server may be busy. Please try again.';
+        } else if (err.message.includes('HTTP 5')) {
+          errorMessage = 'Server error. Please try again later.';
+        }
+      }
+      setError(errorMessage);
+      // Clear championship so error state shows (not stale cached data in UI)
+      setChampionship(null);
     } finally {
       setLoading(false);
     }
@@ -213,20 +226,41 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
     </View>
   );
 
-  // Error State Component
-  const ErrorState = () => (
-    <View style={styles.errorContainer}>
-      <View style={styles.errorIconContainer}>
-        <AlertCircle size={48} color={colors.error} strokeWidth={1.5} />
+  // Error State Component - shown when API fails and no cached data available
+  const ErrorState = () => {
+    const handleCheckRrsPress = async () => {
+      const url = selectedEvent === EVENTS.APAC_2026.id
+        ? 'https://www.racingrulesofsailing.org/events/13241/event_links'
+        : 'https://www.racingrulesofsailing.org/events/13242/event_links';
+      try {
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+          await Linking.openURL(url);
+        }
+      } catch (err) {
+        console.error('Failed to open RRS URL:', err);
+      }
+    };
+
+    return (
+      <View style={styles.errorContainer}>
+        <View style={styles.errorIconContainer}>
+          <AlertCircle size={48} color={colors.error} strokeWidth={1.5} />
+        </View>
+        <Text style={styles.errorTitle}>Unable to Load Results</Text>
+        <Text style={styles.errorMessage}>
+          {error || 'Failed to connect to racingrulesofsailing.org. Please check your internet connection and try again.'}
+        </Text>
+        <TouchableOpacity style={styles.retryButton} onPress={() => loadChampionship(true)}>
+          <RefreshCw size={16} color={colors.textInverted} />
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.errorLinkButton} onPress={handleCheckRrsPress}>
+          <Text style={styles.errorLinkText}>View results directly on racingrulesofsailing.org</Text>
+        </TouchableOpacity>
       </View>
-      <Text style={styles.errorTitle}>Unable to Load Results</Text>
-      <Text style={styles.errorMessage}>{error}</Text>
-      <TouchableOpacity style={styles.retryButton} onPress={() => loadChampionship(true)}>
-        <RefreshCw size={16} color={colors.textInverted} />
-        <Text style={styles.retryButtonText}>Try Again</Text>
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
   // Championship Info Card Component
   const ChampionshipInfoCard = () => {
@@ -276,23 +310,46 @@ export function ModernResultsScreen({ navigation, onToggleView }: ModernResultsS
     );
   };
 
-  // Empty State Component
-  const EmptyState = () => (
-    <View style={styles.emptyStateContainer}>
-      <View style={styles.emptyStateIconContainer}>
-        <Clock size={48} color={colors.textMuted} strokeWidth={1.5} />
-      </View>
-      <Text style={styles.emptyStateTitle}>No Results Yet</Text>
-      <Text style={styles.emptyStateMessage}>
-        Results will appear here once racing begins and scores are posted to racingrulesofsailing.org
-      </Text>
-      {currentChampionship && (
-        <Text style={styles.emptyStateDate}>
-          Racing begins: {currentChampionship.startDate}
+  // Empty State Component - shown when API returns successfully but no results are posted
+  const EmptyState = () => {
+    const handleCheckRrsPress = async () => {
+      const url = selectedEvent === EVENTS.APAC_2026.id
+        ? 'https://www.racingrulesofsailing.org/events/13241/event_links'
+        : 'https://www.racingrulesofsailing.org/events/13242/event_links';
+      try {
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+          await Linking.openURL(url);
+        }
+      } catch (err) {
+        console.error('Failed to open RRS URL:', err);
+      }
+    };
+
+    return (
+      <View style={styles.emptyStateContainer}>
+        <View style={styles.emptyStateIconContainer}>
+          <Clock size={48} color={colors.textMuted} strokeWidth={1.5} />
+        </View>
+        <Text style={styles.emptyStateTitle}>Results Not Posted Yet</Text>
+        <Text style={styles.emptyStateMessage}>
+          Results will appear here once racing begins and scores are posted to racingrulesofsailing.org
         </Text>
-      )}
-    </View>
-  );
+        {currentChampionship && (
+          <Text style={styles.emptyStateDate}>
+            Racing begins: {currentChampionship.startDate}
+          </Text>
+        )}
+        <TouchableOpacity style={styles.emptyStateButton} onPress={handleCheckRrsPress}>
+          <Text style={styles.emptyStateButtonText}>Check racingrulesofsailing.org</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.emptyStateRefreshButton} onPress={onRefresh}>
+          <RefreshCw size={16} color={colors.primary} />
+          <Text style={styles.emptyStateRefreshText}>Refresh</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   // Position Badge Component
   const PositionBadge = ({ position }: { position: number }) => {
@@ -770,6 +827,31 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
+  emptyStateButton: {
+    marginTop: spacing.lg,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.lg,
+  },
+  emptyStateButtonText: {
+    ...typography.labelMedium,
+    color: colors.textInverted,
+    fontWeight: '600',
+  },
+  emptyStateRefreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.xs,
+  },
+  emptyStateRefreshText: {
+    ...typography.labelMedium,
+    color: colors.primary,
+    fontWeight: '500',
+  },
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -831,5 +913,16 @@ const styles = StyleSheet.create({
     ...typography.labelMedium,
     color: colors.textInverted,
     fontWeight: '600',
+  },
+  errorLinkButton: {
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  errorLinkText: {
+    ...typography.labelMedium,
+    color: colors.primary,
+    fontWeight: '500',
+    textDecorationLine: 'underline',
   },
 });
