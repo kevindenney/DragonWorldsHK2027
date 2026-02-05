@@ -12,11 +12,6 @@
     "scheme": "dragonworlds",
     "description": "Official app for the Dragon World Championships 2027 in Hong Kong. Developed by RegattaFlow - specialists in sailing technology solutions. Features real-time weather data, race schedules, results, and sailor connectivity.",
     "primaryColor": "#DC2626",
-    "splash": {
-      "image": "./assets/splash-portrait-centered.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FFFFFF"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -28,11 +23,6 @@
       "requireFullScreen": false,
       "userInterfaceStyle": "light",
       "jsEngine": "hermes",
-      "splash": {
-        "image": "./assets/splash-portrait-centered.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#FFFFFF"
-      },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app uses your location to provide accurate local weather conditions and nearby sailing venues.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app uses your location to provide accurate local weather conditions and nearby sailing venues.",
@@ -73,11 +63,6 @@
     "android": {
       "package": "com.dragonworlds.hk2027",
       "versionCode": 3,
-      "splash": {
-        "image": "./assets/splash-portrait-centered.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#FFFFFF"
-      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
@@ -120,14 +105,6 @@
       "orientation": "portrait"
     },
     "plugins": [
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/splash-portrait-centered.png",
-          "resizeMode": "contain",
-          "backgroundColor": "#FFFFFF"
-        }
-      ],
       [
         "expo-notifications",
         {
