@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { useNavigation } from '@react-navigation/native';
 import { Filter, MapPin } from 'lucide-react-native';
 import { IOSSegmentedControl } from '../components/ios';
 import { LocationDetailModal } from '../components/maps/LocationDetailModal';
@@ -26,7 +27,8 @@ const { colors, spacing, typography, shadows, borderRadius } = dragonChampionshi
 const { width, height } = Dimensions.get('window');
 
 
-export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
+export const MapScreen: React.FC<MapScreenProps> = () => {
+  const navigation = useNavigation<any>();
   const [selectedFilter, setSelectedFilter] = useState<SailingLocationFilter['type']>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<SailingLocation | null>(null);
@@ -356,7 +358,19 @@ export const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
             setSelectedLocation(null);
           }}
           onScheduleNavigate={(date, eventId) => {
-            // TODO: Implement navigation to schedule screen
+            // Navigate to Schedule screen first
+            navigation.navigate('MainTabs', {
+              screen: 'Schedule',
+              params: {
+                date: date,
+                eventId: eventId
+              }
+            });
+            // Close modal after navigation is triggered
+            setTimeout(() => {
+              setShowDetailModal(false);
+              setSelectedLocation(null);
+            }, 100);
           }}
         />
       )}

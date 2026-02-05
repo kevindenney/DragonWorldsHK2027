@@ -37,6 +37,7 @@ export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
   const [showEventInfo, setShowEventInfo] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [highlightedActivityName, setHighlightedActivityName] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
 
   // Toolbar auto-hide
@@ -73,24 +74,67 @@ export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
     }
   }, [selectedEvent]);
 
+  // Helper to convert ISO date (2026-11-19) to "November 19, 2026" format for matching
+  const formatIsoDateForMatching = useCallback((isoDate: string): string | null => {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                   'July', 'August', 'September', 'October', 'November', 'December'];
+    const parts = isoDate.split('-');
+    if (parts.length !== 3) return null;
+    const year = parts[0];
+    const monthIndex = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    if (monthIndex < 0 || monthIndex > 11) return null;
+    return `${months[monthIndex]} ${day}, ${year}`;
+  }, []);
+
   // Handle navigation parameters to auto-select and highlight specific events
   useEffect(() => {
     const { date, eventId } = route?.params || {};
+    console.log('[ScheduleScreen] Received params:', { date, eventId });
 
     if (date || eventId) {
       const matchingDay = currentEvent.days.find(day => {
-        const dateMatches = date && (day.date === date || day.date.includes(date));
-        const eventMatches = eventId && day.activities.some(activity =>
-          activity.activity.includes(eventId)
+        // Try exact match first, then formatted ISO date match
+        const formattedDate = date ? formatIsoDateForMatching(date) : null;
+        const dateMatches = date && (
+          day.date === date ||
+          day.date.includes(date) ||
+          (formattedDate && day.date.includes(formattedDate))
+        );
+
+        // Check if eventId matches:
+        // 1. Any activity name
+        // 2. The day title (e.g., "Racing Day 1" in "APAC Racing Day 1")
+        // 3. Extract "Racing Day X" pattern from eventId and match against title
+        const eventIdLower = eventId?.toLowerCase() || '';
+        const dayTitleLower = day.title?.toLowerCase() || '';
+        const eventMatches = eventId && (
+          day.activities.some(activity =>
+            activity.activity.toLowerCase().includes(eventIdLower)
+          ) ||
+          eventIdLower.includes(dayTitleLower) ||
+          dayTitleLower.includes(eventIdLower)
         );
         return dateMatches || eventMatches;
       });
 
       if (matchingDay) {
         setSelectedDayId(matchingDay.id);
+
+        // Set the highlighted activity name if eventId is provided
+        if (eventId) {
+          setHighlightedActivityName(eventId);
+
+          // Clear highlight after 5 seconds
+          const timer = setTimeout(() => {
+            setHighlightedActivityName(null);
+          }, 5000);
+
+          return () => clearTimeout(timer);
+        }
       }
     }
-  }, [route?.params, currentEvent]);
+  }, [route?.params, currentEvent, formatIsoDateForMatching]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -123,7 +167,7 @@ export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
         }
       >
         {/* Day Content - Activities visible immediately */}
-        <ScheduleDayContent day={selectedDay} />
+        <ScheduleDayContent day={selectedDay} highlightedActivityName={highlightedActivityName} />
 
         {/* Bottom Padding */}
         <View style={styles.bottomPadding} />

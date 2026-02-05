@@ -117,10 +117,10 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
   const isInitialized = useRef(false);
 
   const tabOptions = [
-    { label: 'Emergency', value: 'emergency' },
+    { label: 'SOS', value: 'emergency' },
     { label: 'Contacts', value: 'contacts' },
     { label: 'Groups', value: 'groups' },
-    { label: 'Channels', value: 'channels' }
+    { label: 'VHF', value: 'channels' }
   ];
 
   // Initialize data only once on mount
@@ -370,8 +370,8 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
     }
   };
 
-  // Header height for content padding (safe area + back button space + header content)
-  const HEADER_HEIGHT = 56;
+  // Header height for content padding (title row height + padding)
+  const HEADER_HEIGHT = 44;
 
   return (
     <View style={styles.container}>

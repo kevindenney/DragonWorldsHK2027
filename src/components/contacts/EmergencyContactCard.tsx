@@ -351,20 +351,17 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column',
     paddingHorizontal: 16,
     paddingBottom: 16,
     paddingTop: 12,
-    gap: 12,
+    gap: 10,
   },
   emergencyButton: {
-    flex: 1,
     minHeight: 44,
   },
   vhfButton: {
-    minWidth: 100,
+    minHeight: 40,
   },
   quickDialButton: {
     padding: 8,

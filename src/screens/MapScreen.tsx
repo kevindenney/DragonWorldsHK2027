@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput, ScrollView, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { Filter, Crosshair, Search, X } from 'lucide-react-native';
 
@@ -31,7 +32,8 @@ interface MapScreenLocalProps {
   onBack?: () => void;
 }
 
-export const MapScreen: React.FC<Partial<MapScreenProps> & MapScreenLocalProps> = ({ navigation, route, onBack }) => {
+export const MapScreen: React.FC<Partial<MapScreenProps> & MapScreenLocalProps> = ({ navigation: navProp, route, onBack }) => {
+  const navigation = useNavigation<any>();
   const mapRef = useRef<MapView>(null);
   const insets = useSafeAreaInsets();
   const [selectedFilter, setSelectedFilter] = useState<SailingLocationFilter['type']>('all');
@@ -367,17 +369,17 @@ export const MapScreen: React.FC<Partial<MapScreenProps> & MapScreenLocalProps> 
           location={selectedLocation}
           onClose={handleCloseModal}
           onScheduleNavigate={(date, event) => {
-            // Navigate back to tabs, then to Schedule screen
-            setSelectedLocation(null); // Close modal first
-            if (navigation) {
-              navigation.navigate('MainTabs', {
-                screen: 'Schedule',
-                params: {
-                  date: date,
-                  eventId: event
-                }
-              });
-            }
+            // Navigate to Schedule screen, then close modal
+            navigation.navigate('MainTabs', {
+              screen: 'Schedule',
+              params: {
+                date: date,
+                eventId: event
+              }
+            });
+            setTimeout(() => {
+              setSelectedLocation(null);
+            }, 100);
           }}
         />
       )}

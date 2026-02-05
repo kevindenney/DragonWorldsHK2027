@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, TextInput, RefreshControl, Animated } from 'react-native';
+import { View, StyleSheet, ScrollView, TextInput, RefreshControl, Animated, Linking, TouchableOpacity } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Search,
@@ -10,7 +10,8 @@ import {
   WifiOff,
   Radio,
   Sailboat,
-  Anchor
+  Anchor,
+  ExternalLink
 } from 'lucide-react-native';
 
 import { colors, spacing } from '../../constants/theme';
@@ -177,6 +178,15 @@ export const EntrantsScreen: React.FC<EntrantsScreenProps & EntrantsScreenCustom
     await refresh();
   }, [refresh]);
 
+  // Open ClubSpot entry list in browser
+  const handleOpenClubSpot = useCallback(async () => {
+    await haptics.selection();
+    const url = selectedEvent === 'world'
+      ? externalUrls.clubSpot.worlds.entryList
+      : externalUrls.clubSpot.apac.entryList;
+    Linking.openURL(url);
+  }, [selectedEvent]);
+
   // Get data source badge info
   const getDataSourceBadge = useCallback(() => {
     if (!dataSourceInfo) {
@@ -189,7 +199,7 @@ export const EntrantsScreen: React.FC<EntrantsScreenProps & EntrantsScreenCustom
       case 'cache':
         return { label: 'Cached', color: 'systemOrange' as const, icon: Wifi };
       case 'demo':
-        return { label: 'Demo Mode', color: 'systemBlue' as const, icon: WifiOff };
+        return { label: 'Sample Data', color: 'systemBlue' as const, icon: WifiOff };
       default:
         return { label: 'Unknown', color: 'systemGray' as const, icon: AlertCircle };
     }
@@ -342,13 +352,22 @@ export const EntrantsScreen: React.FC<EntrantsScreenProps & EntrantsScreenCustom
                   })()}
                 </View>
               </View>
-              <IOSButton
-                title="↻"
-                variant="plain"
-                size="small"
-                onPress={handleRefresh}
-                disabled={isRefreshing}
-              />
+              <View style={styles.headerButtons}>
+                <TouchableOpacity
+                  onPress={handleOpenClubSpot}
+                  style={styles.iconButton}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <ExternalLink size={20} color={colors.primary} />
+                </TouchableOpacity>
+                <IOSButton
+                  title="↻"
+                  variant="plain"
+                  size="small"
+                  onPress={handleRefresh}
+                  disabled={isRefreshing}
+                />
+              </View>
             </View>
             <View style={styles.statsGrid}>
               <View style={styles.statItem}>
@@ -525,6 +544,14 @@ const styles = StyleSheet.create({
   statsHeaderLeft: {
     flex: 1,
     gap: spacing.xs,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  iconButton: {
+    padding: spacing.xs,
   },
   dataSourceRow: {
     flexDirection: 'row',

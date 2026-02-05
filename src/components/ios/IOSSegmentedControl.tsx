@@ -51,9 +51,6 @@ export const IOSSegmentedControl: React.FC<IOSSegmentedControlProps> = ({
                   styles.segmentText,
                   isSelected && styles.selectedSegmentText
                 ]}
-                numberOfLines={1}
-                adjustsFontSizeToFit={true}
-                minimumFontScale={0.7}
               >
                 {option.label}
               </IOSText>
@@ -74,8 +71,8 @@ const styles = StyleSheet.create({
   },
   segment: {
     flex: 1,
-    paddingVertical: 10, // Updated from 12 to 10
-    paddingHorizontal: 16, // Updated from 8 to 16
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 8,

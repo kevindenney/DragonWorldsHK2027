@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Linking,
   Alert,
   Platform,
   StatusBar
 } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import BottomSheet, { BottomSheetScrollView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import {
   X,
@@ -266,8 +266,11 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                 <TouchableOpacity
                   key={index}
                   style={styles.eventItem}
-                  onPress={() => onScheduleNavigate?.(event.date, event.event)}
-                  disabled={!onScheduleNavigate}
+                  onPress={() => {
+                    if (onScheduleNavigate) {
+                      onScheduleNavigate(event.date, event.event);
+                    }
+                  }}
                 >
                   <View style={styles.eventContent}>
                     <Text style={styles.eventDate}>{event.date} at {event.time}</Text>
