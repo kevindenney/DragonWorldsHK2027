@@ -24,10 +24,14 @@ import type { Day } from '../../data/scheduleData';
 
 interface ScheduleDayContentProps {
   day: Day | null;
+  highlightedActivityName?: string | null;
+  eventId?: string;
 }
 
 export const ScheduleDayContent: React.FC<ScheduleDayContentProps> = ({
   day,
+  highlightedActivityName,
+  eventId,
 }) => {
   // Get all activities for the day
   const activities = useMemo(() => {
@@ -77,6 +81,8 @@ export const ScheduleDayContent: React.FC<ScheduleDayContentProps> = ({
             key={`${day.id}-${index}-${activity.time}-${activity.activity}`}
             activity={activity}
             activityDate={day.date}
+            eventId={eventId}
+            isHighlighted={highlightedActivityName ? activity.activity.includes(highlightedActivityName) : false}
           />
         ))}
       </View>

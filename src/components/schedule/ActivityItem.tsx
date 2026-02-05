@@ -1,30 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Linking, Alert, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
 import { MapPin, ChevronRight } from 'lucide-react-native';
 import { IOSText } from '../ios/IOSText';
 import { colors, spacing } from '../../constants/theme';
-import type { Activity, ActivityType } from '../../data/scheduleData';
-import { activityTypes } from '../../data/scheduleData';
+import type { Activity, ActivityType, ActivityWithContext } from '../../data/scheduleData';
+import { activityTypes, getActivitiesAtLocation } from '../../data/scheduleData';
 import { EventActionSheet } from './EventActionSheet';
 import { EventDetailModal } from './EventDetailModal';
+import { RelatedActivitiesModal } from './RelatedActivitiesModal';
 import { getLocationById } from '../../data/sailingLocations';
 
 export interface ActivityItemProps {
   activity: Activity;
   activityDate: string; // The day date for calendar integration
+  eventId?: string;
+  isHighlighted?: boolean;
 }
 
 const getActivityColor = (type: ActivityType): string => {
   return activityTypes[type].color;
 };
 
-export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDate }) => {
+export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDate, eventId, isHighlighted = false }) => {
   const navigation = useNavigation();
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showRelatedModal, setShowRelatedModal] = useState(false);
   const activityColor = getActivityColor(activity.type);
+
+  // Find other activities at the same location
+  const activitiesAtLocation = useMemo(() => {
+    if (!eventId) return [];
+    return getActivitiesAtLocation(activity, activityDate, eventId);
+  }, [activity, activityDate, eventId]);
 
   const handleLocationPress = () => {
     if (activity.mapLocationId) {
@@ -51,20 +61,22 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDa
       if (location) {
         const { latitude, longitude } = location.coordinates;
         const encodedName = encodeURIComponent(location.name);
-        
+
         // Use platform-specific URL scheme for native maps
+        // Android: geo: URI with coordinates and label to ensure correct destination
+        // iOS: Apple Maps URL with destination coordinates
         const url = Platform.select({
-          ios: `maps://app?daddr=${latitude},${longitude}&q=${encodedName}`,
-          android: `google.navigation:q=${latitude},${longitude}`,
-          default: `https://maps.google.com/maps?daddr=${latitude},${longitude}&q=${encodedName}`,
+          ios: `maps://app?daddr=${latitude},${longitude}`,
+          android: `geo:${latitude},${longitude}?q=${latitude},${longitude}(${encodedName})`,
+          default: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`,
         });
-        
+
         Linking.canOpenURL(url).then(supported => {
           if (supported) {
             Linking.openURL(url);
           } else {
-            // Fallback to Google Maps web URL
-            const fallbackUrl = `https://maps.google.com/maps?daddr=${latitude},${longitude}&q=${encodedName}`;
+            // Fallback to Google Maps web URL with exact coordinates
+            const fallbackUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
             Linking.openURL(fallbackUrl);
           }
         }).catch(() => {
@@ -81,7 +93,16 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDa
 
   const handleShowRelated = () => {
     setShowActionSheet(false);
-    // TODO: Show related activities
+    setShowRelatedModal(true);
+  };
+
+  const handleRelatedActivityPress = (relatedActivity: ActivityWithContext) => {
+    setShowRelatedModal(false);
+    // Navigate to the day containing this activity
+    (navigation as any).navigate('Schedule', {
+      date: relatedActivity.date,
+      eventId: relatedActivity.activity,
+    });
   };
 
   const handleContact = () => {
@@ -104,18 +125,18 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDa
       if (location) {
         const { latitude, longitude } = location.coordinates;
         const encodedName = encodeURIComponent(location.name);
-        
+
         const url = Platform.select({
-          ios: `maps://app?daddr=${latitude},${longitude}&q=${encodedName}`,
-          android: `google.navigation:q=${latitude},${longitude}`,
-          default: `https://maps.google.com/maps?daddr=${latitude},${longitude}&q=${encodedName}`,
+          ios: `maps://app?daddr=${latitude},${longitude}`,
+          android: `geo:${latitude},${longitude}?q=${latitude},${longitude}(${encodedName})`,
+          default: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`,
         });
-        
+
         Linking.canOpenURL(url).then(supported => {
           if (supported) {
             Linking.openURL(url);
           } else {
-            const fallbackUrl = `https://maps.google.com/maps?daddr=${latitude},${longitude}&q=${encodedName}`;
+            const fallbackUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
             Linking.openURL(fallbackUrl);
           }
         }).catch(() => {
@@ -127,7 +148,7 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDa
 
   const handleDetailModalShowRelated = () => {
     setShowDetailModal(false);
-    // TODO: Show related activities
+    setShowRelatedModal(true);
   };
 
   const handleDetailModalContact = () => {
@@ -138,7 +159,11 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDa
   return (
     <>
       <TouchableOpacity
-        style={[styles.container, { borderLeftColor: activityColor }]}
+        style={[
+          styles.container,
+          { borderLeftColor: activityColor },
+          isHighlighted && styles.highlightedContainer,
+        ]}
         onPress={handleActivityPress}
         activeOpacity={0.7}
       >
@@ -193,6 +218,7 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDa
         onViewDetails={handleViewDetails}
         onShowRelated={handleShowRelated}
         onContact={activity.contactPerson ? handleContact : undefined}
+        activitiesAtLocationCount={activitiesAtLocation.length}
       />
 
       <EventDetailModal
@@ -204,6 +230,15 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ activity, activityDa
         onNavigateToMap={handleDetailModalNavigateToMap}
         onShowRelated={handleDetailModalShowRelated}
         onContact={activity.contactPerson ? handleDetailModalContact : undefined}
+        activitiesAtLocationCount={activitiesAtLocation.length}
+      />
+
+      <RelatedActivitiesModal
+        visible={showRelatedModal}
+        onClose={() => setShowRelatedModal(false)}
+        activities={activitiesAtLocation}
+        onActivityPress={handleRelatedActivityPress}
+        currentActivityName={activity.location}
       />
     </>
   );
@@ -219,6 +254,12 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 8,
   },
+  highlightedContainer: {
+    backgroundColor: colors.primary + '15',
+    borderLeftWidth: 4,
+    borderWidth: 1,
+    borderColor: colors.primary + '40',
+  },
   contentSection: {
     flex: 1,
   },
@@ -233,7 +274,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     lineHeight: 20,
-    minWidth: 60,
+    minWidth: 75,
   },
   activityTitle: {
     color: '#1a1a1a',
@@ -249,14 +290,14 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: spacing.xs,
     marginBottom: spacing.xs,
-    marginLeft: 60 + spacing.md, // Align with title (time width + gap)
+    marginLeft: 75 + spacing.md, // Align with title (time width + gap)
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
     marginTop: spacing.xs,
-    marginLeft: 60 + spacing.md, // Align with title
+    marginLeft: 75 + spacing.md, // Align with title
   },
   locationText: {
     fontSize: 12,

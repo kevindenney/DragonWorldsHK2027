@@ -469,4 +469,66 @@ export const activityTypes = {
 
 export type ActivityType = keyof typeof activityTypes;
 
+// Extended activity with date context for related activities
+export interface ActivityWithContext extends Activity {
+  date: string;
+  dayTitle: string;
+  eventId: string;
+  eventTitle: string;
+}
+
+/**
+ * Find other activities at the same location on different days
+ */
+export function getActivitiesAtLocation(
+  currentActivity: Activity,
+  currentDate: string,
+  currentEventId: string
+): ActivityWithContext[] {
+  const activities: ActivityWithContext[] = [];
+  const seen = new Set<string>();
+
+  // Must have a location to find activities at that location
+  if (!currentActivity.mapLocationId) return activities;
+
+  // Create unique key for current activity to exclude it
+  const currentKey = `${currentDate}-${currentActivity.time}-${currentActivity.activity}`;
+  seen.add(currentKey);
+
+  // Get the schedule for the current event
+  const schedule = Object.values(eventSchedules).find(s => s.id === currentEventId);
+  if (!schedule) return activities;
+
+  // Find all activities at the same location on DIFFERENT days
+  for (const day of schedule.days) {
+    // Skip the current day - user can already see those
+    if (day.date === currentDate) continue;
+
+    for (const activity of day.activities) {
+      const key = `${day.date}-${activity.time}-${activity.activity}`;
+      if (seen.has(key)) continue;
+
+      // Only include activities at the same location
+      if ('mapLocationId' in activity &&
+          activity.mapLocationId === currentActivity.mapLocationId) {
+        seen.add(key);
+        activities.push({
+          ...activity,
+          date: day.date,
+          dayTitle: day.title,
+          eventId: schedule.id,
+          eventTitle: schedule.title,
+        });
+      }
+    }
+  }
+
+  // Sort by date then time
+  return activities.sort((a, b) => {
+    const dateCompare = a.date.localeCompare(b.date);
+    if (dateCompare !== 0) return dateCompare;
+    return a.time.localeCompare(b.time);
+  });
+}
+
 export default eventSchedules;

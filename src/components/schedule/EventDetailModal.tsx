@@ -37,6 +37,7 @@ export interface EventDetailModalProps {
   onNavigateToMap?: () => void;
   onShowRelated?: () => void;
   onContact?: () => void;
+  activitiesAtLocationCount?: number;
 }
 
 export const EventDetailModal: React.FC<EventDetailModalProps> = ({
@@ -48,6 +49,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   onNavigateToMap,
   onShowRelated,
   onContact,
+  activitiesAtLocationCount = 0,
 }) => {
   if (!activity) return null;
 
@@ -274,10 +276,10 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
               />
             )}
 
-            {activity.prerequisites && activity.prerequisites.length > 0 && (
+            {activitiesAtLocationCount > 0 && onShowRelated && (
               <ActionButton
-                title="Show Related Activities"
-                onPress={onShowRelated!}
+                title={`${activitiesAtLocationCount} Other Event${activitiesAtLocationCount === 1 ? '' : 's'} Here`}
+                onPress={onShowRelated}
                 variant="secondary"
               />
             )}

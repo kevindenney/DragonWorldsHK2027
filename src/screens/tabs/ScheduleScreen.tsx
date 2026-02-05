@@ -167,7 +167,7 @@ export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
         }
       >
         {/* Day Content - Activities visible immediately */}
-        <ScheduleDayContent day={selectedDay} highlightedActivityName={highlightedActivityName} />
+        <ScheduleDayContent day={selectedDay} highlightedActivityName={highlightedActivityName} eventId={currentEvent.id} />
 
         {/* Bottom Padding */}
         <View style={styles.bottomPadding} />

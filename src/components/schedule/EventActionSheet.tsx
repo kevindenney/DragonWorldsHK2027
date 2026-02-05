@@ -29,6 +29,7 @@ interface EventActionSheetProps {
   onViewDetails: () => void;
   onShowRelated: () => void;
   onContact?: () => void;
+  activitiesAtLocationCount?: number;
 }
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -42,6 +43,7 @@ export const EventActionSheet: React.FC<EventActionSheetProps> = ({
   onViewDetails,
   onShowRelated,
   onContact,
+  activitiesAtLocationCount = 0,
 }) => {
   const slideAnim = React.useRef(new Animated.Value(screenHeight)).current;
 
@@ -90,11 +92,13 @@ export const EventActionSheet: React.FC<EventActionSheetProps> = ({
     },
     {
       icon: Users,
-      title: 'Related Activities',
-      subtitle: 'See connected events',
+      title: 'At This Location',
+      subtitle: activitiesAtLocationCount > 0
+        ? `${activitiesAtLocationCount} other event${activitiesAtLocationCount === 1 ? '' : 's'} here`
+        : 'No other events here',
       onPress: onShowRelated,
       color: '#7B68EE',
-      disabled: !activity.prerequisites || activity.prerequisites.length === 0,
+      disabled: activitiesAtLocationCount === 0,
     },
   ];
 
