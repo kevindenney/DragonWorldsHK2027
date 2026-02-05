@@ -4,14 +4,12 @@
  */
 
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useNavigation } from '@react-navigation/native';
-import { Filter, MapPin } from 'lucide-react-native';
-import { IOSSegmentedControl } from '../components/ios';
+import { Filter, X, MapPin, Building2, Anchor, ShoppingBag, Hotel, Eye, Compass } from 'lucide-react-native';
 import { LocationDetailModal } from '../components/maps/LocationDetailModal';
 import {
-  sailingLocations,
   locationFilters,
   getLocationsByType
 } from '../data/sailingLocations';
@@ -21,10 +19,19 @@ import {
 } from '../types/sailingLocation';
 import { dragonChampionshipsLightTheme } from '../constants/dragonChampionshipsTheme';
 import type { MapScreenProps } from '../types/navigation';
-import WeatherConditionsOverlay from '../components/weather/WeatherConditionsOverlay';
 
-const { colors, spacing, typography, shadows, borderRadius } = dragonChampionshipsLightTheme;
-const { width, height } = Dimensions.get('window');
+// Filter configuration with colors and icons
+const FILTER_CONFIG: Record<string, { color: string; icon: any; label: string }> = {
+  all: { color: '#6B7280', icon: MapPin, label: 'All Venues' },
+  championship: { color: '#DC2626', icon: Building2, label: 'Championship' },
+  marinas: { color: '#0891B2', icon: Anchor, label: 'Marinas & Clubs' },
+  stores: { color: '#EA580C', icon: ShoppingBag, label: 'Gear & Supplies' },
+  accommodation: { color: '#7C3AED', icon: Hotel, label: 'Hotels' },
+  spectator: { color: '#10B981', icon: Eye, label: 'Spectator Points' },
+  tourism: { color: '#EC4899', icon: Compass, label: 'Tourism' },
+};
+
+const { colors, spacing, shadows } = dragonChampionshipsLightTheme;
 
 
 export const MapScreen: React.FC<MapScreenProps> = () => {
@@ -34,14 +41,6 @@ export const MapScreen: React.FC<MapScreenProps> = () => {
   const [selectedLocation, setSelectedLocation] = useState<SailingLocation | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  // Split filters into two logical groups
-  const primaryFilters = locationFilters.filter(filter =>
-    ['all', 'championship', 'marinas', 'stores'].includes(filter.type)
-  );
-  const secondaryFilters = locationFilters.filter(filter =>
-    ['accommodation', 'spectator', 'tourism'].includes(filter.type)
-  );
-
   // Get filtered locations based on current filter
   const filteredLocations = getLocationsByType(selectedFilter);
 
@@ -50,9 +49,13 @@ export const MapScreen: React.FC<MapScreenProps> = () => {
     setShowFilters(false);
   };
 
-  const getCurrentFilterLabel = () => {
-    const filter = locationFilters.find(f => f.type === selectedFilter);
-    return filter?.label || 'All Locations';
+  const getCurrentFilterConfig = () => {
+    return FILTER_CONFIG[selectedFilter] || FILTER_CONFIG.all;
+  };
+
+  // Get count for each filter type
+  const getFilterCount = (filterType: string) => {
+    return getLocationsByType(filterType as SailingLocationFilter['type']).length;
   };
 
   const generateMapHTML = () => {
@@ -61,6 +64,8 @@ export const MapScreen: React.FC<MapScreenProps> = () => {
       <html>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <style>
           body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; }
           #map { height: 100vh; width: 100%; }
@@ -116,76 +121,56 @@ export const MapScreen: React.FC<MapScreenProps> = () => {
 
           function initMap() {
             // Hong Kong sailing area center
-            const center = { lat: 22.2720, lng: 114.2200 };
+            const center = [22.2720, 114.2200];
 
-            map = new google.maps.Map(document.getElementById("map"), {
-              zoom: 12,
+            map = L.map('map', {
               center: center,
-              mapTypeId: "roadmap",
-              disableDefaultUI: false,
-              zoomControl: true,
-              mapTypeControl: false,
-              scaleControl: true,
-              streetViewControl: false,
-              rotateControl: false,
-              fullscreenControl: false
+              zoom: 12,
+              zoomControl: true
             });
+
+            // Add OpenStreetMap tiles (no attribution to avoid bottom bar)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '',
+              maxZoom: 19
+            }).addTo(map);
+
+            // Hide attribution control
+            map.attributionControl.setPrefix('');
 
             // Add sailing locations as markers
             const locations = ${JSON.stringify(filteredLocations)};
 
-
-            // Helper function to create SVG circle marker
-            function createSVGCircle(color) {
-              const svg = '<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg">' +
-                '<circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" fill="' + color + '" />' +
-                '</svg>';
-              return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+            // Helper function to create circle marker icon
+            function createCircleIcon(color) {
+              return L.divIcon({
+                className: 'custom-div-icon',
+                html: '<div style="background-color: ' + color + '; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+              });
             }
 
-            locations.forEach((location, index) => {
+            locations.forEach((location) => {
               const markerColor = {
-                'championship_hq': '#DC2626',    // Red - Championship HQ
-                'race_course': '#2563EB',         // Blue - Race Course
-                'venue': '#2563EB',               // Blue - Championship Venues
-                'marina': '#0891B2',              // Cyan - Marinas
-                'yacht_club': '#0891B2',          // Cyan - Yacht Clubs
-                'chandlery': '#EA580C',           // Orange - Chandleries
-                'gear_store': '#D97706',          // Amber - Gear Stores
-                'hotel': '#7C3AED',               // Purple - Hotels
-                'spectator_point': '#10B981',     // Green - Spectator Points
-                'tourism': '#EC4899'              // Pink - Tourism Attractions
+                'championship_hq': '#DC2626',
+                'race_course': '#2563EB',
+                'venue': '#2563EB',
+                'marina': '#0891B2',
+                'yacht_club': '#0891B2',
+                'chandlery': '#EA580C',
+                'gear_store': '#D97706',
+                'hotel': '#7C3AED',
+                'spectator_point': '#10B981',
+                'tourism': '#EC4899'
               }[location.type] || '#6B7280';
 
+              const marker = L.marker(
+                [location.coordinates.latitude, location.coordinates.longitude],
+                { icon: createCircleIcon(markerColor) }
+              ).addTo(map);
 
-              // Create marker with SVG icon instead of SymbolPath
-              const markerOptions = {
-                position: {
-                  lat: location.coordinates.latitude,
-                  lng: location.coordinates.longitude
-                },
-                map: map,
-                title: location.name,
-                icon: {
-                  url: createSVGCircle(markerColor),
-                  scaledSize: new google.maps.Size(24, 24),
-                  anchor: new google.maps.Point(12, 12)
-                }
-              };
-
-              // Only add labels for primary locations to reduce clutter
-              if (location.importance === 'primary') {
-                markerOptions.label = {
-                  text: location.name.split(' ')[0], // First word only
-                  color: '#000000',
-                  fontSize: '10px',
-                  fontWeight: 'bold'
-                };
-              }
-
-              const marker = new google.maps.Marker(markerOptions);
-
-              marker.addListener('click', () => {
+              marker.on('click', () => {
                 showLocationInfo(location);
                 selectedMarker = marker;
               });
@@ -193,17 +178,12 @@ export const MapScreen: React.FC<MapScreenProps> = () => {
               markers.push(marker);
             });
 
-
             // Fit bounds to show all markers
             if (locations.length > 0) {
-              const bounds = new google.maps.LatLngBounds();
-              locations.forEach(loc => {
-                bounds.extend(new google.maps.LatLng(
-                  loc.coordinates.latitude,
-                  loc.coordinates.longitude
-                ));
-              });
-              map.fitBounds(bounds, { padding: 50 });
+              const bounds = L.latLngBounds(
+                locations.map(loc => [loc.coordinates.latitude, loc.coordinates.longitude])
+              );
+              map.fitBounds(bounds, { padding: [50, 50] });
             }
           }
 
@@ -212,7 +192,6 @@ export const MapScreen: React.FC<MapScreenProps> = () => {
             document.getElementById('locationType').textContent = location.type.replace('-', ' ');
             document.getElementById('locationInfo').classList.add('active');
 
-            // Send message to React Native
             window.ReactNativeWebView.postMessage(JSON.stringify({
               type: 'locationSelected',
               location: location
@@ -228,9 +207,7 @@ export const MapScreen: React.FC<MapScreenProps> = () => {
             }));
           }
 
-        </script>
-        <script async defer
-          src="https://maps.googleapis.com/maps/api/js?key=${process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || ''}&callback=initMap">
+          document.addEventListener('DOMContentLoaded', initMap);
         </script>
       </body>
       </html>
@@ -264,87 +241,74 @@ export const MapScreen: React.FC<MapScreenProps> = () => {
           showsHorizontalScrollIndicator={false}
         />
 
-        {/* Legend Overlay */}
-        <ScrollView style={styles.legendContainer} showsVerticalScrollIndicator={false}>
-          <View style={styles.legend}>
-            <Text style={styles.legendTitle}>Legend</Text>
-
-            <View style={styles.legendItem}>
-              <View style={[styles.legendMarker, { backgroundColor: '#DC2626' }]} />
-              <Text style={styles.legendText}>Championship HQ</Text>
-            </View>
-
-            <View style={styles.legendItem}>
-              <View style={[styles.legendMarker, { backgroundColor: '#2563EB' }]} />
-              <Text style={styles.legendText}>Race Course</Text>
-            </View>
-
-            <View style={styles.legendItem}>
-              <View style={[styles.legendMarker, { backgroundColor: '#0891B2' }]} />
-              <Text style={styles.legendText}>Marinas</Text>
-            </View>
-
-            <View style={styles.legendItem}>
-              <View style={[styles.legendMarker, { backgroundColor: '#EA580C' }]} />
-              <Text style={styles.legendText}>Chandleries</Text>
-            </View>
-
-            <View style={styles.legendItem}>
-              <View style={[styles.legendMarker, { backgroundColor: '#D97706' }]} />
-              <Text style={styles.legendText}>Gear Stores</Text>
-            </View>
-
-            <View style={styles.legendItem}>
-              <View style={[styles.legendMarker, { backgroundColor: '#7C3AED' }]} />
-              <Text style={styles.legendText}>Hotels</Text>
-            </View>
-
-            <View style={styles.legendItem}>
-              <View style={[styles.legendMarker, { backgroundColor: '#EC4899' }]} />
-              <Text style={styles.legendText}>Tourism</Text>
-            </View>
-          </View>
-        </ScrollView>
-
-        {/* Floating Filter Button */}
+        {/* Floating Filter Chip - shows current filter */}
         <TouchableOpacity
-          style={styles.floatingFilterButton}
+          style={[
+            styles.floatingFilterChip,
+            { borderColor: getCurrentFilterConfig().color }
+          ]}
           onPress={() => setShowFilters(!showFilters)}
         >
-          <Filter size={20} color={colors.primary} />
+          <View style={[styles.filterChipDot, { backgroundColor: getCurrentFilterConfig().color }]} />
+          <Text style={styles.filterChipText}>
+            {getCurrentFilterConfig().label}
+          </Text>
+          <Text style={styles.filterChipCount}>({filteredLocations.length})</Text>
+          <Filter size={16} color={colors.textSecondary} style={{ marginLeft: 6 }} />
         </TouchableOpacity>
 
         {/* Floating Filter Panel */}
         {showFilters && (
           <View style={styles.floatingFilterPanel}>
+            {/* Header with close button */}
             <View style={styles.filterPanelHeader}>
-              <Text style={styles.filterPanelTitle}>Filter Locations</Text>
-              <Text style={styles.filterPanelSubtitle}>
-                {getCurrentFilterLabel()} ({filteredLocations.length})
-              </Text>
+              <Text style={styles.filterPanelTitle}>Filter Venues</Text>
+              <TouchableOpacity
+                style={styles.filterCloseButton}
+                onPress={() => setShowFilters(false)}
+              >
+                <X size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
             </View>
 
-            {/* Primary Filters Row */}
-            <IOSSegmentedControl
-              options={primaryFilters.map(filter => ({
-                label: filter.label,
-                value: filter.type
-              }))}
-              selectedValue={primaryFilters.some(f => f.type === selectedFilter) ? selectedFilter : ''}
-              onValueChange={handleFilterChange}
-              style={styles.segmentedControl}
-            />
+            {/* Filter Options */}
+            <View style={styles.filterOptionsGrid}>
+              {locationFilters.map((filter) => {
+                const config = FILTER_CONFIG[filter.type] || FILTER_CONFIG.all;
+                const IconComponent = config.icon;
+                const isSelected = selectedFilter === filter.type;
+                const count = getFilterCount(filter.type);
 
-            {/* Secondary Filters Row */}
-            <IOSSegmentedControl
-              options={secondaryFilters.map(filter => ({
-                label: filter.label,
-                value: filter.type
-              }))}
-              selectedValue={secondaryFilters.some(f => f.type === selectedFilter) ? selectedFilter : ''}
-              onValueChange={handleFilterChange}
-              style={[styles.segmentedControl, styles.secondaryFilterRow]}
-            />
+                return (
+                  <TouchableOpacity
+                    key={filter.type}
+                    style={[
+                      styles.filterOption,
+                      isSelected && { backgroundColor: config.color + '15', borderColor: config.color }
+                    ]}
+                    onPress={() => handleFilterChange(filter.type as SailingLocationFilter['type'])}
+                  >
+                    <View style={styles.filterOptionTop}>
+                      <View style={[styles.filterIconContainer, { backgroundColor: config.color + '20' }]}>
+                        <IconComponent size={18} color={config.color} />
+                      </View>
+                      <Text style={[
+                        styles.filterCount,
+                        isSelected && { color: config.color }
+                      ]}>
+                        {count}
+                      </Text>
+                    </View>
+                    <Text style={[
+                      styles.filterLabel,
+                      isSelected && { color: config.color, fontWeight: '600' }
+                    ]}>
+                      {config.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
         )}
       </View>
@@ -383,48 +347,108 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  floatingFilterButton: {
+  floatingFilterChip: {
     position: 'absolute',
-    top: spacing.xxl + 20,
+    top: 110, // Below the zoom controls
+    left: spacing.lg,
     right: spacing.lg,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: colors.surface,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.cardLarge,
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 2,
+    ...shadows.cardMedium,
     zIndex: 1000,
+  },
+  filterChipDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  filterChipText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  filterChipCount: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginRight: 4,
   },
   floatingFilterPanel: {
     position: 'absolute',
-    top: spacing.xxl + 20,
-    left: spacing.lg,
-    right: spacing.lg,
+    top: 110, // Below the zoom controls
+    left: spacing.md,
+    right: spacing.md,
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
+    borderRadius: 20,
     padding: spacing.lg,
     ...shadows.cardLarge,
     zIndex: 999,
   },
   filterPanelHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: spacing.md,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border || '#E5E5E5',
   },
   filterPanelTitle: {
-    ...typography.headlineSmall,
+    fontSize: 18,
+    fontWeight: '700',
     color: colors.text,
-    fontWeight: '600',
   },
-  filterPanelSubtitle: {
-    ...typography.caption,
-    color: colors.textMuted,
-    marginTop: 2,
+  filterCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  segmentedControl: {
-    marginTop: spacing.sm,
+  filterOptionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -4,
   },
-  secondaryFilterRow: {
-    marginTop: spacing.xs,
+  filterOption: {
+    width: '31%',
+    marginHorizontal: '1%',
+    marginBottom: 10,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: colors.background,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  filterOptionTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  filterIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterCount: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.textSecondary,
+  },
+  filterLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: colors.text,
   },
   mapContainer: {
     flex: 1,
@@ -432,42 +456,6 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
-  },
-  legendContainer: {
-    position: 'absolute',
-    bottom: spacing.lg,
-    left: spacing.lg,
-    maxHeight: 200,
-  },
-  legend: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    minWidth: 160,
-    ...shadows.cardMedium,
-  },
-  legendTitle: {
-    ...typography.bodyMedium,
-    color: colors.text,
-    fontWeight: '600',
-    marginBottom: spacing.sm,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  legendMarker: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: spacing.sm,
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
-  },
-  legendText: {
-    ...typography.caption,
-    color: colors.text,
   },
 });
 

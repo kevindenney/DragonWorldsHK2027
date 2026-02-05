@@ -8,10 +8,11 @@ import {
   Dimensions,
   SafeAreaView,
   ScrollView,
-  Animated
+  Platform
 } from 'react-native';
 import MapView, {Marker, PROVIDER_DEFAULT, Region, UrlTile} from 'react-native-maps';
-import {ChevronLeft, Wind, Waves, Navigation, Info, TrendingUp, ArrowUp, ArrowDown, RefreshCw, MapPin} from 'lucide-react-native';
+import { WebView } from 'react-native-webview';
+import {ChevronLeft, Wind, Waves, Navigation, Info, TrendingUp, ArrowUp, ArrowDown, RefreshCw, MapPin, X} from 'lucide-react-native';
 import {RACE_AREAS} from '../../config/raceAreas';
 import {useSevenDayWeatherStore} from '../../stores/sevenDayWeatherStore';
 import TrendIcon from '../../ui/TrendIcon';
@@ -19,46 +20,76 @@ import MetricDetailSheet from '../MetricDetailSheet';
 
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 
+// Generate Android WebView map HTML with Leaflet/OpenStreetMap
+const generateAndroidMapHTML = (bundles: any, raceAreas: any[], getWeatherForTime: any, selectedTimeIndex: number) => {
+  const markers = raceAreas.map(area => {
+    const bundle = bundles[area.key];
+    if (!bundle) return null;
+    const weather = getWeatherForTime(bundle, selectedTimeIndex);
+    return {
+      key: area.key,
+      name: area.name,
+      lat: area.lat,
+      lon: area.lon,
+      wind: weather.wind.speedKts.toFixed(0),
+      windDir: weather.wind.dirDeg
+    };
+  }).filter(Boolean);
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+      <style>
+        body { margin: 0; padding: 0; }
+        #map { height: 100vh; width: 100%; }
+        .wind-marker {
+          background: rgba(0, 102, 204, 0.9);
+          border-radius: 6px;
+          padding: 6px 10px;
+          color: white;
+          font-weight: bold;
+          font-size: 12px;
+          white-space: nowrap;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+      </style>
+    </head>
+    <body>
+      <div id="map"></div>
+      <script>
+        const map = L.map('map', { center: [22.265, 114.25], zoom: 11, zoomControl: true, attributionControl: false });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+        // Add OpenSeaMap nautical overlay
+        L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', { maxZoom: 18, opacity: 0.7 }).addTo(map);
+
+        const markers = ${JSON.stringify(markers)};
+        markers.forEach(m => {
+          const icon = L.divIcon({
+            className: 'custom-marker',
+            html: '<div class="wind-marker">' + m.wind + ' kt</div>',
+            iconSize: [60, 30],
+            iconAnchor: [30, 15]
+          });
+          L.marker([m.lat, m.lon], { icon }).addTo(map)
+            .on('click', () => window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'markerSelected', areaKey: m.key })));
+        });
+      </script>
+    </body>
+    </html>
+  `;
+};
+
 // Hong Kong region bounds for initial map view
 const INITIAL_REGION: Region = {
   latitude: 22.265,
   longitude: 114.25,
   latitudeDelta: 0.25,
   longitudeDelta: 0.3
-};
-
-// Race area regions for quick zoom
-const RACE_AREA_REGIONS: Record<string, Region> = {
-  'victoria-harbour': {
-    latitude: 22.285,
-    longitude: 114.165,
-    latitudeDelta: 0.05,
-    longitudeDelta: 0.05
-  },
-  'nine-pins': {
-    latitude: 22.18,
-    longitude: 114.33,
-    latitudeDelta: 0.08,
-    longitudeDelta: 0.08
-  },
-  'port-shelter': {
-    latitude: 22.35,
-    longitude: 114.28,
-    latitudeDelta: 0.1,
-    longitudeDelta: 0.1
-  },
-  'waglan': {
-    latitude: 22.18,
-    longitude: 114.32,
-    latitudeDelta: 0.08,
-    longitudeDelta: 0.08
-  },
-  'cape-collinson': {
-    latitude: 22.23,
-    longitude: 114.23,
-    latitudeDelta: 0.08,
-    longitudeDelta: 0.08
-  }
 };
 
 interface DetailSheetState {
@@ -79,7 +110,6 @@ export function ModernWeatherMapScreen({onBack}: {onBack?: () => void}) {
   const store = useSevenDayWeatherStore();
   const {bundles, loading, fetchAllBundles, clearCache} = store;
   const mapRef = useRef<MapView>(null);
-  const backButtonOpacity = useRef(new Animated.Value(1)).current;
 
   // State management
   const [detailSheet, setDetailSheet] = useState<DetailSheetState>({
@@ -144,28 +174,6 @@ export function ModernWeatherMapScreen({onBack}: {onBack?: () => void}) {
     };
   };
 
-  // Auto-hide back button after 3 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      Animated.timing(backButtonOpacity, {
-        toValue: 0.3,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [backButtonOpacity]);
-
-  // Show back button on press
-  const handleBackButtonPress = () => {
-    Animated.timing(backButtonOpacity, {
-      toValue: 1,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  };
-
   // Clear cache and fetch fresh data to get live tide data
   useEffect(() => {
 
@@ -195,14 +203,6 @@ export function ModernWeatherMapScreen({onBack}: {onBack?: () => void}) {
   // Toggle layer visibility
   const toggleLayer = (layer: keyof LayerToggles) => {
     setLayerToggles(prev => ({...prev, [layer]: !prev[layer]}));
-  };
-
-  // Zoom to race area
-  const zoomToArea = (areaKey: string) => {
-    const region = RACE_AREA_REGIONS[areaKey];
-    if (region && mapRef.current) {
-      mapRef.current.animateToRegion(region, 500);
-    }
   };
 
   // Calculate weather summary from all bundles
@@ -296,69 +296,54 @@ export function ModernWeatherMapScreen({onBack}: {onBack?: () => void}) {
 
   return (
     <View style={styles.container}>
-      {/* Time Slider - Priority 1 */}
+      {/* Header with back button and time slider */}
       <SafeAreaView style={styles.timelineContainer}>
-        <View style={styles.currentTimeIndicator}>
-          <Text style={styles.currentTimeLabel}>
-            {selectedTimeIndex === 0 ? 'NOW' : timeSlots[selectedTimeIndex].label.toUpperCase()}
-          </Text>
-          <Text style={styles.currentTime}>
-            {timeSlots[selectedTimeIndex].time.toLocaleString('en-US', {
-              weekday: 'short',
-              hour: 'numeric',
-              minute: '2-digit'
-            })}
-          </Text>
-        </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.timeSlider}
-          contentContainerStyle={styles.timeSliderContent}
-        >
-          {timeSlots.map((slot, index) => (
+        <View style={styles.headerRow}>
+          {/* Back button */}
+          {onBack && (
             <TouchableOpacity
-              key={index}
-              style={[
-                styles.timeSlot,
-                selectedTimeIndex === index && styles.activeTimeSlot
-              ]}
-              onPress={() => setSelectedTimeIndex(index)}
+              onPress={onBack}
+              style={styles.headerBackButton}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
             >
-              <Text style={[
-                styles.timeSlotLabel,
-                selectedTimeIndex === index && styles.activeTimeSlotText
-              ]}>
-                {slot.label}
-              </Text>
-              <Text style={[
-                styles.timeSlotValue,
-                selectedTimeIndex === index && styles.activeTimeSlotText
-              ]}>
-                {slot.time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false })}
-              </Text>
+              <ChevronLeft size={22} color="#666" strokeWidth={2} />
             </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </SafeAreaView>
+          )}
 
-      {/* Auto-hide back button */}
-      {onBack && (
-        <Animated.View style={[styles.backButtonContainer, { opacity: backButtonOpacity }]}>
-          <TouchableOpacity
-            onPressIn={handleBackButtonPress}
-            onPress={() => {
-              onBack();
-            }}
-            style={styles.backButton}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
+          {/* Time Slider */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.timeSlider}
+            contentContainerStyle={styles.timeSliderContent}
           >
-            <ChevronLeft size={24} color="#fff" strokeWidth={2} />
-          </TouchableOpacity>
-        </Animated.View>
-      )}
+            {timeSlots.map((slot, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.timeSlot,
+                  selectedTimeIndex === index && styles.activeTimeSlot
+                ]}
+                onPress={() => setSelectedTimeIndex(index)}
+              >
+                <Text style={[
+                  styles.timeSlotLabel,
+                  selectedTimeIndex === index && styles.activeTimeSlotText
+                ]}>
+                  {slot.label}
+                </Text>
+                <Text style={[
+                  styles.timeSlotValue,
+                  selectedTimeIndex === index && styles.activeTimeSlotText
+                ]}>
+                  {slot.time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false })}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </SafeAreaView>
 
       {/* Update Indicator - Priority 5 */}
       <View style={styles.updateIndicator}>
@@ -465,193 +450,222 @@ export function ModernWeatherMapScreen({onBack}: {onBack?: () => void}) {
         </View>
       )}
 
-      {/* Full-screen map */}
-      <MapView
-        ref={mapRef}
-        style={styles.map}
-        provider={PROVIDER_DEFAULT}
-        initialRegion={INITIAL_REGION}
-        showsUserLocation={false}
-        showsCompass={false}
-        showsScale={false}
-        mapType="standard"
-      >
-        {/* OpenSeaMap Nautical Overlay - Navigation aids, buoys, lights */}
-        <UrlTile
-          urlTemplate="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
-          zIndex={1}
-          tileSize={256}
-          opacity={0.7}
-          shouldReplaceMapContent={false}
-          maximumZ={18}
-          minimumZ={5}
-          flipY={false}
+      {/* Full-screen map - use WebView on Android due to Google Maps billing issues */}
+      {Platform.OS === 'android' ? (
+        <WebView
+          style={styles.map}
+          source={{ html: generateAndroidMapHTML(bundles, RACE_AREAS, getWeatherForTime, selectedTimeIndex) }}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          onMessage={(event) => {
+            try {
+              const data = JSON.parse(event.nativeEvent.data);
+              if (data.type === 'markerSelected') {
+                setSelectedMarker(data.areaKey);
+              }
+            } catch (error) {}
+          }}
         />
+      ) : (
+        <MapView
+          ref={mapRef}
+          style={styles.map}
+          provider={PROVIDER_DEFAULT}
+          initialRegion={INITIAL_REGION}
+          showsUserLocation={false}
+          showsCompass={false}
+          showsScale={false}
+          mapType="standard"
+        >
+          {/* OpenSeaMap Nautical Overlay - Navigation aids, buoys, lights */}
+          <UrlTile
+            urlTemplate="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
+            zIndex={1}
+            tileSize={256}
+            opacity={0.7}
+            shouldReplaceMapContent={false}
+            maximumZ={18}
+            minimumZ={5}
+            flipY={false}
+          />
 
-        {/* Render exactly 5 race area markers - with layer toggles and time selection */}
-        {RACE_AREAS.map(area => {
-          const bundle = bundles[area.key];
-          if (!bundle) return null;
+          {/* Render exactly 5 race area markers - with layer toggles and time selection */}
+          {RACE_AREAS.map(area => {
+            const bundle = bundles[area.key];
+            if (!bundle) return null;
 
-          const weather = getWeatherForTime(bundle, selectedTimeIndex);
-          const isExpanded = selectedMarker === area.key;
+            const weather = getWeatherForTime(bundle, selectedTimeIndex);
+            const isExpanded = selectedMarker === area.key;
 
-          return (
-            <Marker
-              key={area.key}
-              coordinate={{latitude: area.lat, longitude: area.lon}}
-              title={area.name}
-              onPress={() => setSelectedMarker(isExpanded ? null : area.key)}
-            >
-              <View style={styles.markerContainer}>
-                {!isExpanded ? (
-                  // Compact View - Priority 3
-                  <TouchableOpacity
-                    style={styles.compactDataBubble}
-                    onPress={() => setSelectedMarker(area.key)}
-                  >
-                    <Text style={styles.windSpeed}>{weather.wind.speedKts.toFixed(0)} kt</Text>
-                    <View style={{ transform: [{ rotate: `${weather.wind.dirDeg}deg` }] }}>
-                      <ArrowUp size={12} color="#FFFFFF" />
-                    </View>
-                  </TouchableOpacity>
-                ) : (
-                  // Detailed View - Priority 3
-                  <View style={styles.detailedDataBubble}>
-                    <View style={styles.bubbleHeader}>
-                      <Text style={styles.locationName}>{area.name}</Text>
-                      <TouchableOpacity onPress={() => setSelectedMarker(null)}>
-                        <Text style={styles.closeButton}>✕</Text>
-                      </TouchableOpacity>
-                    </View>
-
-                    <View style={styles.bubbleData}>
-                      <View style={styles.dataRow}>
-                        <Wind size={16} color="#0066CC" />
-                        <Text style={styles.dataLabel}>Wind:</Text>
-                        <Text style={styles.dataValue}>
-                          {weather.wind.speedKts.toFixed(0)} kt
-                          {weather.wind.gustKts && ` (G${weather.wind.gustKts.toFixed(0)})`}
-                        </Text>
+            return (
+              <Marker
+                key={area.key}
+                coordinate={{latitude: area.lat, longitude: area.lon}}
+                title={area.name}
+                onPress={() => setSelectedMarker(isExpanded ? null : area.key)}
+              >
+                <View style={styles.markerContainer}>
+                  {!isExpanded ? (
+                    // Compact View - Priority 3
+                    <TouchableOpacity
+                      style={styles.compactDataBubble}
+                      onPress={() => setSelectedMarker(area.key)}
+                    >
+                      <Text style={styles.windSpeed}>{weather.wind.speedKts.toFixed(0)} kt</Text>
+                      <View style={{ transform: [{ rotate: `${weather.wind.dirDeg}deg` }] }}>
+                        <ArrowUp size={12} color="#FFFFFF" />
+                      </View>
+                    </TouchableOpacity>
+                  ) : (
+                    // Detailed View - Priority 3
+                    <View style={styles.detailedDataBubble}>
+                      <View style={styles.bubbleHeader}>
+                        <Text style={styles.locationName}>{area.name}</Text>
+                        <TouchableOpacity onPress={() => setSelectedMarker(null)}>
+                          <Text style={styles.closeButton}>✕</Text>
+                        </TouchableOpacity>
                       </View>
 
-                      <View style={styles.dataRow}>
-                        <Waves size={16} color="#00ACC1" />
-                        <Text style={styles.dataLabel}>Waves:</Text>
-                        <Text style={styles.dataValue}>
-                          {weather.wave.heightM !== null ? `${weather.wave.heightM.toFixed(1)}m` : 'N/A'}
-                          {weather.wave.periodS !== null && ` @ ${weather.wave.periodS.toFixed(0)}s`}
-                        </Text>
-                      </View>
-
-                      {layerToggles.tides && weather.tide.heightM !== null && (
+                      <View style={styles.bubbleData}>
                         <View style={styles.dataRow}>
-                          <TrendingUp size={16} color="#00ACC1" />
-                          <Text style={styles.dataLabel}>Tide:</Text>
+                          <Wind size={16} color="#0066CC" />
+                          <Text style={styles.dataLabel}>Wind:</Text>
                           <Text style={styles.dataValue}>
-                            {weather.tide.heightM.toFixed(1)}m {weather.tide.trend === 'up' ? '↑' : weather.tide.trend === 'down' ? '↓' : '→'}
+                            {weather.wind.speedKts.toFixed(0)} kt
+                            {weather.wind.gustKts && ` (G${weather.wind.gustKts.toFixed(0)})`}
                           </Text>
                         </View>
-                      )}
 
-                      {layerToggles.current && (
                         <View style={styles.dataRow}>
-                          <Navigation size={16} color="#FF9800" />
-                          <Text style={styles.dataLabel}>Current:</Text>
-                          <Text style={styles.dataValue}>1.2 kt SW</Text>
+                          <Waves size={16} color="#00ACC1" />
+                          <Text style={styles.dataLabel}>Waves:</Text>
+                          <Text style={styles.dataValue}>
+                            {weather.wave.heightM !== null ? `${weather.wave.heightM.toFixed(1)}m` : 'N/A'}
+                            {weather.wave.periodS !== null && ` @ ${weather.wave.periodS.toFixed(0)}s`}
+                          </Text>
                         </View>
-                      )}
+
+                        {layerToggles.tides && weather.tide.heightM !== null && (
+                          <View style={styles.dataRow}>
+                            <TrendingUp size={16} color="#00ACC1" />
+                            <Text style={styles.dataLabel}>Tide:</Text>
+                            <Text style={styles.dataValue}>
+                              {weather.tide.heightM.toFixed(1)}m {weather.tide.trend === 'up' ? '↑' : weather.tide.trend === 'down' ? '↓' : '→'}
+                            </Text>
+                          </View>
+                        )}
+
+                        {layerToggles.current && (
+                          <View style={styles.dataRow}>
+                            <Navigation size={16} color="#FF9800" />
+                            <Text style={styles.dataLabel}>Current:</Text>
+                            <Text style={styles.dataValue}>1.2 kt SW</Text>
+                          </View>
+                        )}
+                      </View>
                     </View>
-                  </View>
-                )}
+                  )}
 
-                {/* Simplified badges when not expanded - only show enabled layers */}
-                {!isExpanded && (
-                  <View style={styles.badgeRow}>
-                    {/* These small badges removed in compact mode - data shown in bubble above */}
-                  </View>
-                )}
+                  {/* Simplified badges when not expanded - only show enabled layers */}
+                  {!isExpanded && (
+                    <View style={styles.badgeRow}>
+                      {/* These small badges removed in compact mode - data shown in bubble above */}
+                    </View>
+                  )}
+                </View>
+              </Marker>
+            );
+          })}
+        </MapView>
+      )}
+
+      {/* Android Weather Detail Card - shows when marker is selected */}
+      {Platform.OS === 'android' && selectedMarker && (() => {
+        const selectedArea = RACE_AREAS.find(area => area.key === selectedMarker);
+        const bundle = selectedArea ? bundles[selectedArea.key] : null;
+        if (!selectedArea || !bundle) return null;
+
+        const weather = getWeatherForTime(bundle, selectedTimeIndex);
+
+        return (
+          <View style={styles.androidDetailCard}>
+            <View style={styles.androidDetailHeader}>
+              <Text style={styles.androidDetailTitle}>{selectedArea.name}</Text>
+              <TouchableOpacity
+                style={styles.androidDetailClose}
+                onPress={() => setSelectedMarker(null)}
+              >
+                <X size={18} color="#666666" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.androidDetailContent}>
+              <View style={styles.androidDetailRow}>
+                <Wind size={18} color="#0066CC" />
+                <Text style={styles.androidDetailLabel}>Wind</Text>
+                <Text style={styles.androidDetailValue}>
+                  {weather.wind.speedKts.toFixed(0)} kt
+                  {weather.wind.gustKts && ` (G${weather.wind.gustKts.toFixed(0)})`}
+                </Text>
               </View>
-            </Marker>
-          );
-        })}
-      </MapView>
 
-      {/* Race Area Quick Zoom Buttons - Priority 5 */}
-      <View style={styles.raceAreaButtons}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.raceAreaButtonsContent}
-        >
-          {RACE_AREAS.map(area => (
-            <TouchableOpacity
-              key={area.key}
-              style={styles.raceAreaButton}
-              onPress={() => zoomToArea(area.key)}
-            >
-              <Text style={styles.raceAreaButtonText}>{area.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+              <View style={styles.androidDetailRow}>
+                <Waves size={18} color="#00ACC1" />
+                <Text style={styles.androidDetailLabel}>Waves</Text>
+                <Text style={styles.androidDetailValue}>
+                  {weather.wave.heightM !== null ? `${weather.wave.heightM.toFixed(1)}m` : 'N/A'}
+                  {weather.wave.periodS !== null && ` @ ${weather.wave.periodS.toFixed(0)}s`}
+                </Text>
+              </View>
 
-      {/* Weather Summary Card - Priority 6 with Tide Data */}
+              {weather.tide.heightM !== null && (
+                <View style={styles.androidDetailRow}>
+                  <TrendingUp size={18} color="#10B981" />
+                  <Text style={styles.androidDetailLabel}>Tide</Text>
+                  <Text style={styles.androidDetailValue}>
+                    {weather.tide.heightM.toFixed(1)}m
+                    {weather.tide.trend === 'up' ? ' ↑ Rising' : weather.tide.trend === 'down' ? ' ↓ Falling' : ' → Slack'}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        );
+      })()}
+
+      {/* Weather Summary Card - Compact version above tab bar */}
       {summary && (
         <View style={styles.weatherSummaryCard}>
+          <Text style={styles.summaryTitle}>Regional Average (All Areas)</Text>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
-              <Wind size={20} color="#0066CC" />
+              <Wind size={16} color="#0066CC" />
               <Text style={styles.summaryValue}>{summary.avgWind} kt</Text>
-              <Text style={styles.summaryLabel}>Avg Wind</Text>
+              <Text style={styles.summaryLabel}>Wind</Text>
             </View>
 
             <View style={styles.summaryItem}>
-              <Text style={[styles.summaryValue, { fontSize: 18 }]}>
+              <Text style={[styles.summaryValue, { fontSize: 14 }]}>
                 {summary.windDirection}
               </Text>
               <Text style={styles.summaryLabel}>Direction</Text>
             </View>
 
             <View style={styles.summaryItem}>
-              <Waves size={20} color="#0066CC" />
+              <Waves size={16} color="#0066CC" />
               <Text style={styles.summaryValue}>{summary.avgWave}m</Text>
-              <Text style={styles.summaryLabel}>Avg Waves</Text>
+              <Text style={styles.summaryLabel}>Waves</Text>
             </View>
 
             {summary.avgTide && (
               <View style={styles.summaryItem}>
-                <TrendingUp size={20} color="#00ACC1" />
+                <TrendingUp size={16} color="#00ACC1" />
                 <Text style={styles.summaryValue}>{summary.avgTide}m</Text>
-                <Text style={styles.summaryLabel}>Tide Level</Text>
+                <Text style={styles.summaryLabel}>Tide</Text>
               </View>
             )}
           </View>
-
-          {/* Tide Timing Row */}
-          <View style={styles.tideTimingRow}>
-            <View style={styles.tideEvent}>
-              <ArrowUp size={16} color="#00ACC1" />
-              <View style={styles.tideEventContent}>
-                <Text style={styles.tideTime}>
-                  High {tideTimings.nextHigh.time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                </Text>
-                <Text style={styles.tideHeight}>{tideTimings.nextHigh.height}m</Text>
-              </View>
-            </View>
-
-            <View style={styles.tideSeparator} />
-
-            <View style={styles.tideEvent}>
-              <ArrowDown size={16} color="#FF9800" />
-              <View style={styles.tideEventContent}>
-                <Text style={styles.tideTime}>
-                  Low {tideTimings.nextLow.time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                </Text>
-                <Text style={styles.tideHeight}>{tideTimings.nextLow.height}m</Text>
-              </View>
-            </View>
-          </View>
+          <Text style={styles.dataSourceLabel}>Data: Open-Meteo Marine API</Text>
         </View>
       )}
 
@@ -683,7 +697,7 @@ const styles = StyleSheet.create({
   map: {
     flex: 1
   },
-  // Time Slider Styles - Priority 1
+  // Header with back button and time slider
   timelineContainer: {
     position: 'absolute',
     top: 0,
@@ -699,26 +713,21 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  currentTimeIndicator: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 4,
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
   },
-  currentTimeLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#0066CC',
-    letterSpacing: 0.5,
-  },
-  currentTime: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#1a1a1a',
-    marginTop: 2,
+  headerBackButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 4,
   },
   timeSlider: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    flex: 1,
+    paddingRight: 12,
   },
   timeSliderContent: {
     gap: 8,
@@ -839,38 +848,10 @@ const styles = StyleSheet.create({
     color: '#666666',
     flex: 1,
   },
-  // Race Area Buttons Styles - Priority 5
-  raceAreaButtons: {
+  // Android Weather Detail Card Styles
+  androidDetailCard: {
     position: 'absolute',
-    bottom: 120,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 16,
-  },
-  raceAreaButtonsContent: {
-    gap: 8,
-    paddingHorizontal: 8,
-  },
-  raceAreaButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  raceAreaButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#0066CC',
-  },
-  // Weather Summary Card Styles - Priority 6
-  weatherSummaryCard: {
-    position: 'absolute',
-    bottom: 16,
+    bottom: 230, // Above the weather summary card
     left: 16,
     right: 16,
     backgroundColor: '#FFFFFF',
@@ -880,7 +861,72 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 8,
+  },
+  androidDetailHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  androidDetailTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1a1a1a',
+  },
+  androidDetailClose: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  androidDetailContent: {
+    gap: 14,
+  },
+  androidDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  androidDetailLabel: {
+    fontSize: 14,
+    color: '#666666',
+    fontWeight: '500',
+    width: 50,
+  },
+  androidDetailValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    flex: 1,
+  },
+  // Weather Summary Card Styles - Compact version above tab bar
+  weatherSummaryCard: {
+    position: 'absolute',
+    bottom: 100, // Above the tab bar
+    left: 12,
+    right: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  summaryTitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#666666',
+    textAlign: 'center',
+    marginBottom: 6,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -892,53 +938,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   summaryValue: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '700',
     color: '#1a1a1a',
-    marginTop: 4,
+    marginTop: 2,
   },
   summaryLabel: {
-    fontSize: 11,
+    fontSize: 9,
     color: '#666666',
-    marginTop: 2,
+    marginTop: 1,
     fontWeight: '500',
   },
-  // Tide Timing Styles
-  tideTimingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-  },
-  tideEvent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  tideEventContent: {
-    flex: 1,
-  },
-  tideTime: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#1a1a1a',
-  },
-  tideHeight: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: '#666666',
-    marginTop: 2,
-  },
-  tideSeparator: {
-    width: 1,
-    height: 30,
-    backgroundColor: '#E0E0E0',
-    marginHorizontal: 8,
+  dataSourceLabel: {
+    fontSize: 8,
+    color: '#999999',
+    textAlign: 'center',
+    marginTop: 6,
+    fontStyle: 'italic',
   },
   // Update Indicator Styles - Priority 5
   updateIndicator: {
@@ -966,7 +982,7 @@ const styles = StyleSheet.create({
   // My Location Button - Priority 4
   myLocationButton: {
     position: 'absolute',
-    bottom: 200,
+    bottom: 170, // Above the weather summary card
     right: 16,
     width: 48,
     height: 48,
@@ -1149,33 +1165,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#475569'
   },
-  backButtonContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 1000,
-    paddingHorizontal: 40,
-    paddingTop: 24,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
-    marginTop: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  }
 });
 
 export default ModernWeatherMapScreen;
