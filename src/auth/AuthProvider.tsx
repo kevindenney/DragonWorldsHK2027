@@ -7,8 +7,12 @@
  */
 
 import React, { createContext, useContext, useReducer, useEffect, ReactNode, useRef } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { mockAuthService } from './mockAuthService';
 import { AuthContextType, AuthState, LoginCredentials, RegisterCredentials, AuthProviderType, User } from './authTypes';
+
+// AsyncStorage key for current user (must match mockAuthService.ts)
+const CURRENT_USER_KEY = 'current_user';
 
 /**
  * Authentication actions
@@ -440,16 +444,24 @@ export function AuthenticationProvider({ children }: AuthProviderProps) {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
 
-
       if (useFirebase && firebaseServiceRef.current) {
-        const updatedUser = await firebaseServiceRef.current.updateUserProfile(updates);
+        // Add timeout to prevent infinite hang
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('Profile update timed out')), 10000);
+        });
+
+        const updatePromise = firebaseServiceRef.current.updateUserProfile(updates);
+
+        const updatedUser = await Promise.race([updatePromise, timeoutPromise]);
         dispatch({ type: 'SET_USER', payload: updatedUser });
       } else {
-        // Mock service doesn't support profile updates yet - just update locally
+        // Mock service - update locally and persist to AsyncStorage
         const currentUser = state.user;
         if (currentUser) {
           const updatedUser = { ...currentUser, ...updates, updatedAt: new Date() };
           dispatch({ type: 'SET_USER', payload: updatedUser });
+          // Persist to AsyncStorage for data to survive app restart
+          await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
         }
       }
     } catch (error) {

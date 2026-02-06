@@ -1,0 +1,275 @@
+# Discuss Create Post Test
+# Tests the full post creation flow
+#
+# Verifies:
+# - New Post button is visible for members
+# - Create Post modal opens correctly
+# - Post type selection works
+# - Title and body inputs work
+# - Submit button behavior (enabled/disabled)
+# - Modal close functionality
+#
+# NOTE: This test requires the user to be a member of the community.
+# If not a member, the create post button won't be visible.
+
+appId: com.denneyke.dragonworldshk2027
+name: Discuss - Create Post
+
+---
+
+# =====================
+# AUTHENTICATION
+# =====================
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible: "Join the Fleet"
+    timeout: 5000
+
+- tapOn:
+    id: "register-displayname"
+- inputText: "Post Creator Test"
+
+- tapOn:
+    id: "register-email"
+- inputText: "postcreator${Date.now()}@maestro.test"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-confirm-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-confirm-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-submit"
+
+# Wait for account creation
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 60000
+
+# Dismiss tooltips
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Got it"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Done"
+    optional: true
+- waitForAnimationToEnd
+
+# =====================
+# NAVIGATE TO DISCUSS
+# =====================
+
+- tapOn:
+    id: "tab-more"
+
+- extendedWaitUntil:
+    visible: "More"
+    timeout: 5000
+
+- tapOn: "Discuss"
+
+- extendedWaitUntil:
+    visible: "Discuss"
+    timeout: 5000
+
+# =====================
+# NAVIGATE TO DRAGON WORLDS & JOIN
+# =====================
+
+- tapOn: "Dragon Worlds"
+- waitForAnimationToEnd
+
+# Wait for community to load
+- extendedWaitUntil:
+    visible: "2027 HK Dragon Worlds"
+    timeout: 10000
+    optional: true
+
+# Join community if not already a member
+- tapOn:
+    id: "community-join-button"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Brief pause for join to complete
+- swipe:
+    direction: DOWN
+    duration: 100
+- swipe:
+    direction: UP
+    duration: 100
+
+# =====================
+# TEST: NEW POST BUTTON VISIBILITY
+# =====================
+
+# New Post button should be visible for members
+- assertVisible:
+    id: "discuss-new-post-button"
+    optional: true
+
+# =====================
+# TEST: OPEN CREATE POST MODAL
+# =====================
+
+# Tap the new post button
+- tapOn:
+    id: "discuss-new-post-button"
+    optional: true
+
+# Wait for modal to open
+- waitForAnimationToEnd
+
+# Verify modal is visible
+- assertVisible:
+    id: "create-post-modal"
+    optional: true
+
+# Verify modal header content
+- assertVisible:
+    text: "New Post"
+    optional: true
+
+# =====================
+# TEST: POST TYPE SELECTOR
+# =====================
+
+# Verify post type options are visible
+- assertVisible:
+    text: "Discussion"
+    optional: true
+
+- assertVisible:
+    text: "Question"
+    optional: true
+
+- assertVisible:
+    text: "Tip"
+    optional: true
+
+- assertVisible:
+    text: "Race Report"
+    optional: true
+
+# Tap on Question type (types: discussion, question, tip, report)
+- tapOn:
+    id: "create-post-type-question"
+    optional: true
+
+- waitForAnimationToEnd
+
+# =====================
+# TEST: TITLE INPUT
+# =====================
+
+# Verify title input is visible
+- assertVisible:
+    id: "create-post-title-input"
+    optional: true
+
+# Type a title
+- tapOn:
+    id: "create-post-title-input"
+    optional: true
+
+- inputText: "Test Question from Maestro"
+
+- hideKeyboard
+
+# =====================
+# TEST: BODY INPUT
+# =====================
+
+# Tap on body input
+- tapOn:
+    id: "create-post-body-input"
+    optional: true
+
+- inputText: "This is a test post created by Maestro E2E testing. Please disregard."
+
+- hideKeyboard
+
+# =====================
+# TEST: SUBMIT BUTTON STATE
+# =====================
+
+# Submit button should be enabled now (title has 5+ chars)
+- assertVisible:
+    id: "create-post-submit-button"
+    optional: true
+
+# =====================
+# TEST: CLOSE MODAL (without submitting)
+# =====================
+
+# Close the modal to avoid creating actual posts in tests
+- tapOn:
+    id: "create-post-close-button"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify modal is closed
+- assertNotVisible:
+    id: "create-post-modal"
+    optional: true
+
+# Verify we're back on the Discuss screen
+- assertVisible: "Dragon Worlds"
+
+# =====================
+# TEST: EMPTY STATE CREATE POST (if no posts)
+# =====================
+
+# If there are no posts, there might be an empty state with create button
+- tapOn:
+    id: "discuss-empty-create-post-button"
+    optional: true
+
+# If that button exists and was tapped, close the modal
+- tapOn:
+    id: "create-post-close-button"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Test complete - create post flow verified

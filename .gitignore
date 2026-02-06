@@ -181,3 +181,8 @@ yarn-error.*
 *.tsbuildinfo
 
 # @end expo-cli
+# Build output
+build/
+
+# Claude Code local settings (may contain secrets)
+.claude/settings.local.json

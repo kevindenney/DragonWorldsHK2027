@@ -6,6 +6,7 @@ import { Mail } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Animated from '../../utils/reanimatedWrapper';
 import { SocialLoginButton } from '../../components/auth/SocialLoginButton';
+import { AnimatedSigningText } from '../../components/auth/AnimatedSigningText';
 import { AuthProvider } from '../../auth/authTypes';
 import { useAuth } from '../../auth/useAuth';
 
@@ -13,10 +14,9 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 interface WelcomeScreenProps {
   onContinue: () => void;
-  onSignIn?: () => void;
 }
 
-export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSignIn }) => {
+export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue }) => {
   const { loginWithProvider, isLoading } = useAuth();
   const [loadingProvider, setLoadingProvider] = useState<'google' | 'apple' | null>(null);
 
@@ -93,14 +93,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSign
     }
   };
 
-  const handleEmailSignUp = async () => {
+  const handleEmailContinue = async () => {
     await Haptics.selectionAsync();
     onContinue();
-  };
-
-  const handleSignIn = async () => {
-    await Haptics.selectionAsync();
-    onSignIn?.();
   };
 
   return (
@@ -157,9 +152,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSign
                   defaultSource={require('../../../assets/dragon-logo.png')}
                 />
               </View>
-              <Text style={styles.googleButtonText}>
-                {loadingProvider === 'google' ? 'Signing in...' : 'Continue with Google'}
-              </Text>
+              {loadingProvider === 'google' ? (
+                <AnimatedSigningText style={styles.googleButtonText} />
+              ) : (
+                <Text style={styles.googleButtonText}>Continue with Google</Text>
+              )}
             </TouchableOpacity>
 
             {/* Secondary: Apple Sign In/Sign Up (all platforms) */}
@@ -170,15 +167,17 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSign
               activeOpacity={0.8}
             >
               <Text style={styles.appleIcon}></Text>
-              <Text style={styles.appleButtonText}>
-                {loadingProvider === 'apple' ? 'Signing in...' : 'Continue with Apple'}
-              </Text>
+              {loadingProvider === 'apple' ? (
+                <AnimatedSigningText style={styles.appleButtonText} />
+              ) : (
+                <Text style={styles.appleButtonText}>Continue with Apple</Text>
+              )}
             </TouchableOpacity>
 
-            {/* Tertiary: Email Sign In/Sign Up */}
+            {/* Tertiary: Email - Unified Sign In/Sign Up */}
             <TouchableOpacity
               style={styles.emailButton}
-              onPress={handleEmailSignUp}
+              onPress={handleEmailContinue}
               activeOpacity={0.7}
             >
               <Mail size={18} color="#FFFFFF" strokeWidth={2} style={styles.emailIcon} />
@@ -187,17 +186,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onContinue, onSign
           </Animated.View>
           </View>
 
-          {/* Footer Section - Sign In Link + Terms */}
+          {/* Footer Section - Terms */}
           <View style={styles.footer}>
-            <TouchableOpacity
-              style={styles.signInLink}
-              onPress={handleSignIn}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.signInLinkText}>
-                Already have an account? <Text style={styles.signInLinkBold}>Sign In</Text>
-              </Text>
-            </TouchableOpacity>
             <Text style={styles.footerText}>
               By continuing, you agree to our Terms of Service
             </Text>
@@ -363,22 +353,6 @@ const styles = StyleSheet.create({
   },
   emailButtonText: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-
-  // Sign In Link
-  signInLink: {
-    alignItems: 'center',
-    paddingVertical: 12,
-    marginBottom: 8,
-  },
-  signInLinkText: {
-    fontSize: 15,
-    fontWeight: '400',
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  signInLinkBold: {
     fontWeight: '600',
     color: '#FFFFFF',
   },

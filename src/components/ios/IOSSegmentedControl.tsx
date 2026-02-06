@@ -22,16 +22,37 @@ export const IOSSegmentedControl: React.FC<IOSSegmentedControlProps> = ({
   options = [],
   selectedValue,
   onValueChange,
+  // Alternative API props
+  values,
+  selectedIndex,
+  onChange,
   style
 }) => {
-  if (!options.length) return null;
+  // Support both APIs: convert values/selectedIndex/onChange to options/selectedValue/onValueChange
+  const normalizedOptions: IOSSegmentedControlOption[] = values
+    ? values.map(v => ({ label: v, value: v }))
+    : options;
+
+  const normalizedSelectedValue = values && selectedIndex !== undefined
+    ? values[selectedIndex]
+    : selectedValue;
+
+  const handlePress = (value: string, index: number) => {
+    if (values && onChange) {
+      onChange(index);
+    } else if (onValueChange) {
+      onValueChange(value);
+    }
+  };
+
+  if (!normalizedOptions.length) return null;
 
   return (
     <View style={[styles.container, style]}>
-      {options.map((option, index) => {
-        const isSelected = option.value === selectedValue;
+      {normalizedOptions.map((option, index) => {
+        const isSelected = option.value === normalizedSelectedValue;
         const isFirst = index === 0;
-        const isLast = index === options.length - 1;
+        const isLast = index === normalizedOptions.length - 1;
 
         return (
           <TouchableOpacity
@@ -42,7 +63,7 @@ export const IOSSegmentedControl: React.FC<IOSSegmentedControlProps> = ({
               isFirst && styles.firstSegment,
               isLast && styles.lastSegment
             ]}
-            onPress={() => onValueChange?.(option.value)}
+            onPress={() => handlePress(option.value, index)}
             activeOpacity={0.6}
           >
             <Animated.View style={styles.segmentContent}>

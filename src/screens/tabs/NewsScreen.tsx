@@ -9,8 +9,8 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Newspaper, Calendar, User, ExternalLink, ChevronRight, AlertCircle } from 'lucide-react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Newspaper, Calendar, User, ExternalLink, ChevronRight, AlertCircle, ChevronLeft } from 'lucide-react-native';
 import { colors } from '../../constants/theme';
 import { useNews, useRefreshNews, NewsItem } from '../../services/api/newsApi';
 import { useNewsStore } from '../../stores/newsStore';
@@ -18,7 +18,12 @@ import { useToastStore } from '../../stores/toastStore';
 import { ArticleWebView } from '../../components/news/ArticleWebView';
 import { Toast } from '../../components/shared/Toast';
 
-export function NewsScreen() {
+interface NewsScreenProps {
+  onBack?: () => void;
+}
+
+export function NewsScreen({ onBack }: NewsScreenProps) {
+  const insets = useSafeAreaInsets();
   const { data: news = [], isLoading, isError, isFetching } = useNews();
   const refreshNews = useRefreshNews();
 
@@ -135,15 +140,33 @@ export function NewsScreen() {
     </TouchableOpacity>
   );
 
+  // Determine safe area edges based on whether we're embedded or standalone
+  const safeAreaEdges: ('top' | 'bottom' | 'left' | 'right')[] = onBack ? [] : ['top'];
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={safeAreaEdges}>
       {/* Toast notifications */}
       <Toast />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>News</Text>
-        <Text style={styles.headerSubtitle}>Latest updates from Dragon World 2027</Text>
+      {/* Header - integrated with back button when onBack is provided */}
+      <View style={[styles.header, onBack && { paddingTop: insets.top + 8 }]}>
+        <View style={styles.headerRow}>
+          {onBack && (
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={onBack}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <ChevronLeft size={28} color={colors.primary} />
+            </TouchableOpacity>
+          )}
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>News</Text>
+            <Text style={styles.headerSubtitle}>Latest updates from Dragon World 2027</Text>
+          </View>
+        </View>
       </View>
 
       <ScrollView
@@ -230,6 +253,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    marginRight: 8,
+    marginLeft: -8,
+  },
+  headerTitleContainer: {
+    flex: 1,
   },
   headerTitle: {
     fontSize: 28,

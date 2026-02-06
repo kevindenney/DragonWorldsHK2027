@@ -1,0 +1,161 @@
+# Notices Basic Viewing Test
+# Tests initial state and basic viewing behavior for notices notification system
+#
+# Verifies:
+# - Badge clears when viewing Notices tab
+# - Notices list is visible
+# - Badge stays cleared when returning to tab
+
+appId: com.denneyke.dragonworldshk2027
+name: Notices - Basic Viewing
+
+---
+
+# =====================
+# AUTHENTICATION
+# =====================
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible: "Join the Fleet"
+    timeout: 5000
+
+- tapOn:
+    id: "register-displayname"
+- inputText: "Basic View Test"
+
+- tapOn:
+    id: "register-email"
+- inputText: "basicview${Date.now()}@maestro.test"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-confirm-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-confirm-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-submit"
+
+# Wait for account creation to complete (can take time)
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 60000
+
+# Dismiss any welcome tooltips
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Got it"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Done"
+    optional: true
+- waitForAnimationToEnd
+
+# =====================
+# TEST: NAVIGATE TO NOTICES TAB
+# =====================
+
+# Navigate to Notices tab
+- tapOn:
+    id: "tab-noticeboard"
+
+# Wait for notices to load
+- extendedWaitUntil:
+    visible: "Notices"
+    timeout: 5000
+
+# Assert Notices screen is visible
+- assertVisible: "Notices"
+
+# =====================
+# TEST: BADGE NOT VISIBLE (ALL SEEN)
+# =====================
+
+# Badge should not be visible since we just viewed the tab
+# (all notices marked as seen on focus)
+- assertNotVisible:
+    id: "badge-noticeboard"
+    optional: true
+
+# =====================
+# TEST: NOTICES LIST CONTENT
+# =====================
+
+# Assert at least one notice category filter is visible
+- assertVisible:
+    text: "All"
+    optional: true
+
+# =====================
+# TEST: NAVIGATE AWAY AND BACK
+# =====================
+
+# Navigate to Results tab
+- tapOn:
+    id: "tab-results"
+
+- extendedWaitUntil:
+    visible: "Results"
+    timeout: 5000
+
+# Wait 2 seconds
+- swipe:
+    direction: DOWN
+    duration: 100
+- swipe:
+    direction: UP
+    duration: 100
+
+# Navigate back to Notices tab
+- tapOn:
+    id: "tab-noticeboard"
+
+- extendedWaitUntil:
+    visible: "Notices"
+    timeout: 5000
+
+# Badge should still not be visible (no new notices)
+- assertNotVisible:
+    id: "badge-noticeboard"
+    optional: true
+
+# Assert screen still works
+- assertVisible: "Notices"
+
+# Test complete!

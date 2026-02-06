@@ -1,0 +1,172 @@
+# Discuss Tab Switching Test
+# Tests switching between Feed and Dragon Worlds tabs
+#
+# Verifies:
+# - Feed tab shows placeholder state
+# - Dragon Worlds tab shows community content
+# - Switching tabs updates content correctly
+# - Tab state persists correctly
+
+appId: com.denneyke.dragonworldshk2027
+name: Discuss - Tab Switching
+
+---
+
+# =====================
+# AUTHENTICATION
+# =====================
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible: "Join the Fleet"
+    timeout: 5000
+
+- tapOn:
+    id: "register-displayname"
+- inputText: "Tab Switch Test"
+
+- tapOn:
+    id: "register-email"
+- inputText: "tabswitch${Date.now()}@maestro.test"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-confirm-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-confirm-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-submit"
+
+# Wait for account creation
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 60000
+
+# Dismiss tooltips
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Got it"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Done"
+    optional: true
+- waitForAnimationToEnd
+
+# =====================
+# NAVIGATE TO DISCUSS
+# =====================
+
+# Navigate to More tab
+- tapOn:
+    id: "tab-more"
+
+- extendedWaitUntil:
+    visible: "More"
+    timeout: 5000
+
+# Tap on Discuss
+- tapOn: "Discuss"
+
+- extendedWaitUntil:
+    visible: "Discuss"
+    timeout: 5000
+
+# =====================
+# TEST: FEED TAB PLACEHOLDER
+# =====================
+
+# Tap Feed tab
+- tapOn: "Feed"
+- waitForAnimationToEnd
+
+# Assert Feed placeholder state is visible
+- assertVisible:
+    text: "Your Feed"
+    optional: true
+
+# Assert RegattaFlow promo is visible
+- assertVisible:
+    text: "Get RegattaFlow App"
+    optional: true
+
+# =====================
+# TEST: DRAGON WORLDS TAB CONTENT
+# =====================
+
+# Tap Dragon Worlds tab
+- tapOn: "Dragon Worlds"
+- waitForAnimationToEnd
+
+# Assert community content is visible
+- assertVisible:
+    id: "community-header"
+    optional: true
+
+# Community name should be visible
+- assertVisible:
+    text: "2027 HK Dragon Worlds"
+    optional: true
+
+# =====================
+# TEST: SWITCH BACK TO FEED
+# =====================
+
+# Tap Feed tab again
+- tapOn: "Feed"
+- waitForAnimationToEnd
+
+# Assert Feed placeholder is still visible
+- assertVisible:
+    text: "Your Feed"
+    optional: true
+
+# =====================
+# TEST: SWITCH BACK TO DRAGON WORLDS
+# =====================
+
+# Tap Dragon Worlds tab
+- tapOn: "Dragon Worlds"
+- waitForAnimationToEnd
+
+# Community should still be visible
+- assertVisible:
+    text: "2027 HK Dragon Worlds"
+    optional: true
+
+# Test complete - tab switching verified

@@ -213,7 +213,7 @@ export function DataSourcesScreen() {
                 <Anchor size={16} color="#007AFF" style={{ marginLeft: 6 }} />
               </View>
               <View style={styles.sourceTextWrap}>
-                <TouchableOpacity onPress={() => open('https://data.weather.gov.hk/weatherAPI/doc/files/HKO_Open_Data_API_Documentation.pdf')}>
+                <TouchableOpacity onPress={() => open('https://www.hko.gov.hk/en/abouthko/opendata_intro.htm')}>
                   <IOSText style={styles.link}>Hong Kong Observatory Open Data</IOSText>
                 </TouchableOpacity>
                 <IOSText style={styles.cardBody}>Real-time local conditions, weather warnings, marine forecasts, and tide data</IOSText>

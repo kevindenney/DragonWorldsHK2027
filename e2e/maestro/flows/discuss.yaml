@@ -1,0 +1,193 @@
+# Discuss Screen Flow Tests for Dragon Worlds HK 2027
+# Tests Discuss screen navigation and basic functionality
+# NOTE: Requires authenticated state
+#
+# For comprehensive tests, run the full suite:
+# maestro test e2e/maestro/flows/discuss/00-discuss-suite.yaml
+#
+# TestIDs used in this flow:
+# - tab-more (navigate to More screen)
+# - discuss-screen (main Discuss screen container)
+# - discuss-segment-control (Feed/Dragon Worlds selector)
+# - discuss-new-post-button (create new post)
+# - community-header (community info card)
+# - community-join-button / community-leave-button
+# - create-post-modal (post creation modal)
+
+appId: com.denneyke.dragonworldshk2027
+name: Discuss Flow
+
+---
+
+# Test: Discuss Screen Loads from More Menu
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+# Dismiss any welcome tooltips
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Got it"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Done"
+    optional: true
+- waitForAnimationToEnd
+
+# Navigate to More tab
+- tapOn:
+    id: "tab-more"
+
+- extendedWaitUntil:
+    visible: "More"
+    timeout: 5000
+
+# Verify Discuss option is visible in More menu
+- assertVisible: "Discuss"
+
+# Tap on Discuss
+- tapOn: "Discuss"
+
+# Wait for Discuss screen
+- extendedWaitUntil:
+    visible: "Discuss"
+    timeout: 5000
+
+# Assert Discuss screen is visible
+- assertVisible: "Discuss"
+
+---
+
+# Test: Segmented Control Visible
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+# Dismiss tooltips
+- tapOn:
+    text: "Next"
+    optional: true
+- tapOn:
+    text: "Next"
+    optional: true
+- tapOn:
+    text: "Got it"
+    optional: true
+
+# Navigate to Discuss
+- tapOn:
+    id: "tab-more"
+
+- extendedWaitUntil:
+    visible: "More"
+    timeout: 5000
+
+- tapOn: "Discuss"
+
+- extendedWaitUntil:
+    visible: "Discuss"
+    timeout: 5000
+
+# Assert segmented control options are visible
+- assertVisible: "Feed"
+- assertVisible: "Dragon Worlds"
+
+---
+
+# Test: Switch to Dragon Worlds Tab
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+# Dismiss tooltips
+- tapOn:
+    text: "Next"
+    optional: true
+- tapOn:
+    text: "Next"
+    optional: true
+- tapOn:
+    text: "Got it"
+    optional: true
+
+# Navigate to Discuss
+- tapOn:
+    id: "tab-more"
+
+- extendedWaitUntil:
+    visible: "More"
+    timeout: 5000
+
+- tapOn: "Discuss"
+
+- extendedWaitUntil:
+    visible: "Discuss"
+    timeout: 5000
+
+# Tap Dragon Worlds tab
+- tapOn: "Dragon Worlds"
+
+# Wait for community content
+- waitForAnimationToEnd
+
+# Community name should be visible (if loaded)
+- assertVisible:
+    text: "2027 HK Dragon Worlds"
+    optional: true
+
+---
+
+# Test: Navigate Back to More
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+# Dismiss tooltips
+- tapOn:
+    text: "Next"
+    optional: true
+- tapOn:
+    text: "Next"
+    optional: true
+- tapOn:
+    text: "Got it"
+    optional: true
+
+# Navigate to Discuss
+- tapOn:
+    id: "tab-more"
+
+- extendedWaitUntil:
+    visible: "More"
+    timeout: 5000
+
+- tapOn: "Discuss"
+
+- extendedWaitUntil:
+    visible: "Discuss"
+    timeout: 5000
+
+# Navigate back via tab bar
+- tapOn:
+    id: "tab-more"
+
+- waitForAnimationToEnd
+
+# Should be back on More screen
+- assertVisible: "More"

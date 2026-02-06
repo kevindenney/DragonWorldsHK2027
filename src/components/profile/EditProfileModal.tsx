@@ -8,15 +8,17 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { X, Save, User, Mail, Phone, MapPin, Sailboat, Anchor } from 'lucide-react-native';
+import { X, Save, User, Camera } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { colors, spacing, typography, borderRadius, shadows } from '../../constants/theme';
 import { useAuth } from '../../auth/useAuth';
-import { User as UserType, SailingProfile } from '../../auth/authTypes';
+import { User as UserType } from '../../auth/authTypes';
+import { imageUploadService } from '../../services/imageUploadService';
 
 interface EditProfileModalProps {
   visible: boolean;
@@ -24,25 +26,9 @@ interface EditProfileModalProps {
   testID?: string;
 }
 
-// Boat class options for the picker
-const BOAT_CLASSES = [
-  { label: 'Select boat class...', value: '' },
-  { label: 'Dragon', value: 'Dragon' },
-  { label: 'J/70', value: 'J/70' },
-  { label: 'Laser', value: 'Laser' },
-  { label: '49er', value: '49er' },
-  { label: 'Optimist', value: 'Optimist' },
-  { label: 'Other', value: 'Other' },
-];
-
 interface ProfileFormData {
   displayName: string;
-  email: string;
-  phoneNumber: string;
-  location: string;
-  sailNumber: string;
-  boatClass: string;
-  yachtClub: string;
+  photoURL: string;
 }
 
 export const EditProfileModal: React.FC<EditProfileModalProps> = ({
@@ -53,12 +39,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   const { user, updateProfile } = useAuth();
   const [formData, setFormData] = useState<ProfileFormData>({
     displayName: '',
-    email: '',
-    phoneNumber: '',
-    location: '',
-    sailNumber: '',
-    boatClass: '',
-    yachtClub: '',
+    photoURL: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -68,12 +49,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     if (visible && user) {
       const initialData = {
         displayName: user.displayName || '',
-        email: user.email || '',
-        phoneNumber: user.phoneNumber || '',
-        location: '', // Location field for future use
-        sailNumber: user.sailingProfile?.sailNumber || '',
-        boatClass: user.sailingProfile?.boatClass || '',
-        yachtClub: user.sailingProfile?.yachtClub || '',
+        photoURL: user.photoURL || '',
       };
       setFormData(initialData);
       setHasChanges(false);
@@ -85,11 +61,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     if (user) {
       const hasModifications =
         formData.displayName !== (user.displayName || '') ||
-        formData.email !== (user.email || '') ||
-        formData.phoneNumber !== (user.phoneNumber || '') ||
-        formData.sailNumber !== (user.sailingProfile?.sailNumber || '') ||
-        formData.boatClass !== (user.sailingProfile?.boatClass || '') ||
-        formData.yachtClub !== (user.sailingProfile?.yachtClub || '');
+        formData.photoURL !== (user.photoURL || '');
 
       setHasChanges(hasModifications);
     }
@@ -99,21 +71,37 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handlePickImage = async () => {
+    try {
+      // Request permission
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required',
+          'Please allow access to your photo library to change your profile picture.'
+        );
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        handleInputChange('photoURL', result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    }
+  };
+
   const validateForm = (): boolean => {
     if (!formData.displayName.trim()) {
       Alert.alert('Validation Error', 'Display name is required.');
-      return false;
-    }
-
-    if (!formData.email.trim()) {
-      Alert.alert('Validation Error', 'Email address is required.');
-      return false;
-    }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      Alert.alert('Validation Error', 'Please enter a valid email address.');
       return false;
     }
 
@@ -125,49 +113,53 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       return;
     }
 
+    if (!user) {
+      Alert.alert('Error', 'No user logged in.');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const updates: Partial<UserType> = {
         displayName: formData.displayName.trim(),
-        phoneNumber: formData.phoneNumber.trim() || undefined,
-        sailingProfile: {
-          sailNumber: formData.sailNumber.trim() || undefined,
-          boatClass: formData.boatClass || undefined,
-          yachtClub: formData.yachtClub.trim() || undefined,
-        },
       };
 
-      // Note: Email changes typically require re-authentication in most systems
-      // For now, we'll exclude email updates to avoid complications
-      if (formData.email !== user?.email) {
-        Alert.alert(
-          'Email Change',
-          'Email changes require additional verification. Please contact support to change your email address.',
-          [{ text: 'OK' }]
-        );
-        return;
+      // Upload new profile picture if changed and is a local file
+      if (formData.photoURL !== (user?.photoURL || '')) {
+        if (formData.photoURL && !formData.photoURL.startsWith('http')) {
+          // Local file URI - upload to Firebase Storage
+          try {
+            const uploadResult = await imageUploadService.uploadProfilePicture(
+              user.uid,
+              formData.photoURL
+            );
+            updates.photoURL = uploadResult.downloadURL;
+          } catch (uploadError) {
+            Alert.alert(
+              'Upload Error',
+              'Failed to upload profile picture. Your other changes will still be saved.',
+              [{ text: 'OK' }]
+            );
+            // Continue without the photo update
+          }
+        } else {
+          // Already a remote URL or empty
+          updates.photoURL = formData.photoURL || undefined;
+        }
       }
 
       await updateProfile(updates);
 
-      Alert.alert(
-        'Success',
-        'Your profile has been updated successfully.',
-        [
-          {
-            text: 'OK',
-            onPress: onClose,
-          },
-        ]
-      );
+      // Close modal immediately on success
+      setIsLoading(false);
+      onClose();
     } catch (error) {
+      setIsLoading(false);
       Alert.alert(
         'Error',
         'Failed to update your profile. Please try again.',
         [{ text: 'OK' }]
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -219,10 +211,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               disabled={!hasChanges || isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator size={20} color={colors.background} />
+                <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <View style={styles.saveButtonContent}>
-                  <Save size={16} color={colors.background} />
+                  <Save size={16} color="#FFFFFF" />
                   <Text style={styles.saveButtonText}>Save</Text>
                 </View>
               )}
@@ -230,150 +222,49 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
           </View>
 
           {/* Form */}
-          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-            <View style={styles.form}>
-              {/* Display Name */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Display Name *</Text>
-                <View style={styles.inputContainer}>
-                  <User size={20} color={colors.textMuted} />
-                  <TextInput
-                    style={styles.textInput}
-                    value={formData.displayName}
-                    onChangeText={(text) => handleInputChange('displayName', text)}
-                    placeholder="Enter your display name"
-                    placeholderTextColor={colors.textMuted}
-                    maxLength={50}
-                    editable={!isLoading}
+          <View style={styles.form}>
+            {/* Profile Picture */}
+            <View style={styles.avatarSection}>
+              <TouchableOpacity
+                onPress={handlePickImage}
+                style={styles.avatarContainer}
+                disabled={isLoading}
+              >
+                {formData.photoURL ? (
+                  <Image
+                    source={{ uri: formData.photoURL }}
+                    style={styles.avatar}
                   />
-                </View>
-              </View>
-
-              {/* Email */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Email Address *</Text>
-                <View style={[styles.inputContainer, styles.inputContainerDisabled]}>
-                  <Mail size={20} color={colors.textMuted} />
-                  <TextInput
-                    style={[styles.textInput, styles.textInputDisabled]}
-                    value={formData.email}
-                    placeholder="Email address"
-                    placeholderTextColor={colors.textMuted}
-                    editable={false}
-                  />
-                </View>
-                <Text style={styles.inputHelper}>
-                  Contact support to change your email address
-                </Text>
-              </View>
-
-              {/* Phone Number */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Phone Number</Text>
-                <View style={styles.inputContainer}>
-                  <Phone size={20} color={colors.textMuted} />
-                  <TextInput
-                    style={styles.textInput}
-                    value={formData.phoneNumber}
-                    onChangeText={(text) => handleInputChange('phoneNumber', text)}
-                    placeholder="Enter your phone number"
-                    placeholderTextColor={colors.textMuted}
-                    keyboardType="phone-pad"
-                    maxLength={20}
-                    editable={!isLoading}
-                  />
-                </View>
-              </View>
-
-              {/* Location */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Location</Text>
-                <View style={styles.inputContainer}>
-                  <MapPin size={20} color={colors.textMuted} />
-                  <TextInput
-                    style={styles.textInput}
-                    value={formData.location}
-                    onChangeText={(text) => handleInputChange('location', text)}
-                    placeholder="Enter your location"
-                    placeholderTextColor={colors.textMuted}
-                    maxLength={100}
-                    editable={!isLoading}
-                  />
-                </View>
-              </View>
-
-              {/* Sailing Profile Section */}
-              <View style={styles.sectionDivider}>
-                <Text style={styles.sectionTitle}>Sailing Profile</Text>
-              </View>
-
-              {/* Sail Number */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Sail Number</Text>
-                <View style={styles.inputContainer}>
-                  <Sailboat size={20} color={colors.textMuted} />
-                  <TextInput
-                    style={styles.textInput}
-                    value={formData.sailNumber}
-                    onChangeText={(text) => handleInputChange('sailNumber', text)}
-                    placeholder="e.g., d59"
-                    placeholderTextColor={colors.textMuted}
-                    maxLength={20}
-                    autoCapitalize="characters"
-                    editable={!isLoading}
-                  />
-                </View>
-              </View>
-
-              {/* Boat Class */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Boat Class</Text>
-                <View style={styles.pickerContainer}>
-                  <Anchor size={20} color={colors.textMuted} />
-                  <View style={styles.pickerWrapper}>
-                    {BOAT_CLASSES.map((item) => (
-                      <TouchableOpacity
-                        key={item.value}
-                        style={[
-                          styles.pickerOption,
-                          formData.boatClass === item.value && styles.pickerOptionSelected,
-                        ]}
-                        onPress={() => handleInputChange('boatClass', item.value)}
-                        disabled={isLoading}
-                      >
-                        <Text
-                          style={[
-                            styles.pickerOptionText,
-                            formData.boatClass === item.value && styles.pickerOptionTextSelected,
-                            !item.value && styles.pickerOptionPlaceholder,
-                          ]}
-                        >
-                          {item.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <User size={48} color={colors.textMuted} />
                   </View>
+                )}
+                <View style={styles.cameraButton}>
+                  <Camera size={16} color={colors.background} />
                 </View>
-              </View>
+              </TouchableOpacity>
+              <Text style={styles.avatarHint}>Tap to change photo</Text>
+            </View>
 
-              {/* Yacht Club */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Yacht Club</Text>
-                <View style={styles.inputContainer}>
-                  <Anchor size={20} color={colors.textMuted} />
-                  <TextInput
-                    style={styles.textInput}
-                    value={formData.yachtClub}
-                    onChangeText={(text) => handleInputChange('yachtClub', text)}
-                    placeholder="e.g., Royal Hong Kong Yacht Club"
-                    placeholderTextColor={colors.textMuted}
-                    maxLength={100}
-                    editable={!isLoading}
-                  />
-                </View>
+            {/* Display Name */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Display Name</Text>
+              <View style={styles.inputContainer}>
+                <User size={20} color={colors.textMuted} />
+                <TextInput
+                  style={styles.textInput}
+                  value={formData.displayName}
+                  onChangeText={(text) => handleInputChange('displayName', text)}
+                  placeholder="Enter your display name"
+                  placeholderTextColor={colors.textMuted}
+                  maxLength={50}
+                  editable={!isLoading}
+                  autoCapitalize="words"
+                />
               </View>
             </View>
-          </ScrollView>
+          </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
@@ -408,14 +299,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   saveButton: {
+    ...shadows.button,
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.md,
-    ...shadows.button,
   },
   saveButtonDisabled: {
-    backgroundColor: colors.border,
+    backgroundColor: '#9CA3AF',
   },
   saveButtonContent: {
     flexDirection: 'row',
@@ -424,14 +315,53 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     ...typography.button,
-    color: colors.background,
-  },
-  scrollView: {
-    flex: 1,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   form: {
     padding: spacing.lg,
-    gap: spacing.lg,
+    gap: spacing.xl,
+  },
+  avatarSection: {
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  avatarContainer: {
+    position: 'relative',
+  },
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.surface,
+  },
+  avatarPlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.surface,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: colors.background,
+  },
+  avatarHint: {
+    ...typography.caption,
+    color: colors.textMuted,
   },
   inputGroup: {
     gap: spacing.sm,
@@ -452,75 +382,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     gap: spacing.sm,
   },
-  inputContainerDisabled: {
-    backgroundColor: colors.border,
-    opacity: 0.6,
-  },
   textInput: {
     flex: 1,
     ...typography.body1,
     color: colors.text,
     paddingVertical: spacing.xs,
-  },
-  textInputDisabled: {
-    color: colors.textMuted,
-  },
-  inputHelper: {
-    ...typography.caption,
-    color: colors.textMuted,
-    marginTop: -spacing.xs,
-  },
-  sectionDivider: {
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingTop: spacing.lg,
-  },
-  sectionTitle: {
-    ...typography.h5,
-    color: colors.text,
-    fontWeight: '600',
-    marginBottom: spacing.sm,
-  },
-  pickerContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-  },
-  pickerWrapper: {
-    flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  pickerOption: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  pickerOptionSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  pickerOptionText: {
-    ...typography.body2,
-    color: colors.text,
-  },
-  pickerOptionTextSelected: {
-    color: colors.background,
-    fontWeight: '600',
-  },
-  pickerOptionPlaceholder: {
-    color: colors.textMuted,
   },
 });

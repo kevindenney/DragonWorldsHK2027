@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, TextInput, RefreshControl, Animated, Linking, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { View, StyleSheet, ScrollView, TextInput, RefreshControl, Animated, Linking, TouchableOpacity, Easing } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Search,
@@ -11,7 +11,8 @@ import {
   Radio,
   Sailboat,
   Anchor,
-  ExternalLink
+  ExternalLink,
+  RefreshCw
 } from 'lucide-react-native';
 
 import { colors, spacing } from '../../constants/theme';
@@ -101,6 +102,55 @@ export const EntrantsScreen: React.FC<EntrantsScreenProps & EntrantsScreenCustom
   const { toolbarTranslateY, createScrollHandler } = useToolbarVisibility();
   const scrollHandler = useMemo(() => createScrollHandler(), [createScrollHandler]);
 
+  // Polling indicator animation
+  const spinAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Start/stop spin animation when refreshing
+  useEffect(() => {
+    if (isRefreshing) {
+      Animated.loop(
+        Animated.timing(spinAnim, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      ).start();
+    } else {
+      spinAnim.setValue(0);
+    }
+  }, [isRefreshing, spinAnim]);
+
+  // Pulse animation for polling indicator (always running when polling is active)
+  useEffect(() => {
+    if (isPolling) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 0.4,
+            duration: 1500,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1500,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [isPolling, pulseAnim]);
+
+  const spinInterpolation = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
   // Get current event configuration
   const currentEvent = selectedEvent === 'world'
     ? eventSchedules.worldChampionship
@@ -113,7 +163,7 @@ export const EntrantsScreen: React.FC<EntrantsScreenProps & EntrantsScreenCustom
       : externalUrls.clubSpot.regattaIds?.apac || 'p75RuY5UZc';
   }, [selectedEvent]);
 
-  // Use the ClubSpot entrants hook
+  // Use the ClubSpot entrants hook with polling enabled
   const {
     entrants,
     isLoading,
@@ -123,7 +173,11 @@ export const EntrantsScreen: React.FC<EntrantsScreenProps & EntrantsScreenCustom
     refresh,
     isLiveData,
     lastUpdatedText,
-  } = useClubSpotEntrants(regattaId, currentEvent.id);
+    isPolling,
+    pollingInterval,
+  } = useClubSpotEntrants(regattaId, currentEvent.id, {
+    pollingInterval: 30000, // Poll every 30 seconds
+  });
 
   // Convert hook error to string
   const error = hookError ? hookError.message : null;
@@ -344,6 +398,19 @@ export const EntrantsScreen: React.FC<EntrantsScreenProps & EntrantsScreenCustom
                             {badgeInfo.label}
                           </IOSBadge>
                         </View>
+                        {isPolling && (
+                          <View style={styles.pollingIndicator}>
+                            <Animated.View style={[styles.pollingDot, { opacity: pulseAnim }]} />
+                            <IOSText textStyle="caption2" color="systemGreen">
+                              Auto-refresh
+                            </IOSText>
+                            {isRefreshing && (
+                              <Animated.View style={{ transform: [{ rotate: spinInterpolation }] }}>
+                                <RefreshCw size={12} color={colors.success} />
+                              </Animated.View>
+                            )}
+                          </View>
+                        )}
                         <IOSText textStyle="caption2" color="tertiaryLabel">
                           Updated {lastUpdatedText}
                         </IOSText>
@@ -562,6 +629,17 @@ const styles = StyleSheet.create({
   dataSourceBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  pollingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  pollingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.success,
   },
   statsGrid: {
     flexDirection: 'row',

@@ -55,8 +55,9 @@ export const NoticeCard: React.FC<NoticeCardProps> = ({
   compact = false
 }) => {
   // Get priority color
-  const getPriorityColor = (priority: NoticeItem['priority'] | undefined) => {
+  const getPriorityColor = (priority: NoticeItem['priority'] | string | undefined) => {
     switch (priority) {
+      case 'critical':
       case 'urgent': return colors.error;
       case 'high': return colors.warning;
       case 'medium': return colors.primary;
@@ -66,11 +67,12 @@ export const NoticeCard: React.FC<NoticeCardProps> = ({
   };
 
   // Get left border color based on priority
-  const getBorderColor = (priority: NoticeItem['priority'] | undefined) => {
+  const getBorderColor = (priority: NoticeItem['priority'] | string | undefined) => {
     switch (priority) {
+      case 'critical':
       case 'urgent':
       case 'high':
-        return '#DC3545'; // Red for urgent/high
+        return '#DC3545'; // Red for critical/urgent/high
       case 'medium':
         return '#FF9800'; // Orange for medium
       case 'low':
@@ -80,8 +82,9 @@ export const NoticeCard: React.FC<NoticeCardProps> = ({
   };
 
   // Get priority badge styling
-  const getPriorityBadgeStyle = (priority: NoticeItem['priority'] | undefined) => {
+  const getPriorityBadgeStyle = (priority: NoticeItem['priority'] | string | undefined) => {
     switch (priority) {
+      case 'critical':
       case 'urgent':
         return {
           backgroundColor: '#FFE5E9',
@@ -176,8 +179,8 @@ export const NoticeCard: React.FC<NoticeCardProps> = ({
     return date.toLocaleDateString();
   };
 
-  // Check if unread
-  const isUnread = 'isRead' in notice ? !notice.isRead : false;
+  // Check if unread - isRead is now always set by NoticesScreen
+  const isUnread = 'isRead' in notice ? !notice.isRead : true;
 
   const IconComponent = getNoticeIcon();
   const priorityColor = getPriorityColor(notice.priority);

@@ -17,14 +17,14 @@ import { IOSText, IOSBadge } from '../ios';
 import { NoticeCard } from './NoticeCard';
 import { haptics } from '../../utils/haptics';
 
-import type { RegattaCategory } from '../../types/noticeBoard';
+import type {
+  RegattaCategory,
+  OfficialNotification,
+  EventDocument
+} from '../../types/noticeBoard';
 
-// Reuse the same type from NoticesScreen
-type NoticeItem = {
-  id: string;
-  title: string;
-  content?: string;
-  description?: string;
+// NoticeItem type compatible with NoticeCard
+type NoticeItem = (OfficialNotification | EventDocument) & {
   itemType: 'notification' | 'document';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   publishedAt: string;

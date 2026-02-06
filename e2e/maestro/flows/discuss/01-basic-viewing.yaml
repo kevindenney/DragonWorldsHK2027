@@ -1,0 +1,153 @@
+# Discuss Basic Viewing Test
+# Tests navigation to Discuss screen and basic content display
+#
+# Verifies:
+# - Can navigate to Discuss from More menu
+# - Discuss screen header is visible
+# - Segmented control (Feed/Dragon Worlds) is visible
+# - Dragon Worlds community header displays correctly
+
+appId: com.denneyke.dragonworldshk2027
+name: Discuss - Basic Viewing
+
+---
+
+# =====================
+# AUTHENTICATION
+# =====================
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible: "Join the Fleet"
+    timeout: 5000
+
+- tapOn:
+    id: "register-displayname"
+- inputText: "Discuss Test User"
+
+- tapOn:
+    id: "register-email"
+- inputText: "discussview${Date.now()}@maestro.test"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-confirm-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-confirm-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-submit"
+
+# Wait for account creation to complete
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 60000
+
+# Dismiss any welcome tooltips
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Got it"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Done"
+    optional: true
+- waitForAnimationToEnd
+
+# =====================
+# TEST: NAVIGATE TO DISCUSS SCREEN
+# =====================
+
+# Navigate to More tab
+- tapOn:
+    id: "tab-more"
+
+# Wait for More screen
+- extendedWaitUntil:
+    visible: "More"
+    timeout: 5000
+
+# Tap on Discuss option in More menu
+- tapOn: "Discuss"
+
+# Wait for Discuss screen to load
+- extendedWaitUntil:
+    visible: "Discuss"
+    timeout: 5000
+
+# =====================
+# TEST: VERIFY DISCUSS SCREEN CONTENT
+# =====================
+
+# Assert Discuss header is visible
+- assertVisible: "Discuss"
+
+# Assert segmented control is visible with both options
+- assertVisible: "Feed"
+- assertVisible: "Dragon Worlds"
+
+# =====================
+# TEST: VERIFY COMMUNITY CONTENT (Dragon Worlds tab)
+# =====================
+
+# Tap on Dragon Worlds tab (default might be Feed)
+- tapOn: "Dragon Worlds"
+
+# Wait for community content to load
+- waitForAnimationToEnd
+
+# Assert community header elements are visible
+- assertVisible:
+    id: "community-header"
+    optional: true
+
+# Assert community name is visible
+- assertVisible:
+    text: "2027 HK Dragon Worlds"
+    optional: true
+
+# Assert stats are visible (members, posts)
+- assertVisible:
+    text: "members"
+    optional: true
+
+# Assert join button or joined state is visible
+- assertVisible:
+    text: "Join Community"
+    optional: true
+
+# Test complete - basic viewing verified

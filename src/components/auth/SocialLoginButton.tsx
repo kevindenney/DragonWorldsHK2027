@@ -3,6 +3,7 @@ import { TouchableOpacity, Text, View, StyleSheet, Platform, ActivityIndicator, 
 import { AntDesign, FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
 import { AuthProvider, AuthProviderType } from '../../auth/authTypes';
+import { AnimatedSigningText } from './AnimatedSigningText';
 
 // DEBUG: Log AuthProvider import to validate type and properties
 
@@ -180,9 +181,11 @@ export function SocialLoginButton({
           )
         )}
         
-        <Text style={getTextStyle()}>
-          {loading ? 'Signing in...' : buttonText}
-        </Text>
+        {loading ? (
+          <AnimatedSigningText style={getTextStyle()} />
+        ) : (
+          <Text style={getTextStyle()}>{buttonText}</Text>
+        )}
       </View>
     </TouchableOpacity>
   );

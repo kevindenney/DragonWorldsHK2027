@@ -1,9 +1,18 @@
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import type { CompositeScreenProps } from '@react-navigation/native';
+import type { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import type { StackScreenProps } from '@react-navigation/stack';
 
+// Define MainTabParamList first since it's used in RootStackParamList
+export type MainTabParamList = {
+  Schedule: { date?: string; eventId?: string } | undefined;
+  NoticeBoard: { eventId: string };
+  Results: undefined;
+  Forms: undefined;
+  More: undefined;
+};
+
 export type RootStackParamList = {
-  MainTabs: undefined;
+  MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   Login: undefined;
   Register: undefined;
   UnifiedAuth: { mode?: 'signin' | 'signup' } | undefined;
@@ -24,14 +33,6 @@ export type RootStackParamList = {
   RaceForms: undefined;
   Services: undefined;
   RacingRules: undefined;
-};
-
-export type MainTabParamList = {
-  Schedule: { date?: string; eventId?: string } | undefined;
-  NoticeBoard: { eventId: string };
-  Results: undefined;
-  Forms: undefined;
-  More: undefined;
 };
 
 export type RootStackScreenProps<Screen extends keyof RootStackParamList> =

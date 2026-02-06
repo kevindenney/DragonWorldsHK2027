@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Animated, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Animated, LayoutAnimation, Platform } from 'react-native';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { IOSText } from '../ios/IOSText';
 import { IOSCard } from '../ios/IOSCard';
@@ -7,10 +7,8 @@ import { ActivityItem } from './ActivityItem';
 import { colors, spacing, shadows } from '../../constants/theme';
 import type { Day } from '../../data/scheduleData';
 
-// Enable LayoutAnimation on Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+// Note: LayoutAnimation works on iOS by default. On Android, it needs UIManager.setLayoutAnimationEnabledExperimental
+// which is only available on native. On web, LayoutAnimation is a no-op.
 
 const DATE_SECTION_WIDTH = 110;
 const CONTENT_INDENT = spacing.md + DATE_SECTION_WIDTH + spacing.sm;
@@ -21,14 +19,14 @@ export interface DayCardProps {
   onToggle?: (dayId: string) => void;
 }
 
-export const DayCard: React.FC<DayCardProps> = ({ 
-  day, 
+export const DayCard: React.FC<DayCardProps> = ({
+  day,
   isExpanded: controlledExpanded,
-  onToggle 
+  onToggle
 }) => {
   const [internalExpanded, setInternalExpanded] = useState(false);
   const isExpanded = controlledExpanded !== undefined ? controlledExpanded : internalExpanded;
-  
+
   const handleToggle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     

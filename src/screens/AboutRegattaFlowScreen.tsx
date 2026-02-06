@@ -24,6 +24,8 @@ import {
   Compass,
   ChevronRight,
   Heart,
+  Apple,
+  Play,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { IOSText } from '../components/ios/IOSText';
@@ -266,6 +268,51 @@ export function AboutRegattaFlowScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* App Store Links */}
+        <View style={styles.section}>
+          <IOSText textStyle="title2" weight="bold" style={styles.sectionTitle}>
+            Get RegattaFlow
+          </IOSText>
+
+          <View style={styles.appStoreLinks}>
+            {Platform.OS === 'ios' && (
+              <TouchableOpacity
+                style={styles.appStoreButton}
+                onPress={() => openUrl('https://apps.apple.com/app/regattaflow/id6740062155', 'Could not open App Store')}
+                activeOpacity={0.8}
+              >
+                <Apple size={22} color="#FFFFFF" strokeWidth={2} />
+                <View style={styles.appStoreTextContainer}>
+                  <IOSText textStyle="caption2" style={styles.appStoreLabel}>
+                    Download on the
+                  </IOSText>
+                  <IOSText textStyle="headline" weight="semibold" style={styles.appStoreName}>
+                    App Store
+                  </IOSText>
+                </View>
+              </TouchableOpacity>
+            )}
+
+            {Platform.OS === 'android' && (
+              <TouchableOpacity
+                style={[styles.appStoreButton, styles.playStoreButton]}
+                onPress={() => openUrl('https://play.google.com/store/apps/details?id=com.regattaflow.app', 'Could not open Play Store')}
+                activeOpacity={0.8}
+              >
+                <Play size={22} color="#FFFFFF" strokeWidth={2} />
+                <View style={styles.appStoreTextContainer}>
+                  <IOSText textStyle="caption2" style={styles.appStoreLabel}>
+                    GET IT ON
+                  </IOSText>
+                  <IOSText textStyle="headline" weight="semibold" style={styles.appStoreName}>
+                    Google Play
+                  </IOSText>
+                </View>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
         {/* Footer */}
         <View style={styles.footer}>
           <View style={styles.madeWithLove}>
@@ -449,6 +496,31 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     marginTop: spacing.md,
     gap: 8,
+  },
+  appStoreLinks: {
+    gap: spacing.md,
+  },
+  appStoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#000000',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    gap: 12,
+  },
+  playStoreButton: {
+    backgroundColor: '#01875f',
+  },
+  appStoreTextContainer: {
+    flex: 1,
+  },
+  appStoreLabel: {
+    color: '#FFFFFF',
+    opacity: 0.8,
+  },
+  appStoreName: {
+    color: '#FFFFFF',
   },
   footer: {
     alignItems: 'center',

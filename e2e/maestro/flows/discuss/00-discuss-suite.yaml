@@ -1,0 +1,47 @@
+# Discuss Screen Test Suite
+# Master flow that runs all discuss screen tests
+#
+# Runs the following sub-flows:
+# 1. Basic Viewing - Navigation to Discuss and content verification
+# 2. Tab Switching - Feed vs Dragon Worlds tab behavior
+# 3. Community Membership - Join/Leave community
+# 4. Create Post - Full post creation flow
+
+appId: com.denneyke.dragonworldshk2027
+name: Discuss - Full Suite
+
+---
+
+# =====================
+# TEST SUITE HEADER
+# =====================
+
+- launchApp
+
+# Verify app is ready
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+# Stop app to prepare for sub-flows
+- stopApp
+
+# =====================
+# RUN SUB-FLOWS
+# =====================
+
+# Flow 1: Basic Viewing
+- runFlow: 01-basic-viewing.yaml
+
+# Flow 2: Tab Switching
+- runFlow: 02-tab-switching.yaml
+
+# Flow 3: Community Membership
+- runFlow: 03-community-membership.yaml
+
+# Flow 4: Create Post
+- runFlow: 04-create-post.yaml
+
+# =====================
+# SUITE COMPLETE
+# =====================

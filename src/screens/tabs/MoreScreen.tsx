@@ -20,7 +20,7 @@ import { useAuth } from '../../auth/useAuth';
 import { ModernWeatherMapScreen } from './ModernWeatherMapScreen';
 import { MapScreen } from '../MapScreen';
 import { DataSourcesScreen } from '../DataSourcesScreen';
-import { AboutRegattaFlowScreen } from '../AboutRegattaFlowScreen';
+import { DiscussScreen } from '../DiscussScreen';
 import { ShippingScreen } from './ShippingScreen';
 import { IOSText } from '../../components/ios/IOSText';
 import { ProfileButton } from '../../components/navigation/ProfileButton';
@@ -71,6 +71,14 @@ const getMoreOptions = (): MoreOption[] => {
     },
     // EVENT section
     {
+      id: 'discuss',
+      title: 'Discuss',
+      iconName: 'chatbubbles-outline',
+      component: DiscussScreen,
+      accessibilityLabel: 'Community discussions and forums',
+      section: 'Event',
+    },
+    {
       id: 'news',
       title: 'News',
       iconName: 'newspaper-outline',
@@ -109,14 +117,6 @@ const getMoreOptions = (): MoreOption[] => {
       iconName: 'server-outline',
       component: DataSourcesScreen,
       accessibilityLabel: 'Information about live data sources',
-      section: 'App',
-    },
-    {
-      id: 'about-regattaflow',
-      title: 'About RegattaFlow',
-      iconName: 'information-circle-outline',
-      component: AboutRegattaFlowScreen,
-      accessibilityLabel: 'Information about RegattaFlow',
       section: 'App',
     },
   ];
@@ -271,7 +271,7 @@ export function MoreScreen() {
 
       // Full-bleed screens - pass onBack prop directly to component
       // These screens render edge-to-edge and handle their own back button positioning
-      if (option.id === 'map' || option.id === 'weather' || option.id === 'entrants') {
+      if (option.id === 'map' || option.id === 'weather' || option.id === 'entrants' || option.id === 'news' || option.id === 'discuss') {
         return (
           <View style={styles.container}>
             <Component onBack={handleBackPress} />

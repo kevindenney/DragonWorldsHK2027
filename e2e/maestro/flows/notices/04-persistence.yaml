@@ -1,0 +1,126 @@
+appId: com.denneyke.dragonworldshk2027
+name: Notices - Persistence
+
+# NOTE: This test validates that the notices seen state persists to AsyncStorage.
+# Full persistence testing (stopApp/launchApp) has limitations with Expo dev client.
+# This test verifies the first session behavior and marks notices as seen.
+
+---
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible: "Join the Fleet"
+    timeout: 5000
+
+- tapOn:
+    id: "register-displayname"
+- inputText: "Persist Test"
+
+- tapOn:
+    id: "register-email"
+- inputText: "persist${Date.now()}@maestro.test"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-confirm-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-confirm-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-submit"
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 60000
+
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Got it"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Done"
+    optional: true
+- waitForAnimationToEnd
+
+# Navigate to Notices tab
+- tapOn:
+    id: "tab-noticeboard"
+
+- extendedWaitUntil:
+    visible: "Notices"
+    timeout: 5000
+
+- assertVisible: "Notices"
+
+# Scroll through notices to ensure all are rendered and marked as seen
+- swipe:
+    direction: UP
+    duration: 300
+
+- swipe:
+    direction: DOWN
+    duration: 300
+
+# Verify current event
+- assertVisible: "APAC 2026"
+
+# Navigate away and back to verify badge behavior
+- tapOn:
+    id: "tab-results"
+
+- extendedWaitUntil:
+    visible: "Results"
+    timeout: 5000
+
+- tapOn:
+    id: "tab-noticeboard"
+
+- extendedWaitUntil:
+    visible: "Notices"
+    timeout: 5000
+
+# Badge should not be visible (all notices seen in this session)
+- assertNotVisible:
+    id: "badge-noticeboard"
+    optional: true
+
+# Verify screen is functional
+- assertVisible: "Notices"
+- assertVisible: "APAC 2026"
+
+# Test complete - notices are marked as seen and badge is clear

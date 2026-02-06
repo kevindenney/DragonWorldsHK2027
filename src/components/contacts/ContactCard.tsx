@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingBottom: 16,
@@ -365,14 +365,15 @@ const styles = StyleSheet.create({
     borderTopWidth: 0.5,
     borderTopColor: '#C6C6C8',
     gap: 12,
+    flexWrap: 'wrap',
   },
   compactActions: {
     flexDirection: 'row',
     gap: 8,
   },
   actionButton: {
-    flex: 1,
-    minWidth: 80,
+    minWidth: 100,
+    maxWidth: 140,
   },
   compactActionButton: {
     padding: 8,

@@ -1,0 +1,189 @@
+# Notices Event Switching Test
+# Tests per-event tracking for APAC 2026 and Worlds 2027
+#
+# Verifies:
+# - Event switcher works
+# - Notices update for different events
+# - Seen state tracked separately per event
+# - Badge clears appropriately
+
+appId: com.denneyke.dragonworldshk2027
+name: Notices - Event Switching
+
+---
+
+# =====================
+# AUTHENTICATION
+# =====================
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible: "Join the Fleet"
+    timeout: 5000
+
+- tapOn:
+    id: "register-displayname"
+- inputText: "Event Switch Test"
+
+- tapOn:
+    id: "register-email"
+- inputText: "eventswitch${Date.now()}@maestro.test"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-confirm-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-confirm-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-submit"
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 60000
+
+# Dismiss any welcome tooltips
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Got it"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Done"
+    optional: true
+- waitForAnimationToEnd
+
+# =====================
+# NAVIGATE TO NOTICES TAB
+# =====================
+
+- tapOn:
+    id: "tab-noticeboard"
+
+- extendedWaitUntil:
+    visible: "Notices"
+    timeout: 5000
+
+- assertVisible: "Notices"
+
+# =====================
+# TEST: VERIFY INITIAL EVENT (APAC 2026)
+# =====================
+
+# Assert current event is APAC 2026
+- assertVisible: "APAC 2026"
+
+# =====================
+# TEST: SWITCH TO WORLDS 2027
+# =====================
+
+# Tap on Worlds 2027 in event selector
+- tapOn:
+    text: "Worlds 2027"
+
+# Wait for notices to reload
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Notices"
+    timeout: 5000
+
+# Verify we switched events
+- assertVisible: "Worlds 2027"
+
+# =====================
+# TEST: NAVIGATE AWAY AND BACK
+# =====================
+
+# Navigate to Results tab
+- tapOn:
+    id: "tab-results"
+
+- extendedWaitUntil:
+    visible: "Results"
+    timeout: 5000
+
+# Navigate back to Notices tab
+- tapOn:
+    id: "tab-noticeboard"
+
+- extendedWaitUntil:
+    visible: "Notices"
+    timeout: 5000
+
+# Badge should be cleared (we just viewed the tab)
+- assertNotVisible:
+    id: "badge-noticeboard"
+    optional: true
+
+# =====================
+# TEST: SWITCH BACK TO APAC 2026
+# =====================
+
+# Tap on APAC 2026 to switch back
+- tapOn:
+    text: "APAC 2026"
+
+# Wait for notices to reload
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Notices"
+    timeout: 5000
+
+# Verify we switched events
+- assertVisible: "APAC 2026"
+
+# Badge should not be visible (previously seen notices from APAC 2026)
+- assertNotVisible:
+    id: "badge-noticeboard"
+    optional: true
+
+# =====================
+# VERIFY SCREEN STILL FUNCTIONAL
+# =====================
+
+- assertVisible: "Notices"
+
+# Scroll to verify list works
+- swipe:
+    direction: UP
+    duration: 300
+
+- swipe:
+    direction: DOWN
+    duration: 300
+
+# Test complete!

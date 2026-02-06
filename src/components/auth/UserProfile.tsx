@@ -43,7 +43,7 @@ import {
 } from 'lucide-react-native';
 import { colors, typography, spacing, borderRadius, shadows } from '../../constants/theme';
 import { useAuth } from '../../auth/useAuth';
-import { User as UserType, UserProfile as UserProfileType, LinkedProvider } from '../../types/auth';
+import { User as UserType, LinkedProvider } from '../../auth/authTypes';
 import { AuthButton } from './AuthButton';
 import { imageUploadService, UploadProgress } from '../../services/imageUploadService';
 
@@ -193,11 +193,15 @@ export function UserProfile({
       setNotificationsEnabled(value);
 
       // Update user preferences
+      const currentNotifications = typeof user?.preferences?.notifications === 'object' && user?.preferences?.notifications !== null
+        ? user.preferences.notifications
+        : { email: false, push: false, sms: false };
+
       await updateProfile({
         preferences: {
           ...user?.preferences,
           notifications: {
-            ...user?.preferences?.notifications,
+            ...currentNotifications,
             push: value,
           },
         },

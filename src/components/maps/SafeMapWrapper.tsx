@@ -1,21 +1,25 @@
-import React, { Component, Suspense, lazy } from 'react';
+import React, { Component, Suspense, lazy, ComponentType } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { AlertTriangle, RefreshCw } from 'lucide-react-native';
+
+// Props types for lazy components
+type MapComponentProps = { navigation?: any; route?: any };
+type WeatherMapComponentProps = { onBack?: () => void };
 
 // Dynamically import map components to isolate them from main bundle
 const LazyMapScreen = lazy(() =>
   import('../../screens/MapScreenSafe').then(module => ({
-    default: module.MapScreen
-  })).catch(error => {
-    return { default: MapFallback };
+    default: module.MapScreen as ComponentType<MapComponentProps>
+  })).catch(() => {
+    return { default: MapFallback as ComponentType<MapComponentProps> };
   })
 );
 
 const LazyModernWeatherMapScreen = lazy(() =>
   import('../../screens/tabs/ModernWeatherMapScreen').then(module => ({
-    default: module.ModernWeatherMapScreen
-  })).catch(error => {
-    return { default: WeatherMapFallback };
+    default: module.ModernWeatherMapScreen as ComponentType<WeatherMapComponentProps>
+  })).catch(() => {
+    return { default: WeatherMapFallback as ComponentType<WeatherMapComponentProps> };
   })
 );
 
@@ -84,9 +88,9 @@ class SafeMapWrapper extends Component<SafeMapWrapperProps, SafeMapWrapperState>
     return (
       <Suspense fallback={<MapLoadingFallback />}>
         {this.props.mapType === 'navigation' ? (
-          <LazyMapScreen navigation={this.props.navigation} />
+          <LazyMapScreen navigation={this.props.navigation} route={undefined} />
         ) : (
-          <LazyModernWeatherMapScreen navigation={this.props.navigation} />
+          <LazyModernWeatherMapScreen onBack={undefined} />
         )}
       </Suspense>
     );

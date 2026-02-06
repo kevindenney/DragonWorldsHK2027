@@ -7,7 +7,7 @@ import {unifiedTideService} from './unifiedTideService';
 // Configuration
 export const WEATHER_CONFIG = {
   useOpenWeatherMap: true, // Use OpenWeatherMap as primary source
-  useOpenMeteo: false, // DISABLED - Open-Meteo shows unrealistic wind speeds
+  useOpenMeteo: true, // Fallback enabled - Open-Meteo used when OWM API key is unavailable
   showConfidence: false,  // No confidence needed with single source
   openWeatherMapApiKey: process.env.EXPO_PUBLIC_OPENWEATHER_API_KEY || '' // Set in .env file
 };

@@ -6,7 +6,7 @@
 import { ref, uploadBytesResumable, getDownloadURL, StorageReference } from 'firebase/storage';
 import { storage } from '../config/firebase';
 import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
+// Note: expo-image-manipulator requires a native build - lazy import to avoid crash
 
 export interface UploadProgress {
   bytesTransferred: number;
@@ -201,11 +201,13 @@ export class ImageUploadService {
 
   /**
    * Compress image if it's too large (for future enhancement)
+   * Note: Requires expo-image-manipulator native module - will fail gracefully if not available
    */
   async compressImage(imageUri: string, maxWidth: number = 800, quality: number = 0.8): Promise<string> {
     try {
+      // Dynamic import to avoid crash if native module not available
+      const ImageManipulator = await import('expo-image-manipulator');
 
-      // Use ImageManipulator for image manipulation
       const manipulatedImage = await ImageManipulator.manipulateAsync(
         imageUri,
         [{ resize: { width: maxWidth } }],
@@ -218,6 +220,8 @@ export class ImageUploadService {
       return manipulatedImage.uri;
 
     } catch (error) {
+      // Return original image if compression fails (native module not available)
+      console.warn('Image compression not available, using original image');
       return imageUri;
     }
   }

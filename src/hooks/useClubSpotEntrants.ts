@@ -34,6 +34,8 @@ interface UseClubSpotEntrantsOptions {
   staleTime?: number;
   /** Force demo mode */
   forceDemoMode?: boolean;
+  /** Polling interval in milliseconds (default: 30000 = 30 seconds, set to 0 to disable) */
+  pollingInterval?: number;
 }
 
 interface UseClubSpotEntrantsResult {
@@ -57,6 +59,10 @@ interface UseClubSpotEntrantsResult {
   lastUpdated: Date | null;
   /** Human-readable time since last update */
   lastUpdatedText: string;
+  /** Whether polling is enabled */
+  isPolling: boolean;
+  /** Current polling interval in ms (0 if disabled) */
+  pollingInterval: number;
 }
 
 /**
@@ -75,6 +81,7 @@ export function useClubSpotEntrants(
     enabled = true,
     staleTime = 24 * 60 * 60 * 1000, // 24 hours - entry lists don't change often
     forceDemoMode = false,
+    pollingInterval = 30000, // 30 seconds default polling
   } = options;
 
   const queryClient = useQueryClient();
@@ -111,6 +118,10 @@ export function useClubSpotEntrants(
     placeholderData: bundledEntrants.length > 0 ? bundledEntrants : undefined,
     // Don't show loading state if we have placeholder data
     notifyOnChangeProps: ['data', 'error', 'isFetching'],
+    // Enable automatic polling for fresh data
+    refetchInterval: pollingInterval > 0 ? pollingInterval : false,
+    // Continue polling even when window is not focused
+    refetchIntervalInBackground: false,
   });
 
   // Get data source info - account for placeholder data
@@ -174,6 +185,8 @@ export function useClubSpotEntrants(
     isLiveData: dataSourceInfo?.isLive ?? false,
     lastUpdated: dataSourceInfo?.lastFetched ?? null,
     lastUpdatedText,
+    isPolling: pollingInterval > 0,
+    pollingInterval,
   };
 }
 

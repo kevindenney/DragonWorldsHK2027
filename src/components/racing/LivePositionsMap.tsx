@@ -68,7 +68,7 @@ export const LivePositionsMap: React.FC<LivePositionsMapProps> = ({
   mapType = 'standard',
   followLeader = false,
 }) => {
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<React.ElementRef<typeof MapView>>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [settings, setSettings] = useState<MapSettings>({
     showCourse: true,
@@ -273,10 +273,11 @@ export const LivePositionsMap: React.FC<LivePositionsMapProps> = ({
     if (!settings.showWindIndicator || !windDirection) return null;
 
     // Place wind indicator in top-right of map
-    const centerLat = positions.length > 0 ? 
-      positions.reduce((sum, p) => sum + p.latitude, 0) / positions.length : 0;
-    const centerLng = positions.length > 0 ? 
-      positions.reduce((sum, p) => sum + p.longitude, 0) / positions.length : 0;
+    const validPositions = positions.filter(p => p.latitude !== undefined && p.longitude !== undefined);
+    const centerLat = validPositions.length > 0 ?
+      validPositions.reduce((sum, p) => sum + (p.latitude ?? 0), 0) / validPositions.length : 0;
+    const centerLng = validPositions.length > 0 ?
+      validPositions.reduce((sum, p) => sum + (p.longitude ?? 0), 0) / validPositions.length : 0;
 
     return (
       <Marker

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Mail, Lock, User } from 'lucide-react-native';
+import { ArrowLeft, Mail, Lock, User, Info } from 'lucide-react-native';
 import Animated from '../../utils/reanimatedWrapper';
 import { IOSCard, IOSText, IOSButton, IOSSection } from '../../components/ios';
 import { SocialLoginButton } from '../../components/auth/SocialLoginButton';
@@ -311,6 +311,21 @@ export const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({ on
             </View>
           </IOSSection>
 
+          {/* Community Info Notice */}
+          <View style={styles.infoSection}>
+            <View style={styles.infoCard}>
+              <Info size={20} color={colors.info} />
+              <View style={styles.infoContent}>
+                <IOSText style={styles.infoTitle} textStyle="footnote" weight="semibold">
+                  Community Features
+                </IOSText>
+                <IOSText style={styles.infoText} textStyle="caption1" color="secondaryLabel">
+                  Using Discuss creates a linked RegattaFlow account for community features.
+                </IOSText>
+              </View>
+            </View>
+          </View>
+
           {/* Terms */}
           <View style={styles.termsContainer}>
             <IOSText style={styles.termsText}>
@@ -430,6 +445,30 @@ const styles = StyleSheet.create({
   },
   createButton: {
     marginTop: 4,
+  },
+  infoSection: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  infoCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    backgroundColor: colors.surface,
+    padding: 12,
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.info,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoTitle: {
+    color: colors.text,
+    marginBottom: 2,
+  },
+  infoText: {
+    lineHeight: 16,
   },
   termsContainer: {
     paddingHorizontal: 20,

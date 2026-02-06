@@ -23,11 +23,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     setShowEditModal(true);
   };
 
-  const handleChangePassword = () => {
-    // Navigate to change password screen (to be implemented)
-    navigation.navigate('ForgotPassword');
-  };
-
   const handleDeleteAccount = async () => {
     Alert.alert(
       'Delete Account',
@@ -72,11 +67,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         
         <AppleStyleProfile
           onEditProfile={handleEditProfile}
-          onChangePassword={handleChangePassword}
           onDeleteAccount={handleDeleteAccount}
-          onNavigateToSettings={() => {
-            Alert.alert('Settings', 'Advanced settings will be available in a future update.');
-          }}
           testID="profile-screen"
         />
 

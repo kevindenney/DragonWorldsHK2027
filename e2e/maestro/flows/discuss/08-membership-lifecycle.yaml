@@ -1,0 +1,294 @@
+# Discuss Membership Lifecycle Test
+# Tests the full join/leave community cycle
+#
+# Verifies:
+# - User starts as member (auto-joined via auth bridge)
+# - Leave community changes button to "Join Community"
+# - Create post button disappears/disabled when not a member
+# - Rejoin restores member status
+# - Create post becomes available again after rejoining
+#
+# NOTE: This test modifies membership state but restores it at the end.
+
+appId: com.denneyke.dragonworldshk2027
+name: Discuss - Membership Lifecycle
+
+---
+
+# =====================
+# AUTHENTICATION
+# =====================
+
+- launchApp:
+    clearState: true
+
+# Wait longer for app to bundle and load after fresh start
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 60000
+
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible: "Join the Fleet"
+    timeout: 5000
+
+- tapOn:
+    id: "register-displayname"
+- inputText: "Membership Test"
+
+- tapOn:
+    id: "register-email"
+- inputText: "membership${Date.now()}@maestro.test"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-confirm-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-confirm-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-submit"
+
+# Wait for account creation
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 60000
+
+# Dismiss tooltips
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Got it"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Done"
+    optional: true
+- waitForAnimationToEnd
+
+# =====================
+# NAVIGATE TO DISCUSS
+# =====================
+
+# Ensure tab bar is ready
+- waitForAnimationToEnd
+- swipe:
+    direction: UP
+    duration: 100
+- swipe:
+    direction: DOWN
+    duration: 100
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-more"
+
+- extendedWaitUntil:
+    visible: "More"
+    timeout: 5000
+
+- tapOn:
+    id: "more-menu-discuss"
+
+- extendedWaitUntil:
+    visible: "Dragon Worlds"
+    timeout: 10000
+
+# =====================
+# NAVIGATE TO DRAGON WORLDS
+# =====================
+
+- tapOn: "Dragon Worlds"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "2027 HK Dragon Worlds"
+    timeout: 10000
+    optional: true
+
+# =====================
+# TEST 1: VERIFY INITIAL MEMBER STATUS
+# =====================
+
+# User should be auto-joined via the auth bridge
+# If not, join now
+- tapOn:
+    id: "community-join-button"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Refresh to ensure membership state is loaded
+- swipe:
+    direction: DOWN
+    duration: 300
+- waitForAnimationToEnd
+
+# Take screenshot of initial state
+- takeScreenshot: "initial_member_state"
+
+# Verify "Joined" status is shown
+- assertVisible:
+    text: "Joined"
+
+# Verify new post button is available (members can post)
+- assertVisible:
+    id: "discuss-new-post-button"
+
+# =====================
+# TEST 2: LEAVE COMMUNITY
+# =====================
+
+# Tap on the Joined button to leave
+# The button should toggle to leave when tapped
+- tapOn:
+    text: "Joined"
+
+- waitForAnimationToEnd
+
+# Brief pause for API call
+- swipe:
+    direction: DOWN
+    duration: 100
+- swipe:
+    direction: UP
+    duration: 100
+
+- waitForAnimationToEnd
+
+# Take screenshot after leaving
+- takeScreenshot: "after_leave"
+
+# Button should now show "Join Community" or similar
+- assertVisible:
+    text: "Join"
+
+# =====================
+# TEST 3: VERIFY NON-MEMBER STATE
+# =====================
+
+# Refresh to ensure state is updated
+- swipe:
+    direction: DOWN
+    duration: 300
+- waitForAnimationToEnd
+
+# Take screenshot of non-member state
+- takeScreenshot: "non_member_state"
+
+# New post button should either:
+# - Be hidden/gone (not visible)
+# - Show a "Join to post" message
+# Check that we can't just post freely
+- assertNotVisible:
+    id: "discuss-new-post-button"
+    optional: true
+
+# =====================
+# TEST 4: REJOIN COMMUNITY
+# =====================
+
+# Find and tap the join button
+- tapOn:
+    id: "community-join-button"
+    optional: true
+
+# If the button text is "Join Community", tap it
+- tapOn:
+    text: "Join Community"
+    optional: true
+
+# If just "Join", tap it
+- tapOn:
+    text: "Join"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Brief pause for API call
+- swipe:
+    direction: DOWN
+    duration: 100
+- swipe:
+    direction: UP
+    duration: 100
+
+- waitForAnimationToEnd
+
+# Take screenshot after rejoining
+- takeScreenshot: "after_rejoin"
+
+# Verify member status is restored
+- assertVisible:
+    text: "Joined"
+
+# =====================
+# TEST 5: VERIFY CREATE POST RESTORED
+# =====================
+
+# Refresh feed
+- swipe:
+    direction: DOWN
+    duration: 300
+- waitForAnimationToEnd
+
+# New post button should be visible again
+- assertVisible:
+    id: "discuss-new-post-button"
+
+# Verify we can open the create post modal
+- tapOn:
+    id: "discuss-new-post-button"
+
+- extendedWaitUntil:
+    visible: "New Post"
+    timeout: 5000
+
+# Take screenshot showing modal opens for rejoined member
+- takeScreenshot: "create_post_available"
+
+# Close modal without posting
+- tapOn:
+    id: "create-post-close-button"
+
+- waitForAnimationToEnd
+
+# =====================
+# VERIFICATION COMPLETE
+# =====================
+
+# Final screenshot
+- takeScreenshot: "membership_lifecycle_complete"
+
+# Verify we're back on the Discuss screen as a member
+- assertVisible: "Dragon Worlds"
+- assertVisible:
+    text: "Joined"
+
+# Test complete - membership lifecycle verified

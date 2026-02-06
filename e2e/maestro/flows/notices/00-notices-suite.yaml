@@ -1,0 +1,47 @@
+# Notices Notification System Test Suite
+# Master flow that runs all notice notification tests
+#
+# Runs the following sub-flows:
+# 1. Basic Viewing - Initial state and badge behavior
+# 2. Pull to Refresh - Toast notifications on refresh
+# 3. Event Switching - Per-event tracking (APAC vs Worlds)
+# 4. Persistence - AsyncStorage persistence across restarts
+
+appId: com.denneyke.dragonworldshk2027
+name: Notices - Full Suite
+
+---
+
+# =====================
+# TEST SUITE HEADER
+# =====================
+
+- launchApp
+
+# Verify app is ready
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 15000
+
+# Stop app to prepare for sub-flows
+- stopApp
+
+# =====================
+# RUN SUB-FLOWS
+# =====================
+
+# Flow 1: Basic Viewing
+- runFlow: 01-basic-viewing.yaml
+
+# Flow 2: Pull to Refresh
+- runFlow: 02-pull-to-refresh.yaml
+
+# Flow 3: Event Switching
+- runFlow: 03-event-switching.yaml
+
+# Flow 4: Persistence
+- runFlow: 04-persistence.yaml
+
+# =====================
+# SUITE COMPLETE
+# =====================

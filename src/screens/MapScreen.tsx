@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput, ScrollView, Modal } from 'react-native';
+import { View, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput, ScrollView, Modal, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Filter, Crosshair, Search, X } from 'lucide-react-native';
+
+// Import WebView map for Android fallback
+import { MapScreen as WebViewMapScreen } from './MapScreenSafe';
 
 import { SailingLocationMarker } from '../components/maps/SailingLocationMarker';
 import { LocationDetailModal } from '../components/maps/LocationDetailModal';
@@ -32,7 +35,13 @@ interface MapScreenLocalProps {
   onBack?: () => void;
 }
 
-export const MapScreen: React.FC<Partial<MapScreenProps> & MapScreenLocalProps> = ({ navigation: navProp, route, onBack }) => {
+export const MapScreen: React.FC<Partial<MapScreenProps> & MapScreenLocalProps> = (props) => {
+  // Use WebView-based map on Android to avoid Google Play Services API key issues
+  if (Platform.OS === 'android') {
+    return <WebViewMapScreen {...props as any} />;
+  }
+
+  const { navigation: navProp, route, onBack } = props;
   const navigation = useNavigation<any>();
   const mapRef = useRef<MapView>(null);
   const insets = useSafeAreaInsets();
@@ -182,7 +191,7 @@ export const MapScreen: React.FC<Partial<MapScreenProps> & MapScreenLocalProps> 
       <View style={styles.mapContainer}>
         <MapView
           ref={mapRef}
-          provider={PROVIDER_DEFAULT}
+          provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_DEFAULT}
           style={styles.map}
           initialRegion={initialRegion}
           mapType="standard"

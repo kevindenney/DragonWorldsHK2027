@@ -18,6 +18,7 @@ import {
 } from 'lucide-react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useNewsStore } from '../../stores/newsStore';
+import { useNoticesStore } from '../../stores/noticesStore';
 // Tab bar stays always visible per Apple HIG - no visibility context needed
 
 interface TabConfig {
@@ -80,13 +81,13 @@ const DIMENSIONS = {
 };
 
 // Badge component for unread indicators
-function TabBadge({ count }: { count: number }) {
+function TabBadge({ count, testID }: { count: number; testID?: string }) {
   if (count <= 0) return null;
 
   const displayText = count > 99 ? '99+' : String(count);
 
   return (
-    <View style={styles.badgeContainer}>
+    <View testID={testID} style={styles.badgeContainer}>
       <Text style={styles.badgeText}>{displayText}</Text>
     </View>
   );
@@ -95,6 +96,7 @@ function TabBadge({ count }: { count: number }) {
 export function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const unreadCount = useNewsStore((state) => state.unreadCount);
+  const noticesUnreadCount = useNoticesStore((state) => state.unreadCount);
 
   const handleTabPress = async (
     routeName: string,
@@ -172,7 +174,9 @@ export function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarP
                       strokeWidth={isFocused ? 2.5 : 2}
                     />
                     {/* Show badge on More tab when there are unread news */}
-                    {route.name === 'More' && <TabBadge count={unreadCount} />}
+                    {route.name === 'More' && <TabBadge count={unreadCount} testID="badge-more" />}
+                    {/* Show badge on NoticeBoard tab when there are unread notices */}
+                    {route.name === 'NoticeBoard' && <TabBadge count={noticesUnreadCount} testID="badge-noticeboard" />}
                   </View>
                   <Text
                     style={[

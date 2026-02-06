@@ -1,0 +1,111 @@
+appId: com.denneyke.dragonworldshk2027
+name: Notices - Pull to Refresh
+
+---
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 10000
+
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible: "Join the Fleet"
+    timeout: 5000
+
+- tapOn:
+    id: "register-displayname"
+- inputText: "Refresh Test"
+
+- tapOn:
+    id: "register-email"
+- inputText: "refresh${Date.now()}@maestro.test"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-confirm-password-password-toggle"
+- waitForAnimationToEnd
+- tapOn:
+    id: "register-confirm-password"
+- eraseText: 100
+- inputText: "TestPass123!"
+
+- hideKeyboard
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "register-submit"
+
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 60000
+
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Got it"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Done"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "tab-noticeboard"
+
+- extendedWaitUntil:
+    visible: "Notices"
+    timeout: 5000
+
+- assertVisible: "Notices"
+
+- swipe:
+    direction: UP
+    duration: 300
+
+- swipe:
+    direction: DOWN
+    duration: 500
+
+- extendedWaitUntil:
+    visible:
+      id: "toast-container"
+    timeout: 5000
+    optional: true
+
+- assertVisible:
+    id: "toast-message"
+    optional: true
+
+- assertVisible: "Notices"
+
+- swipe:
+    direction: UP
+    duration: 300
+
+- swipe:
+    direction: DOWN
+    duration: 300

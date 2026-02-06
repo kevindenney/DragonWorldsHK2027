@@ -880,6 +880,7 @@ export class GamificationService {
       nextLevelXP: 100,
       totalAchievements: 0,
       rareAchievements: 0,
+      achievementScore: 0,
       currentStreak: 0,
       longestStreak: 0,
       badges: [],

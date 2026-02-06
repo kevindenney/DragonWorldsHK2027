@@ -96,7 +96,7 @@ export function Toast() {
   const toastContent = (
     <View style={[styles.contentContainer, { backgroundColor: config.bgColor }]}>
       <IconComponent size={20} color={config.color} strokeWidth={2} />
-      <Text style={styles.message} numberOfLines={2}>
+      <Text testID="toast-message" style={styles.message} numberOfLines={2}>
         {message}
       </Text>
       <TouchableOpacity
@@ -111,6 +111,7 @@ export function Toast() {
 
   return (
     <Animated.View
+      testID="toast-container"
       style={[
         styles.container,
         {
@@ -147,14 +148,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.08)',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-      },
-    }),
+    // Note: Shadows removed from BlurView as iOS cannot efficiently calculate
+    // shadows on transparent views. The blur effect provides sufficient visual depth.
   },
   androidContainer: {
     borderRadius: 16,

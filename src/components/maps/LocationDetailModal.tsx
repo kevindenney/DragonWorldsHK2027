@@ -91,14 +91,24 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
   const handleGetDirections = () => {
     const { latitude, longitude } = location.coordinates;
     const encodedName = encodeURIComponent(location.name);
-    const url = `https://maps.google.com/maps?q=${encodedName}&ll=${latitude},${longitude}`;
-    
+
+    // Use platform-specific URL scheme for accurate navigation to coordinates
+    const url = Platform.select({
+      ios: `maps://app?daddr=${latitude},${longitude}`,
+      android: `geo:${latitude},${longitude}?q=${latitude},${longitude}(${encodedName})`,
+      default: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`,
+    });
+
     Linking.canOpenURL(url).then(supported => {
       if (supported) {
         Linking.openURL(url);
       } else {
-        Alert.alert('Error', 'Cannot open Google Maps');
+        // Fallback to Google Maps web URL
+        const fallbackUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+        Linking.openURL(fallbackUrl);
       }
+    }).catch(() => {
+      Alert.alert('Error', 'Cannot open maps');
     });
   };
 

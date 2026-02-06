@@ -3,7 +3,6 @@ import { View, StyleSheet, Dimensions, Alert, Linking, Platform, Share } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import {
-  Download,
   Share as ShareIcon,
   ChevronLeft,
   FileText,
@@ -39,22 +38,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const { document } = route.params;
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [isDownloading, setIsDownloading] = useState(false);
-
-  const handleDownload = async () => {
-    try {
-      await haptics.buttonPress();
-      setIsDownloading(true);
-
-      // Open document in external browser/app for download
-      await Linking.openURL(document.url);
-    } catch (err) {
-      Alert.alert('Error', 'Failed to open document. Please try again.');
-    } finally {
-      setIsDownloading(false);
-    }
-  };
 
   const handleShare = async () => {
     try {
@@ -119,15 +102,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       
       <View style={styles.documentActions}>
         <IOSButton
-          title="Download"
-          variant="tinted"
-          size="small"
-          onPress={handleDownload}
-          icon={<Download size={16} color={colors.primary} />}
-          style={styles.actionButton}
-        />
-        
-        <IOSButton
           title="Share"
           variant="tinted"
           size="small"
@@ -135,13 +109,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           icon={<ShareIcon size={16} color={colors.primary} />}
           style={styles.actionButton}
         />
-        
+
         <IOSButton
-          title="External"
-          variant="plain"
+          title="Open"
+          variant="tinted"
           size="small"
           onPress={handleOpenExternal}
-          icon={<ExternalLink size={16} color={colors.textSecondary} />}
+          icon={<ExternalLink size={16} color={colors.primary} />}
           style={styles.actionButton}
         />
       </View>
@@ -149,45 +123,16 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   );
 
   const renderWebView = () => {
-    if (document.fileType === 'pdf') {
-      // For PDF files, we'll show a message since WebView PDF support is limited
-      return (
-        <IOSCard variant="elevated" style={styles.pdfNotice}>
-          <FileText size={48} color={colors.textSecondary} />
-          <IOSText textStyle="title3" weight="semibold" style={styles.pdfTitle}>
-            PDF Document
-          </IOSText>
-          <IOSText textStyle="callout" color="secondaryLabel" style={styles.pdfMessage}>
-            This PDF document can be downloaded or opened in an external app for best viewing experience.
-          </IOSText>
-          
-          <View style={styles.pdfActions}>
-            <IOSButton
-              title={isDownloading ? "Downloading..." : "Download PDF"}
-              variant="filled"
-              size="medium"
-              onPress={handleDownload}
-              disabled={isDownloading}
-              icon={<Download size={20} color={colors.surface} />}
-            />
+    // For PDFs on iOS, WebView renders them natively
+    // For Android, use Google Docs viewer as fallback
+    const pdfUrl = document.fileType === 'pdf' && Platform.OS === 'android'
+      ? `https://docs.google.com/viewer?url=${encodeURIComponent(document.url)}&embedded=true`
+      : document.url;
 
-            <IOSButton
-              title="Open External"
-              variant="tinted"
-              size="medium"
-              onPress={handleOpenExternal}
-              icon={<ExternalLink size={20} color={colors.primary} />}
-            />
-          </View>
-        </IOSCard>
-      );
-    }
-
-    // For HTML and other web content
     return (
       <View style={styles.webViewContainer}>
         <WebView
-          source={{ uri: document.url }}
+          source={{ uri: pdfUrl }}
           style={styles.webView}
           onLoadStart={() => setIsLoading(true)}
           onLoadEnd={() => setIsLoading(false)}
@@ -225,12 +170,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           icon: <ChevronLeft size={20} color={colors.primary} />,
           onPress: () => navigation.goBack()
         }}
-        rightActions={[
-          {
-            icon: <ShareIcon size={20} color={colors.primary} />,
-            onPress: handleShare
-          }
-        ]}
       />
 
       <View style={styles.content}>
@@ -269,14 +208,16 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: spacing.md,
-    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+    gap: spacing.sm,
   },
 
   // Document Info
   documentInfo: {
-    padding: spacing.md,
-    gap: spacing.md,
+    padding: spacing.sm,
+    gap: spacing.sm,
   },
   documentHeader: {
     flexDirection: 'row',
@@ -288,15 +229,19 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   description: {
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
   },
   documentActions: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
   },
   actionButton: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: '30%',
+    minWidth: 90,
+    maxWidth: '48%',
   },
 
   // WebView
@@ -328,27 +273,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.background + 'CC',
-  },
-
-  // PDF Notice
-  pdfNotice: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-    gap: spacing.lg,
-  },
-  pdfTitle: {
-    textAlign: 'center',
-  },
-  pdfMessage: {
-    textAlign: 'center',
-    maxWidth: 280,
-  },
-  pdfActions: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginTop: spacing.lg,
   },
 
   // Error

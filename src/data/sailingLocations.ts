@@ -122,20 +122,20 @@ export const sailingLocations: SailingLocation[] = [
       website: 'www.rhkyc.org.hk'
     },
     
-    racerInfo: 'All competitors must complete registration and boat measurement here. Mandatory Skippers Briefing at 10:00-11:00 (APAC: Nov 18, Worlds: Nov 22). Secure boat storage available. Professional marine services on-site.',
-    spectatorInfo: 'Clubhouse terrace offers excellent views of racing action. Restaurant open to guests. Historic club with maritime artifacts and racing memorabilia.',
+    racerInfo: 'All competitors must complete registration and boat measurement here. Mandatory Skippers Briefing at 10:00-11:00 (APAC: Nov 18, Worlds: Nov 22).',
+    spectatorInfo: 'Clubhouse terrace with excellent views of Victoria Harbour. Racing happens at Clearwater Bay Marina. Restaurant open to guests. Historic club with maritime artifacts and racing memorabilia.',
     
     championshipEvents: [
       {
         date: '2026-11-17',
         time: '10:00-18:00',
-        event: 'APAC Registration & Measurement Day 1',
+        event: 'APAC Reg. & Measurement Day 1',
         description: 'Asia Pacific Championship registration and measurement begins'
       },
       {
         date: '2026-11-18',
         time: '10:00-18:00',
-        event: 'APAC Registration & Measurement Day 2',
+        event: 'APAC Reg. & Measurement Day 2',
         description: 'Continuing registration and measurement'
       },
       {
@@ -153,13 +153,13 @@ export const sailingLocations: SailingLocation[] = [
       {
         date: '2026-11-21',
         time: '10:00-18:00',
-        event: 'Worlds Registration & Measurement Day 1',
+        event: 'Worlds Reg. & Measurement Day 1',
         description: 'World Championship official registration and measurement begins'
       },
       {
         date: '2026-11-22',
         time: '10:00-18:00',
-        event: 'Worlds Registration & Measurement Day 2',
+        event: 'Worlds Reg. & Measurement Day 2',
         description: 'Final measurement and registration day'
       },
       {

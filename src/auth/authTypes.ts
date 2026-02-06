@@ -16,9 +16,11 @@ export type UserRoleType = 'user' | 'admin' | 'superadmin' | 'participant' | 'of
 
 export interface LinkedProvider {
   providerId: string;
+  provider: string;
   displayName?: string;
   email?: string;
   photoURL?: string;
+  isPrimary?: boolean;
 }
 
 export interface UserProfile {

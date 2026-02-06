@@ -151,32 +151,36 @@ export function WeatherScreen({ navigation }: WeatherScreenProps) {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Weather Header */}
       <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <Calendar size={20} color="#10B981" />
-          <IOSText textStyle="title3" weight="semibold" style={styles.dateTitle}>
-            {getCurrentDateHeader()}
-          </IOSText>
+        <View style={styles.headerRow}>
+          <View style={styles.headerContent}>
+            <Calendar size={20} color="#10B981" />
+            <IOSText textStyle="title3" weight="semibold" style={styles.dateTitle}>
+              {getCurrentDateHeader()}
+            </IOSText>
+          </View>
+
+          <View style={styles.headerIndicators}>
+            {/* Offline Status Indicator */}
+            {isOffline && (
+              <View style={styles.offlineIndicator}>
+                <WifiOff size={14} color="#FFFFFF" />
+                <IOSText textStyle="caption2" style={styles.offlineText}>
+                  Offline
+                </IOSText>
+              </View>
+            )}
+
+            {/* Data Status Indicator */}
+            {dataStatus === 'cached' && (
+              <View style={styles.dataStatusIndicator}>
+                <Clock size={14} color="#FFFFFF" />
+                <IOSText textStyle="caption2" style={styles.cachedText}>
+                  Cached
+                </IOSText>
+              </View>
+            )}
+          </View>
         </View>
-
-        {/* Offline Status Indicator */}
-        {isOffline && (
-          <View style={styles.offlineIndicator}>
-            <WifiOff size={16} color="#FF6B35" />
-            <IOSText textStyle="caption1" style={styles.offlineText}>
-              Offline
-            </IOSText>
-          </View>
-        )}
-
-        {/* Data Status Indicator */}
-        {dataStatus === 'cached' && (
-          <View style={styles.dataStatusIndicator}>
-            <Clock size={16} color="#FF9500" />
-            <IOSText textStyle="caption1" style={styles.cachedText}>
-              Cached Data
-            </IOSText>
-          </View>
-        )}
       </View>
 
       <ScrollView
@@ -285,10 +289,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
+  },
+  headerIndicators: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexShrink: 0,
   },
   dateTitle: {
     color: '#000000',
@@ -296,7 +312,7 @@ const styles = StyleSheet.create({
   offlineIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 3,
     backgroundColor: '#FF6B35',
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -304,22 +320,21 @@ const styles = StyleSheet.create({
   },
   offlineText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
   },
   dataStatusIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 3,
     backgroundColor: '#FF9500',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
-    marginLeft: 8,
   },
   cachedText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
   },
   offlineContent: {

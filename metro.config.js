@@ -44,7 +44,7 @@ config.resolver = {
     'webm'
   ],
 
-  // Standard source extensions
+  // Standard source extensions (platform extensions handled separately by Metro)
   sourceExts: [
     'expo.ts',
     'expo.tsx',
@@ -91,6 +91,38 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     return {
       type: 'empty',
     };
+  }
+
+  // Block native-only modules on web platform
+  if (platform === 'web') {
+    const nativeOnlyModules = [
+      'react-native-maps',
+      '@gorhom/bottom-sheet',
+    ];
+
+    for (const mod of nativeOnlyModules) {
+      if (moduleName === mod || moduleName.startsWith(mod + '/')) {
+        return { type: 'empty' };
+      }
+    }
+
+    // Block internal react-native modules that don't have web equivalents
+    // These are native-only and should not be bundled for web
+    if (context.originModulePath?.includes('node_modules/react-native/Libraries')) {
+      // Allow only modules that are shimmed by react-native-web
+      // Block internal modules that try to import native-only utilities
+      if (moduleName.includes('/Utilities/Platform') ||
+          moduleName.includes('/ReactNative/') ||
+          moduleName.includes('/NativeComponent/')) {
+        return { type: 'empty' };
+      }
+    }
+
+    // Block react-native internal native modules on web when imported from native packages
+    if (context.originModulePath?.includes('react-native-maps') ||
+        context.originModulePath?.includes('@gorhom/bottom-sheet')) {
+      return { type: 'empty' };
+    }
   }
 
   // Handle google-signin ESM imports that don't have file extensions

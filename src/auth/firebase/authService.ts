@@ -19,6 +19,7 @@ import {
   GoogleAuthProvider,
   OAuthProvider,
   signInWithCredential,
+  fetchSignInMethodsForEmail,
 } from 'firebase/auth';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
@@ -44,6 +45,7 @@ function convertFirebaseUser(firebaseUser: FirebaseUser, additionalData?: any): 
     createdAt: additionalData?.createdAt?.toDate?.() || new Date(),
     updatedAt: additionalData?.updatedAt?.toDate?.() || new Date(),
     preferences: additionalData?.preferences,
+    sailingProfile: additionalData?.sailingProfile,
   };
 }
 
@@ -432,6 +434,28 @@ export class FirebaseAuthService {
   }
 
   /**
+   * Check if an email is already registered
+   * Returns true if account exists, false if new email
+   */
+  async checkEmailExists(email: string): Promise<boolean> {
+    try {
+      if (!auth) {
+        throw new Error('Firebase Auth not initialized');
+      }
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+      return methods.length > 0;
+    } catch (error: any) {
+      // If error is invalid-email, re-throw it
+      if (error?.code === 'auth/invalid-email') {
+        throw this.handleAuthError(error);
+      }
+      // For other errors (like network issues), assume email doesn't exist
+      // The actual login/register will handle the real error
+      return false;
+    }
+  }
+
+  /**
    * Update user profile
    */
   async updateUserProfile(updates: Partial<User>): Promise<User> {
@@ -444,24 +468,28 @@ export class FirebaseAuthService {
         throw new Error('No user logged in');
       }
 
-      // Update Firebase Auth profile
-      if (updates.displayName || updates.photoURL) {
-        await updateProfile(currentUser, {
-          displayName: updates.displayName,
-          photoURL: updates.photoURL,
-        });
+      // Update Firebase Auth profile - only include defined fields
+      const authProfileUpdates: { displayName?: string; photoURL?: string } = {};
+      if (updates.displayName !== undefined) {
+        authProfileUpdates.displayName = updates.displayName;
+      }
+      if (updates.photoURL !== undefined) {
+        authProfileUpdates.photoURL = updates.photoURL;
       }
 
-      // Update Firestore document
+      if (Object.keys(authProfileUpdates).length > 0) {
+        await updateProfile(currentUser, authProfileUpdates);
+      }
+
+      // Update Firestore document (fire and forget - don't block on this)
       if (firestore) {
-        try {
-          const updatedData = {
-            ...updates,
-            updatedAt: new Date(),
-          };
-          await setDoc(doc(firestore, 'users', currentUser.uid), updatedData, { merge: true });
-        } catch (error) {
-        }
+        const updatedData = {
+          ...updates,
+          updatedAt: new Date(),
+        };
+        setDoc(doc(firestore, 'users', currentUser.uid), updatedData, { merge: true }).catch(() => {
+          // Silently ignore Firestore errors - Firebase Auth is the source of truth
+        });
       }
 
       // Return updated user

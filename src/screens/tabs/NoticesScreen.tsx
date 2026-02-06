@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 
-import { View, StyleSheet, FlatList, RefreshControl, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import { View, StyleSheet, FlatList, RefreshControl, ScrollView, TouchableOpacity, Animated, Linking } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Bell,
   WifiOff,
   ChevronLeft,
-  Info
+  Info,
+  ExternalLink
 } from 'lucide-react-native';
 
 import { colors, spacing } from '../../constants/theme';
@@ -16,9 +17,12 @@ import { ErrorBoundary } from '../../components/shared/ErrorBoundary';
 import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
 import { SimpleError } from '../../components/shared/SimpleError';
 import { OfflineError } from '../../components/shared/OfflineError';
+import { Toast } from '../../components/shared/Toast';
 import { FloatingEventSwitch } from '../../components/navigation/FloatingEventSwitch';
 import { haptics } from '../../utils/haptics';
 import { offlineManager } from '../../services/offlineManager';
+import { useToastStore } from '../../stores/toastStore';
+import { useNoticesStore } from '../../stores/noticesStore';
 import {
   IOSNavigationBar,
   IOSText,
@@ -32,6 +36,8 @@ import { ProfileButton } from '../../components/navigation/ProfileButton';
 import { useToolbarVisibility } from '../../contexts/TabBarVisibilityContext';
 
 const HEADER_HEIGHT = 60; // Height of header section for content padding
+const TAB_BAR_HEIGHT = 64; // Height of floating tab bar
+const TAB_BAR_BOTTOM_OFFSET = 20; // Bottom offset of floating tab bar
 
 import NoticeBoardService from '../../services/noticeBoardService';
 import { useUserStore } from '../../stores/userStore';
@@ -58,9 +64,10 @@ interface NoticesScreenProps {
 
 type NoticeItem = (OfficialNotification | EventDocument) & {
   itemType: 'notification' | 'document';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  priority: 'low' | 'medium' | 'high' | 'urgent' | 'critical';
   publishedAt: string;
   category?: RegattaCategory;
+  isRead: boolean;
 };
 
 export const NoticesScreen: React.FC<NoticesScreenProps> = ({
@@ -71,6 +78,15 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
   const { user } = useAuth();
   const [noticeBoardService] = useState(() => new NoticeBoardService(userStore, true, 'demo'));
   const insets = useSafeAreaInsets();
+
+  // Notices store for tracking seen notices
+  const { seenNoticeIdsByEvent, markNoticesAsSeen, clearUnread } = useNoticesStore();
+
+  // Toast store for notifications
+  const showToast = useToastStore((state) => state.showToast);
+
+  // Track previous notice IDs for detecting new notices on refresh
+  const previousNoticesRef = useRef<string[]>([]);
 
   // Toolbar auto-hide
   const { toolbarTranslateY, createScrollHandler } = useToolbarVisibility();
@@ -204,6 +220,10 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
     }, [selectedEventId, storeHydrated, event, loadEventData])
   );
 
+  // Get seen notice IDs for current event
+  const seenIds = useMemo(() => {
+    return new Set(seenNoticeIdsByEvent[selectedEventId] || []);
+  }, [seenNoticeIdsByEvent, selectedEventId]);
 
   // Combine and process notices
   const allNotices = useMemo((): NoticeItem[] => {
@@ -213,7 +233,9 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
       ...notification,
       itemType: 'notification' as const,
       priority: notification.priority || 'medium',
-      category: notification.metadata?.category
+      category: notification.metadata?.category,
+      // Use store tracking for isRead status
+      isRead: seenIds.has(notification.id)
     }));
 
     const documents: NoticeItem[] = (event.noticeBoard.documents || []).map(document => ({
@@ -221,15 +243,17 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
       itemType: 'document' as const,
       priority: (document.priority as NoticeItem['priority']) || 'medium',
       publishedAt: document.uploadedAt,
-      category: document.category
+      category: document.category,
+      // Use store tracking for isRead status
+      isRead: seenIds.has(document.id)
     }));
 
     return [...notifications, ...documents].sort((a, b) => {
       // Sort by: 1) Unread first, 2) Priority (urgent > high > medium > low), 3) Timestamp (newest first)
 
-      // Check unread status
-      const aUnread = 'isRead' in a ? !a.isRead : false;
-      const bUnread = 'isRead' in b ? !b.isRead : false;
+      // Check unread status - now using the isRead property we set above
+      const aUnread = !a.isRead;
+      const bUnread = !b.isRead;
 
       // Unread notices come first
       if (aUnread !== bUnread) {
@@ -237,7 +261,7 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
       }
 
       // Then sort by priority
-      const priorityOrder = { urgent: 4, high: 3, medium: 2, low: 1 };
+      const priorityOrder: Record<string, number> = { critical: 5, urgent: 4, high: 3, medium: 2, low: 1 };
       const aPriority = priorityOrder[a.priority || 'medium'] || 2;
       const bPriority = priorityOrder[b.priority || 'medium'] || 2;
 
@@ -248,7 +272,17 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
       // Finally sort by date (newest first)
       return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
     });
-  }, [event]);
+  }, [event, seenIds]);
+
+  // NOTE: We no longer mark all notices as seen on load
+  // Instead, notices are marked as seen when the user taps on them (in handleNoticePress)
+
+  // Clear unread count when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      clearUnread();
+    }, [clearUnread])
+  );
 
   // Filter notices based on filters
   const filteredNotices = useMemo(() => {
@@ -270,9 +304,9 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
     if (activeFilters.readStatus !== 'all') {
       filtered = filtered.filter(notice => {
         if (activeFilters.readStatus === 'unread') {
-          return 'isRead' in notice ? !notice.isRead : true;
+          return !notice.isRead;
         } else {
-          return 'isRead' in notice ? notice.isRead : false;
+          return notice.isRead;
         }
       });
     }
@@ -297,7 +331,7 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
     // Count notices by category using allNotices to show total counts
     allNotices.forEach(notice => {
       const category = notice.category || 'administrative';
-      const isUnread = 'isRead' in notice ? !notice.isRead : false;
+      const isUnread = !notice.isRead;
 
       // Update specific category count
       const categoryData = categoryMap.get(category) || { count: 0, unreadCount: 0 };
@@ -339,13 +373,48 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
   const onRefresh = useCallback(async () => {
     await haptics.pullToRefresh();
     setRefreshing(true);
+
+    // Store current notice IDs before refresh
+    const currentIds = allNotices.map((notice) => notice.id);
+    previousNoticesRef.current = currentIds;
+
     await loadEventData(false);
-  }, [loadEventData]);
+  }, [loadEventData, allNotices]);
+
+  // Show toast after refresh completes
+  useEffect(() => {
+    // Only run if we just finished refreshing
+    if (!refreshing && previousNoticesRef.current.length > 0 && allNotices.length > 0 && selectedEventId) {
+      const seenIds = new Set(seenNoticeIdsByEvent[selectedEventId] || []);
+      const newNotices = allNotices.filter((notice) => !seenIds.has(notice.id));
+
+      if (newNotices.length > 0) {
+        const message = newNotices.length === 1
+          ? '1 new notice'
+          : `${newNotices.length} new notices`;
+        showToast(message, 'success');
+
+        // Mark the new notices as seen
+        const noticeIds = allNotices.map((notice) => notice.id);
+        markNoticesAsSeen(selectedEventId, noticeIds);
+      } else if (previousNoticesRef.current.length > 0) {
+        showToast('Notices are up to date', 'info');
+      }
+
+      // Clear the previous ref
+      previousNoticesRef.current = [];
+    }
+  }, [refreshing, allNotices, selectedEventId, seenNoticeIdsByEvent, showToast, markNoticesAsSeen]);
 
   // Handle notice press
   const handleNoticePress = useCallback(async (notice: NoticeItem) => {
 
     await haptics.buttonPress();
+
+    // Mark this notice as seen when user taps on it
+    if (selectedEventId) {
+      markNoticesAsSeen(selectedEventId, [notice.id]);
+    }
 
     if (notice.itemType === 'notification') {
       navigation.navigate('NotificationDetail', {
@@ -373,7 +442,7 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
       } catch (error) {
       }
     }
-  }, [navigation, selectedEventId]);
+  }, [navigation, selectedEventId, markNoticesAsSeen]);
 
   // Handle filters
   const handleFiltersChange = useCallback((filters: SearchFilters) => {
@@ -389,10 +458,30 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
 
   // Get unread count
   const unreadCount = useMemo(() => {
-    return allNotices.filter(notice =>
-      'isRead' in notice ? !notice.isRead : false
-    ).length;
+    return allNotices.filter(notice => !notice.isRead).length;
   }, [allNotices]);
+
+  // Get racingrulesofsailing.org URL for the selected event's notice board
+  const getRacingRulesUrl = useCallback(() => {
+    // Map internal event IDs to racingrulesofsailing.org event_links URLs
+    // These are the public notice board pages that don't require login
+    const eventLinksMap: Record<string, string> = {
+      'asia-pacific-2026': 'https://www.racingrulesofsailing.org/events/13241/event_links?name=2026%20HONG%20KONG%20DRAGON%20ASIA%20PACIFIC%20CHAMPIONSHIP',
+      'dragon-worlds-2027': 'https://www.racingrulesofsailing.org/events/13242/event_links?name=2027%20HONG%20KONG%20DRAGON%20WORLD%20CHAMPIONSHIP',
+    };
+    return eventLinksMap[selectedEventId] || eventLinksMap['dragon-worlds-2027'];
+  }, [selectedEventId]);
+
+  // Open racing rules of sailing website
+  const handleOpenRacingRules = useCallback(async () => {
+    await haptics.buttonPress();
+    const url = getRacingRulesUrl();
+    try {
+      await Linking.openURL(url);
+    } catch (error) {
+      showToast('Could not open link', 'error');
+    }
+  }, [getRacingRulesUrl, showToast]);
 
   // Render notice item
   const renderNoticeItem = useCallback(({ item, index }: { item: NoticeItem; index: number }) => (
@@ -459,10 +548,18 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
       }}
     >
       <View style={styles.container}>
+        {/* Toast notifications */}
+        <Toast />
         {/* Notices Content - Scrolls under the header */}
         <ScrollView
           style={styles.scrollContainer}
-          contentContainerStyle={[styles.scrollContent, { paddingTop: HEADER_HEIGHT + insets.top + 100 }]}
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              paddingTop: HEADER_HEIGHT + insets.top + 100,
+              paddingBottom: TAB_BAR_HEIGHT + Math.max(insets.bottom, TAB_BAR_BOTTOM_OFFSET) + spacing.lg,
+            }
+          ]}
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
           onScroll={scrollHandler.onScroll}
@@ -601,7 +698,7 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
             onValueChange={setSelectedEvent}
           />
 
-          {/* Category Filter Chips with Info Icon */}
+          {/* Category Filter Chips with Info Icon and External Link */}
           <View style={styles.filterRow}>
             <View style={styles.filterChipsContainer}>
               <CategoryFilterChips
@@ -610,6 +707,15 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
                 onCategoryChange={handleCategoryChange}
               />
             </View>
+
+            {/* External Link to racingrulesofsailing.org */}
+            <TouchableOpacity
+              style={styles.externalLinkSmall}
+              onPress={handleOpenRacingRules}
+              accessibilityLabel="View on racingrulesofsailing.org"
+            >
+              <ExternalLink size={12} color={colors.textMuted} />
+            </TouchableOpacity>
 
             {/* Info Icon */}
             <TouchableOpacity
@@ -655,6 +761,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: colors.text,
   },
+  externalLinkSmall: {
+    padding: spacing.xs,
+    marginLeft: spacing.xs,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -679,7 +789,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: spacing.xl,
+    // paddingBottom is calculated dynamically to account for floating tab bar
   },
   emptyState: {
     alignItems: 'center',

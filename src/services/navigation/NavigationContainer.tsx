@@ -6,6 +6,7 @@ import { SimpleLoginScreen } from '../../screens/auth/SimpleLoginScreen';
 import { SimpleRegisterScreen } from '../../screens/auth/SimpleRegisterScreen';
 import { SimplePasswordResetScreen } from '../../screens/auth/SimplePasswordResetScreen';
 import { UnifiedAuthScreen } from '../../screens/auth/UnifiedAuthScreen';
+import { UnifiedEmailAuthScreen } from '../../screens/auth/UnifiedEmailAuthScreen';
 // CompetitorDetail is now nested under the Results stack so we do not import it here
 import { DocumentViewer } from '../../components/noticeBoard/DocumentViewer';
 import { NotificationDetail } from '../../components/noticeBoard/NotificationDetail';
@@ -22,7 +23,7 @@ const Stack = createStackNavigator();
 
 // Onboarding Navigator for first-time users
 const OnboardingNavigator = () => {
-  const [currentStep, setCurrentStep] = React.useState<'welcome' | 'signup' | 'login'>('welcome');
+  const [currentStep, setCurrentStep] = React.useState<'welcome' | 'email'>('welcome');
   const { completeOnboarding, setUserType, setSelectedOnboardingType } = useUserStore();
   const { isAuthenticated, user, logout } = useAuth();
 
@@ -66,55 +67,31 @@ const OnboardingNavigator = () => {
     }
   }, [readyForAuth, isAuthenticated, user, completeOnboarding]);
 
-  const handleWelcomeContinue = () => {
-    setCurrentStep('signup');
+  const handleEmailContinue = () => {
+    setCurrentStep('email');
   };
 
-  const handleSignupBack = () => {
+  const handleEmailBack = () => {
     setCurrentStep('welcome');
-  };
-
-  const handleNavigateToLogin = () => {
-    setCurrentStep('login');
-  };
-
-  const handleLoginBack = () => {
-    setCurrentStep('signup');
   };
 
   switch (currentStep) {
     case 'welcome':
       return (
         <WelcomeScreen
-          onContinue={handleWelcomeContinue}
-          onSignIn={handleNavigateToLogin}
+          onContinue={handleEmailContinue}
         />
       );
 
-    case 'signup':
+    case 'email':
       return (
-        <SimpleRegisterScreen
+        <UnifiedEmailAuthScreen
           navigation={{
-            goBack: handleSignupBack,
+            goBack: handleEmailBack,
             navigate: (routeName: string) => {
-              if (routeName === 'Login') {
-                handleNavigateToLogin();
-              }
-            },
-            canGoBack: () => true,
-            reset: () => {}
-          }}
-        />
-      );
-
-    case 'login':
-      return (
-        <SimpleLoginScreen
-          navigation={{
-            goBack: handleLoginBack,
-            navigate: (routeName: string) => {
-              if (routeName === 'Register') {
-                setCurrentStep('signup');
+              if (routeName === 'ForgotPassword') {
+                // For now, go back to welcome - can add password reset later
+                setCurrentStep('welcome');
               }
             },
             canGoBack: () => true,
@@ -126,8 +103,7 @@ const OnboardingNavigator = () => {
     default:
       return (
         <WelcomeScreen
-          onContinue={handleWelcomeContinue}
-          onSignIn={handleNavigateToLogin}
+          onContinue={handleEmailContinue}
         />
       );
   }

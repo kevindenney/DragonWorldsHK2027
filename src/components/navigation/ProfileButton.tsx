@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, View, Text, StyleSheet, Image } from 'react-native';
 import { User } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
@@ -57,11 +57,18 @@ export function ProfileButton({ size = 32, style }: ProfileButtonProps) {
       accessibilityLabel={isAuthenticated ? 'View profile' : 'Sign in'}
     >
       {isAuthenticated ? (
-        <View style={[styles.avatarContainer, { width: size, height: size, borderRadius: size / 2 }]}>
-          <Text style={[styles.avatarText, { fontSize: size * 0.4 }]}>
-            {getInitials()}
-          </Text>
-        </View>
+        user?.photoURL ? (
+          <Image
+            source={{ uri: user.photoURL }}
+            style={[styles.avatarImage, { width: size, height: size, borderRadius: size / 2 }]}
+          />
+        ) : (
+          <View style={[styles.avatarContainer, { width: size, height: size, borderRadius: size / 2 }]}>
+            <Text style={[styles.avatarText, { fontSize: size * 0.4 }]}>
+              {getInitials()}
+            </Text>
+          </View>
+        )
       ) : (
         <View style={[styles.iconContainer, { width: size, height: size, borderRadius: size / 2 }]}>
           <User size={size * 0.55} color={colors.primary} strokeWidth={2} />
@@ -80,6 +87,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  avatarImage: {
+    backgroundColor: colors.primary,
   },
   avatarText: {
     color: '#FFFFFF',
