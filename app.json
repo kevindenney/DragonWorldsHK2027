@@ -2,8 +2,8 @@
   "expo": {
     "name": "Dragon Worlds HK 2027",
     "slug": "dragonworldshk2027",
-    "version": "1.0.0",
-    "runtimeVersion": "1.0.0",
+    "version": "1.0.1",
+    "runtimeVersion": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -19,7 +19,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.denneyke.dragonworldshk2027",
       "usesAppleSignIn": true,
-      "buildNumber": "32",
+      "buildNumber": "34",
       "requireFullScreen": false,
       "userInterfaceStyle": "light",
       "jsEngine": "hermes",
@@ -62,7 +62,7 @@
     },
     "android": {
       "package": "com.dragonworlds.hk2027",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
