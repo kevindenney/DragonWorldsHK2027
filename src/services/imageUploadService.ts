@@ -169,7 +169,7 @@ export class ImageUploadService {
         message = 'Upload was canceled.';
         break;
       case 'storage/unknown':
-        message = 'An unknown error occurred during upload. Please try again.';
+        message = `Storage error: ${error.message || 'Unknown error'}. This may be a Firebase Storage rules issue.`;
         break;
       case 'storage/invalid-format':
         message = 'Invalid image format. Please select a JPEG, PNG, or WebP image.';

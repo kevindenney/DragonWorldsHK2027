@@ -128,7 +128,8 @@ export function AppleStyleProfile({
         setSuccessMessage('Photo updated!');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to update photo.');
+      const message = error instanceof Error ? error.message : 'Failed to update photo.';
+      Alert.alert('Error', message);
     } finally {
       setIsUploadingPhoto(false);
       setUploadProgress(null);

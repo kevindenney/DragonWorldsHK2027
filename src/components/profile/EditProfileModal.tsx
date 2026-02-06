@@ -135,9 +135,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             );
             updates.photoURL = uploadResult.downloadURL;
           } catch (uploadError) {
+            const message = uploadError instanceof Error ? uploadError.message : 'Unknown error';
             Alert.alert(
               'Upload Error',
-              'Failed to upload profile picture. Your other changes will still be saved.',
+              `Failed to upload profile picture: ${message}. Your other changes will still be saved.`,
               [{ text: 'OK' }]
             );
             // Continue without the photo update
