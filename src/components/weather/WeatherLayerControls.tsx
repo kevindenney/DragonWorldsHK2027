@@ -29,6 +29,19 @@ interface HKOLayerControlsProps {
   onRefreshData?: () => void;
   onTogglePolling?: () => void;
   onViewDetails?: () => void;
+
+  // Layer toggle callbacks (for backwards compatibility)
+  onNauticalToggle?: () => void;
+  onRadarToggle?: () => void;
+  onSatelliteToggle?: () => void;
+  onWindStationsToggle?: () => void;
+  onWaveStationsToggle?: () => void;
+  onTideStationsToggle?: () => void;
+
+  // Layer visibility state
+  windStationsVisible?: boolean;
+  waveStationsVisible?: boolean;
+  tideStationsVisible?: boolean;
 }
 
 export const WeatherLayerControls: React.FC<HKOLayerControlsProps> = ({

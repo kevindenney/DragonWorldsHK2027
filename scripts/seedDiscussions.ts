@@ -180,9 +180,9 @@ async function seedDiscussions() {
     post_type: discussion.post_type,
     pinned: discussion.pinned,
     is_public: true,
-    upvotes: Math.floor(Math.random() * 15) + 1, // Random upvotes 1-15
+    upvotes: 0, // Start with 0 - real votes from users only
     downvotes: 0,
-    comment_count: Math.floor(Math.random() * 5), // Random comments 0-4
+    comment_count: 0, // Start with 0, incremented when comments are added
     view_count: Math.floor(Math.random() * 50) + 10, // Random views 10-59
     is_resolved: false,
     created_at: new Date(now.getTime() - index * 3600000 * 4).toISOString(), // Stagger creation times

@@ -17,16 +17,12 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import Constants from 'expo-constants';
 import {
   Mail,
   LogOut,
-  Camera,
   Trash2,
   CheckCircle,
   Sailboat,
@@ -38,7 +34,7 @@ import { colors, typography, spacing, borderRadius, shadows } from '../../consta
 import { useAuth } from '../../auth/useAuth';
 import { User as UserType } from '../../auth/authTypes';
 import { AuthButton } from '../auth/AuthButton';
-import { imageUploadService, UploadProgress } from '../../services/imageUploadService';
+import { ProfileAvatar } from '../shared/ProfileAvatar';
 
 interface AppleStyleProfileProps {
   onEditProfile?: () => void;
@@ -51,10 +47,8 @@ export function AppleStyleProfile({
   onDeleteAccount,
   testID,
 }: AppleStyleProfileProps) {
-  const { user, logout, updateProfile } = useAuth();
+  const { user, logout } = useAuth();
 
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Auto-hide success messages
@@ -64,77 +58,6 @@ export function AppleStyleProfile({
       return () => clearTimeout(timer);
     }
   }, [successMessage]);
-
-  const handlePhotoUpload = async () => {
-    try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permissionResult.granted) {
-        Alert.alert('Permission Required', 'Please allow access to your photo library.');
-        return;
-      }
-
-      Alert.alert('Update Photo', 'Choose a source', [
-        { text: 'Camera', onPress: () => handleImageSelection('camera') },
-        { text: 'Photo Library', onPress: () => handleImageSelection('library') },
-        { text: 'Cancel', style: 'cancel' }
-      ]);
-    } catch (error) {
-      Alert.alert('Error', 'Unable to access photos.');
-    }
-  };
-
-  const handleImageSelection = async (source: 'camera' | 'library') => {
-    if (!user?.uid) return;
-
-    try {
-      setIsUploadingPhoto(true);
-
-      let result: ImagePicker.ImagePickerResult;
-
-      if (source === 'camera') {
-        const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
-        if (!cameraPermission.granted) {
-          Alert.alert('Permission Required', 'Please allow camera access.');
-          return;
-        }
-        result = await ImagePicker.launchCameraAsync({
-          mediaTypes: ['images'],
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 0.8,
-        });
-      } else {
-        result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ['images'],
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 0.8,
-        });
-      }
-
-      if (!result.canceled && result.assets[0]) {
-        const compressedUri = await imageUploadService.compressImage(result.assets[0].uri, 400, 0.8);
-        const uploadResult = await imageUploadService.uploadProfilePicture(
-          user.uid,
-          compressedUri,
-          {
-            onProgress: (progress) => setUploadProgress(progress),
-            timeoutMs: 30000,
-            maxSizeBytes: 5 * 1024 * 1024,
-          }
-        );
-
-        await updateProfile({ photoURL: uploadResult.downloadURL });
-        setSuccessMessage('Photo updated!');
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update photo.';
-      Alert.alert('Error', message);
-    } finally {
-      setIsUploadingPhoto(false);
-      setUploadProgress(null);
-    }
-  };
 
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure?', [
@@ -169,10 +92,7 @@ export function AppleStyleProfile({
       {/* Identity Card - Consolidated sailing identity */}
       <IdentityCard
         user={user}
-        onPhotoUpload={handlePhotoUpload}
         onEditProfile={onEditProfile}
-        isUploadingPhoto={isUploadingPhoto}
-        uploadProgress={uploadProgress}
       />
 
       {/* Contact Info */}
@@ -264,56 +184,23 @@ export function AppleStyleProfile({
 
 interface IdentityCardProps {
   user: UserType;
-  onPhotoUpload: () => void;
   onEditProfile?: () => void;
-  isUploadingPhoto: boolean;
-  uploadProgress: UploadProgress | null;
 }
 
 function IdentityCard({
   user,
-  onPhotoUpload,
   onEditProfile,
-  isUploadingPhoto,
-  uploadProgress,
 }: IdentityCardProps) {
-  const showDragonLogo = !user.photoURL && !isUploadingPhoto;
-
   return (
     <View style={styles.identityCard}>
       {/* Avatar */}
       <View style={styles.avatarSection}>
-        <TouchableOpacity onPress={onPhotoUpload} activeOpacity={0.8}>
-          <View style={styles.avatarContainer}>
-            {user.photoURL ? (
-              <Image source={{ uri: user.photoURL }} style={styles.avatar} />
-            ) : showDragonLogo ? (
-              <Image
-                source={require('../../../assets/dragon-logo.png')}
-                style={styles.avatarLogo}
-                resizeMode="contain"
-              />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Sailboat size={32} color={colors.textMuted} />
-              </View>
-            )}
-
-            {isUploadingPhoto && uploadProgress && (
-              <View style={styles.uploadOverlay}>
-                <Text style={styles.uploadText}>{uploadProgress.percentage}%</Text>
-              </View>
-            )}
-
-            <View style={styles.cameraButton}>
-              {isUploadingPhoto ? (
-                <ActivityIndicator size={12} color="#fff" />
-              ) : (
-                <Camera size={14} color="#fff" />
-              )}
-            </View>
-          </View>
-        </TouchableOpacity>
+        <ProfileAvatar
+          photoURL={user.photoURL}
+          name={user.displayName || 'Sailor'}
+          id={user.uid}
+          size={72}
+        />
       </View>
 
       {/* Identity Info */}
@@ -404,60 +291,6 @@ const styles = StyleSheet.create({
   },
   avatarSection: {
     marginRight: spacing.md,
-  },
-  avatarContainer: {
-    position: 'relative',
-  },
-  avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.border,
-  },
-  avatarLogo: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.surface,
-    borderWidth: 2,
-    borderColor: colors.primary + '20',
-  },
-  avatarPlaceholder: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  uploadOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 36,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  uploadText: {
-    ...typography.caption,
-    color: '#fff',
-    fontWeight: '600',
-  },
-  cameraButton: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: colors.surface,
   },
   identityInfo: {
     flex: 1,

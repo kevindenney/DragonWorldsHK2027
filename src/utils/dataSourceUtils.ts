@@ -1,5 +1,8 @@
 import { DataSource } from '../screens/modals/WeatherDetailModal';
 
+// Re-export DataSource for consumers of this module
+export { DataSource };
+
 // Mapping of source names to their metadata
 const SOURCE_METADATA: Record<string, Omit<DataSource, 'lastUpdated'>> = {
   'Open‑Meteo Weather': {

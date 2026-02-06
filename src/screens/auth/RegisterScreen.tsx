@@ -38,6 +38,8 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
     email?: string;
     password?: string;
     confirmPassword?: string;
+    phoneNumber?: string;
+    acceptTerms?: string;
     terms?: string;
   }>({});
 

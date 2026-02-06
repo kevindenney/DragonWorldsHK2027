@@ -178,11 +178,11 @@ export class OfflineManager {
   async queueAction(action: Omit<OfflineAction, 'id' | 'timestamp' | 'retryCount'>): Promise<void> {
     try {
       const queuedAction: OfflineAction = {
+        ...action,
         id: this.generateId(),
         timestamp: new Date().toISOString(),
         retryCount: 0,
         maxRetries: action.maxRetries || this.maxRetries,
-        ...action
       };
 
       this.syncQueue.push(queuedAction);

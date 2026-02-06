@@ -328,7 +328,7 @@ export const EnhancedContactsScreen: React.FC<MoreScreenProps> = ({ navigation =
                 </IOSText>
               </IOSCard>
             ) : (
-              filteredGroups.map((group: { id: string; title: string; description: string }) => (
+              filteredGroups.map((group) => (
                 <WhatsAppGroupCard
                   key={group.id}
                   group={group}

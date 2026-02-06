@@ -313,7 +313,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete, 
               <IOSButton
                 title="Skip"
                 onPress={handleSkip}
-                variant="ghost"
+                variant="plain"
                 style={styles.skipButton}
               />
             </View>

@@ -482,11 +482,12 @@ export class HKOAPI {
 
         return {
           id: station.code,
+          code: station.code,
           name: station.name,
           latitude: station.latitude,
           longitude: station.longitude,
           currentHeight: Math.round(currentHeight * 100) / 100,
-          trend: trend as 'rising' | 'falling' | 'stable',
+          trend: trend as 'rising' | 'falling' | 'slack',
           tidalRange: 2.0 + Math.random() * 0.5,
           meanSeaLevel: 1.5,
           nextTide: {
@@ -672,12 +673,16 @@ export class HKOAPI {
     // Parse HKO warning format
     if (!data || !Array.isArray(data)) return [];
 
-    return data.map((warning: any) => ({
+    return data.map((warning: any, index: number) => ({
+      id: warning.id || `warning-${Date.now()}-${index}`,
       type: warning.warningStatementCode || 'UNKNOWN',
-      code: warning.subtype || warning.warningStatementCode,
+      code: warning.subtype || warning.warningStatementCode || 'UNKNOWN',
       name: warning.warningName || 'Weather Warning',
+      title: warning.title || warning.warningName || 'Weather Warning',
+      description: warning.description || warning.contents || warning.text || '',
       message: warning.contents || warning.text || '',
       severity: this.mapWarningSeverity(warning.warningStatementCode),
+      affectedAreas: warning.affectedAreas || ['Hong Kong Waters'],
       issuedTime: warning.issueTime || new Date().toISOString(),
       validFrom: warning.issueTime || new Date().toISOString(),
       validTo: warning.expireTime || new Date().toISOString()

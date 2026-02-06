@@ -171,7 +171,7 @@ export const SevenDayForecastModal: React.FC<SevenDayForecastModalProps> = ({
   const slideAnimation = useSharedValue(0);
 
   // Get 7-day forecast data using the existing hook
-  const dailyForecast = useDailyForecast(station?.coordinate || null);
+  const dailyForecast = useDailyForecast();
 
   // Get data source information for this station
   const dataSource = station ? getStationDataSource(

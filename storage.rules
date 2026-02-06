@@ -42,14 +42,12 @@ service firebase.storage {
     }
 
     // User profile images - updated path to match app upload location
-    match /profile-pictures/{userId}/{imageId} {
-      // Users can read/write their own profile images, admins can access any
-      allow read: if isOwner(userId) || hasAnyRole(['admin', 'superadmin']);
-      // Simplified for development - just check authentication and basic image validation
-      allow write: if isAuthenticated() && isOwner(userId) &&
-                      request.resource.contentType != null &&
-                      request.resource.contentType.matches('image/.*');
-      allow delete: if isOwner(userId) || hasAnyRole(['admin', 'superadmin']);
+    match /profile-pictures/{userId}/{allPaths=**} {
+      // Anyone can view profile pictures (they're public)
+      allow read: if true;
+      // Users can write their own profile images (simplified for debugging)
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
     }
 
     // Alternative profile image path (for compatibility)

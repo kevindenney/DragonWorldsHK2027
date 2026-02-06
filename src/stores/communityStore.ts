@@ -15,14 +15,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export type DiscussSegment = 'community' | 'feed';
 
 /**
+ * Current welcome banner version - bump this to show the banner again to all users
+ * when the content changes significantly
+ */
+const WELCOME_BANNER_VERSION = 2;
+
+/**
  * Community store state
  */
 interface CommunityState {
   /** Currently selected segment in the Discuss screen */
   selectedSegment: DiscussSegment;
 
-  /** Whether the user has seen the welcome/onboarding message */
-  hasSeenWelcome: boolean;
+  /** Version of the welcome banner the user has seen (0 = never seen) */
+  seenWelcomeVersion: number;
 
   /** Last time the posts were refreshed (for stale data indicator) */
   lastPostsRefresh: number | null;
@@ -39,10 +45,10 @@ interface CommunityState {
  */
 const initialState: Pick<
   CommunityState,
-  'selectedSegment' | 'hasSeenWelcome' | 'lastPostsRefresh'
+  'selectedSegment' | 'seenWelcomeVersion' | 'lastPostsRefresh'
 > = {
   selectedSegment: 'community',
-  hasSeenWelcome: false,
+  seenWelcomeVersion: 0,
   lastPostsRefresh: null,
 };
 
@@ -59,7 +65,7 @@ export const useCommunityStore = create<CommunityState>()(
       },
 
       markWelcomeSeen: () => {
-        set({ hasSeenWelcome: true });
+        set({ seenWelcomeVersion: WELCOME_BANNER_VERSION });
       },
 
       updateLastPostsRefresh: () => {
@@ -76,8 +82,18 @@ export const useCommunityStore = create<CommunityState>()(
       partialize: (state) => ({
         // Only persist these fields
         selectedSegment: state.selectedSegment,
-        hasSeenWelcome: state.hasSeenWelcome,
+        seenWelcomeVersion: state.seenWelcomeVersion,
       }),
+      // Migrate old hasSeenWelcome to new version system
+      migrate: (persistedState: any, version) => {
+        if (persistedState.hasSeenWelcome !== undefined) {
+          // Old format: convert hasSeenWelcome: true to seenWelcomeVersion: 1
+          persistedState.seenWelcomeVersion = persistedState.hasSeenWelcome ? 1 : 0;
+          delete persistedState.hasSeenWelcome;
+        }
+        return persistedState;
+      },
+      version: 1,
     }
   )
 );
@@ -92,7 +108,7 @@ export const useSetSelectedSegment = () =>
   useCommunityStore((state) => state.setSelectedSegment);
 
 export const useHasSeenWelcome = () =>
-  useCommunityStore((state) => state.hasSeenWelcome);
+  useCommunityStore((state) => state.seenWelcomeVersion >= WELCOME_BANNER_VERSION);
 
 export const useMarkWelcomeSeen = () =>
   useCommunityStore((state) => state.markWelcomeSeen);

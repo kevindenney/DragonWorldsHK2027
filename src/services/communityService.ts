@@ -557,7 +557,7 @@ export async function getFeedPosts(
 }
 
 /**
- * Get comments for a post
+ * Get comments for a post, sorted by best (score = upvotes - downvotes)
  * @param discussionId - The post/discussion UUID
  * @param accessToken - Optional access token for authenticated requests
  */
@@ -573,7 +573,8 @@ export async function getPostComments(
       .select('*')
       .eq('discussion_id', discussionId)
       .is('parent_id', null) // Top-level comments only
-      .order('created_at', { ascending: true });
+      .order('upvotes', { ascending: false }) // Sort by best (most upvotes first)
+      .order('created_at', { ascending: true }); // Then by oldest first for same score
 
     if (error) {
       // Silently return empty array if table doesn't exist or access denied
@@ -582,13 +583,14 @@ export async function getPostComments(
       return { data: [], error: null };
     }
 
-    // Fetch replies for each comment
+    // Fetch replies for each comment, also sorted by best
     const comments = data as PostComment[];
     for (const comment of comments) {
       const { data: replies } = await client
         .from('venue_discussion_comments')
         .select('*')
         .eq('parent_id', comment.id)
+        .order('upvotes', { ascending: false }) // Sort replies by best too
         .order('created_at', { ascending: true });
 
       if (replies) {
@@ -850,6 +852,191 @@ export async function incrementViewCount(
 }
 
 /**
+ * Check if user has voted on a comment
+ * @param commentId - The comment UUID
+ * @param userId - The user's UUID
+ * @param accessToken - Access token for authenticated request
+ */
+export async function checkCommentVote(
+  commentId: string,
+  userId: string,
+  accessToken: string
+): Promise<ServiceResponse<PostVote | null>> {
+  try {
+    const client = getSupabaseClient(accessToken);
+
+    const { data, error } = await client
+      .from('venue_discussion_votes')
+      .select('*')
+      .eq('target_id', commentId)
+      .eq('target_type', 'comment')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      // Silently return null if table doesn't exist
+      console.warn('[CommunityService] Comment votes not available:', error.message);
+      return { data: null, error: null };
+    }
+
+    return { data: data as PostVote | null, error: null };
+  } catch (err) {
+    console.warn('[CommunityService] Comment votes exception:', err);
+    return { data: null, error: null };
+  }
+}
+
+/**
+ * Toggle vote on a comment (upvote or downvote)
+ * @param commentId - The comment UUID
+ * @param userId - The user's UUID
+ * @param voteType - 1 for upvote, -1 for downvote
+ * @param accessToken - Access token for authenticated request
+ * @returns Object with hasUpvoted, hasDownvoted, and net score change
+ */
+export async function toggleCommentVote(
+  commentId: string,
+  userId: string,
+  voteType: 1 | -1,
+  accessToken: string
+): Promise<ServiceResponse<{ hasUpvoted: boolean; hasDownvoted: boolean; upvotes: number; downvotes: number }>> {
+  try {
+    const client = getSupabaseClient(accessToken);
+
+    // Check if user already voted on this comment
+    const { data: existingVote, error: checkError } = await client
+      .from('venue_discussion_votes')
+      .select('*')
+      .eq('target_id', commentId)
+      .eq('target_type', 'comment')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error('[CommunityService] Comment vote check error:', checkError);
+      return { data: null, error: checkError.message };
+    }
+
+    // Get current comment vote counts
+    const { data: comment, error: commentError } = await client
+      .from('venue_discussion_comments')
+      .select('upvotes, downvotes')
+      .eq('id', commentId)
+      .single();
+
+    if (commentError) {
+      console.error('[CommunityService] Comment fetch error:', commentError);
+      return { data: null, error: commentError.message };
+    }
+
+    let newUpvotes = comment.upvotes || 0;
+    let newDownvotes = comment.downvotes || 0;
+    let hasUpvoted = false;
+    let hasDownvoted = false;
+
+    if (existingVote) {
+      const existingVoteType = existingVote.vote as number;
+
+      if (existingVoteType === voteType) {
+        // Same vote type - remove the vote
+        const { error: deleteError } = await client
+          .from('venue_discussion_votes')
+          .delete()
+          .eq('target_id', commentId)
+          .eq('target_type', 'comment')
+          .eq('user_id', userId);
+
+        if (deleteError) {
+          console.error('[CommunityService] Error removing comment vote:', deleteError);
+          return { data: null, error: deleteError.message };
+        }
+
+        // Update counts
+        if (voteType === 1) {
+          newUpvotes = Math.max(0, newUpvotes - 1);
+        } else {
+          newDownvotes = Math.max(0, newDownvotes - 1);
+        }
+      } else {
+        // Different vote type - update the vote
+        const { error: updateError } = await client
+          .from('venue_discussion_votes')
+          .update({ vote: voteType })
+          .eq('target_id', commentId)
+          .eq('target_type', 'comment')
+          .eq('user_id', userId);
+
+        if (updateError) {
+          console.error('[CommunityService] Error updating comment vote:', updateError);
+          return { data: null, error: updateError.message };
+        }
+
+        // Update counts - remove old vote, add new vote
+        if (voteType === 1) {
+          // Changing from downvote to upvote
+          newDownvotes = Math.max(0, newDownvotes - 1);
+          newUpvotes = newUpvotes + 1;
+          hasUpvoted = true;
+        } else {
+          // Changing from upvote to downvote
+          newUpvotes = Math.max(0, newUpvotes - 1);
+          newDownvotes = newDownvotes + 1;
+          hasDownvoted = true;
+        }
+      }
+    } else {
+      // No existing vote - insert new vote
+      const { error: insertError } = await client
+        .from('venue_discussion_votes')
+        .insert({
+          target_id: commentId,
+          target_type: 'comment',
+          user_id: userId,
+          vote: voteType,
+        });
+
+      if (insertError) {
+        console.error('[CommunityService] Error adding comment vote:', insertError);
+        return { data: null, error: `Vote failed: ${insertError.message}` };
+      }
+
+      // Update counts
+      if (voteType === 1) {
+        newUpvotes = newUpvotes + 1;
+        hasUpvoted = true;
+      } else {
+        newDownvotes = newDownvotes + 1;
+        hasDownvoted = true;
+      }
+    }
+
+    // Update comment vote counts
+    const { error: updateCommentError } = await client
+      .from('venue_discussion_comments')
+      .update({ upvotes: newUpvotes, downvotes: newDownvotes })
+      .eq('id', commentId);
+
+    if (updateCommentError) {
+      console.error('[CommunityService] Error updating comment counts:', updateCommentError);
+      // Don't fail - the vote was recorded
+    }
+
+    return {
+      data: {
+        hasUpvoted,
+        hasDownvoted,
+        upvotes: newUpvotes,
+        downvotes: newDownvotes,
+      },
+      error: null,
+    };
+  } catch (err) {
+    console.error('[CommunityService] Comment vote exception:', err);
+    return { data: null, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+/**
  * Service object for convenient imports
  */
 export const communityService = {
@@ -868,6 +1055,8 @@ export const communityService = {
   checkUserVote,
   toggleUpvote,
   incrementViewCount,
+  checkCommentVote,
+  toggleCommentVote,
 };
 
 export default communityService;

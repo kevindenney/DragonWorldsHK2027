@@ -103,7 +103,7 @@ export interface LocationData {
   id: string;
   name: string;
   coordinate: LocationCoordinate;
-  type: 'marina' | 'race-area' | 'harbor' | 'city' | 'custom';
+  type: 'marina' | 'race-area' | 'harbor' | 'city' | 'custom' | 'bay';
   description?: string;
 }
 
@@ -473,7 +473,8 @@ export const useWeatherStore = create<WeatherState>()(
       units: {
         temperature: 'C',
         windSpeed: 'kts',
-        pressure: 'hPa'
+        pressure: 'hPa',
+        distance: 'metric'
       },
       selectedDayId: null,
 

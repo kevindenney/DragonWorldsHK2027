@@ -100,7 +100,7 @@ export const WindRoseChart: React.FC<WindRoseChartProps> = ({
   };
 
   const renderWindSectors = () => {
-    const sectorElements: JSX.Element[] = [];
+    const sectorElements: React.ReactElement[] = [];
     const maxFrequency = Math.max(...Object.values(windSectors).map(sector => sector.length));
 
     // Render frequency bars for each sector
@@ -197,7 +197,7 @@ export const WindRoseChart: React.FC<WindRoseChartProps> = ({
   const renderRacingLines = () => {
     if (!showRacingLines) return null;
 
-    const elements: JSX.Element[] = [];
+    const elements: React.ReactElement[] = [];
     
     // Course line
     const courseRadian = (courseBearing * Math.PI) / 180;

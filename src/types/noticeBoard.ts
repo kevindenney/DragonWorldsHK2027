@@ -65,7 +65,7 @@ export interface EventDocument {
   version: string;
   keyData?: DocumentKeyData;
   downloadOptions?: DocumentOptions;
-  priority: 'low' | 'medium' | 'high' | 'critical';
+  priority: 'low' | 'medium' | 'high' | 'urgent' | 'critical';
   status: 'draft' | 'published' | 'amended' | 'superseded';
 }
 
@@ -105,7 +105,7 @@ export interface OfficialNotification {
   title: string;
   content: string;
   type: NotificationType;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  priority: 'low' | 'medium' | 'high' | 'urgent' | 'critical';
   publishedAt: string;
   expiresAt?: string;
   author: string;

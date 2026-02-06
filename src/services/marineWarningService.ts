@@ -110,8 +110,8 @@ class MarineWarningService {
       });
 
       // Analyze current conditions for potential warnings
-      marineForecasts.forEach((forecast: Record<string, unknown>) => {
-        const localWarnings = this.analyzeLocalConditions(forecast);
+      marineForecasts.forEach((forecast) => {
+        const localWarnings = this.analyzeLocalConditions(forecast as any);
         localWarnings.forEach(warning => {
           this.warnings.set(warning.id, warning);
           this.checkForAlert(warning);
@@ -143,11 +143,11 @@ class MarineWarningService {
       windSpeed: hkoWarning.maxWindSpeed,
       waveHeight: hkoWarning.maxWaveHeight,
       visibility: hkoWarning.minVisibility,
-      validFrom: hkoWarning.validFrom,
-      validUntil: hkoWarning.validUntil,
-      issuedAt: hkoWarning.issuedAt,
-      lastUpdated: hkoWarning.lastUpdated,
-      isActive: hkoWarning.isActive,
+      validFrom: hkoWarning.validFrom ?? new Date().toISOString(),
+      validUntil: hkoWarning.validUntil ?? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      issuedAt: hkoWarning.issuedAt ?? new Date().toISOString(),
+      lastUpdated: hkoWarning.lastUpdated ?? new Date().toISOString(),
+      isActive: hkoWarning.isActive ?? true,
       source: 'HKO'
     };
   }

@@ -312,8 +312,8 @@ const useAnimatedStyle = (styleFunction: () => any) => {
 };
 
 const useAnimatedGestureHandler = (handlers: any) => {
-  // Return empty handler
-  return {};
+  // Return a no-op function that can be used as onGestureEvent handler
+  return () => {};
 };
 
 // Reanimated animation functions - provide fallbacks

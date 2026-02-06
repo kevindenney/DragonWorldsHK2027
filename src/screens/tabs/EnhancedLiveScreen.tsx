@@ -119,14 +119,16 @@ export const EnhancedLiveScreen: React.FC<LiveScreenProps> = ({ navigation }) =>
       <View style={styles.contextHeader}>
         <IOSText style={styles.contextTitle}>2027 Dragon World Championship</IOSText>
         <View style={styles.eventToggle}>
-          <IOSBadge 
-            text="Asia Pacific" 
-            variant={liveContext.eventType === 'asia-pacific' ? 'primary' : 'secondary'}
+          <IOSBadge
+            text="Asia Pacific"
+            variant={liveContext.eventType === 'asia-pacific' ? 'filled' : 'tinted'}
+            color="systemBlue"
             size="small"
           />
-          <IOSBadge 
-            text="World Champ" 
-            variant={liveContext.eventType === 'world-championship' ? 'primary' : 'secondary'} 
+          <IOSBadge
+            text="World Champ"
+            variant={liveContext.eventType === 'world-championship' ? 'filled' : 'tinted'}
+            color="systemBlue"
             size="small"
           />
         </View>
@@ -223,7 +225,7 @@ export const EnhancedLiveScreen: React.FC<LiveScreenProps> = ({ navigation }) =>
           <IOSText style={styles.alertMessage}>{weatherAlert.message}</IOSText>
           <IOSButton
             title="View Details"
-            variant="ghost"
+            variant="plain"
             size="small"
             onPress={() => navigation.navigate('Weather')}
             style={styles.alertButton}
@@ -251,16 +253,17 @@ export const EnhancedLiveScreen: React.FC<LiveScreenProps> = ({ navigation }) =>
         </IOSText>
         
         <View style={styles.weatherFooter}>
-          <IOSBadge 
-            text={`Racing: ${quickWeather.raceConditions}`} 
-            variant={quickWeather.raceConditions === 'excellent' ? 'success' : 'secondary'}
+          <IOSBadge
+            text={`Racing: ${quickWeather.raceConditions}`}
+            variant={quickWeather.raceConditions === 'excellent' ? 'filled' : 'tinted'}
+            color={quickWeather.raceConditions === 'excellent' ? 'systemGreen' : 'systemGray'}
           />
           <IOSButton
             title="Full Forecast"
-            variant="ghost"
+            variant="plain"
             size="small"
             onPress={() => navigation.navigate('Weather')}
-            icon={ChevronRight}
+            icon={<ChevronRight size={16} color="#007AFF" />}
           />
         </View>
         
@@ -290,7 +293,7 @@ export const EnhancedLiveScreen: React.FC<LiveScreenProps> = ({ navigation }) =>
           title={liveContext.status === 'social-time' ? "Join Celebration" : "Get Ready"}
           variant="primary"
           size="small"
-          onPress={() => navigation.navigate('Schedule')}
+          onPress={() => navigation.navigate('MainTabs', { screen: 'Schedule' })}
           style={styles.eventButton}
         />
       </IOSCard>
@@ -320,10 +323,10 @@ export const EnhancedLiveScreen: React.FC<LiveScreenProps> = ({ navigation }) =>
           
           <IOSButton
             title="Full Standings"
-            variant="ghost"
+            variant="plain"
             size="small"
             onPress={() => navigation.navigate('Services')}
-            icon={ChevronRight}
+            icon={<ChevronRight size={16} color="#007AFF" />}
             style={styles.standingsButton}
           />
         </IOSCard>
@@ -712,5 +715,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
 });
+
+// Named export for backward compatibility
+export const LiveScreen = EnhancedLiveScreen;
 
 export default EnhancedLiveScreen;

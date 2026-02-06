@@ -102,7 +102,7 @@ export class UserProfileService {
           updatedAt: toFirestoreTimestamp(),
           lastLoginAt: toFirestoreTimestamp(),
           lastActiveAt: toFirestoreTimestamp(),
-          loginCount: 1,
+          loginCount: 0,
         },
       };
 
@@ -140,7 +140,7 @@ export class UserProfileService {
       };
 
       // Update Firebase Auth profile if needed
-      const firebaseUser = auth.currentUser;
+      const firebaseUser = auth?.currentUser;
       if (firebaseUser && (updates.displayName || updates.photoURL)) {
         await updateProfile(firebaseUser, {
           ...(updates.displayName && { displayName: updates.displayName }),
@@ -197,7 +197,7 @@ export class UserProfileService {
 
     try {
       // Update Firebase Auth profile if needed
-      const firebaseUser = auth.currentUser;
+      const firebaseUser = auth?.currentUser;
       if (firebaseUser && (profileInfo.displayName || profileInfo.photoURL)) {
         await updateProfile(firebaseUser, {
           ...(profileInfo.displayName && { displayName: profileInfo.displayName }),
@@ -352,9 +352,9 @@ export class UserProfileService {
       
       // Delete Firestore profile
       await userDatabaseService.deleteUserProfile(uid);
-      
+
       // Delete Firebase Auth user
-      const firebaseUser = auth.currentUser;
+      const firebaseUser = auth?.currentUser;
       if (firebaseUser) {
         await firebaseUser.delete();
       }

@@ -917,9 +917,6 @@ export const useWhatsAppGroups = () => useSocialStore(state => state.whatsappGro
 export const useJoinedGroups = (): WhatsAppGroup[] => useSocialStore(state => {
   const { whatsappGroups, joinedGroups } = state;
   return whatsappGroups.filter(group => joinedGroups.includes(group.id));
-}, (a: WhatsAppGroup[], b: WhatsAppGroup[]) => {
-  // Custom equality function to prevent unnecessary re-renders
-  return a.length === b.length && a.every((group, index) => group.id === b[index]?.id);
 });
 export const useActiveDiscussions = () => useSocialStore(state => state.activeDiscussions);
 export const useSailingConnections = () => useSocialStore(state => state.connections);
@@ -937,9 +934,6 @@ export const useAvailableGroups = (): WhatsAppGroup[] =>
       !joinedGroups.includes(group.id) &&
       !blockedGroups.includes(group.id)
     );
-  }, (a: WhatsAppGroup[], b: WhatsAppGroup[]) => {
-    // Custom equality function to prevent unnecessary re-renders
-    return a.length === b.length && a.every((group, index) => group.id === b[index]?.id);
   });
 
 export const useConnectionsByRole = (role: SailingConnection['role']) =>

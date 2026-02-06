@@ -752,13 +752,13 @@ export class PaymentService {
     tierId: SubscriptionTierId,
     userId: string
   ): PromotionalOffer | null {
-    const offer = this.promotionalOffers.find(o => 
-      o.id === offerId && 
-      o.isActive && 
+    const offer = this.promotionalOffers.find(o =>
+      o.id === offerId &&
+      o.isActive &&
       new Date() >= new Date(o.validFrom) &&
       new Date() <= new Date(o.validTo) &&
       o.applicableProducts.includes(`dragon_${tierId}_monthly`) &&
-      (!offer.usageLimit || o.usedCount < o.usageLimit)
+      (!o.usageLimit || o.usedCount < (o.usageLimit || 0))
     );
 
     return offer || null;
@@ -900,8 +900,12 @@ export class PaymentService {
     }
   ): Promise<PaymentMethod | null> {
     try {
+      // Map payment type to gateway-supported types
+      const gatewayType = (['card', 'apple_pay', 'google_pay'].includes(paymentData.type))
+        ? paymentData.type as 'card' | 'apple_pay' | 'google_pay'
+        : undefined;
       const gatewayMethod = await paymentGatewayService.addPaymentMethod(userId, {
-        type: paymentData.type === 'card' ? 'card' : paymentData.type,
+        type: gatewayType,
         brand: paymentData.brand,
         last4: paymentData.last4,
         expiryMonth: paymentData.expiryMonth,

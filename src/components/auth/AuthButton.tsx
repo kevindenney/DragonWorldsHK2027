@@ -59,7 +59,10 @@ export function AuthButton({
     }
 
     if (style) {
-      baseStyle.push(style);
+      const flattenedStyle = StyleSheet.flatten(style);
+      if (flattenedStyle) {
+        baseStyle.push(flattenedStyle);
+      }
     }
 
     return baseStyle;

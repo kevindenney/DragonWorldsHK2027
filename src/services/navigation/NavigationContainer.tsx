@@ -160,15 +160,15 @@ const MainApp = () => {
       {/** Detail screens within tab stacks should not be declared here to preserve the tab bar */}
       <Stack.Screen
         name="DocumentViewer"
-        component={DocumentViewer}
+        component={DocumentViewer as any}
       />
       <Stack.Screen
         name="NotificationDetail"
-        component={NotificationDetail}
+        component={NotificationDetail as any}
       />
       <Stack.Screen
         name="EntryList"
-        component={EntryList}
+        component={EntryList as any}
       />
       <Stack.Screen
         name="Profile"

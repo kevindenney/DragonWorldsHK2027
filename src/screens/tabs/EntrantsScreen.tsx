@@ -102,9 +102,37 @@ export const EntrantsScreen: React.FC<EntrantsScreenProps & EntrantsScreenCustom
   const { toolbarTranslateY, createScrollHandler } = useToolbarVisibility();
   const scrollHandler = useMemo(() => createScrollHandler(), [createScrollHandler]);
 
-  // Polling indicator animation
+  // Polling indicator animation refs
   const spinAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Get current event configuration
+  const currentEvent = selectedEvent === 'world'
+    ? eventSchedules.worldChampionship
+    : eventSchedules.asiaPacificChampionships;
+
+  // Get regatta ID from config
+  const regattaId = useMemo(() => {
+    return selectedEvent === 'world'
+      ? externalUrls.clubSpot.regattaIds?.worlds || 'zyQIfeVjhb'
+      : externalUrls.clubSpot.regattaIds?.apac || 'p75RuY5UZc';
+  }, [selectedEvent]);
+
+  // Use the ClubSpot entrants hook with polling enabled
+  const {
+    entrants,
+    isLoading,
+    isRefreshing,
+    error: hookError,
+    dataSourceInfo,
+    refresh,
+    isLiveData,
+    lastUpdatedText,
+    isPolling,
+    pollingInterval,
+  } = useClubSpotEntrants(regattaId, currentEvent.id, {
+    pollingInterval: 30000, // Poll every 30 seconds
+  });
 
   // Start/stop spin animation when refreshing
   useEffect(() => {
@@ -149,34 +177,6 @@ export const EntrantsScreen: React.FC<EntrantsScreenProps & EntrantsScreenCustom
   const spinInterpolation = spinAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
-  });
-
-  // Get current event configuration
-  const currentEvent = selectedEvent === 'world'
-    ? eventSchedules.worldChampionship
-    : eventSchedules.asiaPacificChampionships;
-
-  // Get regatta ID from config
-  const regattaId = useMemo(() => {
-    return selectedEvent === 'world'
-      ? externalUrls.clubSpot.regattaIds?.worlds || 'zyQIfeVjhb'
-      : externalUrls.clubSpot.regattaIds?.apac || 'p75RuY5UZc';
-  }, [selectedEvent]);
-
-  // Use the ClubSpot entrants hook with polling enabled
-  const {
-    entrants,
-    isLoading,
-    isRefreshing,
-    error: hookError,
-    dataSourceInfo,
-    refresh,
-    isLiveData,
-    lastUpdatedText,
-    isPolling,
-    pollingInterval,
-  } = useClubSpotEntrants(regattaId, currentEvent.id, {
-    pollingInterval: 30000, // Poll every 30 seconds
   });
 
   // Convert hook error to string

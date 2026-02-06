@@ -706,7 +706,6 @@ export function DiscussScreen({ onBack }: DiscussScreenProps) {
             selectedIndex={selectedSegment === 'feed' ? 0 : 1}
             onChange={handleSegmentChange}
             style={styles.segmentControl}
-            testID="discuss-segment-control"
           />
         </View>
       </Animated.View>

@@ -61,7 +61,7 @@ export const ChartWithTimeIndicators: React.FC<ChartWithTimeIndicatorsProps> = (
           height={chartHeight}
           chartConfig={chartConfig}
           bezier
-          style={[styles.chart, style]}
+          style={StyleSheet.flatten([styles.chart, style])}
           withDots={false}
           withShadow={false}
           withInnerLines={true}

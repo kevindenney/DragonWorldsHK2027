@@ -18,6 +18,18 @@ export default ({ config }) => {
     config.plugins.push(googleSignInPlugin);
   }
 
+  // Add expo-image-picker plugin for profile photo functionality
+  const imagePickerPlugin = 'expo-image-picker';
+  if (!config.plugins.some(p => p === imagePickerPlugin || (Array.isArray(p) && p[0] === imagePickerPlugin))) {
+    config.plugins.push([
+      imagePickerPlugin,
+      {
+        photosPermission: 'Allow Dragon Worlds HK to access your photos to set your profile picture.',
+        cameraPermission: 'Allow Dragon Worlds HK to access your camera to take a profile picture.',
+      },
+    ]);
+  }
+
   // Inject Google Maps API key from environment variable
   const googleMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   if (googleMapsApiKey) {

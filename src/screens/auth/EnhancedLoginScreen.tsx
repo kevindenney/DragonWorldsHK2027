@@ -302,8 +302,7 @@ const styles = StyleSheet.create({
     marginTop: darkSkySpacing.sm,
     paddingTop: darkSkySpacing.md,
     borderTopWidth: 1,
-    borderTopColor: darkSkyColors.cardBorder,
-    borderTopOpacity: 0.3,
+    borderTopColor: `${darkSkyColors.cardBorder}4D`, // 4D = 30% opacity in hex
   },
   registerPrompt: {
     ...darkSkyTypography.bodyMedium,

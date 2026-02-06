@@ -42,18 +42,13 @@ export { weatherManager } from './weatherManager';
 const weatherManager = _weatherManager;
 export type {
   ProcessedWeatherData,
-  WeatherAlert
+  WeatherAlert as WeatherManagerAlert
 } from './weatherManager';
 
 import { notificationService as _notificationService } from './notificationService';
 export { notificationService } from './notificationService';
-export type {
-  NotificationPreferences,
-  WeatherAlert as NotificationWeatherAlert,
-  RaceNotification,
-  SubscriptionNotification,
-  NotificationSchedule
-} from './notificationService';
+// Note: NotificationService types are not exported from notificationService
+// Use NotificationPreferences from stores/userStore if needed
 const notificationService = _notificationService;
 
 import { errorHandler as _errorHandler } from './errorHandler';
@@ -82,15 +77,13 @@ export const initializeServices = async () => {
     await errorHandler.initialize();
     
     // Initialize notification service
-    const notificationInitialized = await notificationService.initialize();
-    if (!notificationInitialized) {
-    }
+    await notificationService.initialize();
     
     // Weather manager will auto-initialize when first used
     
     return {
       errorHandler: true,
-      notifications: notificationInitialized,
+      notifications: true,
       weather: true,
       subscription: true
     };
@@ -146,17 +139,27 @@ export const checkServiceHealth = async () => {
 // Service sync helper for background refresh
 export const syncAllServices = async () => {
   try {
-    
+
     // Sync weather data
     await weatherManager.updateWeatherData();
-    
+
     // Monitor subscription status
-    await notificationService.monitorSubscriptionStatus();
-    
+    const status = subscriptionService.getSubscriptionStatus();
+    if (status) {
+      const now = new Date();
+      const endDate = new Date(status.endDate);
+      const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      await notificationService.monitorSubscriptionStatus({
+        isActive: status.status === 'active' || status.status === 'trial',
+        isTrial: status.status === 'trial' || status.isTrial === true,
+        daysRemaining: Math.max(0, daysRemaining)
+      });
+    }
+
     // Process any offline actions
     // (errorHandler will automatically handle this when network becomes available)
-    
-    
+
+
   } catch (error) {
     errorHandler.logError({
       type: 'general',

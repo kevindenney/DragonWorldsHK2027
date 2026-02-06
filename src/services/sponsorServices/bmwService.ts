@@ -1,4 +1,4 @@
-import { UserStore } from '../../stores/userStore';
+import type { UserState } from '../../stores/userStore';
 
 export interface BMWVehicle {
   id: string;
@@ -166,10 +166,10 @@ export interface BMWServiceConfig {
 
 class BMWService {
   private config: BMWServiceConfig;
-  private userStore: typeof UserStore;
+  private userState: UserState;
 
-  constructor(userStore: typeof UserStore) {
-    this.userStore = userStore;
+  constructor(userState: UserState) {
+    this.userState = userState;
     this.config = {
       baseUrl: process.env.EXPO_PUBLIC_BMW_API_URL || 'https://api.bmw.com.hk/mobility',
       apiKey: process.env.EXPO_PUBLIC_BMW_API_KEY || 'demo_key',

@@ -32,6 +32,12 @@ export interface UserProfile {
   needsVerification?: boolean;
   joinedAt?: string;
   preferences?: UserPreferences;
+
+  // Sponsor integrations
+  hsbc?: {
+    isConnected: boolean;
+    isPremier: boolean;
+  };
 }
 
 export interface SailingExperience {
@@ -139,7 +145,7 @@ export interface SailingPreferences {
 export interface Subscription {
   id: string;
   type: 'free' | 'basic' | 'professional' | 'elite';
-  status: 'active' | 'cancelled' | 'expired' | 'trial';
+  status: 'active' | 'cancelled' | 'expired' | 'trial' | 'grace-period';
   startDate: string;
   endDate: string;
   renewalDate?: string;

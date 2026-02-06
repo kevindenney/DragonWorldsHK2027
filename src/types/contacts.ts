@@ -1,4 +1,4 @@
-export type ContactRole = 
+export type ContactRole =
   | 'principal-race-officer'
   | 'chief-judge'
   | 'regatta-director'
@@ -15,7 +15,8 @@ export type ContactRole =
   | 'event-medical'
   | 'race-official'
   | 'mark-boat-crew'
-  | 'shore-support';
+  | 'shore-support'
+  | 'event-coordinator';
 
 export type ContactCategory =
   | 'race-management'

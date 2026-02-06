@@ -249,13 +249,13 @@ export const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({ on
               <SocialLoginButton
                 provider={AuthProvider.GOOGLE}
                 onPress={() => handleSocialSignUp('google')}
-                isLoading={isLoading}
+                loading={isLoading}
                 style={styles.socialButton}
               />
               <SocialLoginButton
                 provider={AuthProvider.APPLE}
                 onPress={() => handleSocialSignUp('apple')}
-                isLoading={isLoading}
+                loading={isLoading}
                 style={styles.socialButton}
               />
             </View>
@@ -272,34 +272,34 @@ export const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({ on
           <IOSSection title="CREATE ACCOUNT" style={styles.formSection}>
             <View style={styles.formContainer}>
               <AuthInput
-                icon={User}
+                label="Display Name"
+                leftIcon={<User size={20} color="#8E8E93" />}
                 placeholder="Display Name"
                 value={displayName}
                 onChangeText={setDisplayName}
                 error={displayNameError}
                 autoCapitalize="words"
-                style={styles.input}
               />
 
               <AuthInput
-                icon={Mail}
+                label="Email Address"
+                leftIcon={<Mail size={20} color="#8E8E93" />}
                 placeholder="Email Address"
                 value={email}
                 onChangeText={setEmail}
                 error={emailError}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                style={styles.input}
               />
 
               <AuthInput
-                icon={Lock}
+                label="Password"
+                leftIcon={<Lock size={20} color="#8E8E93" />}
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
                 error={passwordError}
                 secureTextEntry
-                style={styles.input}
               />
 
               <IOSButton

@@ -33,6 +33,7 @@ export type RootStackParamList = {
   RaceForms: undefined;
   Services: undefined;
   RacingRules: undefined;
+  Social: undefined;
 };
 
 export type RootStackScreenProps<Screen extends keyof RootStackParamList> =
@@ -58,6 +59,7 @@ export type ShippingScreenProps = StackScreenProps<RootStackParamList, 'MainTabs
 export type WeatherScreenProps = StackScreenProps<RootStackParamList, 'Weather'>;
 export type SocialScreenProps = StackScreenProps<RootStackParamList, 'MainTabs'>;
 export type ServicesScreenProps = StackScreenProps<RootStackParamList, 'MainTabs'>;
+export type LiveScreenProps = StackScreenProps<RootStackParamList, 'MainTabs'>;
 
 declare global {
   namespace ReactNavigation {

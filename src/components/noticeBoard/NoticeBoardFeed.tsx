@@ -228,8 +228,8 @@ export function NoticeBoardFeed({
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'priority':
-          const priorityOrder = { urgent: 4, high: 3, medium: 2, low: 1 };
-          return priorityOrder[b.priority] - priorityOrder[a.priority];
+          const priorityOrder: Record<string, number> = { critical: 5, urgent: 4, high: 3, medium: 2, low: 1 };
+          return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
         case 'category':
           return a.type.localeCompare(b.type);
         case 'newest':
@@ -410,7 +410,8 @@ export function NoticeBoardFeed({
         </View>
       </IOSCard>
     </TouchableOpacity>
-  );
+    );
+  };
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -879,7 +880,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
-}
 
 export default NoticeBoardFeed;

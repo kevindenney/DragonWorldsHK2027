@@ -57,7 +57,7 @@ export const requestCalendarPermissions = async (): Promise<boolean> => {
     }
 
     logCalendarDebug('Checking current permission status');
-    const currentStatus = await Calendar.getCalendarPermissionsAsync();
+    const currentStatus = await Calendar.requestCalendarPermissionsAsync();
     logCalendarDebug('Current calendar permission status:', currentStatus);
 
     if (currentStatus.status === 'granted') {
@@ -321,7 +321,7 @@ export const addActivityToCalendar = async (
 export const hasCalendarPermissions = async (): Promise<boolean> => {
   try {
     logCalendarDebug('Checking if calendar permissions are granted');
-    const { status } = await Calendar.getCalendarPermissionsAsync();
+    const { status } = await Calendar.requestCalendarPermissionsAsync();
     logCalendarDebug('Permission check result:', { status });
     return status === 'granted';
   } catch (error) {
@@ -350,7 +350,7 @@ export const testCalendarModule = async (): Promise<void> => {
     // Test 2: Permission status check
     logCalendarDebug('Test 2: Permission status check');
     try {
-      const permissionStatus = await Calendar.getCalendarPermissionsAsync();
+      const permissionStatus = await Calendar.requestCalendarPermissionsAsync();
       logCalendarDebug('Permission status:', permissionStatus);
     } catch (error) {
       logCalendarError('Permission status check failed', error);

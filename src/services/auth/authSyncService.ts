@@ -256,6 +256,9 @@ export class AuthSyncService {
    * Force sync for current user
    */
   async forceSyncCurrentUser(): Promise<User | null> {
+    if (!auth) {
+      return null;
+    }
     const firebaseUser = auth.currentUser;
     if (!firebaseUser) {
       return null;
@@ -269,6 +272,9 @@ export class AuthSyncService {
    */
   async handleEmailVerification(uid: string): Promise<User | null> {
     try {
+      if (!auth) {
+        throw new AuthSyncError('auth_not_initialized', 'Firebase Auth is not initialized');
+      }
       const firebaseUser = auth.currentUser;
       if (!firebaseUser || firebaseUser.uid !== uid) {
         throw new AuthSyncError('user_mismatch', 'Firebase user does not match provided UID');

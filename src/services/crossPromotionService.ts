@@ -111,9 +111,9 @@ export class CrossPromotionService {
       // Determine segments
       const segments = Array.from(this.userSegments.values()).filter(segment => {
         const criteria = segment.criteria;
-        
+
         // Check subscription tier
-        if (criteria.subscriptionTier && !criteria.subscriptionTier.includes(subscription.tier)) {
+        if (criteria.subscriptionTier && subscription?.tier && !criteria.subscriptionTier.includes(subscription.tier)) {
           return false;
         }
         

@@ -240,7 +240,7 @@ export const GoogleWeatherScreen: React.FC<GoogleWeatherScreenProps> = ({
             uvIndex: forecast.uvIndex || 5,
             humidity: forecast.humidity || 70
           }))}
-          selectedDayId={selectedDay}
+          selectedDayId={selectedDay ?? ''}
           onDaySelect={handleDaySelectorSelect}
           loading={loading}
         />

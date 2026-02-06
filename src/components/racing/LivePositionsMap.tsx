@@ -68,7 +68,7 @@ export const LivePositionsMap: React.FC<LivePositionsMapProps> = ({
   mapType = 'standard',
   followLeader = false,
 }) => {
-  const mapRef = useRef<React.ElementRef<typeof MapView>>(null);
+  const mapRef = useRef<{ animateToRegion?: (region: any, duration?: number) => void } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [settings, setSettings] = useState<MapSettings>({
     showCourse: true,
@@ -119,7 +119,7 @@ export const LivePositionsMap: React.FC<LivePositionsMapProps> = ({
   useEffect(() => {
     if (followMode && positions.length > 0) {
       const leader = positions.find(p => p.position === 1);
-      if (leader && mapRef.current) {
+      if (leader && mapRef.current?.animateToRegion) {
         mapRef.current.animateToRegion({
           latitude: leader.latitude,
           longitude: leader.longitude,
@@ -148,7 +148,7 @@ export const LivePositionsMap: React.FC<LivePositionsMapProps> = ({
     const deltaLat = (maxLat - minLat) * 1.2; // Add 20% padding
     const deltaLng = (maxLng - minLng) * 1.2;
 
-    mapRef.current.animateToRegion({
+    mapRef.current?.animateToRegion?.({
       latitude: centerLat,
       longitude: centerLng,
       latitudeDelta: Math.max(deltaLat, 0.01),

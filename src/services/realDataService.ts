@@ -1,4 +1,4 @@
-import { NoticeBoardEvent, EventDocument, Competitor, OfficialNotification } from '../types/noticeBoard';
+import { NoticeBoardEvent, EventDocument, Competitor, OfficialNotification, RegattaCategory } from '../types/noticeBoard';
 import { 
   collection, 
   query, 
@@ -532,7 +532,10 @@ export class RealDataService {
         lastModified: new Date().toISOString(),
         size: 0, // Would need HEAD request to get size
         isRequired: false,
-        category: 'document'
+        category: RegattaCategory.PRE_EVENT,
+        version: '1.0',
+        priority: 'medium',
+        status: 'published'
       });
     }
     

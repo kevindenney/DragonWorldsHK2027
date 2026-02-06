@@ -63,6 +63,10 @@ export interface SailingLocation {
   importance: 'primary' | 'secondary' | 'tertiary';
   operatingHours?: string;
   championshipSpecific?: boolean;
+
+  // Booking information (for hotels/accommodation)
+  bookingUrl?: string;
+  bookingPromoCode?: string;
 }
 
 export interface SailingLocationFilter {

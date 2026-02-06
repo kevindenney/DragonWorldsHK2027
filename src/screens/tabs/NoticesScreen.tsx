@@ -45,12 +45,12 @@ import { useAuth } from '../../hooks/useAuth';
 import { useSelectedEvent, useSetSelectedEvent, useEventStoreHydrated } from '../../stores/eventStore';
 import { EVENTS } from '../../constants/events';
 
-import type {
-  NoticeBoardEvent,
-  OfficialNotification,
-  EventDocument,
+import {
   RegattaCategory,
-  SearchFilters
+  type NoticeBoardEvent,
+  type OfficialNotification,
+  type EventDocument,
+  type SearchFilters
 } from '../../types/noticeBoard';
 
 interface NoticesScreenProps {
@@ -67,7 +67,7 @@ type NoticeItem = (OfficialNotification | EventDocument) & {
   priority: 'low' | 'medium' | 'high' | 'urgent' | 'critical';
   publishedAt: string;
   category?: RegattaCategory;
-  isRead: boolean;
+  isRead?: boolean;
 };
 
 export const NoticesScreen: React.FC<NoticesScreenProps> = ({
@@ -316,12 +316,17 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
 
   // Category counts for filter chips - based on all notices (not filtered) to show total counts
   const categoryCounts = useMemo((): CategoryCount[] => {
-    const categoryMap = new Map<RegattaCategory | 'all' | 'administrative', { count: number; unreadCount: number }>();
+    const categoryMap = new Map<RegattaCategory | 'all', { count: number; unreadCount: number }>();
 
     // Initialize with all possible categories
-    const allCategories: (RegattaCategory | 'all' | 'administrative')[] = [
-      'all', 'pre_event', 'daily_operations', 'competition_management',
-      'protests_hearings', 'safety_regulatory', 'administrative'
+    const allCategories: (RegattaCategory | 'all')[] = [
+      'all',
+      RegattaCategory.PRE_EVENT,
+      RegattaCategory.DAILY_OPERATIONS,
+      RegattaCategory.COMPETITION_MANAGEMENT,
+      RegattaCategory.PROTESTS_HEARINGS,
+      RegattaCategory.SAFETY_REGULATORY,
+      RegattaCategory.ADMINISTRATIVE
     ];
 
     allCategories.forEach(cat => {
@@ -330,7 +335,7 @@ export const NoticesScreen: React.FC<NoticesScreenProps> = ({
 
     // Count notices by category using allNotices to show total counts
     allNotices.forEach(notice => {
-      const category = notice.category || 'administrative';
+      const category = notice.category || RegattaCategory.ADMINISTRATIVE;
       const isUnread = !notice.isRead;
 
       // Update specific category count

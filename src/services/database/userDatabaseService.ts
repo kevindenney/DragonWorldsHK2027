@@ -37,10 +37,10 @@ export class UserDatabaseService {
         profile: { ...defaultUserProfile, ...userData.profile },
         preferences: { ...defaultUserPreferences, ...userData.preferences },
         metadata: {
+          ...userData.metadata,
           createdAt: toFirestoreTimestamp(),
           updatedAt: toFirestoreTimestamp(),
           loginCount: 0,
-          ...userData.metadata,
         },
       };
 
@@ -92,13 +92,13 @@ export class UserDatabaseService {
    */
   async updateUserProfile(uid: string, updates: UpdateUserProfile): Promise<User> {
     // Add update timestamp to metadata
-    const updateData: UpdateUserProfile = {
+    const updateData = {
       ...updates,
       metadata: {
         ...updates.metadata,
         updatedAt: toFirestoreTimestamp(),
       },
-    };
+    } as UpdateUserProfile;
 
     const updatedUser = await firestoreService.updateDocument(
       CollectionName.USERS,
@@ -129,7 +129,7 @@ export class UserDatabaseService {
       metadata: {
         updatedAt: toFirestoreTimestamp(),
       },
-    };
+    } as any;
 
     const updatedUser = await firestoreService.updateDocument(
       CollectionName.USERS,
@@ -160,7 +160,7 @@ export class UserDatabaseService {
       metadata: {
         updatedAt: toFirestoreTimestamp(),
       },
-    };
+    } as any;
 
     const updatedUser = await firestoreService.updateDocument(
       CollectionName.USERS,

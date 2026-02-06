@@ -32,6 +32,8 @@ export const communityQueryKeys = {
     [...communityQueryKeys.all, 'comments', postId] as const,
   userVote: (postId: string, userId: string) =>
     [...communityQueryKeys.all, 'vote', postId, userId] as const,
+  commentVote: (commentId: string, userId: string) =>
+    [...communityQueryKeys.all, 'comment-vote', commentId, userId] as const,
 };
 
 /**
@@ -603,6 +605,88 @@ export function useIncrementViewCount() {
         console.warn('[useIncrementViewCount] Error:', result.error);
       }
       return result.data;
+    },
+  });
+}
+
+/**
+ * Hook to check if user has voted on a comment
+ * @param commentId - The comment UUID
+ */
+export function useCommentVote(commentId: string | undefined) {
+  const { session, isValid } = useRegattaFlowSession();
+
+  return useQuery({
+    queryKey:
+      commentId && session?.userId
+        ? communityQueryKeys.commentVote(commentId, session.userId)
+        : [...communityQueryKeys.all, 'comment-vote', 'none'],
+    queryFn: async () => {
+      if (!commentId || !session?.userId || !session.accessToken) {
+        return null;
+      }
+      const result = await communityService.checkCommentVote(
+        commentId,
+        session.userId,
+        session.accessToken
+      );
+      if (result.error) {
+        console.warn('[useCommentVote] Error:', result.error);
+        return null;
+      }
+      return result.data;
+    },
+    enabled: !!commentId && isValid && !!session?.userId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+  });
+}
+
+/**
+ * Parameters for toggling a comment vote
+ */
+interface ToggleCommentVoteParams {
+  commentId: string;
+  voteType: 1 | -1; // 1 = upvote, -1 = downvote
+}
+
+/**
+ * Hook to toggle vote on a comment
+ */
+export function useToggleCommentVote() {
+  const queryClient = useQueryClient();
+  const { session } = useRegattaFlowSession();
+
+  return useMutation({
+    mutationFn: async ({ commentId, voteType }: ToggleCommentVoteParams) => {
+      if (!session?.userId || !session.accessToken) {
+        throw new Error('You must be signed in to vote');
+      }
+
+      const result = await communityService.toggleCommentVote(
+        commentId,
+        session.userId,
+        voteType,
+        session.accessToken
+      );
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      return result.data;
+    },
+    onSuccess: (_, { commentId }) => {
+      // Invalidate comment vote query
+      if (session?.userId) {
+        queryClient.invalidateQueries({
+          queryKey: communityQueryKeys.commentVote(commentId, session.userId),
+        });
+      }
+      // Invalidate comments to update vote counts
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.all,
+      });
     },
   });
 }

@@ -170,7 +170,7 @@ class TideDataService {
       currentHeight: hkoStation.currentHeight || 1.5,
       trend,
       nextTide,
-      lastUpdated: hkoStation.lastUpdated,
+      lastUpdated: hkoStation.lastUpdated || new Date().toISOString(),
       dataQuality: 'high',
       hkoStationId: stationInfo.stationId,
       isHKOData: true,
@@ -186,9 +186,11 @@ class TideDataService {
    * Calculate tide trend from HKO data or time-based estimation
    */
   private calculateTideTrendFromHKOData(hkoStation?: HKOTideStation): 'rising' | 'falling' | 'stable' {
-    // If we have HKO trend data, use it
+    // If we have HKO trend data, use it (map 'slack' to 'stable')
     if (hkoStation?.trend) {
-      return hkoStation.trend;
+      const trend = hkoStation.trend;
+      if (trend === 'slack') return 'stable';
+      return trend as 'rising' | 'falling' | 'stable';
     }
 
     // Fallback to time-based calculation

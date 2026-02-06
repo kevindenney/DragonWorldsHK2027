@@ -1,4 +1,4 @@
-import { UserStore } from '../../stores/userStore';
+import type { UserState } from '../../stores/userStore';
 
 export interface SinoProperty {
   id: string;
@@ -168,10 +168,10 @@ export interface SinoServiceConfig {
 
 class SinoGroupService {
   private config: SinoServiceConfig;
-  private userStore: typeof UserStore;
+  private userState: UserState;
 
-  constructor(userStore: typeof UserStore) {
-    this.userStore = userStore;
+  constructor(userState: UserState) {
+    this.userState = userState;
     this.config = {
       baseUrl: process.env.EXPO_PUBLIC_SINO_API_URL || 'https://api.sino.com/hospitality',
       apiKey: process.env.EXPO_PUBLIC_SINO_API_KEY || 'demo_key',
@@ -447,7 +447,7 @@ class SinoGroupService {
         id: 'cultural_tour',
         name: 'Private Cultural Tour',
         description: 'Guided tour of Hong Kong cultural highlights',
-        category: 'recreation',
+        category: 'concierge',
         provider: 'Professional Tour Guide',
         duration: 240,
         capacity: 6,
@@ -542,7 +542,7 @@ class SinoGroupService {
     specialRequests?: string[]
   ): Promise<HospitalityBooking> {
     try {
-      const user = this.userStore.getState();
+      const user = this.userState;
       
       const booking: HospitalityBooking = {
         id: `sino_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,

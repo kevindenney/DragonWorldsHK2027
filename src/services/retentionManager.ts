@@ -235,7 +235,7 @@ export class RetentionManager {
       type: 'race_result',
       content: {
         title: `Finished ${event.title}`,
-        description: results.position 
+        description: results?.position
           ? `Placed ${results.position}${this.getOrdinalSuffix(results.position)}`
           : 'Race completed',
         data: { eventId, results }

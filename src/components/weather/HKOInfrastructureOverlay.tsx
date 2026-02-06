@@ -164,32 +164,36 @@ export const HKOInfrastructureOverlay: React.FC<HKOInfrastructureOverlayProps> =
       })}
 
       {/* HKO Drifting Buoys */}
-      {showDriftingBuoys && hkoDriftingBuoys.map((buoy) => (
-        <StationMarker
-          key={`drifting-buoy-${buoy.id}`}
-          coordinate={buoy.coordinate}
-          title={`Drifting Buoy ${buoy.id}`}
-          description={`Position: ${buoy.coordinate.latitude.toFixed(3)}, ${buoy.coordinate.longitude.toFixed(3)}`}
-          stationType="drifting"
-          status={buoy.isActive ? 'active' : 'inactive'}
-          lastUpdate={buoy.lastUpdated}
-          onPress={() => handleStationPress(buoy.id, 'drifting')}
-        />
-      ))}
+      {showDriftingBuoys && hkoDriftingBuoys
+        .filter((buoy) => buoy.coordinate !== undefined)
+        .map((buoy) => (
+          <StationMarker
+            key={`drifting-buoy-${buoy.id}`}
+            coordinate={buoy.coordinate!}
+            title={`Drifting Buoy ${buoy.id}`}
+            description={`Position: ${buoy.coordinate!.latitude.toFixed(3)}, ${buoy.coordinate!.longitude.toFixed(3)}`}
+            stationType="drifting"
+            status={buoy.isActive ? 'active' : 'inactive'}
+            lastUpdate={buoy.lastUpdated}
+            onPress={() => handleStationPress(buoy.id, 'drifting')}
+          />
+        ))}
 
       {/* HKO Marine Forecast Areas */}
-      {showForecastAreas && hkoMarineAreas.map((forecast) => (
-        <StationMarker
-          key={`forecast-area-${forecast.areaId}`}
-          coordinate={forecast.centerCoordinate}
-          title={forecast.areaName}
-          description={`Wind: ${forecast.windSpeed || 0}kts, Conditions: ${forecast.conditions || 'Unknown'}`}
-          stationType="forecast"
-          status="active"
-          lastUpdate={forecast.lastUpdated}
-          onPress={() => handleStationPress(forecast.areaId ?? '', 'forecast')}
-        />
-      ))}
+      {showForecastAreas && hkoMarineAreas
+        .filter((forecast) => forecast.centerCoordinate !== undefined && forecast.areaName !== undefined)
+        .map((forecast) => (
+          <StationMarker
+            key={`forecast-area-${forecast.areaId}`}
+            coordinate={forecast.centerCoordinate!}
+            title={forecast.areaName!}
+            description={`Wind: ${forecast.windSpeed || 0}kts, Conditions: ${forecast.conditions || 'Unknown'}`}
+            stationType="forecast"
+            status="active"
+            lastUpdate={forecast.lastUpdated}
+            onPress={() => handleStationPress(forecast.areaId ?? '', 'forecast')}
+          />
+        ))}
 
       {/* Station Details Panel (if station selected) */}
       {selectedStation && (

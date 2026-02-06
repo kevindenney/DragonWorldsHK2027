@@ -27,6 +27,7 @@ import {
   User,
   Clock,
   ThumbsUp,
+  ThumbsDown,
   MessageCircle,
   Pin,
   ExternalLink,
@@ -51,6 +52,8 @@ import {
   useToggleUpvote,
   useCreateComment,
   useIncrementViewCount,
+  useCommentVote,
+  useToggleCommentVote,
 } from '../../hooks/useCommunityData';
 import { useToastStore } from '../../stores/toastStore';
 
@@ -93,7 +96,7 @@ function formatDate(dateString: string): string {
 }
 
 /**
- * Single comment component with replies support
+ * Single comment component with replies support and voting
  */
 interface CommentItemProps {
   comment: PostComment;
@@ -103,9 +106,86 @@ interface CommentItemProps {
 
 function CommentItem({ comment, onReply, level = 0 }: CommentItemProps) {
   const [showReplies, setShowReplies] = useState(true);
+  const showToast = useToastStore((state) => state.showToast);
   const authorName = comment.author?.full_name || 'Anonymous';
   const authorAvatar = comment.author?.avatar_url;
   const hasReplies = comment.replies && comment.replies.length > 0;
+
+  // Voting state
+  const { data: userVote } = useCommentVote(comment.id);
+  const toggleVoteMutation = useToggleCommentVote();
+
+  // Optimistic UI state
+  const [optimisticVote, setOptimisticVote] = useState<{ upvotes: number; downvotes: number; userVote: 1 | -1 | null } | null>(null);
+
+  // Calculate current vote state
+  const currentUpvotes = optimisticVote?.upvotes ?? (comment.upvotes || 0);
+  const currentDownvotes = optimisticVote?.downvotes ?? (comment.downvotes || 0);
+  const score = currentUpvotes - currentDownvotes;
+  const currentUserVote = optimisticVote?.userVote ?? (userVote?.vote as 1 | -1 | null) ?? null;
+  const hasUpvoted = currentUserVote === 1;
+  const hasDownvoted = currentUserVote === -1;
+
+  // Reset optimistic state when comment changes or server data updates
+  useEffect(() => {
+    setOptimisticVote(null);
+  }, [comment.id, comment.upvotes, comment.downvotes]);
+
+  const handleVote = async (voteType: 1 | -1) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // Optimistic update
+    const oldUpvotes = currentUpvotes;
+    const oldDownvotes = currentDownvotes;
+    const oldUserVote = currentUserVote;
+
+    let newUpvotes = oldUpvotes;
+    let newDownvotes = oldDownvotes;
+    let newUserVote: 1 | -1 | null = null;
+
+    if (oldUserVote === voteType) {
+      // Removing vote
+      if (voteType === 1) {
+        newUpvotes = Math.max(0, oldUpvotes - 1);
+      } else {
+        newDownvotes = Math.max(0, oldDownvotes - 1);
+      }
+      newUserVote = null;
+    } else if (oldUserVote === null) {
+      // Adding new vote
+      if (voteType === 1) {
+        newUpvotes = oldUpvotes + 1;
+      } else {
+        newDownvotes = oldDownvotes + 1;
+      }
+      newUserVote = voteType;
+    } else {
+      // Changing vote
+      if (voteType === 1) {
+        newUpvotes = oldUpvotes + 1;
+        newDownvotes = Math.max(0, oldDownvotes - 1);
+      } else {
+        newDownvotes = oldDownvotes + 1;
+        newUpvotes = Math.max(0, oldUpvotes - 1);
+      }
+      newUserVote = voteType;
+    }
+
+    setOptimisticVote({ upvotes: newUpvotes, downvotes: newDownvotes, userVote: newUserVote });
+
+    try {
+      await toggleVoteMutation.mutateAsync({ commentId: comment.id, voteType });
+      // Clear optimistic state after success - let server data take over
+      setOptimisticVote(null);
+    } catch (error) {
+      // Revert on error
+      setOptimisticVote({ upvotes: oldUpvotes, downvotes: oldDownvotes, userVote: oldUserVote });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[CommentItem] Vote error:', errorMessage);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      showToast(errorMessage, 'error');
+    }
+  };
 
   return (
     <View style={[styles.commentItem, level > 0 && styles.commentReply]}>
@@ -132,6 +212,47 @@ function CommentItem({ comment, onReply, level = 0 }: CommentItemProps) {
       </IOSText>
 
       <View style={styles.commentActions}>
+        {/* Voting buttons */}
+        <View style={styles.voteButtons}>
+          <TouchableOpacity
+            style={[styles.voteButton, hasUpvoted && styles.voteButtonActive]}
+            onPress={() => handleVote(1)}
+            disabled={toggleVoteMutation.isPending}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <ThumbsUp
+              size={14}
+              color={hasUpvoted ? '#FFFFFF' : colors.textMuted}
+              fill={hasUpvoted ? '#FFFFFF' : 'none'}
+            />
+          </TouchableOpacity>
+
+          <IOSText
+            textStyle="caption1"
+            weight="semibold"
+            style={[
+              styles.voteScore,
+              score > 0 && styles.voteScorePositive,
+              score < 0 && styles.voteScoreNegative,
+            ]}
+          >
+            {score}
+          </IOSText>
+
+          <TouchableOpacity
+            style={[styles.voteButton, hasDownvoted && styles.voteButtonDownvoteActive]}
+            onPress={() => handleVote(-1)}
+            disabled={toggleVoteMutation.isPending}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <ThumbsDown
+              size={14}
+              color={hasDownvoted ? '#FFFFFF' : colors.textMuted}
+              fill={hasDownvoted ? '#FFFFFF' : 'none'}
+            />
+          </TouchableOpacity>
+        </View>
+
         {level === 0 && (
           <TouchableOpacity
             style={styles.replyButton}
@@ -202,11 +323,12 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
   // Get upvote count (use optimistic state if available)
   const upvoteCount = optimisticUpvoteCount !== null ? optimisticUpvoteCount : (post?.upvotes || 0);
 
-  // Reset optimistic state when post changes
+  // Reset optimistic state when post changes OR when server data updates
+  // This ensures optimistic state is cleared after query refetch
   useEffect(() => {
     setOptimisticUpvoteCount(null);
     setOptimisticHasUpvoted(null);
-  }, [post?.id]);
+  }, [post?.id, post?.upvotes]);
 
   // Increment view count when post is opened
   useEffect(() => {
@@ -261,6 +383,10 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
 
     try {
       await toggleUpvoteMutation.mutateAsync(post.id);
+      // Clear optimistic state after success - let server data take over
+      // The query will refetch and provide the real values
+      setOptimisticHasUpvoted(null);
+      setOptimisticUpvoteCount(null);
     } catch (error) {
       // Revert optimistic update on error
       setOptimisticHasUpvoted(currentlyUpvoted);
@@ -464,7 +590,7 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
               <View style={styles.commentsSectionHeader}>
                 <MessageCircle size={18} color={colors.text} />
                 <IOSText textStyle="headline" weight="semibold">
-                  Comments ({comments?.length || post.comment_count || 0})
+                  Comments ({comments?.length ?? 0})
                 </IOSText>
               </View>
 
@@ -718,6 +844,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+  },
+  voteButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  voteButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.surfaceSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  voteButtonActive: {
+    backgroundColor: colors.primary,
+  },
+  voteButtonDownvoteActive: {
+    backgroundColor: '#FF6B6B',
+  },
+  voteScore: {
+    minWidth: 24,
+    textAlign: 'center',
+    color: colors.textMuted,
+  },
+  voteScorePositive: {
+    color: colors.primary,
+  },
+  voteScoreNegative: {
+    color: '#FF6B6B',
   },
   replyButton: {
     flexDirection: 'row',

@@ -122,8 +122,12 @@ export class ConversionService {
 
   private async onTrialStart(event: ConversionEvent): Promise<void> {
     // Schedule trial ending notifications
-    await notificationService.monitorSubscriptionStatus();
-    
+    await notificationService.monitorSubscriptionStatus({
+      isActive: true,
+      isTrial: true,
+      daysRemaining: 7
+    });
+
     // Track trial start for analytics
   }
 
@@ -282,7 +286,7 @@ export class ConversionService {
       const userEvents = userId ? this.getUserEvents(userId) : this.conversionEvents.slice(0, 50);
 
       // Don't show paywalls to active subscribers
-      if (subscription.active && !subscription.isTrial) {
+      if (subscription?.active && !subscription?.isTrial) {
         return null;
       }
 

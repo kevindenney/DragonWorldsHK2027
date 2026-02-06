@@ -36,9 +36,10 @@ import type {
 
 type NoticeItem = (OfficialNotification | EventDocument) & {
   itemType: 'notification' | 'document';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  priority: 'low' | 'medium' | 'high' | 'urgent' | 'critical';
   publishedAt: string;
   category?: RegattaCategory;
+  isRead?: boolean;
 };
 
 interface NoticeCardProps {

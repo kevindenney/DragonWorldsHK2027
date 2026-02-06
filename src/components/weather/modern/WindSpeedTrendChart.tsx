@@ -100,7 +100,7 @@ export const WindSpeedTrendChart: React.FC<WindSpeedTrendChartProps> = ({
   const isDragging = useSharedValue(false);
 
   const chartData = useMemo(() => {
-    if (data.length === 0) return { points: [], maxValue: 0, minValue: 0 };
+    if (data.length === 0) return { points: [], maxValue: 0, minValue: 0, valueRange: 1 };
 
     const values = data.map(d => d.value);
     const maxValue = Math.max(...values);

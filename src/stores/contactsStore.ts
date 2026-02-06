@@ -630,21 +630,13 @@ export const useRecentContacts = () => useContactsStore(state => state.recentCon
 export const useContactsLoading = () => useContactsStore(state => state.loading);
 export const useContactsError = () => useContactsStore(state => state.error);
 
-// Computed selectors with custom equality functions to prevent unnecessary re-renders
+// Computed selectors
 export const useFilteredContacts = () => useContactsStore(
-  state => state.getFilteredContacts(),
-  (a: Array<{ id: string }>, b: Array<{ id: string }>) => {
-    if (a.length !== b.length) return false;
-    return a.every((contact: { id: string }, index: number) => contact.id === b[index]?.id);
-  }
+  state => state.getFilteredContacts()
 );
 
 export const useFilteredEmergencyContacts = () => useContactsStore(
-  state => state.getFilteredEmergencyContacts(),
-  (a: Array<{ id: string }>, b: Array<{ id: string }>) => {
-    if (a.length !== b.length) return false;
-    return a.every((contact: { id: string }, index: number) => contact.id === b[index]?.id);
-  }
+  state => state.getFilteredEmergencyContacts()
 );
 
 export const useContactsByCategory = (category: ContactCategory) =>

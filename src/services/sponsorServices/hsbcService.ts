@@ -1,4 +1,4 @@
-import { UserStore } from '../../stores/userStore';
+import type { UserState } from '../../stores/userStore';
 
 export interface HSBCLocation {
   id: string;
@@ -101,10 +101,10 @@ export interface HSBCServiceConfig {
 
 class HSBCService {
   private config: HSBCServiceConfig;
-  private userStore: typeof UserStore;
+  private userState: UserState;
 
-  constructor(userStore: typeof UserStore) {
-    this.userStore = userStore;
+  constructor(userState: UserState) {
+    this.userState = userState;
     this.config = {
       baseUrl: process.env.EXPO_PUBLIC_HSBC_API_URL || 'https://api.hsbc.com.hk/open-banking',
       apiKey: process.env.EXPO_PUBLIC_HSBC_API_KEY || 'demo_key',
@@ -416,7 +416,7 @@ class HSBCService {
    */
   async getAccountInfo(): Promise<HSBCAccountInfo | null> {
     try {
-      const user = this.userStore.getState();
+      const user = this.userState;
       
       // Check if user has connected HSBC account
       if (!user.profile?.hsbc?.isConnected) {
@@ -467,7 +467,7 @@ class HSBCService {
     preferredTime?: string
   ): Promise<HSBCServiceRequest> {
     try {
-      const user = this.userStore.getState();
+      const user = this.userState;
       const locations = await this.getLocations();
       const location = locations.find(l => l.id === locationId);
       const services = await this.getAvailableServices();
@@ -503,7 +503,7 @@ class HSBCService {
   async connectAccount(accountNumber: string, verificationCode: string): Promise<boolean> {
     try {
       // In real implementation, this would use HSBC's OAuth or account linking API
-      const user = this.userStore.getState();
+      const user = this.userState;
       
       // Demo verification
       if (accountNumber.includes('123456') && verificationCode === '123456') {

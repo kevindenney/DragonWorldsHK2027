@@ -37,7 +37,7 @@ interface MapScreenLocalProps {
 
 export const MapScreen: React.FC<Partial<MapScreenProps> & MapScreenLocalProps> = (props) => {
   // Use WebView-based map on Android to avoid Google Play Services API key issues
-  if (Platform.OS === 'android') {
+  if ((Platform.OS as string) === 'android') {
     return <WebViewMapScreen {...props as any} />;
   }
 

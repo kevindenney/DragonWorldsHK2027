@@ -164,7 +164,7 @@ export class MultiSourceWeatherService {
   private sources: { [key: string]: any } = {};
 
   constructor(config: Partial<Record<string, WeatherSourceConfig>> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = { ...DEFAULT_CONFIG, ...config } as Record<string, WeatherSourceConfig>;
     this.initializeSources();
   }
 

@@ -1,4 +1,6 @@
-import { logger } from '@firebase/logger';
+import { Logger } from '@firebase/logger';
+
+const logger = new Logger('documentProcessing');
 import { db, isFirestoreReady } from '../config/firebase';
 import { 
   collection, 
@@ -262,9 +264,9 @@ export class DocumentProcessingService {
         }
         
         // Search in content if requested and available
-        let content: DocumentContent | null = null;
+        let content: DocumentContent | undefined = undefined;
         if (includeContent && document.contentProcessed) {
-          content = await this.getDocumentContent(document.id);
+          content = await this.getDocumentContent(document.id) ?? undefined;
           if (content && content.content.toLowerCase().includes(searchTermLower)) {
             relevanceScore += 3;
             matchedTerms.push('content');

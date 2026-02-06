@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, View, Text, StyleSheet, Image } from 'react-native';
+import { TouchableOpacity, View, StyleSheet } from 'react-native';
 import { User } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../auth/useAuth';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
 import type { RootStackParamList } from '../../types/navigation';
+import { InitialsAvatar } from '../shared/InitialsAvatar';
 
 const { colors } = dragonChampionshipsLightTheme;
 
@@ -38,17 +39,6 @@ export function ProfileButton({ size = 32, style }: ProfileButtonProps) {
     }
   };
 
-  // Get user initials for avatar
-  const getInitials = (): string => {
-    if (!user) return '';
-    const name = user.displayName || user.email || 'U';
-    if (name.includes(' ')) {
-      const parts = name.split(' ');
-      return (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
-  };
-
   return (
     <TouchableOpacity
       onPress={handlePress}
@@ -56,19 +46,12 @@ export function ProfileButton({ size = 32, style }: ProfileButtonProps) {
       accessibilityRole="button"
       accessibilityLabel={isAuthenticated ? 'View profile' : 'Sign in'}
     >
-      {isAuthenticated ? (
-        user?.photoURL ? (
-          <Image
-            source={{ uri: user.photoURL }}
-            style={[styles.avatarImage, { width: size, height: size, borderRadius: size / 2 }]}
-          />
-        ) : (
-          <View style={[styles.avatarContainer, { width: size, height: size, borderRadius: size / 2 }]}>
-            <Text style={[styles.avatarText, { fontSize: size * 0.4 }]}>
-              {getInitials()}
-            </Text>
-          </View>
-        )
+      {isAuthenticated && user ? (
+        <InitialsAvatar
+          name={user.displayName || user.email || 'User'}
+          id={user.uid}
+          size={size}
+        />
       ) : (
         <View style={[styles.iconContainer, { width: size, height: size, borderRadius: size / 2 }]}>
           <User size={size * 0.55} color={colors.primary} strokeWidth={2} />
@@ -82,18 +65,6 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  avatarContainer: {
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarImage: {
-    backgroundColor: colors.primary,
-  },
-  avatarText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
   },
   iconContainer: {
     backgroundColor: colors.primaryLight || '#E3F2FD',

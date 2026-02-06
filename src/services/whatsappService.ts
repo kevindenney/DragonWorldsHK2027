@@ -101,10 +101,10 @@ export interface WhatsAppServiceConfig {
 
 class WhatsAppService {
   private config: WhatsAppServiceConfig;
-  private userStore?: typeof UserStore;
+  private userState?: UserStore;
 
-  constructor(userStore?: typeof UserStore) {
-    this.userStore = userStore;
+  constructor(userState?: UserStore) {
+    this.userState = userState;
     this.config = {
       baseUrl: process.env.EXPO_PUBLIC_WHATSAPP_API_URL || 'https://graph.facebook.com/v18.0',
       apiKey: process.env.EXPO_PUBLIC_WHATSAPP_API_KEY || 'demo_key',
@@ -119,7 +119,7 @@ class WhatsAppService {
    */
   async getAvailableGroups(): Promise<WhatsAppGroup[]> {
     try {
-      const user = this.userStore?.getState();
+      const user = this.userState;
       
       // Demo groups for Dragon Worlds HK 2027
       const allGroups: WhatsAppGroup[] = [
@@ -331,7 +331,7 @@ class WhatsAppService {
     }
 
     if (group.sponsor === 'Sino_Group' && group.verificationRequired.sino) {
-      return user?.profile?.sino?.isGuest === true;
+      return false; // Sino guest status not available in current profile
     }
 
     // Check event registration requirement
@@ -352,20 +352,20 @@ class WhatsAppService {
    */
   async requestGroupAccess(groupId: string, message?: string): Promise<GroupAccessRequest> {
     try {
-      const user = this.userStore?.getState();
+      const user = this.userState;
       
       const request: GroupAccessRequest = {
         id: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         groupId,
-        userId: user?.id || 'demo_user',
+        userId: user?.profile?.id || 'demo_user',
         requestType: 'join_request',
         status: 'pending',
         requestedAt: new Date().toISOString(),
         message,
         verificationData: {
-          sailingCredentials: user?.profile?.sailing,
+          sailingCredentials: user?.profile?.sailingExperience,
           hsbcAccount: user?.profile?.hsbc,
-          sinoGuestStatus: user?.profile?.sino,
+          sinoGuestStatus: undefined,
           eventRegistration: user?.userType === 'participant'
         }
       };
@@ -383,11 +383,11 @@ class WhatsAppService {
    */
   async joinGroup(groupId: string): Promise<UserGroupMembership> {
     try {
-      const user = this.userStore?.getState();
+      const user = this.userState;
       
       const membership: UserGroupMembership = {
         groupId,
-        userId: user?.id || 'demo_user',
+        userId: user?.profile?.id || 'demo_user',
         status: 'member',
         joinedAt: new Date().toISOString(),
         role: 'member',
@@ -411,7 +411,7 @@ class WhatsAppService {
    */
   async getUserGroups(): Promise<UserGroupMembership[]> {
     try {
-      const user = this.userStore?.getState();
+      const user = this.userState;
       
       // Demo memberships based on user type
       const memberships: UserGroupMembership[] = [];
@@ -419,7 +419,7 @@ class WhatsAppService {
       if (user?.userType === 'participant') {
         memberships.push({
           groupId: 'dragon_worlds_participants',
-          userId: user?.id || 'demo_user',
+          userId: user?.profile?.id || 'demo_user',
           status: 'member',
           joinedAt: '2024-11-01T10:00:00Z',
           role: 'member',
@@ -434,7 +434,7 @@ class WhatsAppService {
       if (user?.userType === 'vip' && user?.profile?.hsbc?.isPremier) {
         memberships.push({
           groupId: 'hsbc_premier_vip',
-          userId: user?.id || 'demo_user',
+          userId: user?.profile?.id || 'demo_user',
           status: 'member',
           joinedAt: '2024-11-01T12:00:00Z',
           role: 'member',
@@ -449,7 +449,7 @@ class WhatsAppService {
       // Everyone can join spectator groups
       memberships.push({
         groupId: 'dragon_worlds_spectators',
-        userId: user?.id || 'demo_user',
+        userId: user?.profile?.id || 'demo_user',
         status: 'member',
         joinedAt: '2024-11-02T08:00:00Z',
         role: 'member',
@@ -517,7 +517,8 @@ class WhatsAppService {
           message: '🌤️ Weather Update: Wind backing to ENE 10-14 knots. Next weather window in 2 hours.',
           timestamp: new Date(Date.now() - 120000).toISOString(), // 2 minutes ago
           type: 'weather_alert',
-          isOfficial: true
+          isOfficial: true,
+          reactions: {}
         }
       ];
 
@@ -532,13 +533,13 @@ class WhatsAppService {
    */
   async postComment(groupId: string, message: string, type: 'text' | 'photo' = 'text'): Promise<RaceComment> {
     try {
-      const user = this.userStore?.getState();
+      const user = this.userState;
       
       const comment: RaceComment = {
         id: `comment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         groupId,
-        userId: user?.id || 'demo_user',
-        username: user?.profile?.name || 'Anonymous',
+        userId: user?.profile?.id || 'demo_user',
+        username: user?.profile?.displayName || 'Anonymous',
         userType: user?.userType || 'spectator',
         message,
         timestamp: new Date().toISOString(),
@@ -572,7 +573,7 @@ class WhatsAppService {
    */
   async leaveGroup(groupId: string): Promise<void> {
     try {
-      const user = this.userStore?.getState();
+      const user = this.userState;
       
       // In a real implementation, this would use WhatsApp Business API
     } catch (error) {

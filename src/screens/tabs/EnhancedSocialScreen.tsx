@@ -278,7 +278,7 @@ export const EnhancedSocialScreen: React.FC<SocialScreenProps> = ({ navigation }
         {joinedGroups.length > 0 && (
           <IOSSection style={styles.section}>
             <IOSText style={styles.sectionTitle}>My Groups</IOSText>
-            {joinedGroups.slice(0, 3).map((group: { id: string }) => (
+            {joinedGroups.slice(0, 3).map((group) => (
               <WhatsAppGroupCard
                 key={group.id}
                 group={group}

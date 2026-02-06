@@ -29,6 +29,11 @@ export interface UserProfile {
   website?: string;
 }
 
+export interface UserMetadata {
+  loginCount?: number;
+  lastLoginAt?: Date;
+}
+
 export interface User {
   uid: string;
   email: string;
@@ -47,6 +52,7 @@ export interface User {
   updatedAt: Date;
   preferences?: UserPreferences;
   sailingProfile?: SailingProfile;
+  metadata?: UserMetadata;
 }
 
 export interface UserPreferences {

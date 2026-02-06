@@ -61,6 +61,7 @@ export interface SocialLoginButtonProps {
   showIcon?: boolean;
   customText?: string;
   testID?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function SocialLoginButton({
@@ -73,6 +74,7 @@ export function SocialLoginButton({
   showIcon = true,
   customText,
   testID,
+  style,
 }: SocialLoginButtonProps) {
   const config = socialConfigs[provider];
   
@@ -149,7 +151,7 @@ export function SocialLoginButton({
 
   return (
     <TouchableOpacity
-      style={getButtonStyle()}
+      style={[getButtonStyle(), style]}
       onPress={handlePress}
       disabled={isDisabled}
       accessible={true}

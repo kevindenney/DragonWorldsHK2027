@@ -438,36 +438,6 @@ class FirebaseRaceDataService {
   }
 
   /**
-   * Trigger manual data sync from Firebase Functions
-   */
-  async triggerDataSync(eventId: string): Promise<boolean> {
-    try {
-      const functionUrl = process.env.EXPO_PUBLIC_FIREBASE_FUNCTIONS_URL || 
-                         'https://us-central1-dragonworldshk2027.cloudfunctions.net';
-      
-      const response = await fetch(`${functionUrl}/syncRaceData?eventId=${eventId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Sync failed: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      
-      // Clear cache to force refresh
-      this.clearCache();
-      
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
-
-  /**
    * Check if cache is valid
    */
   private isCacheValid(key: string): boolean {
@@ -853,16 +823,15 @@ class FirebaseRaceDataService {
         }))
       }));
       
-      const competitors = allBoats.map((boat: any) => ({
+      const competitors: Competitor[] = allBoats.map((boat: any) => ({
         id: boat.sailNumber,
         sailNumber: boat.sailNumber,
         boatName: boat.boatName || '',
         helmName: boat.helmName,
         crewMembers: boat.crewName ? [boat.crewName] : [],
-        yachtClub: boat.yachtClub,
+        club: boat.yachtClub,
         country: 'HKG',
-        boatType: 'Various',
-        status: 'active'
+        registrationStatus: 'confirmed'
       }));
       
       return {

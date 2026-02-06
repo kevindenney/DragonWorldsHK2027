@@ -59,7 +59,7 @@ export interface LocationData {
   id: string;
   name: string;
   coordinate: LocationCoordinate;
-  type: 'marina' | 'race-area' | 'harbor' | 'city' | 'custom';
+  type: 'marina' | 'race-area' | 'harbor' | 'city' | 'custom' | 'bay';
   description?: string;
   country?: string;
   region?: string;
@@ -141,7 +141,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   const [isSearching, setIsSearching] = useState(false);
 
   // Map reference
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<React.ElementRef<typeof MapView>>(null);
 
   // Initial region (Hong Kong racing waters)
   const initialRegion: Region = {

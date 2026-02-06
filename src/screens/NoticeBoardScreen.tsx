@@ -313,7 +313,7 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
     switch (type) {
       case 'notice_of_race': return FileText;
       case 'sailing_instructions': return FileText;
-      case 'schedule': return Calendar;
+      case 'race_schedule': return Calendar;
       case 'results': return Flag;
       default: return FileText;
     }
@@ -359,7 +359,7 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
               <View style={styles.eventDetailRow}>
                 <Users size={16} color={colors.textSecondary} />
                 <IOSText textStyle="callout" color="secondaryLabel">
-                  {event.entryCount} entries • {event.classes.join(', ')}
+                  {event.entryCount} entries • {(event.classes ?? []).join(', ')}
                 </IOSText>
               </View>
             </View>
@@ -387,7 +387,7 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
 
   // Render content for a specific category
   const renderCategoryContent = (category: RegattaCategory) => {
-    if (!event) return null;
+    if (!event || !event.noticeBoard) return null;
 
     const documents = filterByCategory(event.noticeBoard.documents, category, true);
     const notifications = filterByCategory(event.noticeBoard.notifications, category, false);
@@ -414,7 +414,13 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
             key={`${type}-${item.id}`}
             item={item}
             type={type}
-            onPress={type === 'document' ? handleViewDocument : handleNotificationPress}
+            onPress={(itemArg) => {
+              if (type === 'document') {
+                handleViewDocument(itemArg as EventDocument);
+              } else {
+                handleNotificationPress(itemArg as OfficialNotification);
+              }
+            }}
             onDownload={type === 'document' ? handleDocumentDownload : undefined}
             onBookmark={handleBookmarkItem}
             compact={true}
@@ -467,12 +473,18 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
         {searchResults.map((result, index) => (
           <EnhancedNoticeCard
             key={`${result.type}-${result.id}`}
-            item={result.type === 'document' 
-              ? event?.noticeBoard.documents.find(d => d.id === result.id)!
-              : event?.noticeBoard.notifications.find(n => n.id === result.id)!
+            item={result.type === 'document'
+              ? event?.noticeBoard?.documents.find(d => d.id === result.id)!
+              : event?.noticeBoard?.notifications.find(n => n.id === result.id)!
             }
             type={result.type}
-            onPress={result.type === 'document' ? handleViewDocument : handleNotificationPress}
+            onPress={(itemArg) => {
+              if (result.type === 'document') {
+                handleViewDocument(itemArg as EventDocument);
+              } else {
+                handleNotificationPress(itemArg as OfficialNotification);
+              }
+            }}
             onDownload={result.type === 'document' ? handleDocumentDownload : undefined}
             onBookmark={handleBookmarkItem}
             showCategory={true}
@@ -495,12 +507,12 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
 
   // Legacy render function kept for compatibility
   const renderOverview = () => {
-    if (!event) return null;
+    if (!event || !event.noticeBoard) return null;
 
     const unreadNotifications = event.noticeBoard.notifications.filter(n => !n.isRead).length;
-    const activeProtests = event.noticeBoard.protests.filter(p => p.status !== 'decided').length;
-    const pendingHearings = event.noticeBoard.hearings.filter(h => h.status === 'scheduled').length;
-    const recentPenalties = event.noticeBoard.penalties.length;
+    const activeProtests = event.noticeBoard.protests?.filter(p => p.status !== 'decided').length ?? 0;
+    const pendingHearings = event.noticeBoard.hearings?.filter(h => h.status === 'scheduled').length ?? 0;
+    const recentPenalties = event.noticeBoard.penalties?.length ?? 0;
 
     return (
       <View style={styles.tabContent}>
@@ -530,7 +542,7 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
               <View style={styles.eventDetailRow}>
                 <Users size={16} color={colors.textSecondary} />
                 <IOSText textStyle="callout" color="secondaryLabel">
-                  {event.entryCount} entries • {event.classes.join(', ')}
+                  {event.entryCount} entries • {(event.classes ?? []).join(', ')}
                 </IOSText>
               </View>
               
@@ -628,7 +640,7 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
             <NoticeActions
               eventId={eventId}
               noticeBoardService={noticeBoardService}
-              userRole={user?.role || 'participant'}
+              userRole={(user?.role === 'participant' || user?.role === 'official') ? user.role : 'participant'}
               onActionSubmitted={(actionId) => {
                 // Optionally reload notices or show confirmation
               }}
@@ -637,7 +649,7 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
         )}
 
         {/* Recent Notifications */}
-        {unreadNotifications > 0 && (
+        {unreadNotifications > 0 && event.noticeBoard && (
           <IOSSection title="Recent Notices" spacing="regular">
             <View style={styles.notificationsList}>
               {event.noticeBoard.notifications
@@ -693,7 +705,7 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
 
   // Render documents tab
   const renderDocuments = () => {
-    if (!event) return null;
+    if (!event || !event.noticeBoard) return null;
 
     const groupedDocs = event.noticeBoard.documents.reduce((groups, doc) => {
       const category = doc.category || 'Other';
@@ -763,7 +775,7 @@ export const NoticeBoardScreen: React.FC<NoticeBoardScreenProps> = ({
           eventId={eventId}
           onNoticePress={handleNoticePress}
           onSubmitProtest={handleSubmitProtest}
-          userRole={user?.role || 'participant'}
+          userRole={(user?.role === 'participant' || user?.role === 'official') ? user.role : 'participant'}
           useLiveData={!useDemoData}
         />
       </View>
@@ -1103,10 +1115,6 @@ const styles = StyleSheet.create({
   categoryContent: {
     gap: spacing.xs,
     margin: spacing.sm,
-  },
-  viewAllButton: {
-    alignSelf: 'center',
-    marginTop: spacing.sm,
   },
   searchResultsContainer: {
     paddingHorizontal: spacing.md,

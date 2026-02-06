@@ -17,7 +17,7 @@ export const EventHeader: React.FC<EventHeaderProps> = ({ event }) => {
         <IOSText textStyle="title2" weight="bold" style={styles.title}>
           {event.title}
         </IOSText>
-        <IOSText textStyle="body2" color="secondaryLabel" style={styles.description}>
+        <IOSText textStyle="callout" color="secondaryLabel" style={styles.description}>
           {event.description}
         </IOSText>
       </View>

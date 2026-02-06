@@ -148,7 +148,7 @@ class WaveDataService {
       swellHeight: waveHeight * 0.6, // Estimated swell as 60% of wave height
       swellPeriod: wavePeriod * 1.4, // Longer period for swell
       swellDirection: waveDirection + (Math.random() * 60 - 30), // Slight direction variance
-      lastUpdated: buoy.lastUpdated,
+      lastUpdated: buoy.lastUpdated || new Date().toISOString(),
       dataQuality: 'high',
       hkoBuoyId: buoy.id,
       isHKOData: true,

@@ -21,9 +21,9 @@ interface ApiResponse<T = any> {
  * HTTP Client configuration
  */
 class ApiClient {
-  private baseURL: string;
-  private timeout: number;
-  private defaultHeaders: Record<string, string>;
+  protected baseURL: string;
+  protected timeout: number;
+  protected defaultHeaders: Record<string, string>;
 
   constructor() {
     this.baseURL = `${apiConfig.baseURL}/api/${apiConfig.apiVersion}`;
@@ -51,7 +51,7 @@ class ApiClient {
   /**
    * Make HTTP request
    */
-  private async request<T>(
+  protected async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {

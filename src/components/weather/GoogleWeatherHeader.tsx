@@ -335,7 +335,6 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     color: colors.text,
     lineHeight: 80,
-    ...typography.h1,
   },
 
   temperatureUnit: {

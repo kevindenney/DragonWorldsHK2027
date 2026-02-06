@@ -25,7 +25,7 @@ interface TideStation {
   name: string;
   currentHeight: number;
   trend: 'rising' | 'falling' | 'stable';
-  nextTide: {
+  nextTide?: {
     type: 'high' | 'low';
     time: string;
     height: number;
@@ -294,9 +294,11 @@ export const TideCurrentOverlay: React.FC<TideCurrentOverlayProps> = ({
                 <IOSText style={styles.tideHeight}>
                   {station.currentHeight > 0 ? '+' : ''}{station.currentHeight.toFixed(1)}m
                 </IOSText>
-                <IOSText style={styles.tideNextChange}>
-                  Next {station.nextTide.type}: {station.nextTide.time}
-                </IOSText>
+                {station.nextTide && (
+                  <IOSText style={styles.tideNextChange}>
+                    Next {station.nextTide.type}: {station.nextTide.time}
+                  </IOSText>
+                )}
               </View>
             </View>
           </Marker>

@@ -10,15 +10,21 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
-  Image,
+  ActionSheetIOS,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { X, Save, User, Camera } from 'lucide-react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { colors, spacing, typography, borderRadius, shadows } from '../../constants/theme';
 import { useAuth } from '../../auth/useAuth';
 import { User as UserType } from '../../auth/authTypes';
-import { imageUploadService } from '../../services/imageUploadService';
+import { ProfileAvatar } from '../shared/ProfileAvatar';
+import {
+  pickImageFromGallery,
+  pickImageFromCamera,
+  uploadProfileImage,
+  isCameraAvailable,
+  debugFirebaseState,
+} from '../../services/imageUploadService';
 
 interface EditProfileModalProps {
   visible: boolean;
@@ -28,7 +34,6 @@ interface EditProfileModalProps {
 
 interface ProfileFormData {
   displayName: string;
-  photoURL: string;
 }
 
 export const EditProfileModal: React.FC<EditProfileModalProps> = ({
@@ -39,64 +44,51 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   const { user, updateProfile } = useAuth();
   const [formData, setFormData] = useState<ProfileFormData>({
     displayName: '',
-    photoURL: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
+  // Photo editing state
+  const [localPhotoUri, setLocalPhotoUri] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [photoRemoved, setPhotoRemoved] = useState(false);
+
   // Initialize form data when modal opens
   useEffect(() => {
     if (visible && user) {
+      console.log('[EditProfileModal] Modal opened');
+      console.log('[EditProfileModal] App user.uid:', user.uid);
+      console.log('[EditProfileModal] App user.email:', user.email);
+      console.log('[EditProfileModal] App user.displayName:', user.displayName);
+      console.log('[EditProfileModal] App user.photoURL:', user.photoURL);
+
+      // Debug Firebase state when modal opens
+      debugFirebaseState('EditProfileModal opened');
+
       const initialData = {
         displayName: user.displayName || '',
-        photoURL: user.photoURL || '',
       };
       setFormData(initialData);
+      setLocalPhotoUri(null);
+      setPhotoRemoved(false);
+      setUploadProgress(0);
       setHasChanges(false);
     }
   }, [visible, user]);
 
-  // Track changes
+  // Track changes (including photo changes)
   useEffect(() => {
     if (user) {
-      const hasModifications =
-        formData.displayName !== (user.displayName || '') ||
-        formData.photoURL !== (user.photoURL || '');
+      const hasNameChange = formData.displayName !== (user.displayName || '');
+      const hasPhotoChange = localPhotoUri !== null || photoRemoved;
 
-      setHasChanges(hasModifications);
+      setHasChanges(hasNameChange || hasPhotoChange);
     }
-  }, [formData, user]);
+  }, [formData, user, localPhotoUri, photoRemoved]);
 
   const handleInputChange = (field: keyof ProfileFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handlePickImage = async () => {
-    try {
-      // Request permission
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission Required',
-          'Please allow access to your photo library to change your profile picture.'
-        );
-        return;
-      }
-
-      // Launch image picker
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        handleInputChange('photoURL', result.assets[0].uri);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to pick image. Please try again.');
-    }
   };
 
   const validateForm = (): boolean => {
@@ -108,15 +100,190 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     return true;
   };
 
+  // Handle avatar tap - show action sheet
+  const handleAvatarPress = () => {
+    const hasExistingPhoto = user?.photoURL || localPhotoUri;
+    const cameraAvailable = isCameraAvailable();
+
+    // Build options dynamically
+    const options: string[] = ['Choose from Library'];
+    if (cameraAvailable) {
+      options.unshift('Take Photo');
+    }
+    if (hasExistingPhoto && !photoRemoved) {
+      options.push('Remove Photo');
+    }
+    options.push('Cancel');
+
+    const cancelIndex = options.length - 1;
+    const destructiveIndex = options.indexOf('Remove Photo');
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex: cancelIndex,
+          destructiveButtonIndex: destructiveIndex >= 0 ? destructiveIndex : undefined,
+          title: 'Change Profile Photo',
+        },
+        (buttonIndex) => {
+          handleActionSheetSelection(options[buttonIndex]);
+        }
+      );
+    } else {
+      // Android fallback using Alert
+      Alert.alert(
+        'Change Profile Photo',
+        undefined,
+        options.map((option, index) => ({
+          text: option,
+          style: option === 'Remove Photo' ? 'destructive' : option === 'Cancel' ? 'cancel' : 'default',
+          onPress: () => handleActionSheetSelection(option),
+        }))
+      );
+    }
+  };
+
+  const handleActionSheetSelection = async (selection: string) => {
+    switch (selection) {
+      case 'Take Photo':
+        await handleTakePhoto();
+        break;
+      case 'Choose from Library':
+        await handleChooseFromLibrary();
+        break;
+      case 'Remove Photo':
+        handleRemovePhoto();
+        break;
+      default:
+        // Cancel - do nothing
+        break;
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    const result = await pickImageFromCamera();
+    if (result && !result.cancelled) {
+      setLocalPhotoUri(result.uri);
+      setPhotoRemoved(false);
+    }
+  };
+
+  const handleChooseFromLibrary = async () => {
+    const result = await pickImageFromGallery();
+    if (result && !result.cancelled) {
+      setLocalPhotoUri(result.uri);
+      setPhotoRemoved(false);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setLocalPhotoUri(null);
+    setPhotoRemoved(true);
+  };
+
   const handleSave = async () => {
+    console.log('[EditProfileModal] handleSave called');
+    console.log('[EditProfileModal] localPhotoUri:', localPhotoUri?.substring(0, 50));
+    console.log('[EditProfileModal] photoRemoved:', photoRemoved);
+    console.log('[EditProfileModal] formData:', JSON.stringify(formData));
+
     if (!validateForm()) {
+      console.log('[EditProfileModal] Form validation failed');
       return;
     }
 
     if (!user) {
+      console.log('[EditProfileModal] No user in context');
       Alert.alert('Error', 'No user logged in.');
       return;
     }
+
+    console.log('[EditProfileModal] User from context:', user.uid);
+    debugFirebaseState('handleSave before upload');
+
+    setIsLoading(true);
+    try {
+      let newPhotoURL: string | undefined | null = undefined;
+
+      // Upload new photo if selected
+      if (localPhotoUri) {
+        console.log('[EditProfileModal] Starting photo upload...');
+        console.log('[EditProfileModal] Uploading for user.uid:', user.uid);
+        setIsUploadingImage(true);
+        try {
+          const uploadResult = await uploadProfileImage(
+            user.uid,
+            localPhotoUri,
+            (progress) => {
+              console.log('[EditProfileModal] Upload progress:', progress);
+              setUploadProgress(progress);
+            }
+          );
+          console.log('[EditProfileModal] Upload SUCCESS!');
+          console.log('[EditProfileModal] Download URL:', uploadResult.downloadURL);
+          newPhotoURL = uploadResult.downloadURL;
+        } catch (uploadError: any) {
+          setIsUploadingImage(false);
+          setIsLoading(false);
+          const errorMessage = uploadError?.message || 'Unknown error';
+          console.error('[EditProfileModal] Upload FAILED');
+          console.error('[EditProfileModal] Upload error type:', typeof uploadError);
+          console.error('[EditProfileModal] Upload error:', uploadError);
+          console.error('[EditProfileModal] Upload error message:', errorMessage);
+          Alert.alert(
+            'Upload Failed',
+            `${errorMessage}\n\nWould you like to try again or save without the photo?`,
+            [
+              { text: 'Try Again', onPress: handleSave },
+              {
+                text: 'Save Without Photo',
+                onPress: () => saveProfileWithoutPhoto(),
+              },
+              { text: 'Cancel', style: 'cancel' },
+            ]
+          );
+          return;
+        }
+        setIsUploadingImage(false);
+      } else if (photoRemoved) {
+        // User explicitly removed their photo
+        console.log('[EditProfileModal] Photo removed, setting photoURL to null');
+        newPhotoURL = null;
+      }
+
+      // Build profile updates
+      const updates: Partial<UserType> = {
+        displayName: formData.displayName.trim(),
+      };
+
+      // Only include photoURL if it changed
+      if (newPhotoURL !== undefined) {
+        updates.photoURL = newPhotoURL ?? undefined;
+      }
+
+      console.log('[EditProfileModal] Calling updateProfile with:', JSON.stringify(updates));
+      await updateProfile(updates);
+      console.log('[EditProfileModal] updateProfile SUCCESS');
+
+      // Close modal immediately on success
+      setIsLoading(false);
+      onClose();
+    } catch (error: any) {
+      console.error('[EditProfileModal] updateProfile FAILED');
+      console.error('[EditProfileModal] Profile update error:', error);
+      console.error('[EditProfileModal] Profile update error message:', error?.message);
+      setIsLoading(false);
+      Alert.alert(
+        'Error',
+        `Failed to update your profile: ${error?.message || 'Unknown error'}`,
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  const saveProfileWithoutPhoto = async () => {
+    if (!user) return;
 
     setIsLoading(true);
     try {
@@ -124,43 +291,12 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         displayName: formData.displayName.trim(),
       };
 
-      // Upload new profile picture if changed and is a local file
-      if (formData.photoURL !== (user?.photoURL || '')) {
-        if (formData.photoURL && !formData.photoURL.startsWith('http')) {
-          // Local file URI - upload to Firebase Storage
-          try {
-            const uploadResult = await imageUploadService.uploadProfilePicture(
-              user.uid,
-              formData.photoURL
-            );
-            updates.photoURL = uploadResult.downloadURL;
-          } catch (uploadError) {
-            const message = uploadError instanceof Error ? uploadError.message : 'Unknown error';
-            Alert.alert(
-              'Upload Error',
-              `Failed to upload profile picture: ${message}. Your other changes will still be saved.`,
-              [{ text: 'OK' }]
-            );
-            // Continue without the photo update
-          }
-        } else {
-          // Already a remote URL or empty
-          updates.photoURL = formData.photoURL || undefined;
-        }
-      }
-
       await updateProfile(updates);
-
-      // Close modal immediately on success
       setIsLoading(false);
       onClose();
     } catch (error) {
       setIsLoading(false);
-      Alert.alert(
-        'Error',
-        'Failed to update your profile. Please try again.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Error', 'Failed to update your profile. Please try again.');
     }
   };
 
@@ -178,6 +314,11 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       onClose();
     }
   };
+
+  // Determine the photo URL to display
+  const displayPhotoURL = photoRemoved
+    ? null
+    : localPhotoUri || user?.photoURL;
 
   return (
     <Modal
@@ -224,28 +365,48 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
           {/* Form */}
           <View style={styles.form}>
-            {/* Profile Picture */}
+            {/* Profile Avatar Preview - Tappable */}
             <View style={styles.avatarSection}>
               <TouchableOpacity
-                onPress={handlePickImage}
-                style={styles.avatarContainer}
+                onPress={handleAvatarPress}
                 disabled={isLoading}
+                activeOpacity={0.7}
+                style={styles.avatarTouchable}
               >
-                {formData.photoURL ? (
-                  <Image
-                    source={{ uri: formData.photoURL }}
-                    style={styles.avatar}
-                  />
-                ) : (
-                  <View style={styles.avatarPlaceholder}>
-                    <User size={48} color={colors.textMuted} />
-                  </View>
-                )}
-                <View style={styles.cameraButton}>
-                  <Camera size={16} color={colors.background} />
+                <ProfileAvatar
+                  photoURL={displayPhotoURL}
+                  name={formData.displayName || user?.displayName || 'Sailor'}
+                  id={user?.uid || 'default'}
+                  size={120}
+                  isLoading={isUploadingImage}
+                />
+                {/* Camera badge overlay */}
+                <View style={styles.cameraBadge}>
+                  <Camera size={16} color={colors.white} />
                 </View>
               </TouchableOpacity>
-              <Text style={styles.avatarHint}>Tap to change photo</Text>
+
+              {/* Upload progress indicator */}
+              {isUploadingImage && (
+                <View style={styles.progressContainer}>
+                  <View style={styles.progressBar}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        { width: `${uploadProgress}%` },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.progressText}>
+                    Uploading... {uploadProgress}%
+                  </Text>
+                </View>
+              )}
+
+              {/* Hint text */}
+              {!isUploadingImage && (
+                <Text style={styles.avatarHint}>Tap to change photo</Text>
+              )}
             </View>
 
             {/* Display Name */}
@@ -327,38 +488,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  avatarContainer: {
+  avatarTouchable: {
     position: 'relative',
   },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.surface,
-  },
-  avatarPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.surface,
-    borderWidth: 2,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cameraButton: {
+  cameraBadge: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    bottom: 4,
+    right: 4,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: colors.primary,
-    alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 3,
+    alignItems: 'center',
+    borderWidth: 2,
     borderColor: colors.background,
+    ...shadows.button,
+  },
+  progressContainer: {
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+  },
+  progressBar: {
+    width: 120,
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 2,
+  },
+  progressText: {
+    ...typography.caption,
+    color: colors.textMuted,
   },
   avatarHint: {
     ...typography.caption,

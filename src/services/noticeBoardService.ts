@@ -16,7 +16,7 @@ import {
   NoticeBoardServiceConfig,
   MediaItem
 } from '../types/noticeBoard';
-import { UserStore } from '../stores/userStore';
+import type { UserState } from '../stores/userStore';
 import { RealDataService } from './realDataService';
 import { CCR2024NoticesService, ActionForm } from './ccr2024NoticesService';
 import {
@@ -28,7 +28,7 @@ import {
 
 export class NoticeBoardService {
   private config: NoticeBoardServiceConfig;
-  private userStore: typeof UserStore;
+  private userState: UserState;
   private cache: Map<string, any> = new Map();
   private lastFetchTime: Map<string, number> = new Map();
   private useDemoData: boolean;
@@ -36,8 +36,8 @@ export class NoticeBoardService {
   private ccrNoticesService: CCR2024NoticesService;
   private dataSource: 'demo' | 'racing_rules' | 'ccr2024' = 'demo';
 
-  constructor(userStore: typeof UserStore, useDemoData: boolean = false, dataSource: 'demo' | 'racing_rules' | 'ccr2024' = 'racing_rules') {
-    this.userStore = userStore;
+  constructor(userState: UserState, useDemoData: boolean = false, dataSource: 'demo' | 'racing_rules' | 'ccr2024' = 'racing_rules') {
+    this.userState = userState;
     this.useDemoData = useDemoData;
     this.dataSource = dataSource;
     this.realDataService = new RealDataService();
@@ -88,7 +88,7 @@ export class NoticeBoardService {
   async getEventDocuments(eventId: string): Promise<EventDocument[]> {
     try {
       const event = await this.getEvent(eventId);
-      return event?.noticeBoard.documents || [];
+      return event?.noticeBoard?.documents || [];
     } catch (error) {
       return [];
     }
@@ -108,7 +108,7 @@ export class NoticeBoardService {
       } else {
         // Use existing logic for demo/racing rules data
         const event = await this.getEvent(eventId);
-        notifications = event?.noticeBoard.notifications || [];
+        notifications = event?.noticeBoard?.notifications || [];
       }
 
       return notifications;
@@ -159,7 +159,7 @@ export class NoticeBoardService {
   async getProtests(eventId: string): Promise<ProtestSubmission[]> {
     try {
       const event = await this.getEvent(eventId);
-      return event?.noticeBoard.protests || [];
+      return event?.noticeBoard?.protests || [];
     } catch (error) {
       return [];
     }
@@ -171,7 +171,7 @@ export class NoticeBoardService {
   async getHearings(eventId: string): Promise<Hearing[]> {
     try {
       const event = await this.getEvent(eventId);
-      return event?.noticeBoard.hearings || [];
+      return event?.noticeBoard?.hearings || [];
     } catch (error) {
       return [];
     }
@@ -203,7 +203,7 @@ export class NoticeBoardService {
   async getScoringInquiries(eventId: string): Promise<ScoringInquiry[]> {
     try {
       const event = await this.getEvent(eventId);
-      return event?.noticeBoard.scoringInquiries || [];
+      return event?.noticeBoard?.scoringInquiries || [];
     } catch (error) {
       return [];
     }
@@ -215,7 +215,7 @@ export class NoticeBoardService {
   async getOnWaterPenalties(eventId: string): Promise<OnWaterPenalty[]> {
     try {
       const event = await this.getEvent(eventId);
-      return event?.noticeBoard.penalties || [];
+      return event?.noticeBoard?.penalties || [];
     } catch (error) {
       return [];
     }
@@ -226,7 +226,7 @@ export class NoticeBoardService {
    */
   async getRegistrationStatus(eventId: string): Promise<RegistrationStatus | null> {
     try {
-      const user = this.userStore.getState();
+      const user = this.userState;
       
       if (user.userType !== 'participant') {
         return null;
@@ -446,7 +446,7 @@ export class NoticeBoardService {
   async getMediaItems(eventId: string): Promise<MediaItem[]> {
     try {
       const event = await this.getEvent(eventId);
-      return event?.noticeBoard.mediaItems || this.generateDemoMediaItems();
+      return event?.noticeBoard?.mediaItems || this.generateDemoMediaItems();
     } catch (error) {
       return this.generateDemoMediaItems();
     }

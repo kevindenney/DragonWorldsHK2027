@@ -231,6 +231,8 @@ class LocationWeatherService {
       waveHeight: Math.max(0.1, baseWaveHeight + waveVariation + (Math.random() - 0.5) * 0.3),
       wavePeriod: 6 + Math.random() * 4,
       waveDirection: Math.random() * 360,
+      swellPeriod: 8 + Math.random() * 6,
+      swellDirection: Math.random() * 360,
       tideHeight: Math.max(0, baseTideHeight + tideVariation + (Math.random() - 0.5) * 0.2),
       tideTrend: Math.random() > 0.5 ? 'rising' : 'falling',
       current: {
@@ -377,10 +379,13 @@ class LocationWeatherService {
   /**
    * Calculate next tide time
    */
-  private calculateNextTide(type: 'high' | 'low'): string {
+  private calculateNextTide(type: 'high' | 'low'): { time: string; height: number } {
     const now = new Date();
     const nextTide = new Date(now.getTime() + (6 + Math.random() * 6) * 60 * 60 * 1000);
-    return nextTide.toISOString();
+    return {
+      time: nextTide.toISOString(),
+      height: type === 'high' ? 2.0 + Math.random() * 1.0 : 0.3 + Math.random() * 0.5
+    };
   }
 }
 

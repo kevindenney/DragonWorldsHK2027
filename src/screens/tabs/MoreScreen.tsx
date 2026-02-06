@@ -21,6 +21,7 @@ import { ModernWeatherMapScreen } from './ModernWeatherMapScreen';
 import { MapScreen } from '../MapScreen';
 import { DataSourcesScreen } from '../DataSourcesScreen';
 import { DiscussScreen } from '../DiscussScreen';
+import { AboutRegattaFlowScreen } from '../AboutRegattaFlowScreen';
 import { ShippingScreen } from './ShippingScreen';
 import { IOSText } from '../../components/ios/IOSText';
 import { ProfileButton } from '../../components/navigation/ProfileButton';
@@ -111,6 +112,14 @@ const getMoreOptions = (): MoreOption[] => {
       section: 'Event',
     },
     // APP section
+    {
+      id: 'about-regattaflow',
+      title: 'About RegattaFlow',
+      iconName: 'navigate-outline',
+      component: AboutRegattaFlowScreen,
+      accessibilityLabel: 'Learn about RegattaFlow sailing platform',
+      section: 'App',
+    },
     {
       id: 'data-sources',
       title: 'Data Sources',

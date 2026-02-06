@@ -7,7 +7,16 @@ import React from 'react';
 import { View } from 'react-native';
 
 // Minimal stub components that don't render anything functional
-export const MapView = ({ children, ...props }: any) => <View {...props}>{children}</View>;
+export const MapView = React.forwardRef(({ children, ...props }: any, ref: any) => {
+  // Expose stub methods that real MapView would have
+  React.useImperativeHandle(ref, () => ({
+    animateToRegion: () => {},
+    fitToCoordinates: () => {},
+    getCamera: () => Promise.resolve({}),
+    setCamera: () => {},
+  }));
+  return <View {...props}>{children}</View>;
+});
 export const Marker = ({ children, ...props }: any) => <View {...props}>{children}</View>;
 export const Heatmap = ({ children, ...props }: any) => <View {...props}>{children}</View>;
 export const Circle = ({ children, ...props }: any) => <View {...props}>{children}</View>;

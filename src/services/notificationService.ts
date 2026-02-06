@@ -44,6 +44,8 @@ export class NotificationService {
           shouldShowAlert: true,
           shouldPlaySound: data?.priority === 'emergency' || data?.priority === 'urgent',
           shouldSetBadge: true,
+          shouldShowBanner: true,
+          shouldShowList: true,
         };
       },
     });

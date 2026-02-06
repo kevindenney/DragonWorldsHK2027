@@ -5,24 +5,20 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   Alert,
   Switch,
   ActivityIndicator,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import {
   User,
   Mail,
   Phone,
   MapPin,
   Calendar,
-  Settings,
   Shield,
   Bell,
   LogOut,
   Edit3,
-  Camera,
   Link,
   Trash2,
   CheckCircle,
@@ -31,13 +27,10 @@ import {
   Globe,
   Database,
   Eye,
-  Moon,
-  Sun,
   HelpCircle,
   MessageCircle,
   FileText,
   Star,
-  Anchor,
   Sailboat,
   ChevronRight
 } from 'lucide-react-native';
@@ -45,7 +38,7 @@ import { colors, typography, spacing, borderRadius, shadows } from '../../consta
 import { useAuth } from '../../auth/useAuth';
 import { User as UserType, LinkedProvider } from '../../auth/authTypes';
 import { AuthButton } from './AuthButton';
-import { imageUploadService, UploadProgress } from '../../services/imageUploadService';
+import { InitialsAvatar } from '../shared/InitialsAvatar';
 
 interface UserProfileProps {
   onEditProfile?: () => void;
@@ -67,8 +60,6 @@ export function UserProfile({
       ? user?.preferences?.notifications
       : (user?.preferences?.notifications as any)?.push || false
   );
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -86,124 +77,16 @@ export function UserProfile({
     setSuccessMessage(message);
   };
 
-  const handlePhotoUpload = async () => {
-    try {
-      // Request permission
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permissionResult.granted) {
-        Alert.alert('Permission Required', 'Please allow access to your photo library to update your profile picture.');
-        return;
-      }
-
-      // Show action sheet for photo selection
-      Alert.alert(
-        'Update Profile Photo',
-        'Choose an option to update your profile picture',
-        [
-          { text: 'Camera', onPress: () => handleImageSelection('camera') },
-          { text: 'Photo Library', onPress: () => handleImageSelection('library') },
-          { text: 'Cancel', style: 'cancel' }
-        ]
-      );
-    } catch (error) {
-      Alert.alert('Error', 'Unable to access photo library. Please try again.');
-    }
-  };
-
-  const handleImageSelection = async (source: 'camera' | 'library') => {
-    if (!user?.uid) {
-      Alert.alert('Error', 'User not authenticated. Please log in again.');
-      return;
-    }
-
-    try {
-      setIsUploadingPhoto(true);
-      setUploadProgress(null);
-
-
-      let result: ImagePicker.ImagePickerResult;
-
-      if (source === 'camera') {
-        const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
-        if (!cameraPermission.granted) {
-          Alert.alert('Permission Required', 'Please allow camera access to take a photo.');
-          return;
-        }
-
-        result = await ImagePicker.launchCameraAsync({
-          mediaTypes: ['images'] as ImagePicker.MediaType[],
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 0.8, // Better quality for profile pictures
-        });
-      } else {
-        result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ['images'] as ImagePicker.MediaType[],
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 0.8, // Better quality for profile pictures
-        });
-      }
-
-      if (!result.canceled && result.assets[0]) {
-        const imageUri = result.assets[0].uri;
-
-        // Compress image if needed to reduce upload time
-        const compressedUri = await imageUploadService.compressImage(imageUri, 400, 0.8);
-
-        // Upload to Firebase Storage with progress tracking
-        const uploadResult = await imageUploadService.uploadProfilePicture(
-          user.uid,
-          compressedUri,
-          {
-            onProgress: (progress) => {
-              setUploadProgress(progress);
-            },
-            timeoutMs: 30000, // 30 second timeout
-            maxSizeBytes: 5 * 1024 * 1024, // 5MB limit
-          }
-        );
-
-
-        // Update the profile with the cloud storage URL
-        await updateProfile({
-          photoURL: uploadResult.downloadURL,
-        });
-
-        showSuccessMessage('Profile photo updated successfully!');
-      }
-    } catch (error) {
-
-      let errorMessage = 'Failed to update profile photo.';
-      if (error instanceof Error) {
-        // Use the user-friendly error messages from the upload service
-        errorMessage = error.message;
-      }
-
-      Alert.alert('Upload Error', errorMessage + ' Please try again.');
-    } finally {
-      setIsUploadingPhoto(false);
-      setUploadProgress(null);
-    }
-  };
-
   const handleNotificationToggle = async (value: boolean) => {
     try {
       setIsUpdatingProfile(true);
       setNotificationsEnabled(value);
 
-      // Update user preferences
-      const currentNotifications = typeof user?.preferences?.notifications === 'object' && user?.preferences?.notifications !== null
-        ? user.preferences.notifications
-        : { email: false, push: false, sms: false };
-
+      // Update user preferences - notifications is a boolean in UserPreferences
       await updateProfile({
         preferences: {
           ...user?.preferences,
-          notifications: {
-            ...currentNotifications,
-            push: value,
-          },
+          notifications: value,
         },
       });
 
@@ -289,9 +172,6 @@ export function UserProfile({
       <ProfileHeader
         user={user}
         onEditProfile={onEditProfile}
-        onPhotoUpload={handlePhotoUpload}
-        isUploadingPhoto={isUploadingPhoto}
-        uploadProgress={uploadProgress}
       />
 
       <ProfileSection title="Sailing Profile">
@@ -585,59 +465,20 @@ Thank you for your assistance.`;
 interface ProfileHeaderProps {
   user: UserType;
   onEditProfile?: () => void;
-  onPhotoUpload?: () => void;
-  isUploadingPhoto?: boolean;
-  uploadProgress?: UploadProgress | null;
 }
 
 function ProfileHeader({
   user,
   onEditProfile,
-  onPhotoUpload,
-  isUploadingPhoto,
-  uploadProgress,
 }: ProfileHeaderProps) {
-  const showDragonLogo = !user.photoURL && !isUploadingPhoto;
-
   return (
     <View style={styles.header}>
       <View style={styles.avatarContainer}>
-        {user.photoURL ? (
-          <Image source={{ uri: user.photoURL }} style={styles.avatar} />
-        ) : showDragonLogo ? (
-          <Image
-            source={require('../../../assets/dragon-logo.png')}
-            style={styles.avatarDragonLogo}
-            resizeMode="contain"
-          />
-        ) : (
-          <View style={styles.avatarPlaceholder}>
-            <User size={40} color={colors.textMuted} />
-          </View>
-        )}
-
-        {/* Upload progress overlay */}
-        {isUploadingPhoto && uploadProgress && (
-          <View style={styles.uploadProgressOverlay}>
-            <View style={styles.uploadProgressContainer}>
-              <View style={[styles.uploadProgressBar, { width: `${uploadProgress.percentage}%` }]} />
-            </View>
-            <Text style={styles.uploadProgressText}>{uploadProgress.percentage}%</Text>
-          </View>
-        )}
-
-        <TouchableOpacity
-          style={[styles.cameraButton, isUploadingPhoto && styles.cameraButtonLoading]}
-          activeOpacity={0.7}
-          onPress={onPhotoUpload}
-          disabled={isUploadingPhoto}
-        >
-          {isUploadingPhoto ? (
-            <ActivityIndicator size={14} color={colors.background} />
-          ) : (
-            <Camera size={16} color={colors.background} />
-          )}
-        </TouchableOpacity>
+        <InitialsAvatar
+          name={user.displayName || 'Sailor'}
+          id={user.uid}
+          size={80}
+        />
       </View>
       
       <View style={styles.userInfo}>
@@ -847,75 +688,7 @@ const styles = StyleSheet.create({
     ...shadows.card,
   },
   avatarContainer: {
-    position: 'relative',
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.border,
-  },
-  avatarPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarDragonLogo: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.surface,
-    borderWidth: 2,
-    borderColor: colors.primary + '20',
-  },
-  uploadProgressOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 40,
-    backgroundColor: colors.text + '80',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-  },
-  uploadProgressContainer: {
-    width: 60,
-    height: 4,
-    backgroundColor: colors.background + '40',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  uploadProgressBar: {
-    height: '100%',
-    backgroundColor: colors.primary,
-    borderRadius: 2,
-  },
-  uploadProgressText: {
-    ...typography.caption,
-    color: colors.background,
-    fontWeight: '600',
-  },
-  cameraButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: colors.background,
-    ...shadows.button,
-  },
-  cameraButtonLoading: {
-    backgroundColor: colors.textMuted,
+    marginRight: spacing.sm,
   },
   userInfo: {
     flex: 1,

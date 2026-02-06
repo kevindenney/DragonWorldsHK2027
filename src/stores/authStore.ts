@@ -18,7 +18,7 @@ import {
 import { auth } from '../config/firebase';
 import { User, AuthProviderType, LoginCredentials, RegisterCredentials } from '../types/simpleAuth';
 import { getDocRef, withTimestamp, UserDocument } from '../config/firestore';
-import { setDoc, getDoc } from 'firebase/firestore';
+import { setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { firestore } from '../config/firebase';
 import {
   GoogleSignin,
@@ -268,17 +268,17 @@ export const useAuthStore = create<AuthState>()(
           // Create user document in Firestore (if available)
           try {
             if (firestore) {
-              const userDoc: UserDocument = withTimestamp({
+              const userDoc = withTimestamp({
                 uid: userCredential.user.uid,
                 email: userCredential.user.email || '',
                 displayName: credentials.displayName || '',
                 emailVerified: false,
-                role: 'participant',
+                role: 'participant' as const,
                 providers: ['email'],
                 preferences: defaultPreferences,
               });
 
-              await setDoc(getDocRef.user(userCredential.user.uid), userDoc);
+              await setDoc(getDocRef.user(userCredential.user.uid), userDoc as any);
             } else {
             }
           } catch (error) {
@@ -355,14 +355,14 @@ export const useAuthStore = create<AuthState>()(
           // Create or update user document in Firestore
           try {
             if (firestore) {
-              const userDoc: UserDocument = withTimestamp({
+              const userDoc = withTimestamp({
                 uid: userCredential.user.uid,
                 email: userCredential.user.email || '',
                 displayName: userCredential.user.displayName || '',
                 photoURL: userCredential.user.photoURL || undefined,
                 phoneNumber: userCredential.user.phoneNumber || undefined,
                 emailVerified: userCredential.user.emailVerified,
-                role: userData?.role || 'participant',
+                role: (userData?.role || 'participant') as 'participant' | 'organizer' | 'admin',
                 providers: userData?.providers || [provider],
                 preferences: userData?.preferences || {
                   notifications: true,
@@ -371,7 +371,7 @@ export const useAuthStore = create<AuthState>()(
                 },
               });
 
-              await setDoc(getDocRef.user(userCredential.user.uid), userDoc, { merge: true });
+              await setDoc(getDocRef.user(userCredential.user.uid), userDoc as any, { merge: true });
             }
           } catch (error) {
           }
@@ -494,8 +494,8 @@ export const useAuthStore = create<AuthState>()(
               const userDocRef = getDocRef.user(currentUser.uid);
               await setDoc(userDocRef, {
                 ...updates,
-                updatedAt: new Date(),
-              } as Partial<UserDocument>, { merge: true });
+                updatedAt: serverTimestamp(),
+              } as any, { merge: true });
             }
           } catch (error) {
           }
@@ -524,7 +524,10 @@ export const useAuthStore = create<AuthState>()(
       resendEmailVerification: async () => {
         try {
           set({ isLoading: true, error: null });
-          
+
+          if (!auth) {
+            throw new Error('Auth not initialized');
+          }
           const firebaseUser = auth.currentUser;
           if (!firebaseUser) {
             throw new Error('No user logged in');
@@ -671,7 +674,7 @@ export const useAuthStore = create<AuthState>()(
 );
 
 // Post-creation debugging
-authDebugger.afterCreate(useAuthStore);
+authDebugger.afterCreate();
 
 /**
  * Auth store selectors for optimized re-renders

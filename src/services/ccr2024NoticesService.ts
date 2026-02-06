@@ -1,4 +1,4 @@
-import { OfficialNotification, EventDocument } from '../types/noticeBoard';
+import { OfficialNotification, EventDocument, RegattaCategory } from '../types/noticeBoard';
 
 /**
  * China Coast Race Week Notice Board Scraping Service
@@ -80,8 +80,15 @@ export class CCR2024NoticesService {
             id: 'weather_forecast_001',
             title: 'Weather Forecast Update',
             url: `${this.baseUrl}/documents/weather-update-001.pdf`,
-            type: 'pdf',
-            size: 156789
+            type: 'weather_forecast',
+            category: RegattaCategory.DAILY_OPERATIONS,
+            fileType: 'pdf',
+            size: 156789,
+            uploadedAt: new Date().toISOString(),
+            isRequired: false,
+            version: '1.0',
+            priority: 'high',
+            status: 'published'
           }
         ]
       },
@@ -104,7 +111,7 @@ export class CCR2024NoticesService {
         id: 'ccr_notice_004',
         title: 'Equipment Check - Mandatory Safety Items',
         content: 'Random equipment checks will be conducted after racing today. Boats selected will be notified at the dock. Please ensure all mandatory safety equipment is aboard and in good condition.',
-        type: 'equipment',
+        type: 'equipment_inspection',
         priority: 'medium',
         publishedAt: new Date(Date.now() - 6 * 3600 * 1000).toISOString(), // 6 hours ago
         author: 'Technical Committee',
@@ -117,8 +124,15 @@ export class CCR2024NoticesService {
             id: 'safety_checklist_001',
             title: 'Mandatory Safety Equipment Checklist',
             url: `${this.baseUrl}/documents/safety-equipment-checklist.pdf`,
-            type: 'pdf',
-            size: 234567
+            type: 'equipment_regulations',
+            category: RegattaCategory.SAFETY_REGULATORY,
+            fileType: 'pdf',
+            size: 234567,
+            uploadedAt: new Date().toISOString(),
+            isRequired: false,
+            version: '1.0',
+            priority: 'medium',
+            status: 'published'
           }
         ]
       },
@@ -126,11 +140,11 @@ export class CCR2024NoticesService {
         id: 'ccr_notice_005',
         title: 'Prize Giving Ceremony - Location Updated',
         content: 'The prize giving ceremony scheduled for Saturday evening has been moved from the Clipper Lounge to the Main Ballroom due to increased attendance. Cocktails at 1830, ceremony begins at 1930.',
-        type: 'social',
+        type: 'announcement',
         priority: 'low',
         publishedAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(), // 12 hours ago
         author: 'Event Coordinator',
-        authorRole: 'event_organizer',
+        authorRole: 'organizer',
         tags: ['prize-giving', 'social', 'location-change'],
         isRead: false,
         source: 'ccr2024',
@@ -154,8 +168,15 @@ export class CCR2024NoticesService {
             id: 'course_diagram_003',
             title: 'Race 3 Course Diagram',
             url: `${this.baseUrl}/documents/course-diagram-race3.pdf`,
-            type: 'pdf',
-            size: 445678
+            type: 'course_info',
+            category: RegattaCategory.DAILY_OPERATIONS,
+            fileType: 'pdf',
+            size: 445678,
+            uploadedAt: new Date().toISOString(),
+            isRequired: false,
+            version: '1.0',
+            priority: 'urgent',
+            status: 'published'
           }
         ]
       },

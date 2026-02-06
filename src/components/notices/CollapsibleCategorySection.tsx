@@ -26,7 +26,7 @@ import type {
 // NoticeItem type compatible with NoticeCard
 type NoticeItem = (OfficialNotification | EventDocument) & {
   itemType: 'notification' | 'document';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  priority: 'low' | 'medium' | 'high' | 'urgent' | 'critical';
   publishedAt: string;
   category?: RegattaCategory;
   isRead?: boolean;

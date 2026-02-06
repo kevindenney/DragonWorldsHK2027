@@ -259,7 +259,7 @@ export function ServicesScreen({ navigation }: ServicesScreenProps) {
               </IOSText>
             </View>
 
-            <IOSList style={styles.standingsList}>
+            <View style={styles.standingsList}>
               {raceStandings.map((standing) => (
                 <View key={standing.position} style={styles.standingItem}>
                   <IOSText textStyle="headline" weight="bold" style={styles.position}>
@@ -279,7 +279,7 @@ export function ServicesScreen({ navigation }: ServicesScreenProps) {
                   </IOSText>
                 </View>
               ))}
-            </IOSList>
+            </View>
 
             <View style={styles.resultsActions}>
               <IOSButton
@@ -307,7 +307,7 @@ export function ServicesScreen({ navigation }: ServicesScreenProps) {
               EVENT INFORMATION
             </IOSText>
 
-            <IOSList style={styles.infoList}>
+            <View style={styles.infoList}>
               {eventInfoItems.map((item) => (
                 <View key={item.id} style={styles.infoItem}>
                   {item.icon}
@@ -316,7 +316,7 @@ export function ServicesScreen({ navigation }: ServicesScreenProps) {
                   </IOSText>
                 </View>
               ))}
-            </IOSList>
+            </View>
 
             <IOSButton
               title="Access Info Hub"
@@ -335,7 +335,7 @@ export function ServicesScreen({ navigation }: ServicesScreenProps) {
               NAVIGATION & TRANSPORT
             </IOSText>
 
-            <IOSList style={styles.navigationList}>
+            <View style={styles.navigationList}>
               {navigationItems.map((item) => (
                 <View key={item.id} style={styles.navigationItem}>
                   {item.icon}
@@ -351,7 +351,7 @@ export function ServicesScreen({ navigation }: ServicesScreenProps) {
                   </View>
                 </View>
               ))}
-            </IOSList>
+            </View>
 
             <View style={styles.navigationActions}>
               <IOSButton

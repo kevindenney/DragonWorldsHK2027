@@ -113,10 +113,10 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
         <IOSText style={styles.accessExpiry}>Expires: Nov 29, 23:59</IOSText>
         <IOSButton
           title="Continue After Event"
-          variant="ghost"
+          variant="plain"
           size="small"
           onPress={handleSubscriptionUpgrade}
-          icon={ChevronRight}
+          icon={<ChevronRight size={16} color="#007AFF" />}
           style={styles.continueButton}
         />
       </IOSCard>
@@ -141,12 +141,12 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
             variant="primary"
             size="small"
             onPress={handleSubscriptionUpgrade}
-            icon={ChevronRight}
+            icon={<ChevronRight size={16} color="#007AFF" />}
             style={styles.subscriptionButton}
           />
           <IOSButton
             title="Try Basic Weather"
-            variant="ghost"
+            variant="plain"
             size="small"
             onPress={() => {}}
             style={styles.basicButton}
@@ -195,8 +195,8 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
 
           {accessLevel === 'premium' && (
             <View style={styles.professionalBadge}>
-              <IOSBadge text="Multi-Source Data Active" variant="success" size="small" />
-              <IOSBadge text="OpenWeatherMap + Open-Meteo" variant="primary" size="small" />
+              <IOSBadge text="Multi-Source Data Active" variant="filled" color="systemGreen" size="small" />
+              <IOSBadge text="OpenWeatherMap + Open-Meteo" variant="tinted" color="systemBlue" size="small" />
             </View>
           )}
           
@@ -236,10 +236,10 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
 
           <IOSButton
             title="Detailed Wind Maps"
-            variant="ghost"
+            variant="plain"
             size="small"
             onPress={() => {}}
-            icon={ChevronRight}
+            icon={<ChevronRight size={16} color="#007AFF" />}
             style={styles.detailButton}
           />
         </IOSCard>
@@ -274,10 +274,10 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
 
           <IOSButton
             title="Current Maps"
-            variant="ghost"
+            variant="plain"
             size="small"
             onPress={() => {}}
-            icon={ChevronRight}
+            icon={<ChevronRight size={16} color="#007AFF" />}
             style={styles.detailButton}
           />
         </IOSCard>
@@ -317,10 +317,10 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
             <IOSText style={styles.legendText}>R = Racing Conditions Quality</IOSText>
             <IOSButton
               title="Extended Forecast"
-              variant="ghost"
+              variant="plain"
               size="small"
               onPress={() => {}}
-              icon={ChevronRight}
+              icon={<ChevronRight size={16} color="#007AFF" />}
               style={styles.extendedButton}
             />
           </View>
@@ -372,7 +372,7 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
             title="Unlock Professional"
             variant="primary"
             onPress={handleSubscriptionUpgrade}
-            icon={ChevronRight}
+            icon={<ChevronRight size={16} color="#007AFF" />}
             style={styles.unlockButton}
           />
         </IOSCard>
@@ -397,7 +397,7 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
           title="Download TacticalWind Pro"
           variant="primary"
           onPress={handleCrossPromotion}
-          icon={ChevronRight}
+          icon={<ChevronRight size={16} color="#007AFF" />}
           style={styles.promoButton}
         />
         
@@ -416,7 +416,7 @@ export const EnhancedWeatherScreen: React.FC<WeatherScreenProps> = ({ navigation
         <IOSText style={styles.lockedDescription}>{description}</IOSText>
         <IOSButton
           title="Upgrade to Access"
-          variant="ghost"
+          variant="plain"
           size="small"
           onPress={handleSubscriptionUpgrade}
           style={styles.lockedButton}

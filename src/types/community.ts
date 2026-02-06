@@ -155,9 +155,9 @@ export interface PostComment {
 export interface PostVote {
   id: string;
   user_id: string;
-  discussion_id: string | null;
-  comment_id: string | null;
-  vote_type: 'upvote' | 'downvote';
+  target_id: string;
+  target_type: 'discussion' | 'comment';
+  vote: 1 | -1; // 1 = upvote, -1 = downvote
   created_at: string;
 }
 

@@ -40,7 +40,7 @@ const firebaseConfig: FirebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || '',
   authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || 'dragonworldshk2027.firebaseapp.com',
   projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'dragonworldshk2027',
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || 'dragonworldshk2027.appspot.com',
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || 'dragonworldshk2027.firebasestorage.app',
   messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || '',
   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID || undefined,
@@ -223,8 +223,11 @@ export let analytics: any = null;
 
 /**
  * Connect to Firebase emulators in development with enhanced debugging
+ * NOTE: Disabled by default - set EXPO_PUBLIC_USE_EMULATORS=true to enable
+ * Real devices cannot reach localhost emulators
  */
-if (__DEV__ && (process.env.EXPO_PUBLIC_NODE_ENV === 'development' || isEmulatorMode) && app && auth) {
+const useEmulators = process.env.EXPO_PUBLIC_USE_EMULATORS === 'true';
+if (__DEV__ && useEmulators && app && auth) {
   const EMULATOR_HOST = process.env.EXPO_PUBLIC_EMULATOR_HOST || 'localhost';
 
   console.log('🔥 [Firebase] Attempting to connect to emulators...');
@@ -269,8 +272,10 @@ if (__DEV__ && (process.env.EXPO_PUBLIC_NODE_ENV === 'development' || isEmulator
       }
     }
 
-    // Connect Storage Emulator only if storage is available
-    if (storage) {
+    // Connect Storage Emulator only if storage is available AND explicitly enabled
+    // NOTE: Storage emulator disabled by default - real devices can't reach localhost
+    const useStorageEmulator = process.env.EXPO_PUBLIC_USE_STORAGE_EMULATOR === 'true';
+    if (storage && useStorageEmulator) {
       try {
         connectStorageEmulator(storage, EMULATOR_HOST, 9199);
         emulatorConnections.storage = true;
@@ -283,6 +288,8 @@ if (__DEV__ && (process.env.EXPO_PUBLIC_NODE_ENV === 'development' || isEmulator
           console.warn('⚠️ [Firebase] Storage emulator connection failed:', error.message);
         }
       }
+    } else if (storage) {
+      console.log('ℹ️ [Firebase] Storage using production (emulator disabled)');
     }
 
     console.log('🔥 [Firebase] Emulator connection summary:', emulatorConnections);

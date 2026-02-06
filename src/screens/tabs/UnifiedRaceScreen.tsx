@@ -193,28 +193,29 @@ export function UnifiedRaceScreen() {
           <View style={styles.liveHeader}>
             <View style={styles.liveIndicator}>
               <View style={styles.liveDot} />
-              <IOSText variant="caption" color="secondary">LIVE</IOSText>
+              <IOSText textStyle="caption1" color="secondaryLabel">LIVE</IOSText>
             </View>
-            <IOSBadge 
-              text={currentRace.status.toUpperCase()} 
-              variant={currentRace.status === 'in-progress' ? 'warning' : 'default'}
+            <IOSBadge
+              text={currentRace.status.toUpperCase()}
+              variant="filled"
+              color={currentRace.status === 'in-progress' ? 'systemOrange' : 'systemGray'}
             />
           </View>
           
-          <IOSText variant="title2" style={styles.raceTitle}>
+          <IOSText textStyle="title2" style={styles.raceTitle}>
             {currentRace.raceName}
           </IOSText>
           
           <View style={styles.raceDetails}>
             <View style={styles.raceDetailItem}>
               <Clock size={16} color={colors.textSecondary} />
-              <IOSText variant="body" color="secondary">
+              <IOSText textStyle="body" color="secondaryLabel">
                 {currentRace.elapsedTime || currentRace.startTime}
               </IOSText>
             </View>
             <View style={styles.raceDetailItem}>
               <MapPin size={16} color={colors.textSecondary} />
-              <IOSText variant="body" color="secondary">
+              <IOSText textStyle="body" color="secondaryLabel">
                 {currentRace.location}
               </IOSText>
             </View>
@@ -226,19 +227,19 @@ export function UnifiedRaceScreen() {
 
   const renderNoticeBoard = () => (
     <Animated.View entering={FadeInDown.duration(600).delay(400)}>
-      <IOSSection title="Notice Board" icon={FileText}>
+      <IOSSection title="Notice Board">
         {notices.map((notice, index) => (
           <IOSCard key={notice.id} style={[styles.noticeCard, notice.urgent && styles.urgentNotice]}>
             <View style={styles.noticeHeader}>
-              <IOSText variant="headline" style={styles.noticeTitle}>
+              <IOSText textStyle="headline" style={styles.noticeTitle}>
                 {notice.title}
               </IOSText>
               {notice.urgent && (
-                <IOSBadge text="URGENT" variant="error" />
+                <IOSBadge text="URGENT" variant="filled" color="systemRed" />
               )}
             </View>
             <View style={styles.noticeFooter}>
-              <IOSText variant="caption" color="secondary">
+              <IOSText textStyle="caption1" color="secondaryLabel">
                 {notice.type.toUpperCase()} • {notice.postedTime}
               </IOSText>
               <ExternalLink size={16} color={colors.primary} />
@@ -258,7 +259,7 @@ export function UnifiedRaceScreen() {
   const renderEventHeader = () => {
     return (
       <View style={styles.eventHeaderContainer}>
-        <IOSText variant="title1" style={styles.screenTitle}>Race Day</IOSText>
+        <IOSText textStyle="title1" style={styles.screenTitle}>Race Day</IOSText>
         <FloatingEventSwitch
           options={[
             { label: 'APAC 2026', shortLabel: 'APAC 2026', value: EVENTS.APAC_2026.id },
@@ -273,40 +274,41 @@ export function UnifiedRaceScreen() {
 
   const renderRaceEvents = () => (
     <Animated.View entering={SlideInRight.duration(600).delay(600)}>
-      <IOSSection title="Race Schedule" icon={Calendar}>
+      <IOSSection title="Race Schedule">
         {raceEvents.map((event, index) => (
           <IOSCard key={event.id} style={styles.eventCard}>
             <View style={styles.eventHeader}>
               <View style={styles.eventTime}>
-                <IOSText variant="title3">{event.time}</IOSText>
+                <IOSText textStyle="title3">{event.time}</IOSText>
                 {event.status && (
-                  <IOSBadge 
-                    text={event.status.toUpperCase()} 
-                    variant={
-                      event.status === 'in-progress' ? 'warning' :
-                      event.status === 'completed' ? 'success' :
-                      event.status === 'weather-hold' ? 'error' : 'default'
+                  <IOSBadge
+                    text={event.status.toUpperCase()}
+                    variant="filled"
+                    color={
+                      event.status === 'in-progress' ? 'systemOrange' :
+                      event.status === 'completed' ? 'systemGreen' :
+                      event.status === 'weather-hold' ? 'systemRed' : 'systemGray'
                     }
                   />
                 )}
               </View>
               <event.icon size={24} color={colors.primary} />
             </View>
-            
-            <IOSText variant="headline" style={styles.eventTitle}>
+
+            <IOSText textStyle="headline" style={styles.eventTitle}>
               {event.title}
             </IOSText>
-            
+
             <View style={styles.eventLocation}>
               <MapPin size={16} color={colors.textSecondary} />
-              <IOSText variant="body" color="secondary">
+              <IOSText textStyle="body" color="secondaryLabel">
                 {event.location}
               </IOSText>
             </View>
-            
+
             <View style={styles.eventDetails}>
               {event.details.map((detail, idx) => (
-                <IOSText key={idx} variant="caption" color="secondary">
+                <IOSText key={idx} textStyle="caption1" color="secondaryLabel">
                   • {detail}
                 </IOSText>
               ))}
