@@ -161,7 +161,8 @@
       "Bash(xcrun simctl:*)",
       "Bash(xcrun simctl install:*)",
       "Bash(tar:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(pgrep:*)"
     ],
     "deny": [],
     "ask": []
