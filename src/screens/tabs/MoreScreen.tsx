@@ -45,14 +45,14 @@ interface MoreOption {
 // Group options by section for iOS-style grouped list
 const getMoreOptions = (): MoreOption[] => {
   const options: MoreOption[] = [
-    // RACING section
+    // RACE section
     {
       id: 'entrants',
       title: 'Entrants',
       iconName: 'people-outline',
       component: EntrantsScreen,
       accessibilityLabel: 'View registered competitors and boats',
-      section: 'Racing',
+      section: 'Race',
     },
     {
       id: 'map',
@@ -60,15 +60,15 @@ const getMoreOptions = (): MoreOption[] => {
       iconName: 'map-outline',
       component: MapScreen,
       accessibilityLabel: 'Interactive sailing locations and race course map',
-      section: 'Racing',
+      section: 'Race',
     },
     {
-      id: 'shipping',
-      title: 'Container Shipping',
-      iconName: 'boat-outline',
-      component: ShippingScreen,
-      accessibilityLabel: 'Track your boat shipping container',
-      section: 'Racing',
+      id: 'weather',
+      title: 'Weather',
+      iconName: 'partly-sunny-outline',
+      component: ModernWeatherMapScreen,
+      accessibilityLabel: 'Weather maps and nautical charts',
+      section: 'Race',
     },
     // EVENT section
     {
@@ -96,20 +96,21 @@ const getMoreOptions = (): MoreOption[] => {
       section: 'Event',
     },
     {
-      id: 'weather',
-      title: 'Weather',
-      iconName: 'partly-sunny-outline',
-      component: ModernWeatherMapScreen,
-      accessibilityLabel: 'Weather maps and nautical charts',
-      section: 'Event',
-    },
-    {
       id: 'sponsors',
       title: 'Sponsors',
       iconName: 'ribbon-outline',
       component: SponsorsScreen,
       accessibilityLabel: 'Championship sponsors with exclusive offers',
       section: 'Event',
+    },
+    // LOGISTICS section
+    {
+      id: 'shipping',
+      title: 'Container Shipping',
+      iconName: 'boat-outline',
+      component: ShippingScreen,
+      accessibilityLabel: 'Track your boat shipping container',
+      section: 'Logistics',
     },
     // APP section
     {
@@ -302,7 +303,7 @@ export function MoreScreen() {
   }
 
   // Section order for consistent display
-  const sectionOrder = ['Racing', 'Event', 'App'];
+  const sectionOrder = ['Race', 'Event', 'Logistics', 'App'];
 
   return (
     <View style={styles.container}>

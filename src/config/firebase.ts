@@ -192,10 +192,14 @@ if (app) {
     try {
       if (__DEV__) console.log('[firebase.ts] Attempting to initialize Firestore/Storage...');
       firestore = getFirestore(app);
+      console.log('[firebase.ts] Firestore initialized:', !!firestore);
       storage = getStorage(app);
+      console.log('[firebase.ts] Storage initialized:', !!storage);
+      console.log('[firebase.ts] Storage bucket:', (storage as any)?._bucket || 'unknown');
       console.log('✅ Firebase Firestore and Storage initialized');
     } catch (error) {
-      console.warn('⚠️ Firebase Firestore/Storage initialization skipped:', error);
+      console.warn('⚠️ Firebase Firestore/Storage initialization error:', error);
+      console.warn('⚠️ Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error as object)));
       // Services will remain null if not available
     }
   } catch (error) {
