@@ -444,6 +444,60 @@ export async function createPost(
 }
 
 /**
+ * Update an existing post
+ * @param postId - The post UUID
+ * @param title - Updated post title
+ * @param body - Updated post body (optional)
+ * @param postType - Updated type of post
+ * @param accessToken - Access token for authenticated request
+ */
+export async function updatePost(
+  postId: string,
+  title: string,
+  body: string | null,
+  postType: string,
+  accessToken: string
+): Promise<ServiceResponse<CommunityPost>> {
+  try {
+    const client = getSupabaseClient(accessToken);
+
+    const { data, error } = await client
+      .from('venue_discussions')
+      .update({
+        title,
+        body,
+        post_type: postType,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', postId)
+      .select(
+        `
+        *,
+        author:users!author_id (
+          id,
+          full_name,
+          avatar_url
+        )
+      `
+      )
+      .single();
+
+    if (error) {
+      console.error('[CommunityService] Error updating post:', error);
+      return { data: null, error: error.message };
+    }
+
+    return { data: data as CommunityPost, error: null };
+  } catch (err) {
+    console.error('[CommunityService] Exception updating post:', err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : 'Unknown error',
+    };
+  }
+}
+
+/**
  * Get all communities the user has joined
  * @param userId - The user's UUID
  * @param accessToken - Access token for authenticated request
@@ -671,6 +725,45 @@ export async function createComment(
     return { data: data as PostComment, error: null };
   } catch (err) {
     console.error('[CommunityService] Exception creating comment:', err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Update an existing comment
+ * @param commentId - The comment UUID
+ * @param body - Updated comment text
+ * @param accessToken - Access token for authenticated request
+ */
+export async function updateComment(
+  commentId: string,
+  body: string,
+  accessToken: string
+): Promise<ServiceResponse<PostComment>> {
+  try {
+    const client = getSupabaseClient(accessToken);
+
+    const { data, error } = await client
+      .from('venue_discussion_comments')
+      .update({
+        body,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', commentId)
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error('[CommunityService] Error updating comment:', error);
+      return { data: null, error: error.message };
+    }
+
+    return { data: data as PostComment, error: null };
+  } catch (err) {
+    console.error('[CommunityService] Exception updating comment:', err);
     return {
       data: null,
       error: err instanceof Error ? err.message : 'Unknown error',
@@ -1142,10 +1235,12 @@ export const communityService = {
   joinCommunity,
   leaveCommunity,
   createPost,
+  updatePost,
   getUserCommunities,
   getFeedPosts,
   getPostComments,
   createComment,
+  updateComment,
   checkUserVote,
   toggleUpvote,
   togglePostVote,

@@ -38,6 +38,7 @@ import {
   Reply,
   ChevronDown,
   ChevronUp,
+  Pencil,
 } from 'lucide-react-native';
 
 import { colors, spacing, borderRadius } from '../../constants/theme';
@@ -46,7 +47,7 @@ import { IOSButton } from '../ios/IOSButton';
 import { IOSCard } from '../ios/IOSCard';
 import { Toast } from '../shared/Toast';
 
-import type { CommunityPost, PostComment } from '../../types/community';
+import type { CommunityPost, PostComment, PostType } from '../../types/community';
 import { POST_TYPE_BADGES, REGATTAFLOW_URLS } from '../../types/community';
 import {
   usePostComments,
@@ -54,11 +55,15 @@ import {
   useTogglePostVote,
   useTogglePinPost,
   useCreateComment,
+  useUpdateComment,
   useIncrementViewCount,
   useCommentVote,
   useToggleCommentVote,
+  useUpdatePost,
 } from '../../hooks/useCommunityData';
+import { useRegattaFlowSession } from '../../hooks/useRegattaFlowSession';
 import { useToastStore } from '../../stores/toastStore';
+import { CreatePostModal } from './CreatePostModal';
 
 interface PostDetailModalProps {
   post: CommunityPost | null;
@@ -101,24 +106,42 @@ function formatDate(dateString: string): string {
 }
 
 /**
+ * Check if a post has been edited (updated_at differs from created_at)
+ */
+function isPostEdited(createdAt: string, updatedAt: string): boolean {
+  const created = new Date(createdAt).getTime();
+  const updated = new Date(updatedAt).getTime();
+  // Consider edited if updated more than 1 minute after creation
+  return updated - created > 60000;
+}
+
+/**
  * Single comment component with replies support and voting
  */
 interface CommentItemProps {
   comment: PostComment;
   onReply: (commentId: string, authorName: string) => void;
   level?: number;
+  /** Current user's ID for checking authorship */
+  currentUserId?: string;
+  /** Post ID for cache invalidation */
+  postId: string;
 }
 
-function CommentItem({ comment, onReply, level = 0 }: CommentItemProps) {
+function CommentItem({ comment, onReply, level = 0, currentUserId, postId }: CommentItemProps) {
   const [showReplies, setShowReplies] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(comment.body);
   const showToast = useToastStore((state) => state.showToast);
   const authorName = comment.author?.full_name || 'Anonymous';
   const authorAvatar = comment.author?.avatar_url;
   const hasReplies = comment.replies && comment.replies.length > 0;
+  const isAuthor = currentUserId === comment.author_id;
 
   // Voting state
   const { data: userVote } = useCommentVote(comment.id);
   const toggleVoteMutation = useToggleCommentVote();
+  const updateCommentMutation = useUpdateComment();
 
   // Optimistic UI state
   const [optimisticVote, setOptimisticVote] = useState<{ upvotes: number; downvotes: number; userVote: 1 | -1 | null } | null>(null);
@@ -135,6 +158,31 @@ function CommentItem({ comment, onReply, level = 0 }: CommentItemProps) {
   useEffect(() => {
     setOptimisticVote(null);
   }, [comment.id, comment.upvotes, comment.downvotes]);
+
+  const handleEditSave = async () => {
+    if (!editText.trim()) return;
+
+    try {
+      await updateCommentMutation.mutateAsync({
+        commentId: comment.id,
+        postId,
+        body: editText.trim(),
+      });
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showToast('Comment updated!', 'success');
+      setIsEditing(false);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update comment';
+      console.error('[CommentItem] Edit error:', errorMessage);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      showToast(errorMessage, 'error');
+    }
+  };
+
+  const handleEditCancel = () => {
+    setEditText(comment.body);
+    setIsEditing(false);
+  };
 
   const handleVote = async (voteType: 1 | -1) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -206,15 +254,64 @@ function CommentItem({ comment, onReply, level = 0 }: CommentItemProps) {
           <IOSText textStyle="footnote" weight="semibold">
             {authorName}
           </IOSText>
-          <IOSText textStyle="caption2" color="tertiaryLabel">
-            {getRelativeTime(comment.created_at)}
-          </IOSText>
+          <View style={styles.commentMetaRow}>
+            <IOSText textStyle="caption2" color="tertiaryLabel">
+              {getRelativeTime(comment.created_at)}
+            </IOSText>
+            {isPostEdited(comment.created_at, comment.updated_at) && (
+              <View style={styles.commentEditedIndicator}>
+                <Pencil size={9} color={colors.textMuted} />
+                <IOSText textStyle="caption2" color="tertiaryLabel">
+                  edited
+                </IOSText>
+              </View>
+            )}
+          </View>
         </View>
       </View>
 
-      <IOSText textStyle="callout" style={styles.commentBody}>
-        {comment.body}
-      </IOSText>
+      {isEditing ? (
+        <View style={styles.commentEditContainer}>
+          <TextInput
+            style={styles.commentEditInput}
+            value={editText}
+            onChangeText={setEditText}
+            multiline
+            autoFocus
+            maxLength={2000}
+          />
+          <View style={styles.commentEditActions}>
+            <TouchableOpacity
+              style={styles.commentEditCancel}
+              onPress={handleEditCancel}
+            >
+              <IOSText textStyle="caption1" color="secondaryLabel">
+                Cancel
+              </IOSText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.commentEditSave,
+                (!editText.trim() || updateCommentMutation.isPending) && styles.commentEditSaveDisabled,
+              ]}
+              onPress={handleEditSave}
+              disabled={!editText.trim() || updateCommentMutation.isPending}
+            >
+              {updateCommentMutation.isPending ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <IOSText textStyle="caption1" weight="semibold" style={{ color: '#FFFFFF' }}>
+                  Save
+                </IOSText>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        <IOSText textStyle="callout" style={styles.commentBody}>
+          {comment.body}
+        </IOSText>
+      )}
 
       <View style={styles.commentActions}>
         {/* Voting buttons */}
@@ -270,6 +367,21 @@ function CommentItem({ comment, onReply, level = 0 }: CommentItemProps) {
           </TouchableOpacity>
         )}
 
+        {isAuthor && !isEditing && (
+          <TouchableOpacity
+            style={styles.editCommentButton}
+            onPress={() => {
+              Haptics.selectionAsync();
+              setIsEditing(true);
+            }}
+          >
+            <Pencil size={14} color={colors.primary} />
+            <IOSText textStyle="caption1" color="systemBlue">
+              Edit
+            </IOSText>
+          </TouchableOpacity>
+        )}
+
         {hasReplies && (
           <TouchableOpacity
             style={styles.showRepliesButton}
@@ -291,7 +403,14 @@ function CommentItem({ comment, onReply, level = 0 }: CommentItemProps) {
       {hasReplies && showReplies && (
         <View style={styles.repliesContainer}>
           {comment.replies!.map((reply) => (
-            <CommentItem key={reply.id} comment={reply} onReply={onReply} level={1} />
+            <CommentItem
+              key={reply.id}
+              comment={reply}
+              onReply={onReply}
+              level={1}
+              currentUserId={currentUserId}
+              postId={postId}
+            />
           ))}
         </View>
       )}
@@ -307,9 +426,17 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const showToast = useToastStore((state) => state.showToast);
+  const { session } = useRegattaFlowSession();
 
   // Check if user can pin posts (moderator, admin, or owner)
   const canPin = userRole === 'moderator' || userRole === 'admin' || userRole === 'owner';
+
+  // Check if current user is the post author
+  const isAuthor = post?.author_id === session?.userId;
+
+  // Edit modal state
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const updatePostMutation = useUpdatePost();
 
   // Comment input state
   const [commentText, setCommentText] = useState('');
@@ -382,6 +509,32 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
       console.error('[PostDetailModal] Failed to open URL:', error);
     }
   };
+
+  /**
+   * Handle edit post
+   */
+  const handleEditPost = useCallback(async (editedPost: { title: string; body: string | null; postType: PostType }) => {
+    if (!post) return;
+
+    try {
+      await updatePostMutation.mutateAsync({
+        postId: post.id,
+        communityId: post.community_id || '',
+        title: editedPost.title,
+        body: editedPost.body,
+        postType: editedPost.postType,
+      });
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showToast('Post updated!', 'success');
+      setIsEditModalVisible(false);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update post';
+      console.error('[PostDetailModal] Edit error:', errorMessage);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      showToast(errorMessage, 'error');
+      throw error;
+    }
+  }, [post, updatePostMutation, showToast]);
 
   /**
    * Handle toggle pin (moderators+ only)
@@ -589,6 +742,14 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
                   <IOSText textStyle="caption1" color="secondaryLabel">
                     {getRelativeTime(post.created_at)}
                   </IOSText>
+                  {isPostEdited(post.created_at, post.updated_at) && (
+                    <View style={styles.editedIndicator}>
+                      <Pencil size={10} color={colors.textMuted} />
+                      <IOSText textStyle="caption1" color="secondaryLabel">
+                        edited
+                      </IOSText>
+                    </View>
+                  )}
                 </View>
               </View>
             </View>
@@ -664,6 +825,23 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
               </View>
 
               <View style={styles.actionButtonsRight}>
+                {/* Edit button - only for post author */}
+                {isAuthor && (
+                  <TouchableOpacity
+                    style={styles.editButton}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setIsEditModalVisible(true);
+                    }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Pencil size={16} color={colors.primary} />
+                    <IOSText textStyle="caption1" weight="semibold" color="systemBlue">
+                      Edit
+                    </IOSText>
+                  </TouchableOpacity>
+                )}
+
                 {/* Pin button - only for moderators, admins, owners */}
                 {canPin && (
                   <TouchableOpacity
@@ -724,6 +902,8 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
                       key={comment.id}
                       comment={comment}
                       onReply={handleReplyToComment}
+                      currentUserId={session?.userId}
+                      postId={post.id}
                     />
                   ))}
                 </View>
@@ -779,6 +959,16 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
       </KeyboardAvoidingView>
     </View>
       )}
+
+      {/* Edit Post Modal */}
+      <CreatePostModal
+        visible={isEditModalVisible}
+        onClose={() => setIsEditModalVisible(false)}
+        onSubmit={handleEditPost}
+        isSubmitting={updatePostMutation.isPending}
+        communityName={post?.community?.name || 'Community'}
+        editingPost={post}
+      />
     </Modal>
   );
 };
@@ -854,6 +1044,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
+  editedIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    marginLeft: 4,
+  },
   typeBadge: {
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -906,6 +1102,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: colors.primaryLight + '20',
   },
   pinButton: {
     flexDirection: 'row',
@@ -977,13 +1182,62 @@ const styles = StyleSheet.create({
   },
   commentAuthorInfo: {
     flex: 1,
+    gap: 2,
+  },
+  commentMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: 6,
+  },
+  commentEditedIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
   commentBody: {
     lineHeight: 20,
     marginBottom: spacing.xs,
+  },
+  commentEditContainer: {
+    marginBottom: spacing.xs,
+  },
+  commentEditInput: {
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    fontSize: 15,
+    color: colors.text,
+    minHeight: 60,
+    maxHeight: 120,
+    lineHeight: 20,
+  },
+  commentEditActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  commentEditCancel: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+  },
+  commentEditSave: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: 14,
+    minWidth: 60,
+    alignItems: 'center',
+  },
+  commentEditSaveDisabled: {
+    backgroundColor: colors.textMuted,
+  },
+  editCommentButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: spacing.xs,
   },
   commentActions: {
     flexDirection: 'row',

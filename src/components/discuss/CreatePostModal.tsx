@@ -1,11 +1,11 @@
 /**
  * CreatePostModal Component
  *
- * Native modal for creating new posts in the community.
+ * Native modal for creating new posts or editing existing posts in the community.
  * Supports post types, title, and body input.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -21,6 +21,7 @@ import * as Haptics from 'expo-haptics';
 import {
   X,
   Send,
+  Check,
   MessageSquare,
   HelpCircle,
   Lightbulb,
@@ -33,7 +34,7 @@ import { IOSText } from '../ios/IOSText';
 import { IOSButton } from '../ios/IOSButton';
 import { IOSCard } from '../ios/IOSCard';
 
-import type { PostType } from '../../types/community';
+import type { PostType, CommunityPost } from '../../types/community';
 import { POST_TYPE_BADGES } from '../../types/community';
 
 interface CreatePostModalProps {
@@ -42,6 +43,8 @@ interface CreatePostModalProps {
   onSubmit: (post: { title: string; body: string | null; postType: PostType }) => Promise<void>;
   isSubmitting?: boolean;
   communityName?: string;
+  /** If provided, modal operates in edit mode with pre-filled values */
+  editingPost?: CommunityPost | null;
 }
 
 interface PostTypeOption {
@@ -84,12 +87,27 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
   onSubmit,
   isSubmitting = false,
   communityName = 'Community',
+  editingPost,
 }) => {
   const insets = useSafeAreaInsets();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [postType, setPostType] = useState<PostType>('discussion');
   const [titleError, setTitleError] = useState<string | null>(null);
+
+  const isEditMode = !!editingPost;
+
+  /**
+   * Pre-fill form when editing
+   */
+  useEffect(() => {
+    if (editingPost && visible) {
+      setTitle(editingPost.title);
+      setBody(editingPost.body || '');
+      setPostType(editingPost.post_type);
+      setTitleError(null);
+    }
+  }, [editingPost, visible]);
 
   /**
    * Reset form state
@@ -181,19 +199,19 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
             </TouchableOpacity>
             <View style={styles.headerTitle}>
               <IOSText textStyle="headline" weight="semibold">
-                New Post
+                {isEditMode ? 'Edit Post' : 'New Post'}
               </IOSText>
               <IOSText textStyle="caption1" color="secondaryLabel">
                 in {communityName}
               </IOSText>
             </View>
             <IOSButton
-              title="Post"
+              title={isEditMode ? 'Save' : 'Post'}
               size="small"
               variant={canSubmit ? 'filled' : 'gray'}
               disabled={!canSubmit}
               loading={isSubmitting}
-              icon={!isSubmitting ? <Send size={14} color={canSubmit ? '#FFFFFF' : colors.textMuted} /> : undefined}
+              icon={!isSubmitting ? (isEditMode ? <Check size={14} color={canSubmit ? '#FFFFFF' : colors.textMuted} /> : <Send size={14} color={canSubmit ? '#FFFFFF' : colors.textMuted} />) : undefined}
               onPress={handleSubmit}
               testID="create-post-submit-button"
             />

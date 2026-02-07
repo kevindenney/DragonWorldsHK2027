@@ -14,6 +14,7 @@ import {
   Clock,
   ChevronRight,
   User,
+  Pencil,
 } from 'lucide-react-native';
 
 import { colors, spacing, borderRadius } from '../../constants/theme';
@@ -61,6 +62,16 @@ function getBodyPreview(body: string | null, maxLength: number = 150): string {
   return body.substring(0, maxLength).trim() + '...';
 }
 
+/**
+ * Check if a post has been edited (updated_at differs from created_at)
+ */
+function isPostEdited(createdAt: string, updatedAt: string): boolean {
+  const created = new Date(createdAt).getTime();
+  const updated = new Date(updatedAt).getTime();
+  // Consider edited if updated more than 1 minute after creation
+  return updated - created > 60000;
+}
+
 export const PostCard: React.FC<PostCardProps> = ({
   post,
   communitySlug,
@@ -73,6 +84,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   const authorName = post.author?.full_name || 'Anonymous';
   const authorAvatar = post.author?.avatar_url;
   const communityName = post.community?.name;
+  const wasEdited = isPostEdited(post.created_at, post.updated_at);
 
   /**
    * Handle card press - calls parent handler
@@ -121,6 +133,14 @@ export const PostCard: React.FC<PostCardProps> = ({
                     {getRelativeTime(post.created_at)}
                   </IOSText>
                 </View>
+                {wasEdited && (
+                  <View style={styles.editedIndicator}>
+                    <Pencil size={9} color={colors.textMuted} />
+                    <IOSText textStyle="caption2" color="tertiaryLabel">
+                      edited
+                    </IOSText>
+                  </View>
+                )}
                 {showCommunityBadge && communityName && (
                   <>
                     <IOSText textStyle="caption2" color="tertiaryLabel">
@@ -266,6 +286,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  editedIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
   headerRight: {
     flexDirection: 'row',

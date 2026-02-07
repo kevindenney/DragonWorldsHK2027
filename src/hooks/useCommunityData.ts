@@ -311,6 +311,57 @@ export function useCreatePost() {
 }
 
 /**
+ * Parameters for updating an existing post
+ */
+interface UpdatePostParams {
+  postId: string;
+  communityId: string;
+  title: string;
+  body: string | null;
+  postType: string;
+}
+
+/**
+ * Hook to update an existing post
+ */
+export function useUpdatePost() {
+  const queryClient = useQueryClient();
+  const { session } = useRegattaFlowSession();
+
+  return useMutation({
+    mutationFn: async ({ postId, title, body, postType }: UpdatePostParams) => {
+      if (!session?.accessToken) {
+        throw new Error('You must be signed in to edit a post');
+      }
+
+      const result = await communityService.updatePost(
+        postId,
+        title,
+        body,
+        postType,
+        session.accessToken
+      );
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      return result.data;
+    },
+    onSuccess: (_, { communityId }) => {
+      // Invalidate posts query to refetch with updated post
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.posts(communityId),
+      });
+      // Also invalidate feed posts
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.all,
+      });
+    },
+  });
+}
+
+/**
  * Hook to fetch all communities the user has joined
  */
 export function useUserCommunities() {
@@ -558,6 +609,49 @@ export function useCreateComment() {
       // Also invalidate posts to update comment count
       queryClient.invalidateQueries({
         queryKey: communityQueryKeys.all,
+      });
+    },
+  });
+}
+
+/**
+ * Parameters for updating a comment
+ */
+interface UpdateCommentParams {
+  commentId: string;
+  postId: string;
+  body: string;
+}
+
+/**
+ * Hook to update an existing comment
+ */
+export function useUpdateComment() {
+  const queryClient = useQueryClient();
+  const { session } = useRegattaFlowSession();
+
+  return useMutation({
+    mutationFn: async ({ commentId, body }: UpdateCommentParams) => {
+      if (!session?.accessToken) {
+        throw new Error('You must be signed in to edit a comment');
+      }
+
+      const result = await communityService.updateComment(
+        commentId,
+        body,
+        session.accessToken
+      );
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      return result.data;
+    },
+    onSuccess: (_, { postId }) => {
+      // Invalidate comments query to refetch with updated comment
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.postComments(postId),
       });
     },
   });
