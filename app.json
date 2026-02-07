@@ -19,7 +19,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.denneyke.dragonworldshk2027",
       "usesAppleSignIn": true,
-      "buildNumber": "35",
+      "buildNumber": "37",
       "requireFullScreen": false,
       "userInterfaceStyle": "light",
       "jsEngine": "hermes",

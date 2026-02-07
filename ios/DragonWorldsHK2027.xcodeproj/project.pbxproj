@@ -8,11 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		387EFEAFF520D2678B77047B /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8161CE0E927E18AB019D0245 /* ExpoModulesProvider.swift */; };
-		3886ED9089226C1400F4E7CC /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E0317A9CB4E8A305283F5D2F /* PrivacyInfo.xcprivacy */; };
+		37444F553DF345D85938F3C3 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B98D440EBAC39150193755A /* ExpoModulesProvider.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
+		5A32307FC1E9E5F07A8FC543 /* libPods-DragonWorldsHK2027.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E44E4421545CE99E12892C0A /* libPods-DragonWorldsHK2027.a */; };
+		832596D88E8D9E450938BB4E /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 3BF4B6AFB265D7A585284E2B /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		DB841CA9BBBDDAC35631430A /* libPods-DragonWorldsHK2027.a in Frameworks */ = {isa = PBXBuildFile; fileRef = ADE436E23241EE68D11AB035 /* libPods-DragonWorldsHK2027.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
@@ -20,13 +20,13 @@
 		13B07F961A680F5B00A75B9A /* DragonWorldsHK2027.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DragonWorldsHK2027.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = DragonWorldsHK2027/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = DragonWorldsHK2027/Info.plist; sourceTree = "<group>"; };
-		16A459B9A3BDFBFD04BF750F /* Pods-DragonWorldsHK2027.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DragonWorldsHK2027.debug.xcconfig"; path = "Target Support Files/Pods-DragonWorldsHK2027/Pods-DragonWorldsHK2027.debug.xcconfig"; sourceTree = "<group>"; };
-		3FA0F73AB59BE8A7FFBAD082 /* Pods-DragonWorldsHK2027.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DragonWorldsHK2027.release.xcconfig"; path = "Target Support Files/Pods-DragonWorldsHK2027/Pods-DragonWorldsHK2027.release.xcconfig"; sourceTree = "<group>"; };
-		8161CE0E927E18AB019D0245 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-DragonWorldsHK2027/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		2B98D440EBAC39150193755A /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-DragonWorldsHK2027/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		3BF4B6AFB265D7A585284E2B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = DragonWorldsHK2027/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		5793011B08A2F9A6511EF922 /* Pods-DragonWorldsHK2027.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DragonWorldsHK2027.release.xcconfig"; path = "Target Support Files/Pods-DragonWorldsHK2027/Pods-DragonWorldsHK2027.release.xcconfig"; sourceTree = "<group>"; };
+		80F06071B8118350E380C9A7 /* Pods-DragonWorldsHK2027.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DragonWorldsHK2027.debug.xcconfig"; path = "Target Support Files/Pods-DragonWorldsHK2027/Pods-DragonWorldsHK2027.debug.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = DragonWorldsHK2027/SplashScreen.storyboard; sourceTree = "<group>"; };
-		ADE436E23241EE68D11AB035 /* libPods-DragonWorldsHK2027.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DragonWorldsHK2027.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		E0317A9CB4E8A305283F5D2F /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = DragonWorldsHK2027/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		E44E4421545CE99E12892C0A /* libPods-DragonWorldsHK2027.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DragonWorldsHK2027.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = DragonWorldsHK2027/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* DragonWorldsHK2027-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "DragonWorldsHK2027-Bridging-Header.h"; path = "DragonWorldsHK2027/DragonWorldsHK2027-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -37,7 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DB841CA9BBBDDAC35631430A /* libPods-DragonWorldsHK2027.a in Frameworks */,
+				5A32307FC1E9E5F07A8FC543 /* libPods-DragonWorldsHK2027.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,35 +53,34 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				E0317A9CB4E8A305283F5D2F /* PrivacyInfo.xcprivacy */,
+				3BF4B6AFB265D7A585284E2B /* PrivacyInfo.xcprivacy */,
 			);
 			name = DragonWorldsHK2027;
 			sourceTree = "<group>";
 		};
-		29A2B2A1B02BE356456E9C7E /* Pods */ = {
+		1770DD6BA1B98A8C008AA1D4 /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				16A459B9A3BDFBFD04BF750F /* Pods-DragonWorldsHK2027.debug.xcconfig */,
-				3FA0F73AB59BE8A7FFBAD082 /* Pods-DragonWorldsHK2027.release.xcconfig */,
+				2DE67ACFFD8CD9A7C4389E32 /* DragonWorldsHK2027 */,
 			);
-			path = Pods;
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				ADE436E23241EE68D11AB035 /* libPods-DragonWorldsHK2027.a */,
+				E44E4421545CE99E12892C0A /* libPods-DragonWorldsHK2027.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		365296AEBCFA99B0FFF9B928 /* ExpoModulesProviders */ = {
+		2DE67ACFFD8CD9A7C4389E32 /* DragonWorldsHK2027 */ = {
 			isa = PBXGroup;
 			children = (
-				FA9D6EE87B489E66B3D29FD0 /* DragonWorldsHK2027 */,
+				2B98D440EBAC39150193755A /* ExpoModulesProvider.swift */,
 			);
-			name = ExpoModulesProviders;
+			name = DragonWorldsHK2027;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -98,8 +97,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				29A2B2A1B02BE356456E9C7E /* Pods */,
-				365296AEBCFA99B0FFF9B928 /* ExpoModulesProviders */,
+				D7FFC37A858299005096E764 /* Pods */,
+				1770DD6BA1B98A8C008AA1D4 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -123,12 +122,14 @@
 			path = DragonWorldsHK2027/Supporting;
 			sourceTree = "<group>";
 		};
-		FA9D6EE87B489E66B3D29FD0 /* DragonWorldsHK2027 */ = {
+		D7FFC37A858299005096E764 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				8161CE0E927E18AB019D0245 /* ExpoModulesProvider.swift */,
+				80F06071B8118350E380C9A7 /* Pods-DragonWorldsHK2027.debug.xcconfig */,
+				5793011B08A2F9A6511EF922 /* Pods-DragonWorldsHK2027.release.xcconfig */,
 			);
-			name = DragonWorldsHK2027;
+			name = Pods;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -139,13 +140,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "DragonWorldsHK2027" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				48C8BCC0C620907648BE548A /* [Expo] Configure project */,
+				2C24C0F28F2B562D82136CFA /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				9E66093358A54A81E925AB7B /* [CP] Embed Pods Frameworks */,
+				EEC09D7587E980234A677478 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -195,7 +196,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				3886ED9089226C1400F4E7CC /* PrivacyInfo.xcprivacy in Resources */,
+				832596D88E8D9E450938BB4E /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -239,7 +240,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		48C8BCC0C620907648BE548A /* [Expo] Configure project */ = {
+		2C24C0F28F2B562D82136CFA /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -320,7 +321,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DragonWorldsHK2027/Pods-DragonWorldsHK2027-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		9E66093358A54A81E925AB7B /* [CP] Embed Pods Frameworks */ = {
+		EEC09D7587E980234A677478 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -346,7 +347,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				387EFEAFF520D2678B77047B /* ExpoModulesProvider.swift in Sources */,
+				37444F553DF345D85938F3C3 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -355,15 +356,12 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 16A459B9A3BDFBFD04BF750F /* Pods-DragonWorldsHK2027.debug.xcconfig */;
+			baseConfigurationReference = 80F06071B8118350E380C9A7 /* Pods-DragonWorldsHK2027.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = DragonWorldsHK2027/DragonWorldsHK2027.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 67845JJJZJ;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -384,7 +382,6 @@
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.denneyke.dragonworldshk2027;
 				PRODUCT_NAME = DragonWorldsHK2027;
-				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "DragonWorldsHK2027/DragonWorldsHK2027-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -395,15 +392,12 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3FA0F73AB59BE8A7FFBAD082 /* Pods-DragonWorldsHK2027.release.xcconfig */;
+			baseConfigurationReference = 5793011B08A2F9A6511EF922 /* Pods-DragonWorldsHK2027.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = DragonWorldsHK2027/DragonWorldsHK2027.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 67845JJJZJ;
 				INFOPLIST_FILE = DragonWorldsHK2027/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -419,7 +413,6 @@
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.denneyke.dragonworldshk2027;
 				PRODUCT_NAME = DragonWorldsHK2027;
-				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "DragonWorldsHK2027/DragonWorldsHK2027-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

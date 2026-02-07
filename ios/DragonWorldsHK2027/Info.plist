@@ -21,7 +21,7 @@
     <key>CFBundlePackageType</key>
     <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.1</string>
+    <string>1.0.2</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleURLTypes</key>
@@ -50,7 +50,7 @@
       </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>34</string>
+    <string>37</string>
     <key>GMSApiKey</key>
     <string>AIzaSyC6fMo9bHpu41fIWKAPchSubNwuR_0s3eM</string>
     <key>ITSAppUsesNonExemptEncryption</key>
@@ -75,13 +75,15 @@
       </dict>
     </dict>
     <key>NSCameraUsageDescription</key>
-    <string>This app uses the camera to allow you to share photos of racing moments and connect with other sailors.</string>
+    <string>Allow Dragon Worlds HK to access your camera to take a profile picture.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
     <string>This app uses your location to provide accurate local weather conditions and nearby sailing venues.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>This app uses your location to provide accurate local weather conditions and nearby sailing venues.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your microphone</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>This app accesses your photo library to let you share sailing photos and memories.</string>
+    <string>Allow Dragon Worlds HK to access your photos to set your profile picture.</string>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>
