@@ -6,7 +6,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { communityService } from '../services/communityService';
+import { communityService, type PostSortBy } from '../services/communityService';
 import { useRegattaFlowSession } from './useRegattaFlowSession';
 import type { Community, CommunityPost, CommunityMembership, CommunityMember, PostComment, PostVote } from '../types/community';
 import { DRAGON_WORLDS_COMMUNITY_SLUG } from '../types/community';
@@ -77,16 +77,19 @@ export function useDragonWorldsCommunity() {
  * Hook to fetch posts for a community
  * @param communityId - The community UUID
  * @param enabled - Whether to enable the query
+ * @param sortBy - Sort order: 'new' (most recent) or 'top' (most upvotes)
  */
 export function useCommunityPosts(
   communityId: string | undefined,
-  enabled: boolean = true
+  enabled: boolean = true,
+  sortBy: PostSortBy = 'new'
 ) {
   const { session, isValid } = useRegattaFlowSession();
 
   return useQuery({
+    // Include sortBy in query key so changing sort triggers a refetch
     queryKey: communityId
-      ? communityQueryKeys.posts(communityId)
+      ? [...communityQueryKeys.posts(communityId), sortBy]
       : [...communityQueryKeys.all, 'posts', 'none'],
     queryFn: async () => {
       if (!communityId) {
@@ -94,7 +97,10 @@ export function useCommunityPosts(
       }
       const result = await communityService.getCommunityPosts(
         communityId,
-        session?.accessToken
+        session?.accessToken,
+        0, // page
+        20, // pageSize (DEFAULT_PAGE_SIZE)
+        sortBy
       );
       if (result.error) {
         throw new Error(result.error);
@@ -400,10 +406,15 @@ export function useFeed() {
 /**
  * Combined hook for community data with posts and membership
  * This is the main hook to use in the DiscussScreen
+ * @param slug - Community slug (defaults to Dragon Worlds)
+ * @param sortBy - Sort order for posts: 'new' (most recent) or 'top' (most upvotes)
  */
-export function useCommunityWithPosts(slug: string = DRAGON_WORLDS_COMMUNITY_SLUG) {
+export function useCommunityWithPosts(
+  slug: string = DRAGON_WORLDS_COMMUNITY_SLUG,
+  sortBy: PostSortBy = 'new'
+) {
   const communityQuery = useCommunity(slug);
-  const postsQuery = useCommunityPosts(communityQuery.data?.id);
+  const postsQuery = useCommunityPosts(communityQuery.data?.id, true, sortBy);
   const membershipQuery = useCommunityMembership(communityQuery.data?.id);
 
   return {
@@ -553,7 +564,8 @@ export function useCreateComment() {
 }
 
 /**
- * Hook to toggle upvote on a post
+ * Hook to toggle upvote on a post (legacy)
+ * @deprecated Use useTogglePostVote for full upvote/downvote support
  */
 export function useToggleUpvote() {
   const queryClient = useQueryClient();
@@ -585,6 +597,55 @@ export function useToggleUpvote() {
         });
       }
       // Invalidate posts to update upvote count
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.all,
+      });
+    },
+  });
+}
+
+/**
+ * Parameters for toggling a post vote
+ */
+interface TogglePostVoteParams {
+  postId: string;
+  voteType: 1 | -1; // 1 = upvote, -1 = downvote
+}
+
+/**
+ * Hook to toggle vote on a post (supports upvote and downvote)
+ */
+export function useTogglePostVote() {
+  const queryClient = useQueryClient();
+  const { session } = useRegattaFlowSession();
+
+  return useMutation({
+    mutationFn: async ({ postId, voteType }: TogglePostVoteParams) => {
+      if (!session?.userId || !session.accessToken) {
+        throw new Error('You must be signed in to vote');
+      }
+
+      const result = await communityService.togglePostVote(
+        postId,
+        session.userId,
+        voteType,
+        session.accessToken
+      );
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      return result.data;
+    },
+    onSuccess: (_, { postId }) => {
+      // Invalidate vote query
+      if (session?.userId) {
+        queryClient.invalidateQueries({
+          queryKey: communityQueryKeys.userVote(postId, session.userId),
+        });
+      }
+      // Invalidate posts to update vote counts
       queryClient.invalidateQueries({
         queryKey: communityQueryKeys.all,
       });
@@ -684,6 +745,39 @@ export function useToggleCommentVote() {
         });
       }
       // Invalidate comments to update vote counts
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.all,
+      });
+    },
+  });
+}
+
+/**
+ * Hook to toggle pin status on a post (moderators/admins only)
+ */
+export function useTogglePinPost() {
+  const queryClient = useQueryClient();
+  const { session } = useRegattaFlowSession();
+
+  return useMutation({
+    mutationFn: async (postId: string) => {
+      if (!session?.accessToken) {
+        throw new Error('You must be signed in to pin posts');
+      }
+
+      const result = await communityService.togglePinPost(
+        postId,
+        session.accessToken
+      );
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      return result.data;
+    },
+    onSuccess: () => {
+      // Invalidate posts to refresh with new pin status
       queryClient.invalidateQueries({
         queryKey: communityQueryKeys.all,
       });

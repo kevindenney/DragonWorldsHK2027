@@ -28,6 +28,8 @@ import {
   Clock,
   ThumbsUp,
   ThumbsDown,
+  ArrowBigUp,
+  ArrowBigDown,
   MessageCircle,
   Pin,
   ExternalLink,
@@ -49,7 +51,8 @@ import { POST_TYPE_BADGES, REGATTAFLOW_URLS } from '../../types/community';
 import {
   usePostComments,
   useUserVote,
-  useToggleUpvote,
+  useTogglePostVote,
+  useTogglePinPost,
   useCreateComment,
   useIncrementViewCount,
   useCommentVote,
@@ -61,6 +64,8 @@ interface PostDetailModalProps {
   post: CommunityPost | null;
   communitySlug: string;
   onClose: () => void;
+  /** User's role in the community (for mod actions like pinning) */
+  userRole?: 'member' | 'moderator' | 'admin' | 'owner' | null;
 }
 
 /**
@@ -298,37 +303,50 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
   post,
   communitySlug,
   onClose,
+  userRole,
 }) => {
   const insets = useSafeAreaInsets();
   const showToast = useToastStore((state) => state.showToast);
+
+  // Check if user can pin posts (moderator, admin, or owner)
+  const canPin = userRole === 'moderator' || userRole === 'admin' || userRole === 'owner';
 
   // Comment input state
   const [commentText, setCommentText] = useState('');
   const [replyingTo, setReplyingTo] = useState<{ id: string; name: string } | null>(null);
 
-  // Optimistic UI state for upvotes
-  const [optimisticUpvoteCount, setOptimisticUpvoteCount] = useState<number | null>(null);
-  const [optimisticHasUpvoted, setOptimisticHasUpvoted] = useState<boolean | null>(null);
+  // Optimistic UI state for post voting
+  const [optimisticPostVote, setOptimisticPostVote] = useState<{
+    upvotes: number;
+    downvotes: number;
+    userVote: 1 | -1 | null;
+  } | null>(null);
 
   // Data hooks
   const { data: comments, isLoading: isLoadingComments, refetch: refetchComments } = usePostComments(post?.id);
   const { data: userVote } = useUserVote(post?.id);
-  const toggleUpvoteMutation = useToggleUpvote();
+  const togglePostVoteMutation = useTogglePostVote();
+  const togglePinMutation = useTogglePinPost();
   const createCommentMutation = useCreateComment();
   const incrementViewMutation = useIncrementViewCount();
 
-  // Track if user has upvoted (use optimistic state if available)
-  const hasUpvoted = optimisticHasUpvoted !== null ? optimisticHasUpvoted : !!userVote;
+  // Optimistic UI state for pin status
+  const [optimisticPinned, setOptimisticPinned] = useState<boolean | null>(null);
+  const isPinned = optimisticPinned ?? post?.pinned ?? false;
 
-  // Get upvote count (use optimistic state if available)
-  const upvoteCount = optimisticUpvoteCount !== null ? optimisticUpvoteCount : (post?.upvotes || 0);
+  // Get current vote state (optimistic or from server)
+  const currentUpvotes = optimisticPostVote?.upvotes ?? (post?.upvotes || 0);
+  const currentDownvotes = optimisticPostVote?.downvotes ?? (post?.downvotes || 0);
+  const postScore = currentUpvotes - currentDownvotes;
+  const currentUserVote = optimisticPostVote?.userVote ?? (userVote?.vote as 1 | -1 | null) ?? null;
+  const hasUpvoted = currentUserVote === 1;
+  const hasDownvoted = currentUserVote === -1;
 
-  // Reset optimistic state when post changes OR when server data updates
-  // This ensures optimistic state is cleared after query refetch
+  // Reset optimistic state when post data changes
   useEffect(() => {
-    setOptimisticUpvoteCount(null);
-    setOptimisticHasUpvoted(null);
-  }, [post?.id, post?.upvotes]);
+    setOptimisticPostVote(null);
+    setOptimisticPinned(null);
+  }, [post?.id, post?.upvotes, post?.downvotes, post?.pinned]);
 
   // Increment view count when post is opened
   useEffect(() => {
@@ -366,33 +384,85 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
   };
 
   /**
-   * Handle upvote toggle with optimistic UI
+   * Handle toggle pin (moderators+ only)
    */
-  const handleUpvote = async () => {
+  const handleTogglePin = async () => {
+    if (!post || !canPin) return;
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    const oldPinned = isPinned;
+    setOptimisticPinned(!oldPinned);
+
+    try {
+      await togglePinMutation.mutateAsync(post.id);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showToast(oldPinned ? 'Post unpinned' : 'Post pinned', 'success');
+    } catch (error) {
+      // Revert on error
+      setOptimisticPinned(oldPinned);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update pin status';
+      console.error('[PostDetailModal] Pin toggle error:', errorMessage);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      showToast(errorMessage, 'error');
+    }
+  };
+
+  /**
+   * Handle post vote (upvote or downvote) with optimistic UI
+   */
+  const handlePostVote = async (voteType: 1 | -1) => {
     if (!post) return;
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    // Optimistic update - immediately update UI
-    const currentlyUpvoted = hasUpvoted;
-    const currentCount = upvoteCount;
-    const newUpvoted = !currentlyUpvoted;
-    const newCount = newUpvoted ? currentCount + 1 : Math.max(0, currentCount - 1);
+    // Save old state for potential revert
+    const oldUpvotes = currentUpvotes;
+    const oldDownvotes = currentDownvotes;
+    const oldUserVote = currentUserVote;
 
-    setOptimisticHasUpvoted(newUpvoted);
-    setOptimisticUpvoteCount(newCount);
+    // Calculate optimistic state
+    let newUpvotes = oldUpvotes;
+    let newDownvotes = oldDownvotes;
+    let newUserVote: 1 | -1 | null = null;
+
+    if (oldUserVote === voteType) {
+      // Removing vote
+      if (voteType === 1) {
+        newUpvotes = Math.max(0, oldUpvotes - 1);
+      } else {
+        newDownvotes = Math.max(0, oldDownvotes - 1);
+      }
+      newUserVote = null;
+    } else if (oldUserVote === null) {
+      // Adding new vote
+      if (voteType === 1) {
+        newUpvotes = oldUpvotes + 1;
+      } else {
+        newDownvotes = oldDownvotes + 1;
+      }
+      newUserVote = voteType;
+    } else {
+      // Switching vote
+      if (voteType === 1) {
+        newUpvotes = oldUpvotes + 1;
+        newDownvotes = Math.max(0, oldDownvotes - 1);
+      } else {
+        newDownvotes = oldDownvotes + 1;
+        newUpvotes = Math.max(0, oldUpvotes - 1);
+      }
+      newUserVote = voteType;
+    }
+
+    setOptimisticPostVote({ upvotes: newUpvotes, downvotes: newDownvotes, userVote: newUserVote });
 
     try {
-      await toggleUpvoteMutation.mutateAsync(post.id);
+      await togglePostVoteMutation.mutateAsync({ postId: post.id, voteType });
       // Clear optimistic state after success - let server data take over
-      // The query will refetch and provide the real values
-      setOptimisticHasUpvoted(null);
-      setOptimisticUpvoteCount(null);
+      setOptimisticPostVote(null);
     } catch (error) {
       // Revert optimistic update on error
-      setOptimisticHasUpvoted(currentlyUpvoted);
-      setOptimisticUpvoteCount(currentCount);
+      setOptimisticPostVote({ upvotes: oldUpvotes, downvotes: oldDownvotes, userVote: oldUserVote });
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[PostDetailModal] Upvote error:', errorMessage, error);
+      console.error('[PostDetailModal] Vote error:', errorMessage, error);
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       showToast(errorMessage, 'error');
     }
@@ -488,7 +558,7 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
             keyboardShouldPersistTaps="handled"
           >
             {/* Pinned indicator */}
-            {post.pinned && (
+            {isPinned && (
               <View style={styles.pinnedBanner}>
                 <Pin size={14} color={colors.primary} />
                 <IOSText textStyle="caption1" weight="semibold" color="systemBlue">
@@ -551,32 +621,78 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
               </IOSText>
             )}
 
-            {/* Action buttons - Upvote */}
+            {/* Reddit-style voting */}
             <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[styles.upvoteButton, hasUpvoted && styles.upvoteButtonActive]}
-                onPress={handleUpvote}
-                disabled={toggleUpvoteMutation.isPending}
-              >
-                <ThumbsUp
-                  size={20}
-                  color={hasUpvoted ? '#FFFFFF' : colors.primary}
-                  fill={hasUpvoted ? '#FFFFFF' : 'none'}
-                />
-                <IOSText
-                  textStyle="callout"
-                  weight="semibold"
-                  style={{ color: hasUpvoted ? '#FFFFFF' : colors.primary }}
+              <View style={styles.postVoteContainer}>
+                <TouchableOpacity
+                  style={[styles.postVoteButton, hasUpvoted && styles.postVoteButtonUpvoted]}
+                  onPress={() => handlePostVote(1)}
+                  disabled={togglePostVoteMutation.isPending}
+                  hitSlop={{ top: 8, bottom: 4, left: 8, right: 8 }}
                 >
-                  {hasUpvoted ? 'Upvoted' : 'Upvote'} ({upvoteCount})
-                </IOSText>
-              </TouchableOpacity>
+                  <ArrowBigUp
+                    size={28}
+                    color={hasUpvoted ? '#FF4500' : colors.textMuted}
+                    fill={hasUpvoted ? '#FF4500' : 'none'}
+                  />
+                </TouchableOpacity>
 
-              <View style={styles.viewCount}>
-                <Eye size={16} color={colors.textMuted} />
-                <IOSText textStyle="caption1" color="secondaryLabel">
-                  {post.view_count || 0} views
+                <IOSText
+                  textStyle="headline"
+                  weight="bold"
+                  style={[
+                    styles.postVoteScore,
+                    hasUpvoted && styles.postVoteScoreUpvoted,
+                    hasDownvoted && styles.postVoteScoreDownvoted,
+                  ]}
+                >
+                  {postScore}
                 </IOSText>
+
+                <TouchableOpacity
+                  style={[styles.postVoteButton, hasDownvoted && styles.postVoteButtonDownvoted]}
+                  onPress={() => handlePostVote(-1)}
+                  disabled={togglePostVoteMutation.isPending}
+                  hitSlop={{ top: 4, bottom: 8, left: 8, right: 8 }}
+                >
+                  <ArrowBigDown
+                    size={28}
+                    color={hasDownvoted ? '#7193FF' : colors.textMuted}
+                    fill={hasDownvoted ? '#7193FF' : 'none'}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.actionButtonsRight}>
+                {/* Pin button - only for moderators, admins, owners */}
+                {canPin && (
+                  <TouchableOpacity
+                    style={[styles.pinButton, isPinned && styles.pinButtonActive]}
+                    onPress={handleTogglePin}
+                    disabled={togglePinMutation.isPending}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Pin
+                      size={18}
+                      color={isPinned ? '#FFFFFF' : colors.primary}
+                      fill={isPinned ? '#FFFFFF' : 'none'}
+                    />
+                    <IOSText
+                      textStyle="caption1"
+                      weight="semibold"
+                      style={{ color: isPinned ? '#FFFFFF' : colors.primary }}
+                    >
+                      {isPinned ? 'Unpin' : 'Pin'}
+                    </IOSText>
+                  </TouchableOpacity>
+                )}
+
+                <View style={styles.viewCount}>
+                  <Eye size={16} color={colors.textMuted} />
+                  <IOSText textStyle="caption1" color="secondaryLabel">
+                    {post.view_count || 0} views
+                  </IOSText>
+                </View>
               </View>
             </View>
 
@@ -759,20 +875,49 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: spacing.md,
   },
-  upvoteButton: {
+  postVoteContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    backgroundColor: 'transparent',
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.xs,
   },
-  upvoteButtonActive: {
+  postVoteButton: {
+    padding: spacing.xs,
+  },
+  postVoteButtonUpvoted: {
+    // No background change, just icon color
+  },
+  postVoteButtonDownvoted: {
+    // No background change, just icon color
+  },
+  postVoteScore: {
+    minWidth: 40,
+    textAlign: 'center',
+    color: colors.text,
+  },
+  postVoteScoreUpvoted: {
+    color: '#FF4500', // Reddit orange
+  },
+  postVoteScoreDownvoted: {
+    color: '#7193FF', // Reddit blue/periwinkle
+  },
+  actionButtonsRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  pinButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: colors.primaryLight + '20',
+  },
+  pinButtonActive: {
     backgroundColor: colors.primary,
-    borderColor: colors.primary,
   },
   viewCount: {
     flexDirection: 'row',

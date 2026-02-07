@@ -15,6 +15,7 @@ import {
   Linking,
   ActivityIndicator,
   Animated,
+  TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -29,6 +30,8 @@ import {
   AlertCircle,
   MessageCircle,
   Plus,
+  Clock,
+  TrendingUp,
 } from 'lucide-react-native';
 
 // Hooks
@@ -69,6 +72,7 @@ import { WelcomeBanner } from '../components/discuss/WelcomeBanner';
 // Utils
 import { colors, spacing } from '../constants/theme';
 import { DRAGON_WORLDS_COMMUNITY_SLUG, REGATTAFLOW_URLS, PostType, CommunityPost } from '../types/community';
+import type { PostSortBy } from '../services/communityService';
 
 /** Floating tab bar total height (tab bar + bottom offset + extra padding) */
 const FLOATING_TAB_BAR_HEIGHT = 64 + 20 + 16; // 100px total
@@ -265,6 +269,9 @@ export function DiscussScreen({ onBack }: DiscussScreenProps) {
   const [isCreatePostModalVisible, setIsCreatePostModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState<{ post: CommunityPost; communitySlug: string } | null>(null);
 
+  // Sort state for community posts
+  const [postSortBy, setPostSortBy] = useState<PostSortBy>('new');
+
   // Toolbar auto-hide
   const { toolbarTranslateY, createScrollHandler } = useToolbarVisibility();
   const scrollHandler = useMemo(() => createScrollHandler(), [createScrollHandler]);
@@ -305,7 +312,7 @@ export function DiscussScreen({ onBack }: DiscussScreenProps) {
     communityError,
     postsError,
     refetchAll,
-  } = useCommunityWithPosts(DRAGON_WORLDS_COMMUNITY_SLUG);
+  } = useCommunityWithPosts(DRAGON_WORLDS_COMMUNITY_SLUG, postSortBy);
 
   // Feed data (all joined communities)
   const {
@@ -563,7 +570,8 @@ export function DiscussScreen({ onBack }: DiscussScreenProps) {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: HEADER_HEIGHT + insets.top + 70,
+            // Add extra padding when sort toggle is visible (community tab)
+            paddingTop: HEADER_HEIGHT + insets.top + 70 + (selectedSegment === 'community' ? 36 : 0),
             paddingBottom: FLOATING_TAB_BAR_HEIGHT + Math.max(insets.bottom, 20) + spacing.lg,
           },
         ]}
@@ -580,13 +588,13 @@ export function DiscussScreen({ onBack }: DiscussScreenProps) {
             tintColor={colors.primary}
             colors={[colors.primary]}
             progressBackgroundColor={colors.surface}
-            progressViewOffset={HEADER_HEIGHT + insets.top + 70}
+            progressViewOffset={HEADER_HEIGHT + insets.top + 70 + (selectedSegment === 'community' ? 36 : 0)}
           />
         }
       >
-        {/* Welcome Banner - shown once to explain Feed vs Community */}
+        {/* Welcome Banner - shown once per tab to explain Feed vs Community */}
         {!hasSeenWelcome && session && (
-          <WelcomeBanner onDismiss={markWelcomeSeen} />
+          <WelcomeBanner onDismiss={markWelcomeSeen} segment={selectedSegment} />
         )}
 
         {selectedSegment === 'community' ? (
@@ -708,6 +716,46 @@ export function DiscussScreen({ onBack }: DiscussScreenProps) {
             style={styles.segmentControl}
           />
         </View>
+
+        {/* Sort Toggle - only show for community tab */}
+        {selectedSegment === 'community' && (
+          <View style={styles.sortToggleContainer}>
+            <TouchableOpacity
+              style={[styles.sortPill, postSortBy === 'new' && styles.sortPillActive]}
+              onPress={() => {
+                setPostSortBy('new');
+                Haptics.selectionAsync();
+              }}
+              activeOpacity={0.7}
+            >
+              <Clock size={14} color={postSortBy === 'new' ? colors.primary : colors.textMuted} />
+              <IOSText
+                textStyle="subheadline"
+                weight={postSortBy === 'new' ? 'semibold' : 'regular'}
+                color={postSortBy === 'new' ? 'primary' : 'secondaryLabel'}
+              >
+                New
+              </IOSText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.sortPill, postSortBy === 'top' && styles.sortPillActive]}
+              onPress={() => {
+                setPostSortBy('top');
+                Haptics.selectionAsync();
+              }}
+              activeOpacity={0.7}
+            >
+              <TrendingUp size={14} color={postSortBy === 'top' ? colors.primary : colors.textMuted} />
+              <IOSText
+                textStyle="subheadline"
+                weight={postSortBy === 'top' ? 'semibold' : 'regular'}
+                color={postSortBy === 'top' ? 'primary' : 'secondaryLabel'}
+              >
+                Top
+              </IOSText>
+            </TouchableOpacity>
+          </View>
+        )}
       </Animated.View>
 
 
@@ -725,6 +773,7 @@ export function DiscussScreen({ onBack }: DiscussScreenProps) {
         post={selectedPost?.post ?? null}
         communitySlug={selectedPost?.communitySlug ?? DRAGON_WORLDS_COMMUNITY_SLUG}
         onClose={() => setSelectedPost(null)}
+        userRole={membership?.role}
       />
     </View>
   );
@@ -785,6 +834,24 @@ const styles = StyleSheet.create({
   },
   segmentControl: {
     // Additional styling if needed
+  },
+  sortToggleContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+    gap: spacing.sm,
+  },
+  sortPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: colors.surfaceSecondary,
+  },
+  sortPillActive: {
+    backgroundColor: colors.primaryLight + '20',
   },
   centerContainer: {
     flex: 1,

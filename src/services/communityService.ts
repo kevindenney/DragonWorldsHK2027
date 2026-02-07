@@ -128,23 +128,32 @@ export async function getCommunityById(
 }
 
 /**
+ * Post sort options
+ */
+export type PostSortBy = 'new' | 'top';
+
+/**
  * Fetch posts for a community
  * @param communityId - The community UUID
  * @param accessToken - Optional access token for authenticated requests
  * @param page - Page number (0-indexed)
  * @param pageSize - Number of posts per page
+ * @param sortBy - Sort order: 'new' (most recent) or 'top' (most upvotes)
  */
 export async function getCommunityPosts(
   communityId: string,
   accessToken?: string,
   page: number = 0,
-  pageSize: number = DEFAULT_PAGE_SIZE
+  pageSize: number = DEFAULT_PAGE_SIZE,
+  sortBy: PostSortBy = 'new'
 ): Promise<ServiceResponse<CommunityPost[]>> {
   try {
     const client = getSupabaseClient(accessToken);
     const from = page * pageSize;
     const to = from + pageSize - 1;
 
+    // Build query with dynamic sort order
+    // Pinned posts always come first, then sort by either date or upvotes
     const { data, error } = await client
       .from('venue_discussions')
       .select(
@@ -160,7 +169,7 @@ export async function getCommunityPosts(
       .eq('community_id', communityId)
       .eq('is_public', true)
       .order('pinned', { ascending: false })
-      .order('created_at', { ascending: false })
+      .order(sortBy === 'top' ? 'upvotes' : 'created_at', { ascending: false })
       .range(from, to);
 
     if (error) {
@@ -705,21 +714,23 @@ export async function checkUserVote(
 }
 
 /**
- * Toggle upvote on a post
+ * Toggle vote on a post (upvote or downvote)
  * @param discussionId - The post/discussion UUID
  * @param userId - The user's UUID
+ * @param voteType - 1 for upvote, -1 for downvote
  * @param accessToken - Access token for authenticated request
- * @returns true if upvoted, false if removed
+ * @returns Object with vote state and counts
  */
-export async function toggleUpvote(
+export async function togglePostVote(
   discussionId: string,
   userId: string,
+  voteType: 1 | -1,
   accessToken: string
-): Promise<ServiceResponse<boolean>> {
+): Promise<ServiceResponse<{ hasUpvoted: boolean; hasDownvoted: boolean; upvotes: number; downvotes: number }>> {
   try {
     const client = getSupabaseClient(accessToken);
 
-    // Check if user already voted (using correct column names: target_id, target_type)
+    // Check if user already voted
     const { data: existingVote, error: checkError } = await client
       .from('venue_discussion_votes')
       .select('*')
@@ -728,86 +739,121 @@ export async function toggleUpvote(
       .eq('user_id', userId)
       .maybeSingle();
 
-    // If votes table check fails, show the error for debugging
     if (checkError) {
       console.error('[CommunityService] Votes check error:', checkError);
-      return { data: false, error: checkError.message };
+      return { data: null, error: checkError.message };
     }
 
+    let hasUpvoted = false;
+    let hasDownvoted = false;
+
     if (existingVote) {
-      // Remove existing vote
-      const { error: deleteError } = await client
-        .from('venue_discussion_votes')
-        .delete()
-        .eq('target_id', discussionId)
-        .eq('target_type', 'discussion')
-        .eq('user_id', userId);
+      const existingVoteType = existingVote.vote as number;
 
-      if (deleteError) {
-        console.error('[CommunityService] Error removing vote:', deleteError);
-        return { data: false, error: deleteError.message };
+      if (existingVoteType === voteType) {
+        // Same vote type - remove the vote
+        const { error: deleteError } = await client
+          .from('venue_discussion_votes')
+          .delete()
+          .eq('target_id', discussionId)
+          .eq('target_type', 'discussion')
+          .eq('user_id', userId);
+
+        if (deleteError) {
+          console.error('[CommunityService] Error removing vote:', deleteError);
+          return { data: null, error: deleteError.message };
+        }
+        // hasUpvoted and hasDownvoted stay false (vote removed)
+      } else {
+        // Different vote type - update the vote
+        const { error: updateError } = await client
+          .from('venue_discussion_votes')
+          .update({ vote: voteType })
+          .eq('target_id', discussionId)
+          .eq('target_type', 'discussion')
+          .eq('user_id', userId);
+
+        if (updateError) {
+          console.error('[CommunityService] Error updating vote:', updateError);
+          return { data: null, error: updateError.message };
+        }
+
+        hasUpvoted = voteType === 1;
+        hasDownvoted = voteType === -1;
       }
-
-      // Decrement upvote count - fetch current and decrement
-      const { data: post } = await client
-        .from('venue_discussions')
-        .select('upvotes')
-        .eq('id', discussionId)
-        .single();
-
-      if (post) {
-        await client
-          .from('venue_discussions')
-          .update({ upvotes: Math.max(0, (post.upvotes || 0) - 1) })
-          .eq('id', discussionId);
-      }
-
-      return { data: false, error: null }; // Removed upvote
     } else {
-      // Add new upvote (vote: 1 = upvote)
-      const { error: insertError, data: insertData } = await client
+      // No existing vote - insert new vote
+      const { error: insertError } = await client
         .from('venue_discussion_votes')
         .insert({
           target_id: discussionId,
           target_type: 'discussion',
           user_id: userId,
-          vote: 1,
-        })
-        .select();
+          vote: voteType,
+        });
 
       if (insertError) {
-        console.error('[CommunityService] Error adding vote:', {
-          message: insertError.message,
-          code: insertError.code,
-          details: insertError.details,
-          hint: insertError.hint,
-          fullError: JSON.stringify(insertError),
-        });
-        return { data: false, error: `Vote failed: ${insertError.message} (${insertError.code || 'no code'})` };
+        console.error('[CommunityService] Error adding vote:', insertError);
+        return { data: null, error: `Vote failed: ${insertError.message}` };
       }
 
-      console.log('[CommunityService] Vote inserted successfully:', insertData);
-
-      // Increment upvote count - fetch current and increment
-      const { data: post } = await client
-        .from('venue_discussions')
-        .select('upvotes')
-        .eq('id', discussionId)
-        .single();
-
-      if (post) {
-        await client
-          .from('venue_discussions')
-          .update({ upvotes: (post.upvotes || 0) + 1 })
-          .eq('id', discussionId);
-      }
-
-      return { data: true, error: null }; // Added upvote
+      hasUpvoted = voteType === 1;
+      hasDownvoted = voteType === -1;
     }
+
+    // Count actual votes from database (no more increment/decrement bugs!)
+    const { count: upvoteCount } = await client
+      .from('venue_discussion_votes')
+      .select('*', { count: 'exact', head: true })
+      .eq('target_id', discussionId)
+      .eq('target_type', 'discussion')
+      .eq('vote', 1);
+
+    const { count: downvoteCount } = await client
+      .from('venue_discussion_votes')
+      .select('*', { count: 'exact', head: true })
+      .eq('target_id', discussionId)
+      .eq('target_type', 'discussion')
+      .eq('vote', -1);
+
+    const newUpvotes = upvoteCount || 0;
+    const newDownvotes = downvoteCount || 0;
+
+    // Update the post with accurate counts
+    await client
+      .from('venue_discussions')
+      .update({ upvotes: newUpvotes, downvotes: newDownvotes })
+      .eq('id', discussionId);
+
+    return {
+      data: {
+        hasUpvoted,
+        hasDownvoted,
+        upvotes: newUpvotes,
+        downvotes: newDownvotes,
+      },
+      error: null,
+    };
   } catch (err) {
-    console.error('[CommunityService] Upvote exception:', err);
-    return { data: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    console.error('[CommunityService] Vote exception:', err);
+    return { data: null, error: err instanceof Error ? err.message : 'Unknown error' };
   }
+}
+
+/**
+ * Toggle upvote on a post (legacy wrapper for backwards compatibility)
+ * @deprecated Use togglePostVote instead
+ */
+export async function toggleUpvote(
+  discussionId: string,
+  userId: string,
+  accessToken: string
+): Promise<ServiceResponse<boolean>> {
+  const result = await togglePostVote(discussionId, userId, 1, accessToken);
+  if (result.error) {
+    return { data: false, error: result.error };
+  }
+  return { data: result.data?.hasUpvoted ?? false, error: null };
 }
 
 /**
@@ -846,6 +892,54 @@ export async function incrementViewCount(
     console.error('[CommunityService] Exception incrementing view count:', err);
     return {
       data: false,
+      error: err instanceof Error ? err.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Toggle pin status for a post (moderators/admins only)
+ * @param discussionId - The post/discussion UUID
+ * @param accessToken - Access token for authenticated request
+ * @returns The new pinned status
+ */
+export async function togglePinPost(
+  discussionId: string,
+  accessToken: string
+): Promise<ServiceResponse<{ pinned: boolean }>> {
+  try {
+    const client = getSupabaseClient(accessToken);
+
+    // First get the current pin status
+    const { data: post, error: fetchError } = await client
+      .from('venue_discussions')
+      .select('pinned')
+      .eq('id', discussionId)
+      .single();
+
+    if (fetchError) {
+      console.error('[CommunityService] Error fetching post for pin toggle:', fetchError);
+      return { data: null, error: fetchError.message };
+    }
+
+    // Toggle the pinned status
+    const newPinnedStatus = !post.pinned;
+
+    const { error: updateError } = await client
+      .from('venue_discussions')
+      .update({ pinned: newPinnedStatus })
+      .eq('id', discussionId);
+
+    if (updateError) {
+      console.error('[CommunityService] Error toggling pin status:', updateError);
+      return { data: null, error: updateError.message };
+    }
+
+    return { data: { pinned: newPinnedStatus }, error: null };
+  } catch (err) {
+    console.error('[CommunityService] Exception toggling pin status:', err);
+    return {
+      data: null,
       error: err instanceof Error ? err.message : 'Unknown error',
     };
   }
@@ -1054,6 +1148,8 @@ export const communityService = {
   createComment,
   checkUserVote,
   toggleUpvote,
+  togglePostVote,
+  togglePinPost,
   incrementViewCount,
   checkCommentVote,
   toggleCommentVote,
