@@ -191,6 +191,10 @@ function IdentityCard({
   user,
   onEditProfile,
 }: IdentityCardProps) {
+  // Debug: Log user.photoURL to verify it's being received
+  if (__DEV__) {
+    console.log('[IdentityCard] user.photoURL:', user.photoURL);
+  }
   return (
     <View style={styles.identityCard}>
       {/* Avatar */}

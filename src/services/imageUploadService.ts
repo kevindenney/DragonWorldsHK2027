@@ -8,8 +8,11 @@
 import { Platform, Alert, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import { storage, auth } from '../config/firebase';
+import * as FileSystem from 'expo-file-system';
+import { auth } from '../config/firebase';
+
+// Firebase Storage bucket name (without gs://)
+const STORAGE_BUCKET = 'dragonworldshk2027.firebasestorage.app';
 
 // ============================================
 // Debug Logging
@@ -20,29 +23,15 @@ import { storage, auth } from '../config/firebase';
  */
 export function debugFirebaseState(context: string): void {
   console.log(`\n========== [ImageUpload Debug: ${context}] ==========`);
-  console.log('[DEBUG] storage object exists:', !!storage);
-  console.log('[DEBUG] storage type:', typeof storage);
-  console.log('[DEBUG] auth object exists:', !!auth);
-  console.log('[DEBUG] auth type:', typeof auth);
+  console.log('[DEBUG] Using REST API upload (no native SDK)');
+  console.log('[DEBUG] Storage bucket:', STORAGE_BUCKET);
+  console.log('[DEBUG] Web auth object exists:', !!auth);
 
   if (auth) {
     console.log('[DEBUG] auth.currentUser exists:', !!auth.currentUser);
     if (auth.currentUser) {
       console.log('[DEBUG] auth.currentUser.uid:', auth.currentUser.uid);
       console.log('[DEBUG] auth.currentUser.email:', auth.currentUser.email);
-      console.log('[DEBUG] auth.currentUser.providerId:', auth.currentUser.providerId);
-      console.log('[DEBUG] auth.currentUser.providerData:', JSON.stringify(auth.currentUser.providerData));
-    }
-  }
-
-  if (storage) {
-    try {
-      // Try to access storage properties
-      console.log('[DEBUG] storage.app exists:', !!(storage as any).app);
-      console.log('[DEBUG] storage.app.name:', (storage as any).app?.name);
-      console.log('[DEBUG] storage._bucket:', (storage as any)._bucket);
-    } catch (e) {
-      console.log('[DEBUG] Error accessing storage properties:', e);
     }
   }
   console.log('========== [End Debug] ==========\n');
@@ -240,7 +229,8 @@ export async function compressImage(uri: string): Promise<string> {
 // ============================================
 
 /**
- * Upload a profile image to Firebase Storage
+ * Upload a profile image to Firebase Storage using REST API
+ * This approach bypasses the Firebase SDK's blob handling issues in React Native
  *
  * @param userId - The user's UID
  * @param imageUri - Local URI of the image to upload
@@ -255,57 +245,47 @@ export async function uploadProfileImage(
   // COMPREHENSIVE DEBUG LOGGING
   debugFirebaseState('uploadProfileImage START');
 
-  console.log('[ImageUpload] === UPLOAD ATTEMPT ===');
+  console.log('[ImageUpload] === UPLOAD ATTEMPT (REST API) ===');
   console.log('[ImageUpload] Passed userId:', userId);
   console.log('[ImageUpload] Image URI (first 100 chars):', imageUri?.substring(0, 100));
-  console.log('[ImageUpload] Image URI length:', imageUri?.length);
 
-  // Check #1: Storage initialization
-  if (!storage) {
-    console.error('[ImageUpload] FAILURE: storage is null/undefined');
-    throw new Error('Firebase Storage is not initialized. Storage object is null.');
-  }
-  console.log('[ImageUpload] CHECK PASSED: storage exists');
-
-  // Check #2: Auth initialization
+  // Check #1: Auth initialization
   if (!auth) {
     console.error('[ImageUpload] FAILURE: auth is null/undefined');
-    throw new Error('Firebase Auth is not initialized. Auth object is null.');
+    throw new Error('Firebase Auth is not initialized.');
   }
   console.log('[ImageUpload] CHECK PASSED: auth exists');
 
-  // Check #3: Current user exists
+  // Check #2: Current user exists
   if (!auth.currentUser) {
     console.error('[ImageUpload] FAILURE: auth.currentUser is null');
-    console.error('[ImageUpload] auth object:', JSON.stringify(auth, null, 2).substring(0, 500));
-    throw new Error('No authenticated user. auth.currentUser is null.');
+    throw new Error('No authenticated user. Please sign in again.');
   }
   console.log('[ImageUpload] CHECK PASSED: auth.currentUser exists');
   console.log('[ImageUpload] auth.currentUser.uid:', auth.currentUser.uid);
 
-  // Check #4: User ID match
+  // Check #3: User ID match
   if (auth.currentUser.uid !== userId) {
     console.warn('[ImageUpload] WARNING: User ID mismatch!');
     console.warn('[ImageUpload] Passed userId:', userId);
     console.warn('[ImageUpload] auth.currentUser.uid:', auth.currentUser.uid);
-    console.warn('[ImageUpload] Using auth.currentUser.uid for upload');
     userId = auth.currentUser.uid;
   }
-  console.log('[ImageUpload] CHECK PASSED: Using userId:', userId);
 
-  // Check #5: Image URI validation
+  // Check #4: Image URI validation
   if (!imageUri || imageUri.length === 0) {
     console.error('[ImageUpload] FAILURE: imageUri is empty');
     throw new Error('No image URI provided');
   }
-  console.log('[ImageUpload] CHECK PASSED: imageUri is valid');
 
   // Compress the image first
   console.log('[ImageUpload] Starting image compression...');
+  onProgress?.(5);
   let compressedUri: string;
   try {
     compressedUri = await compressImage(imageUri);
-    console.log('[ImageUpload] Compression complete. Compressed URI (first 100 chars):', compressedUri?.substring(0, 100));
+    console.log('[ImageUpload] Compression complete');
+    onProgress?.(15);
   } catch (compressionError: any) {
     console.error('[ImageUpload] FAILURE: Image compression failed:', compressionError);
     throw new Error(`Image compression failed: ${compressionError.message}`);
@@ -314,144 +294,136 @@ export async function uploadProfileImage(
   // Generate storage path with timestamp to avoid caching issues
   const timestamp = Date.now();
   const storagePath = `profile-pictures/${userId}/${timestamp}.jpg`;
-  const storageRef = ref(storage, storagePath);
+  const encodedPath = encodeURIComponent(storagePath);
 
-  if (__DEV__) {
-    console.log('[ImageUpload] Storage path:', storagePath);
-    console.log('[ImageUpload] Storage ref fullPath:', storageRef.fullPath);
-    console.log('[ImageUpload] Storage bucket:', storageRef.bucket);
-    console.log('[ImageUpload] Auth provider:', auth.currentUser?.providerData?.[0]?.providerId);
-  }
+  console.log('[ImageUpload] Storage path:', storagePath);
+  console.log('[ImageUpload] Encoded path:', encodedPath);
 
-  // Convert URI to blob for upload
-  console.log('[ImageUpload] Starting blob conversion...');
-
-  let blob: Blob;
   try {
-    blob = await uriToBlob(compressedUri);
-    console.log('[ImageUpload] Blob created successfully');
-    console.log('[ImageUpload] Blob size:', blob.size);
-    console.log('[ImageUpload] Blob type:', blob.type);
+    // Get auth token for REST API
+    console.log('[ImageUpload] Getting auth token...');
+    const authToken = await auth.currentUser.getIdToken(true);
+    console.log('[ImageUpload] Auth token obtained (length):', authToken.length);
+    onProgress?.(20);
 
-    if (blob.size === 0) {
-      console.error('[ImageUpload] FAILURE: Blob size is 0');
-      throw new Error('Blob conversion resulted in empty file');
+    // Read the image file as base64
+    console.log('[ImageUpload] Reading image file...');
+    const base64Data = await FileSystem.readAsStringAsync(compressedUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    console.log('[ImageUpload] Image read as base64 (length):', base64Data.length);
+    onProgress?.(40);
+
+    // Convert base64 to binary for upload
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
     }
-  } catch (blobError: any) {
-    console.error('[ImageUpload] FAILURE: Blob creation failed');
-    console.error('[ImageUpload] Blob error:', blobError);
-    console.error('[ImageUpload] Blob error message:', blobError?.message);
-    throw new Error(`Failed to process image for upload: ${blobError?.message || 'Unknown blob error'}`);
+    console.log('[ImageUpload] Converted to binary (bytes):', bytes.length);
+    onProgress?.(50);
+
+    // Upload to Firebase Storage REST API
+    const uploadUrl = `https://firebasestorage.googleapis.com/v0/b/${STORAGE_BUCKET}/o/${encodedPath}`;
+    console.log('[ImageUpload] Upload URL:', uploadUrl);
+    console.log('[ImageUpload] Starting REST API upload...');
+
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'image/jpeg',
+      },
+      body: bytes,
+    });
+
+    console.log('[ImageUpload] Upload response status:', uploadResponse.status);
+    onProgress?.(80);
+
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      console.error('[ImageUpload] Upload failed:', errorText);
+      throw new Error(`Upload failed: ${uploadResponse.status} - ${errorText}`);
+    }
+
+    const uploadResult = await uploadResponse.json();
+    console.log('[ImageUpload] Upload result:', JSON.stringify(uploadResult, null, 2));
+
+    // Construct the download URL
+    // Format: https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{path}?alt=media&token={downloadToken}
+    const downloadToken = uploadResult.downloadTokens;
+    const downloadURL = `https://firebasestorage.googleapis.com/v0/b/${STORAGE_BUCKET}/o/${encodedPath}?alt=media&token=${downloadToken}`;
+
+    console.log('[ImageUpload] Download URL:', downloadURL);
+    onProgress?.(100);
+
+    return {
+      downloadURL,
+      path: storagePath,
+    };
+  } catch (uploadError: any) {
+    console.error('[ImageUpload] ========== UPLOAD ERROR ==========');
+    console.error('[ImageUpload] Error:', uploadError);
+    console.error('[ImageUpload] Error message:', uploadError?.message);
+    console.error('[ImageUpload] ========== END ERROR ==========');
+
+    // Provide specific error messages
+    let errorMessage = `Upload failed: ${uploadError?.message || 'Unknown error'}`;
+    if (uploadError?.message?.includes('401') || uploadError?.message?.includes('403')) {
+      errorMessage = 'Storage permission denied. You must be signed in to upload images.';
+    } else if (uploadError?.message?.includes('507')) {
+      errorMessage = 'Storage quota exceeded. Please contact support.';
+    }
+
+    throw new Error(errorMessage);
   }
-
-  console.log('[ImageUpload] Starting Firebase upload...');
-  console.log('[ImageUpload] Upload metadata: contentType=image/jpeg');
-
-  return new Promise((resolve, reject) => {
-    let uploadTask;
-    try {
-      uploadTask = uploadBytesResumable(storageRef, blob, {
-        contentType: 'image/jpeg',
-      });
-      console.log('[ImageUpload] uploadBytesResumable called successfully');
-    } catch (uploadInitError: any) {
-      console.error('[ImageUpload] FAILURE: uploadBytesResumable threw error');
-      console.error('[ImageUpload] Upload init error:', uploadInitError);
-      reject(new Error(`Failed to initialize upload: ${uploadInitError?.message}`));
-      return;
-    }
-
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const progress = Math.round(
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-        );
-        onProgress?.(progress);
-
-        if (__DEV__) {
-          console.log(`[ImageUpload] Upload progress: ${progress}%`);
-        }
-      },
-      (error: any) => {
-        console.error('[ImageUpload] ========== UPLOAD ERROR ==========');
-        console.error('[ImageUpload] Error object:', error);
-        console.error('[ImageUpload] Error type:', typeof error);
-        console.error('[ImageUpload] Error constructor:', error?.constructor?.name);
-        console.error('[ImageUpload] Error code:', error?.code);
-        console.error('[ImageUpload] Error message:', error?.message);
-        console.error('[ImageUpload] Error name:', error?.name);
-        console.error('[ImageUpload] Error serverResponse:', error?.serverResponse);
-        console.error('[ImageUpload] Error stack:', error?.stack);
-
-        // Try to stringify the entire error
-        try {
-          console.error('[ImageUpload] Error JSON:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
-        } catch (e) {
-          console.error('[ImageUpload] Could not stringify error');
-        }
-        console.error('[ImageUpload] ========== END ERROR ==========');
-
-        // Provide more specific error messages based on Firebase error codes
-        let errorMessage = `Upload failed: ${error?.message || error?.code || 'Unknown error'}`;
-        if (error?.code === 'storage/unauthorized' || error?.code === 'storage/unauthenticated') {
-          errorMessage = 'Storage permission denied. You must be signed in to upload images.';
-        } else if (error?.code === 'storage/quota-exceeded') {
-          errorMessage = 'Storage quota exceeded. Please contact support.';
-        } else if (error?.code === 'storage/invalid-checksum') {
-          errorMessage = 'Upload failed due to data corruption. Please try again.';
-        } else if (error?.code === 'storage/retry-limit-exceeded') {
-          errorMessage = 'Upload timed out. Please check your connection and try again.';
-        } else if (error?.code === 'storage/canceled') {
-          errorMessage = 'Upload was canceled.';
-        }
-
-        reject(new Error(errorMessage));
-      },
-      async () => {
-        try {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-
-          if (__DEV__) {
-            console.log('[ImageUpload] Upload complete:', downloadURL);
-          }
-
-          resolve({
-            downloadURL,
-            path: storagePath,
-          });
-        } catch (error) {
-          console.error('[ImageUpload] Error getting download URL:', error);
-          reject(new Error('Failed to get image URL. Please try again.'));
-        }
-      }
-    );
-  });
 }
 
 /**
- * Delete a profile image from Firebase Storage
+ * Delete a profile image from Firebase Storage using REST API
  *
  * @param storagePath - The storage path of the image to delete
  */
 export async function deleteProfileImage(storagePath: string): Promise<void> {
-  if (!storage) {
-    throw new Error('Firebase Storage is not initialized');
-  }
-
   try {
-    const storageRef = ref(storage, storagePath);
-    await deleteObject(storageRef);
+    if (!auth?.currentUser) {
+      console.warn('[ImageUpload] No authenticated user for delete operation');
+      return;
+    }
+
+    const authToken = await auth.currentUser.getIdToken(true);
+    const encodedPath = encodeURIComponent(storagePath);
+    const deleteUrl = `https://firebasestorage.googleapis.com/v0/b/${STORAGE_BUCKET}/o/${encodedPath}`;
+
+    const response = await fetch(deleteUrl, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+      },
+    });
 
     if (__DEV__) {
-      console.log('[ImageUpload] Image deleted:', storagePath);
+      console.log('[ImageUpload] Delete response status:', response.status);
     }
+
+    // 404 means already deleted, which is fine
+    if (response.ok || response.status === 404) {
+      if (__DEV__) {
+        console.log('[ImageUpload] Image deleted:', storagePath);
+      }
+      return;
+    }
+
+    const errorText = await response.text();
+    console.error('[ImageUpload] Delete failed:', errorText);
+    throw new Error(`Delete failed: ${response.status}`);
   } catch (error: any) {
     // Ignore "object not found" errors - the image may have already been deleted
-    if (error.code !== 'storage/object-not-found') {
-      console.error('[ImageUpload] Error deleting image:', error);
-      throw error;
+    if (error.message?.includes('404')) {
+      return;
     }
+    console.error('[ImageUpload] Error deleting image:', error);
+    throw error;
   }
 }
 

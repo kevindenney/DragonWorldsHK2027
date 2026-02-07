@@ -459,42 +459,77 @@ export class FirebaseAuthService {
    * Update user profile
    */
   async updateUserProfile(updates: Partial<User>): Promise<User> {
+    console.log('[AuthService] updateUserProfile called');
+    console.log('[AuthService] Updates received:', JSON.stringify(updates));
+
     try {
+      console.log('[AuthService] Checking auth...');
       if (!auth) {
+        console.error('[AuthService] FAILURE: auth is null');
         throw new Error('Firebase Auth not initialized');
       }
+      console.log('[AuthService] auth exists:', !!auth);
+
       const currentUser = auth.currentUser;
+      console.log('[AuthService] currentUser exists:', !!currentUser);
       if (!currentUser) {
+        console.error('[AuthService] FAILURE: currentUser is null');
         throw new Error('No user logged in');
       }
+      console.log('[AuthService] currentUser.uid:', currentUser.uid);
 
       // Update Firebase Auth profile - only include defined fields
       const authProfileUpdates: { displayName?: string; photoURL?: string } = {};
       if (updates.displayName !== undefined) {
         authProfileUpdates.displayName = updates.displayName;
+        console.log('[AuthService] Will update displayName to:', updates.displayName);
       }
       if (updates.photoURL !== undefined) {
         authProfileUpdates.photoURL = updates.photoURL;
+        console.log('[AuthService] Will update photoURL to:', updates.photoURL);
       }
 
+      console.log('[AuthService] authProfileUpdates:', JSON.stringify(authProfileUpdates));
+
       if (Object.keys(authProfileUpdates).length > 0) {
-        await updateProfile(currentUser, authProfileUpdates);
+        console.log('[AuthService] Calling Firebase updateProfile...');
+        try {
+          await updateProfile(currentUser, authProfileUpdates);
+          console.log('[AuthService] Firebase updateProfile SUCCESS');
+        } catch (updateError: any) {
+          console.error('[AuthService] Firebase updateProfile FAILED');
+          console.error('[AuthService] updateProfile error:', updateError);
+          console.error('[AuthService] updateProfile error code:', updateError?.code);
+          console.error('[AuthService] updateProfile error message:', updateError?.message);
+          throw updateError;
+        }
+      } else {
+        console.log('[AuthService] No auth profile updates needed');
       }
 
       // Update Firestore document (fire and forget - don't block on this)
       if (firestore) {
+        console.log('[AuthService] Updating Firestore document...');
         const updatedData = {
           ...updates,
           updatedAt: new Date(),
         };
-        setDoc(doc(firestore, 'users', currentUser.uid), updatedData, { merge: true }).catch(() => {
+        setDoc(doc(firestore, 'users', currentUser.uid), updatedData, { merge: true }).catch((firestoreError) => {
+          console.warn('[AuthService] Firestore update failed (non-blocking):', firestoreError);
           // Silently ignore Firestore errors - Firebase Auth is the source of truth
         });
+      } else {
+        console.log('[AuthService] Firestore not available, skipping document update');
       }
 
       // Return updated user
+      console.log('[AuthService] Returning updated user');
       return convertFirebaseUser(currentUser, updates);
     } catch (error: any) {
+      console.error('[AuthService] updateUserProfile error:', error);
+      console.error('[AuthService] Error type:', error?.constructor?.name);
+      console.error('[AuthService] Error code:', error?.code);
+      console.error('[AuthService] Error message:', error?.message);
       throw this.handleAuthError(error);
     }
   }

@@ -7,7 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../auth/useAuth';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
 import type { RootStackParamList } from '../../types/navigation';
-import { InitialsAvatar } from '../shared/InitialsAvatar';
+import { ProfileAvatar } from '../shared/ProfileAvatar';
 
 const { colors } = dragonChampionshipsLightTheme;
 
@@ -47,7 +47,8 @@ export function ProfileButton({ size = 32, style }: ProfileButtonProps) {
       accessibilityLabel={isAuthenticated ? 'View profile' : 'Sign in'}
     >
       {isAuthenticated && user ? (
-        <InitialsAvatar
+        <ProfileAvatar
+          photoURL={user.photoURL}
           name={user.displayName || user.email || 'User'}
           id={user.uid}
           size={size}

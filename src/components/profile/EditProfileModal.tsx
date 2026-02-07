@@ -25,6 +25,7 @@ import {
   isCameraAvailable,
   debugFirebaseState,
 } from '../../services/imageUploadService';
+import { auth } from '../../config/firebase';
 
 interface EditProfileModalProps {
   visible: boolean;
@@ -54,6 +55,9 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [photoRemoved, setPhotoRemoved] = useState(false);
 
+  // DEBUG: Firebase state info
+  const [debugInfo, setDebugInfo] = useState<string>('');
+
   // Initialize form data when modal opens
   useEffect(() => {
     if (visible && user) {
@@ -65,6 +69,23 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
       // Debug Firebase state when modal opens
       debugFirebaseState('EditProfileModal opened');
+
+      // Build debug info string for visual display
+      const authOk = !!auth;
+      const currentUserOk = !!auth?.currentUser;
+      const uidMatch = auth?.currentUser?.uid === user.uid;
+
+      const debugStr = [
+        `Upload: REST API`,
+        `Auth: ${authOk ? 'OK' : 'NULL'}`,
+        `CurrentUser: ${currentUserOk ? 'OK' : 'NULL'}`,
+        `UID Match: ${uidMatch ? 'YES' : 'NO'}`,
+        `App UID: ${user.uid?.substring(0, 8)}...`,
+        `Auth UID: ${auth?.currentUser?.uid?.substring(0, 8) || 'N/A'}...`,
+      ].join(' | ');
+
+      setDebugInfo(debugStr);
+      console.log('[EditProfileModal] DEBUG:', debugStr);
 
       const initialData = {
         displayName: user.displayName || '',
@@ -363,6 +384,13 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             </TouchableOpacity>
           </View>
 
+          {/* DEBUG INFO - TEMPORARY */}
+          {__DEV__ && (
+            <View style={styles.debugBanner}>
+              <Text style={styles.debugText}>{debugInfo}</Text>
+            </View>
+          )}
+
           {/* Form */}
           <View style={styles.form}>
             {/* Profile Avatar Preview - Tappable */}
@@ -437,6 +465,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  debugBanner: {
+    backgroundColor: '#FFEB3B',
+    padding: 8,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.sm,
+    borderRadius: 4,
+  },
+  debugText: {
+    fontSize: 10,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    color: '#000',
   },
   keyboardAvoidingView: {
     flex: 1,

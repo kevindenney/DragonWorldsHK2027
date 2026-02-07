@@ -30,6 +30,8 @@ export default ({ config }) => {
     ]);
   }
 
+  // NOTE: @react-native-firebase/app plugin removed - using REST API for Storage instead
+
   // Inject Google Maps API key from environment variable
   const googleMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   if (googleMapsApiKey) {
