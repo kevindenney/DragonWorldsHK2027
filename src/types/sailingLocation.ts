@@ -78,7 +78,7 @@ export interface SailingLocationFilter {
 export interface LocationDetailModalProps {
   location: SailingLocation;
   onClose: () => void;
-  onScheduleNavigate?: (date: string, eventId?: string) => void;
+  onScheduleNavigate?: (date: string, eventId?: string, championship?: string) => void;
 }
 
 export interface SailingLocationMarkerProps {

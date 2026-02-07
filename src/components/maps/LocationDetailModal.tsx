@@ -22,10 +22,58 @@ import {
   Users,
   Eye
 } from 'lucide-react-native';
-import { LocationDetailModalProps } from '../../types/sailingLocation';
+import { LocationDetailModalProps, ChampionshipEvent } from '../../types/sailingLocation';
 import { dragonChampionshipsLightTheme } from '../../constants/dragonChampionshipsTheme';
+import { EVENTS } from '../../constants/events';
 
 const { colors, spacing, typography, shadows, borderRadius } = dragonChampionshipsLightTheme;
+
+// Championship colors for visual differentiation
+const CHAMPIONSHIP_COLORS = {
+  apac: {
+    background: '#EBF5FF', // Light blue
+    border: '#2563EB', // Blue
+    text: '#1D4ED8', // Dark blue
+  },
+  worlds: {
+    background: '#FDF2F8', // Light pink
+    border: '#DB2777', // Pink
+    text: '#BE185D', // Dark pink
+  },
+};
+
+// Determine championship from event name or date
+const getChampionshipFromEvent = (event: ChampionshipEvent): 'apac' | 'worlds' => {
+  const eventName = event.event.toLowerCase();
+
+  // Check event name for championship indicators
+  if (eventName.includes('apac') || eventName.includes('asia pacific')) {
+    return 'apac';
+  }
+  if (eventName.includes('worlds') || eventName.includes('world')) {
+    return 'worlds';
+  }
+
+  // Fall back to date-based determination
+  // APAC: Nov 17-21, Worlds: Nov 22-30
+  const dateParts = event.date.split('-');
+  if (dateParts.length === 3) {
+    const day = parseInt(dateParts[2], 10);
+    const month = parseInt(dateParts[1], 10);
+    if (month === 11) { // November
+      if (day <= 21) return 'apac';
+      return 'worlds';
+    }
+  }
+
+  // Default to APAC if can't determine
+  return 'apac';
+};
+
+// Get the EventId for navigation
+const getEventIdFromChampionship = (championship: 'apac' | 'worlds'): string => {
+  return championship === 'apac' ? EVENTS.APAC_2026.id : EVENTS.WORLDS_2027.id;
+};
 
 export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
   location,
@@ -272,28 +320,50 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                 <Calendar size={16} color={colors.primary} />
                 <Text style={styles.sectionTitle}>Championship Events</Text>
               </View>
-              {location.championshipEvents.map((event, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.eventItem}
-                  onPress={() => {
-                    if (onScheduleNavigate) {
-                      onScheduleNavigate(event.date, event.event);
-                    }
-                  }}
-                >
-                  <View style={styles.eventContent}>
-                    <Text style={styles.eventDate}>{event.date} at {event.time}</Text>
-                    <Text style={styles.eventTitle}>{event.event}</Text>
-                    {event.description && (
-                      <Text style={styles.eventDescription}>{event.description}</Text>
+              {location.championshipEvents.map((event, index) => {
+                const championship = getChampionshipFromEvent(event);
+                const championshipColors = CHAMPIONSHIP_COLORS[championship];
+                const eventId = getEventIdFromChampionship(championship);
+
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.eventItem,
+                      {
+                        backgroundColor: championshipColors.background,
+                        borderLeftWidth: 4,
+                        borderLeftColor: championshipColors.border,
+                      }
+                    ]}
+                    onPress={() => {
+                      if (onScheduleNavigate) {
+                        onScheduleNavigate(event.date, event.event, eventId);
+                      }
+                    }}
+                  >
+                    <View style={styles.eventContent}>
+                      <View style={styles.eventHeaderRow}>
+                        <Text style={[styles.eventDate, { color: championshipColors.text }]}>
+                          {event.date} at {event.time}
+                        </Text>
+                        <View style={[styles.championshipTag, { backgroundColor: championshipColors.border }]}>
+                          <Text style={styles.championshipTagText}>
+                            {championship === 'apac' ? 'APAC' : 'Worlds'}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={styles.eventTitle}>{event.event}</Text>
+                      {event.description && (
+                        <Text style={styles.eventDescription}>{event.description}</Text>
+                      )}
+                    </View>
+                    {onScheduleNavigate && (
+                      <Calendar size={24} color={championshipColors.border} style={styles.eventIcon} />
                     )}
-                  </View>
-                  {onScheduleNavigate && (
-                    <Calendar size={24} color={colors.primary} style={styles.eventIcon} />
-                  )}
-                </TouchableOpacity>
-              ))}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           )}
 
@@ -532,6 +602,23 @@ const styles = StyleSheet.create({
   eventContent: {
     flex: 1,
     marginRight: spacing.sm,
+  },
+  eventHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  championshipTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  championshipTagText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
   },
   eventIcon: {
     width: 24,

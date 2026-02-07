@@ -377,13 +377,14 @@ export const MapScreen: React.FC<Partial<MapScreenProps> & MapScreenLocalProps> 
         <LocationDetailModal
           location={selectedLocation}
           onClose={handleCloseModal}
-          onScheduleNavigate={(date, event) => {
-            // Navigate to Schedule screen, then close modal
+          onScheduleNavigate={(date, event, championship) => {
+            // Navigate to Schedule screen with championship, then close modal
             navigation.navigate('MainTabs', {
               screen: 'Schedule',
               params: {
                 date: date,
-                eventId: event
+                eventId: event,
+                championship: championship
               }
             });
             setTimeout(() => {

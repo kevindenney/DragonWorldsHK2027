@@ -21,6 +21,145 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
 const DRAGON_WORLDS_COMMUNITY_SLUG = '2027-hk-dragon-worlds';
 
+// Kevin Denney - Main admin and moderator of the Hong Kong Dragon Worlds community
+const MODERATOR_USER = {
+  email: 'kevin@example.com', // Will be used to find existing user or create new
+  full_name: 'Kevin Denney',
+  avatar_url: null, // Can be updated later with actual avatar URL
+};
+
+// Sample comments to add to discussions
+const SAMPLE_COMMENTS = [
+  // Comments for "Best time to arrive" post
+  {
+    postIndex: 0, // Index in SAMPLE_DISCUSSIONS array
+    comments: [
+      { body: 'I would recommend arriving at least 3-4 days early. The jetlag from Europe was brutal last time!', upvotes: 5 },
+      { body: 'Great question! Hong Kong is 8 hours ahead of GMT. Coming from the US West Coast, I needed almost a full week to feel normal.', upvotes: 3 },
+      { body: 'Pro tip: Book a hotel with a pool. Light exercise helps reset your body clock faster.', upvotes: 7 },
+    ],
+  },
+  // Comments for "Wind patterns" post
+  {
+    postIndex: 1,
+    comments: [
+      { body: 'The easterly trade winds are quite reliable in November. Expect 12-18 knots most days.', upvotes: 12 },
+      { body: 'Watch out for the wind shadows from High Island. The pressure can build up and create some interesting gusts.', upvotes: 8 },
+      { body: 'Local knowledge: the sea breeze usually kicks in around 11am and builds through the afternoon.', upvotes: 15 },
+      { body: 'I raced there in 2019 - the current around the Nine Pins can be significant during tide changes.', upvotes: 6 },
+    ],
+  },
+  // Comments for "Hotels near Clearwater Bay" post
+  {
+    postIndex: 2,
+    comments: [
+      { body: 'The Crowne Plaza Kowloon East is a good option - about 30 min drive to the venue but much better value.', upvotes: 4 },
+      { body: 'Some teams are staying in Sai Kung town. Nice restaurants and good local vibe.', upvotes: 6 },
+      { body: 'If budget allows, staying at the RHKYC is ideal - you can literally walk to your boat.', upvotes: 9 },
+    ],
+  },
+  // Comments for "Charter boat" post
+  {
+    postIndex: 3,
+    comments: [
+      { body: 'There were a few Dragons available for charter last I checked. Contact the RHKYC fleet captain.', upvotes: 8 },
+      { body: 'We are looking to split charter costs if anyone is interested. DM me!', upvotes: 2 },
+    ],
+  },
+  // Comments for "Tidal currents" post
+  {
+    postIndex: 4,
+    comments: [
+      { body: 'The flood runs roughly northeast and the ebb runs southwest. Can be up to 2 knots at springs.', upvotes: 11 },
+      { body: 'Check the Hong Kong Observatory tide tables - they are very accurate for this area.', upvotes: 7 },
+    ],
+  },
+  // Comments for "Practice session partners" post
+  {
+    postIndex: 5,
+    comments: [
+      { body: 'Count us in! We are arriving Nov 12 and would love some practice time.', upvotes: 3 },
+      { body: 'Great idea. Should we set up a WhatsApp group for practice coordination?', upvotes: 5 },
+      { body: 'We are in! Will have our boat in the water by Nov 14.', upvotes: 2 },
+    ],
+  },
+  // Comments for "Weather forecast" post
+  {
+    postIndex: 6,
+    comments: [
+      { body: 'The Hong Kong Observatory marine forecast is excellent for local conditions.', upvotes: 9 },
+      { body: 'I use a combination of Windy and HKO. They complement each other well.', upvotes: 4 },
+    ],
+  },
+  // Comments for "Equipment inspection" post
+  {
+    postIndex: 7,
+    comments: [
+      { body: 'Measurement will be on the first two days according to the draft schedule. Bring all certificates.', upvotes: 6 },
+      { body: 'Make sure your sail numbers are clearly visible and correctly registered!', upvotes: 4 },
+    ],
+  },
+  // Comments for "Transportation from airport" post
+  {
+    postIndex: 8,
+    comments: [
+      { body: 'Taxi is the easiest with sailing gear. Expect about 400-500 HKD to Clearwater Bay.', upvotes: 8 },
+      { body: 'The Airport Express to Kowloon then taxi is a bit cheaper but more hassle with gear.', upvotes: 3 },
+      { body: 'Uber works well in HK too. Easier for communication if you do not speak Cantonese.', upvotes: 5 },
+    ],
+  },
+  // Comments for "Social events" post
+  {
+    postIndex: 9,
+    comments: [
+      { body: 'Sai Kung has amazing seafood restaurants. The floating restaurants are a must!', upvotes: 7 },
+      { body: 'The prize giving will likely be at RHKYC. Their clubhouse is beautiful with views over the harbor.', upvotes: 4 },
+    ],
+  },
+  // Comments for "Typhoon season" post
+  {
+    postIndex: 10,
+    comments: [
+      { body: 'November is actually the tail end of typhoon season. Risk is much lower than summer months.', upvotes: 6 },
+      { body: 'RHKYC has excellent protocols for weather delays. They will keep everyone informed.', upvotes: 5 },
+      { body: 'I experienced Signal 8 during a regatta in HK once. Everything just pauses until it passes.', upvotes: 3 },
+    ],
+  },
+  // Comments for "Local sailmakers" post
+  {
+    postIndex: 11,
+    comments: [
+      { body: 'OneSails Hong Kong has good reputation for quick repairs. They know Dragons well.', upvotes: 8 },
+      { body: 'There will likely be a sailmaker tent at the venue for emergency repairs during the event.', upvotes: 5 },
+    ],
+  },
+  // Comments for "Crew looking for boat" post
+  {
+    postIndex: 12,
+    comments: [
+      { body: 'Good luck with your search! Have you posted on the IDA Facebook group too?', upvotes: 2 },
+      { body: 'What positions do you prefer? We might need tactician for our team.', upvotes: 4 },
+    ],
+  },
+  // Comments for "Food and dining" post
+  {
+    postIndex: 13,
+    comments: [
+      { body: 'Sai Kung town has the best seafood in Hong Kong. Try Chuen Kee Seafood Restaurant.', upvotes: 11 },
+      { body: 'The club restaurant at RHKYC is surprisingly good and reasonably priced.', upvotes: 6 },
+      { body: 'For breakfast, many teams just grab dim sum from local places. So good!', upvotes: 8 },
+    ],
+  },
+  // Comments for "Registration reminder" post
+  {
+    postIndex: 14,
+    comments: [
+      { body: 'Already registered! Cannot wait to get back to Hong Kong racing.', upvotes: 4 },
+      { body: 'Thank you for the reminder! Just submitted our entry.', upvotes: 2 },
+    ],
+  },
+];
+
 // Sample discussions for Dragon Worlds HK 2027
 const SAMPLE_DISCUSSIONS = [
   {
@@ -153,8 +292,82 @@ async function seedDiscussions() {
 
   console.log(`Found community: ${community.name} (${community.id})\n`);
 
-  // Step 2: Delete existing discussions for this community
-  console.log('Deleting existing discussions...');
+  // Step 2: Find or create the moderator user (Kevin Denney)
+  console.log(`Looking up moderator user: ${MODERATOR_USER.full_name}`);
+
+  // First try to find existing user by name
+  let { data: moderator, error: userError } = await client
+    .from('users')
+    .select('id, full_name, avatar_url')
+    .eq('full_name', MODERATOR_USER.full_name)
+    .maybeSingle();
+
+  if (userError) {
+    console.warn('Could not look up user:', userError.message);
+  }
+
+  if (!moderator) {
+    console.log('Moderator user not found, creating new user...');
+    // Create a new user record for the moderator
+    const { data: newUser, error: createError } = await client
+      .from('users')
+      .insert({
+        full_name: MODERATOR_USER.full_name,
+        avatar_url: MODERATOR_USER.avatar_url,
+      })
+      .select('id, full_name, avatar_url')
+      .single();
+
+    if (createError) {
+      console.error('Failed to create moderator user:', createError.message);
+      console.log('\nNote: Users table may have different structure. Proceeding without author assignment.');
+      moderator = null;
+    } else {
+      moderator = newUser;
+      console.log(`Created moderator user: ${moderator.full_name} (${moderator.id})`);
+    }
+  } else {
+    console.log(`Found moderator user: ${moderator.full_name} (${moderator.id})`);
+  }
+
+  const moderatorId = moderator?.id ?? null;
+
+  // Step 3: Delete existing discussions and comments for this community
+  console.log('\nDeleting existing discussions and comments...');
+
+  // First get all discussion IDs to delete their comments
+  const { data: existingDiscussions } = await client
+    .from('venue_discussions')
+    .select('id')
+    .eq('community_id', community.id);
+
+  if (existingDiscussions && existingDiscussions.length > 0) {
+    const discussionIds = existingDiscussions.map(d => d.id);
+
+    // Delete comments for these discussions
+    const { error: deleteCommentsError, count: deleteCommentsCount } = await client
+      .from('venue_discussion_comments')
+      .delete({ count: 'exact' })
+      .in('discussion_id', discussionIds);
+
+    if (deleteCommentsError) {
+      console.warn('Could not delete comments:', deleteCommentsError.message);
+    } else {
+      console.log(`Deleted ${deleteCommentsCount ?? 0} existing comments.`);
+    }
+
+    // Delete votes for these discussions
+    const { error: deleteVotesError } = await client
+      .from('venue_discussion_votes')
+      .delete()
+      .in('target_id', discussionIds);
+
+    if (deleteVotesError) {
+      console.warn('Could not delete votes:', deleteVotesError.message);
+    }
+  }
+
+  // Delete the discussions themselves
   const { error: deleteError, count: deleteCount } = await client
     .from('venue_discussions')
     .delete({ count: 'exact' })
@@ -168,24 +381,24 @@ async function seedDiscussions() {
 
   console.log(`Deleted ${deleteCount ?? 0} existing discussions.\n`);
 
-  // Step 3: Insert new sample discussions
+  // Step 4: Insert new sample discussions
   console.log('Inserting sample discussions...');
 
   const now = new Date();
   const discussionsToInsert = SAMPLE_DISCUSSIONS.map((discussion, index) => ({
     community_id: community.id,
-    author_id: null, // Anonymous sample posts
+    author_id: moderatorId, // Kevin Denney as moderator/author
     title: discussion.title,
     body: discussion.body,
     post_type: discussion.post_type,
     pinned: discussion.pinned,
     is_public: true,
-    upvotes: 0, // Start with 0 - real votes from users only
-    downvotes: 0,
-    comment_count: 0, // Start with 0, incremented when comments are added
-    view_count: Math.floor(Math.random() * 50) + 10, // Random views 10-59
+    upvotes: Math.floor(Math.random() * 15) + 5, // Random upvotes 5-19
+    downvotes: Math.floor(Math.random() * 3), // Random downvotes 0-2
+    comment_count: 0, // Will be updated after inserting comments
+    view_count: Math.floor(Math.random() * 150) + 50, // Random views 50-199
     is_resolved: false,
-    created_at: new Date(now.getTime() - index * 3600000 * 4).toISOString(), // Stagger creation times
+    created_at: new Date(now.getTime() - index * 3600000 * 8).toISOString(), // Stagger creation times (8 hours apart)
   }));
 
   const { data: insertedData, error: insertError } = await client
@@ -203,6 +416,49 @@ async function seedDiscussions() {
   insertedData?.forEach((post, i) => {
     console.log(`  ${i + 1}. ${post.title}`);
   });
+
+  // Step 5: Insert sample comments
+  if (moderatorId && insertedData) {
+    console.log('\nInserting sample comments...');
+
+    let totalComments = 0;
+
+    for (const commentGroup of SAMPLE_COMMENTS) {
+      const discussion = insertedData[commentGroup.postIndex];
+      if (!discussion) continue;
+
+      for (const comment of commentGroup.comments) {
+        const { error: commentError } = await client
+          .from('venue_discussion_comments')
+          .insert({
+            discussion_id: discussion.id,
+            author_id: moderatorId, // All comments from Kevin Denney for now
+            body: comment.body,
+            upvotes: comment.upvotes,
+            downvotes: 0,
+            parent_id: null,
+          });
+
+        if (commentError) {
+          console.warn(`Could not insert comment for "${discussion.title}":`, commentError.message);
+        } else {
+          totalComments++;
+        }
+      }
+
+      // Update comment count on the discussion
+      const { error: updateError } = await client
+        .from('venue_discussions')
+        .update({ comment_count: commentGroup.comments.length })
+        .eq('id', discussion.id);
+
+      if (updateError) {
+        console.warn(`Could not update comment count for "${discussion.title}":`, updateError.message);
+      }
+    }
+
+    console.log(`Inserted ${totalComments} sample comments.`);
+  }
 
   console.log('\nSeeding complete!');
 }

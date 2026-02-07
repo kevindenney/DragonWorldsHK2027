@@ -13,7 +13,7 @@
  * - EventInfoSheet for progressive disclosure of event details
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { View, ScrollView, StyleSheet, RefreshControl, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IOSText } from '../../components/ios/IOSText';
@@ -39,6 +39,9 @@ export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [highlightedActivityName, setHighlightedActivityName] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
+
+  // Track processed params to prevent infinite loops
+  const processedParamsRef = useRef<string | null>(null);
 
   // Toolbar auto-hide
   const { toolbarTranslateY, createScrollHandler } = useToolbarVisibility();
@@ -89,8 +92,37 @@ export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
 
   // Handle navigation parameters to auto-select and highlight specific events
   useEffect(() => {
-    const { date, eventId } = route?.params || {};
-    console.log('[ScheduleScreen] Received params:', { date, eventId });
+    const { date, eventId, championship } = route?.params || {};
+
+    // Skip if no params to process
+    if (!date && !eventId && !championship) {
+      return;
+    }
+
+    // Create a unique key for these params to prevent re-processing
+    const paramsKey = `${championship || ''}-${date || ''}-${eventId || ''}`;
+
+    // Skip if we've already processed these exact params
+    if (processedParamsRef.current === paramsKey) {
+      return;
+    }
+
+    console.log('[ScheduleScreen] Processing params:', { date, eventId, championship });
+
+    // If championship is specified and different from current, switch first
+    if (championship && championship !== selectedEvent) {
+      console.log('[ScheduleScreen] Switching to championship:', championship);
+      setSelectedEvent(championship);
+      // Don't mark as processed yet - we need to run again after championship switch
+      // to find the matching day in the new event data
+      return;
+    }
+
+    // Mark these params as processed
+    processedParamsRef.current = paramsKey;
+
+    // Clear the navigation params to prevent re-processing on future renders
+    navigation.setParams({ date: undefined, eventId: undefined, championship: undefined });
 
     if (date || eventId) {
       const matchingDay = currentEvent.days.find(day => {
@@ -134,7 +166,7 @@ export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
         }
       }
     }
-  }, [route?.params, currentEvent, formatIsoDateForMatching]);
+  }, [route?.params, currentEvent, formatIsoDateForMatching, selectedEvent, setSelectedEvent, navigation]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

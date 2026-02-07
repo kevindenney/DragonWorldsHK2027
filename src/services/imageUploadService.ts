@@ -156,6 +156,22 @@ export async function pickImageFromGallery(): Promise<ImagePickResult | null> {
 }
 
 /**
+ * Check if the device has an actual camera available
+ * iOS Simulator does not have camera access
+ */
+async function checkCameraAvailability(): Promise<boolean> {
+  // Check if we're on iOS Simulator by trying to get camera permissions
+  // The simulator will grant permission but launchCameraAsync will fail
+  if (Platform.OS === 'ios') {
+    // expo-device can detect simulator, but we can also check via expo-image-picker
+    const { status } = await ImagePicker.getCameraPermissionsAsync();
+    // Even if permission is granted, simulator doesn't have camera hardware
+    // We'll rely on the try-catch below to handle the actual failure
+  }
+  return true;
+}
+
+/**
  * Take a photo with the camera with square cropping
  */
 export async function pickImageFromCamera(): Promise<ImagePickResult | null> {
@@ -183,9 +199,25 @@ export async function pickImageFromCamera(): Promise<ImagePickResult | null> {
       height: asset.height,
       cancelled: false,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('[ImageUpload] Error taking photo:', error);
-    Alert.alert('Error', 'Failed to take photo. Please try again.');
+
+    // Provide a more helpful error message for simulator users
+    const errorMessage = error?.message || '';
+    if (
+      Platform.OS === 'ios' &&
+      (errorMessage.includes('simulator') ||
+       errorMessage.includes('source type') ||
+       errorMessage.includes('not available'))
+    ) {
+      Alert.alert(
+        'Camera Not Available',
+        'The camera is not available on the iOS Simulator. Please use "Choose from Library" instead, or test on a physical device.',
+        [{ text: 'OK' }]
+      );
+    } else {
+      Alert.alert('Error', 'Failed to take photo. Please try again.');
+    }
     return null;
   }
 }

@@ -4,7 +4,7 @@ import type { StackScreenProps } from '@react-navigation/stack';
 
 // Define MainTabParamList first since it's used in RootStackParamList
 export type MainTabParamList = {
-  Schedule: { date?: string; eventId?: string } | undefined;
+  Schedule: { date?: string; eventId?: string; championship?: string } | undefined;
   NoticeBoard: { eventId: string };
   Results: undefined;
   Forms: undefined;
