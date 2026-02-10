@@ -72,6 +72,7 @@ export const IOSSegmentedControl: React.FC<IOSSegmentedControlProps> = ({
                   styles.segmentText,
                   isSelected && styles.selectedSegmentText
                 ]}
+                numberOfLines={1}
               >
                 {option.label}
               </IOSText>
@@ -88,7 +89,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: 'transparent',
     borderRadius: 12,
-    gap: 12, // Space between tabs
+    gap: 8, // Space between tabs
   },
   segment: {
     flex: 1,

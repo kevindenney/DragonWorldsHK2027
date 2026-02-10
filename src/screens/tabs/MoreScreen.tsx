@@ -320,7 +320,7 @@ export function MoreScreen() {
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 32 + insets.bottom + 60 }]}
       >
         {sectionOrder.map(sectionName => {
           const sectionOptions = groupedOptions[sectionName];

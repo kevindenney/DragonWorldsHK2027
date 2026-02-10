@@ -227,9 +227,15 @@ function CommentItem({ comment, onReply, level = 0, currentUserId, postId }: Com
     setOptimisticVote({ upvotes: newUpvotes, downvotes: newDownvotes, userVote: newUserVote });
 
     try {
-      await toggleVoteMutation.mutateAsync({ commentId: comment.id, voteType });
-      // Clear optimistic state after success - let server data take over
-      setOptimisticVote(null);
+      const result = await toggleVoteMutation.mutateAsync({ commentId: comment.id, voteType });
+      // Use actual server counts from the mutation result (more reliable than optimistic)
+      if (result) {
+        setOptimisticVote({
+          upvotes: result.upvotes,
+          downvotes: result.downvotes,
+          userVote: result.hasUpvoted ? 1 : result.hasDownvoted ? -1 : null,
+        });
+      }
     } catch (error) {
       // Revert on error
       setOptimisticVote({ upvotes: oldUpvotes, downvotes: oldDownvotes, userVote: oldUserVote });
@@ -608,9 +614,15 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
     setOptimisticPostVote({ upvotes: newUpvotes, downvotes: newDownvotes, userVote: newUserVote });
 
     try {
-      await togglePostVoteMutation.mutateAsync({ postId: post.id, voteType });
-      // Clear optimistic state after success - let server data take over
-      setOptimisticPostVote(null);
+      const result = await togglePostVoteMutation.mutateAsync({ postId: post.id, voteType });
+      // Use actual server counts from the mutation result (more reliable than optimistic)
+      if (result) {
+        setOptimisticPostVote({
+          upvotes: result.upvotes,
+          downvotes: result.downvotes,
+          userVote: result.hasUpvoted ? 1 : result.hasDownvoted ? -1 : null,
+        });
+      }
     } catch (error) {
       // Revert optimistic update on error
       setOptimisticPostVote({ upvotes: oldUpvotes, downvotes: oldDownvotes, userVote: oldUserVote });

@@ -29,7 +29,7 @@ import { eventSchedules } from '../../data/scheduleData';
 import { useToolbarVisibility } from '../../contexts/TabBarVisibilityContext';
 import type { ScheduleScreenProps } from '../../types/navigation';
 
-const HEADER_HEIGHT = 250; // Height of header section including month/year, date picker, and day title
+const HEADER_HEIGHT = 265; // Height of header section including month/year, date picker, and day title
 
 export function ScheduleScreen({ navigation, route }: ScheduleScreenProps) {
   const selectedEvent = useSelectedEvent();

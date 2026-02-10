@@ -886,12 +886,34 @@ export async function togglePostVote(
         });
 
       if (insertError) {
-        console.error('[CommunityService] Error adding vote:', insertError);
-        return { data: null, error: `Vote failed: ${insertError.message}` };
-      }
+        // Handle duplicate key error (23505) - vote already exists
+        if (insertError.code === '23505') {
+          console.warn('[CommunityService] Duplicate vote detected, treating as toggle-off');
+          // Try to remove the existing vote instead
+          const { error: deleteError } = await client
+            .from('venue_discussion_votes')
+            .delete()
+            .eq('target_id', discussionId)
+            .eq('target_type', 'discussion')
+            .eq('user_id', userId);
 
-      hasUpvoted = voteType === 1;
-      hasDownvoted = voteType === -1;
+          if (deleteError) {
+            console.error('[CommunityService] Could not remove duplicate vote:', deleteError);
+            return { data: null, error: 'Vote already exists. Please try again.' };
+          }
+          // Vote was removed, hasUpvoted/hasDownvoted stay false
+        } else if (insertError.code === '42501') {
+          // RLS policy error
+          console.error('[CommunityService] RLS policy error - check database permissions');
+          return { data: null, error: 'Permission denied. Please sign in again.' };
+        } else {
+          console.error('[CommunityService] Error adding vote:', insertError);
+          return { data: null, error: `Vote failed: ${insertError.message}` };
+        }
+      } else {
+        hasUpvoted = voteType === 1;
+        hasDownvoted = voteType === -1;
+      }
     }
 
     // Count actual votes from database (no more increment/decrement bugs!)
