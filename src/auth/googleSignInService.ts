@@ -42,6 +42,16 @@ export class GoogleSignInService {
         throw new Error('Invalid Google Web Client ID format');
       }
 
+      // DEBUG: Log actual client IDs being used at runtime
+      console.log('[GoogleSignIn] === DEBUG CONFIG ===');
+      console.log('[GoogleSignIn] webClientId:', webClientId);
+      console.log('[GoogleSignIn] webClientId length:', webClientId?.length);
+      console.log('[GoogleSignIn] webClientId last 20 chars:', webClientId?.slice(-20));
+      console.log('[GoogleSignIn] iosClientId:', iosClientId);
+      console.log('[GoogleSignIn] iosClientId length:', iosClientId?.length);
+      console.log('[GoogleSignIn] Platform:', Platform.OS);
+      console.log('[GoogleSignIn] === END DEBUG ===');
+
       // Configure without empty strings that cause issues on iOS
       const configOptions = {
         webClientId: webClientId,
@@ -51,10 +61,12 @@ export class GoogleSignInService {
         profileImageSize: 120,
       };
 
+      console.log('[GoogleSignIn] Calling GoogleSignin.configure() with:', JSON.stringify(configOptions));
 
       GoogleSignin.configure(configOptions);
 
       this.initialized = true;
+      console.log('[GoogleSignIn] Configuration complete');
     } catch (error) {
       throw error;
     }
@@ -84,7 +96,9 @@ export class GoogleSignInService {
         await GoogleSignin.hasPlayServices();
       }
 
+      console.log('[GoogleSignIn] Calling GoogleSignin.signIn()...');
       const response = await GoogleSignin.signIn();
+      console.log('[GoogleSignIn] signIn response type:', response.type);
 
 
       // Handle the response based on type
@@ -122,6 +136,12 @@ export class GoogleSignInService {
       };
     } catch (error: unknown) {
       const err = error as { code?: string; message?: string };
+
+      console.error('[GoogleSignIn] === SIGN IN ERROR ===');
+      console.error('[GoogleSignIn] Error code:', err.code);
+      console.error('[GoogleSignIn] Error message:', err.message);
+      console.error('[GoogleSignIn] Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error as object)));
+      console.error('[GoogleSignIn] === END ERROR ===');
 
       if (err.code === statusCodes.SIGN_IN_CANCELLED) {
         throw new Error('Google sign-in was cancelled');
