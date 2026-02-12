@@ -8,6 +8,7 @@ import { Text, View, StyleSheet } from 'react-native';
 import { validateRuntimeConfiguration, logEnvironmentVariables } from './src/utils/configValidator';
 import { useUserStore } from './src/stores/userStore';
 import { useTrackUnreadNews } from './src/services/api/newsApi';
+import { Ionicons } from '@expo/vector-icons';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -114,8 +115,8 @@ export default function App() {
           }
         }
 
-        // Calendar module test removed from startup to prevent app hanging
-        // Test will be performed when user attempts to use calendar feature
+        // Preload Ionicons font (required for Android to render icons on first frame)
+        await Ionicons.loadFont();
 
         console.log('🚀 [App.tsx] Basic app preparation complete');
         setAppIsReady(true);
