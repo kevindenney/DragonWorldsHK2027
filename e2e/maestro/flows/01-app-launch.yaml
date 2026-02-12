@@ -1,0 +1,39 @@
+# Category 1: App Launch & Initialization
+# Tests that the app starts correctly and shows the right initial screen
+#
+# Usage: maestro test e2e/maestro/flows/01-app-launch.yaml
+
+appId: com.dragonworlds.hk2027
+name: App Launch
+
+---
+
+# Test 1: Fresh app launch shows welcome screen
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 30000
+
+# Verify welcome screen elements
+- assertVisible: "Dragon Worlds"
+- assertVisible: "Hong Kong 2026 & 2027"
+
+# Verify auth buttons are present
+- assertVisible: "Continue with Google"
+- assertVisible: "Continue with Apple"
+- assertVisible: "Continue with Email"
+
+# Note: "Terms of Service" footer text is visible but not in Android accessibility tree
+# (small text at screen bottom, single Text node)
+
+# Test 2: App survives background/foreground cycle
+- pressKey: Home
+- waitForAnimationToEnd
+- launchApp
+
+# Should still show welcome screen after returning (Android splash takes time)
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 30000

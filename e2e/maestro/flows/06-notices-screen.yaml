@@ -1,0 +1,61 @@
+# Category 4B: Notices Screen
+# Tests notices display and event switching
+#
+# Usage: maestro test e2e/maestro/flows/06-notices-screen.yaml
+
+appId: com.dragonworlds.hk2027
+name: Notices Screen
+
+---
+
+# Authenticate with test account
+- launchApp:
+    clearState: true
+
+- runFlow: "00-login-subflow.yaml"
+
+# =====================
+# NAVIGATE TO NOTICES
+# =====================
+
+- tapOn:
+    id: "tab-noticeboard"
+- waitForAnimationToEnd
+
+# =====================
+# NOTICES CONTENT
+# =====================
+
+- assertVisible: "Notices"
+
+# Event switcher
+- assertVisible: "APAC 2026"
+
+# =====================
+# EVENT SWITCHING
+# =====================
+
+- tapOn: "Worlds 2027"
+- waitForAnimationToEnd
+- assertVisible: "Worlds 2027"
+
+- tapOn: "APAC 2026"
+- waitForAnimationToEnd
+- assertVisible: "APAC 2026"
+
+# =====================
+# SCROLL THROUGH NOTICES
+# =====================
+
+- scroll
+- scroll
+- scroll
+- scroll
+
+# Navigate back to top
+- tapOn:
+    id: "tab-noticeboard"
+- waitForAnimationToEnd
+
+# Still on Notices
+- assertVisible: "Notices"

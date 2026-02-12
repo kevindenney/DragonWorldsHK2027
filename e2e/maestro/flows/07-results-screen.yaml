@@ -1,0 +1,63 @@
+# Category 4C: Results Screen
+# Tests results display, live results link, racing rules link
+#
+# Usage: maestro test e2e/maestro/flows/07-results-screen.yaml
+
+appId: com.dragonworlds.hk2027
+name: Results Screen
+
+---
+
+# Authenticate with test account
+- launchApp:
+    clearState: true
+
+- runFlow: "00-login-subflow.yaml"
+
+# =====================
+# NAVIGATE TO RESULTS
+# =====================
+
+- tapOn:
+    id: "tab-results"
+- waitForAnimationToEnd
+
+# =====================
+# RESULTS CONTENT
+# =====================
+
+- assertVisible: "Results"
+- assertVisible: "APAC 2026"
+
+# Should show either results data, loading, or empty state
+- assertVisible:
+    text: "Live Results"
+    optional: true
+
+- assertVisible:
+    text: "Rules"
+    optional: true
+
+# =====================
+# EVENT SWITCHING
+# =====================
+
+- tapOn: "Worlds 2027"
+- waitForAnimationToEnd
+- assertVisible: "Worlds 2027"
+
+- tapOn: "APAC 2026"
+- waitForAnimationToEnd
+- assertVisible: "APAC 2026"
+
+# =====================
+# SCROLL
+# =====================
+
+- scroll
+- scroll
+- scroll
+- scroll
+- waitForAnimationToEnd
+
+- assertVisible: "Results"

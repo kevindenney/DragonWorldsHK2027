@@ -1,0 +1,101 @@
+# Category 3: Tab Navigation
+# Tests all 5 bottom tabs, switching, and persistence
+#
+# Prerequisites: Test account must exist (run 00-signup-test-account.yaml first)
+# Usage: maestro test e2e/maestro/flows/04-tab-navigation.yaml
+
+appId: com.dragonworlds.hk2027
+name: Tab Navigation
+
+---
+
+# Authenticate with test account
+- launchApp:
+    clearState: true
+
+- runFlow: "00-login-subflow.yaml"
+
+# =====================
+# TAB BAR VERIFICATION
+# =====================
+
+# All 5 tabs visible
+- assertVisible:
+    id: "tab-schedule"
+- assertVisible:
+    id: "tab-noticeboard"
+- assertVisible:
+    id: "tab-results"
+- assertVisible:
+    id: "tab-forms"
+- assertVisible:
+    id: "tab-more"
+
+# =====================
+# NAVIGATE TO EACH TAB
+# =====================
+
+# Schedule tab (already here)
+- assertVisible: "Schedule"
+
+# Notices tab
+- tapOn:
+    id: "tab-noticeboard"
+- waitForAnimationToEnd
+- assertVisible: "Notices"
+
+# Results tab
+- tapOn:
+    id: "tab-results"
+- waitForAnimationToEnd
+- assertVisible: "Results"
+
+# Forms tab
+- tapOn:
+    id: "tab-forms"
+- waitForAnimationToEnd
+- assertVisible: "Forms"
+
+# More tab
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- assertVisible: "More"
+
+# =====================
+# RAPID TAB SWITCHING (10 cycles)
+# =====================
+
+- tapOn:
+    id: "tab-schedule"
+- tapOn:
+    id: "tab-noticeboard"
+- tapOn:
+    id: "tab-results"
+- tapOn:
+    id: "tab-forms"
+- tapOn:
+    id: "tab-more"
+- tapOn:
+    id: "tab-schedule"
+- tapOn:
+    id: "tab-results"
+- tapOn:
+    id: "tab-more"
+- tapOn:
+    id: "tab-noticeboard"
+- tapOn:
+    id: "tab-forms"
+
+# Verify app didn't crash - tab bar still visible
+- waitForAnimationToEnd
+- assertVisible:
+    id: "tab-schedule"
+- assertVisible:
+    id: "tab-more"
+
+# Return to schedule
+- tapOn:
+    id: "tab-schedule"
+- waitForAnimationToEnd
+- assertVisible: "Schedule"

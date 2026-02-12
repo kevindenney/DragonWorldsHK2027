@@ -1,0 +1,178 @@
+# Category 6: Stress Testing & Edge Cases
+# Tests rapid interactions, repeated actions, and error recovery
+#
+# Usage: maestro test e2e/maestro/flows/11-stress-test.yaml
+
+appId: com.dragonworlds.hk2027
+name: Stress Test
+
+---
+
+# Authenticate with test account
+- launchApp:
+    clearState: true
+
+- runFlow: "00-login-subflow.yaml"
+
+# =====================
+# STRESS TEST 1: Rapid Tab Switching (20+ cycles)
+# =====================
+
+- tapOn:
+    id: "tab-noticeboard"
+- tapOn:
+    id: "tab-results"
+- tapOn:
+    id: "tab-forms"
+- tapOn:
+    id: "tab-more"
+- tapOn:
+    id: "tab-schedule"
+- tapOn:
+    id: "tab-results"
+- tapOn:
+    id: "tab-noticeboard"
+- tapOn:
+    id: "tab-more"
+- tapOn:
+    id: "tab-forms"
+- tapOn:
+    id: "tab-schedule"
+- tapOn:
+    id: "tab-more"
+- tapOn:
+    id: "tab-results"
+- tapOn:
+    id: "tab-noticeboard"
+- tapOn:
+    id: "tab-schedule"
+- tapOn:
+    id: "tab-forms"
+- tapOn:
+    id: "tab-more"
+- tapOn:
+    id: "tab-schedule"
+- tapOn:
+    id: "tab-noticeboard"
+- tapOn:
+    id: "tab-results"
+- tapOn:
+    id: "tab-forms"
+
+# Verify app survived
+- waitForAnimationToEnd
+- assertVisible:
+    id: "tab-schedule"
+
+# =====================
+# STRESS TEST 2: Rapid More Menu Navigation
+# =====================
+
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+# Quick enter/exit of sub-screens
+- tapOn:
+    id: "more-menu-entrants"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "more-menu-news"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "more-menu-contacts"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "more-menu-sponsors"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+# Verify More screen renders correctly after rapid navigation
+- assertVisible: "More"
+- assertVisible: "RACE"
+
+# =====================
+# STRESS TEST 3: Rapid Event Switching
+# =====================
+
+- tapOn:
+    id: "tab-schedule"
+- waitForAnimationToEnd
+
+# Switch events rapidly
+- tapOn: "Worlds 2027"
+- tapOn: "APAC 2026"
+- tapOn: "Worlds 2027"
+- tapOn: "APAC 2026"
+- tapOn: "Worlds 2027"
+- tapOn: "APAC 2026"
+- waitForAnimationToEnd
+
+# Verify app is stable
+- assertVisible: "Schedule"
+- assertVisible: "APAC 2026"
+
+# =====================
+# STRESS TEST 4: Deep Navigation + Back
+# =====================
+
+# Go deep: Schedule → More → Entrants → back → News → back → Contacts → back → Schedule
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- tapOn:
+    id: "more-menu-entrants"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- tapOn:
+    id: "more-menu-news"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- tapOn:
+    id: "more-menu-contacts"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- tapOn:
+    id: "tab-schedule"
+- waitForAnimationToEnd
+
+# Verify we're back home
+- assertVisible: "Schedule"
+
+# =====================
+# FINAL VERIFICATION
+# =====================
+
+# App survived all stress tests
+- assertVisible:
+    id: "tab-schedule"
+- assertVisible:
+    id: "tab-noticeboard"
+- assertVisible:
+    id: "tab-results"
+- assertVisible:
+    id: "tab-forms"
+- assertVisible:
+    id: "tab-more"
+
+# Stress test complete!

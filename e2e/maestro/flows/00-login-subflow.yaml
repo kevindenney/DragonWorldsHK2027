@@ -1,0 +1,85 @@
+# Login subflow — signs in with the pre-created test account
+# Include this in other flows with: - runFlow: "00-login-subflow.yaml"
+#
+# Prerequisites: Run 00-signup-test-account.yaml first to create the account
+#
+# Note: Firestore doesn't always have the user document, so checkEmailExists
+# returns false, showing "Create Account" instead of "Welcome Back".
+# We handle this by entering signup data which triggers "email-already-in-use"
+# error, auto-switching to the signin screen.
+#
+# Credentials:
+#   Email: maestro.e2etest2026@gmail.com
+#   Password: Test2026Aa!
+
+appId: com.dragonworlds.hk2027
+
+---
+
+# Wait for welcome screen
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 30000
+
+# Navigate to email auth
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible:
+      id: "auth-email"
+    timeout: 10000
+
+# Enter test email
+- tapOn:
+    id: "auth-email"
+- inputText: "maestro.e2etest2026@gmail.com"
+- hideKeyboard
+
+# Tap continue — Firebase checks Firestore (may show signup or signin)
+- tapOn:
+    id: "auth-continue"
+
+# Wait for either "Create Account" or "Welcome Back" (Firestore cold-start ~60-90s)
+- extendedWaitUntil:
+    visible: "Create Account"
+    timeout: 120000
+
+# Display Name is auto-focused, enter dummy data
+- inputText: "Test"
+
+# Fill Password
+- tapOn:
+    below: "Password"
+    index: 0
+- inputText: "Test2026Aa!"
+
+# Fill Confirm Password
+- tapOn:
+    below: "Confirm Password"
+    index: 0
+- inputText: "Test2026Aa!"
+
+# Hide keyboard and tap Create Account — this will trigger "email-already-in-use"
+# which auto-switches to signin screen
+- hideKeyboard
+- waitForAnimationToEnd
+- tapOn:
+    id: "auth-signup"
+
+# Wait for signin screen to appear (auto-switch from email-already-in-use)
+- extendedWaitUntil:
+    visible: "Welcome Back"
+    timeout: 30000
+
+# Password input is auto-focused, type password
+- inputText: "Test2026Aa!"
+- hideKeyboard
+
+# Tap Sign In
+- tapOn:
+    id: "auth-signin"
+
+# Wait for navigation to main app
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 60000

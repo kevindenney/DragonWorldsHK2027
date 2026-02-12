@@ -1,0 +1,62 @@
+# Category 2A: Welcome Screen Authentication UI
+# Tests that all auth buttons exist and are tappable
+#
+# Usage: maestro test e2e/maestro/flows/02-auth-welcome.yaml
+
+appId: com.dragonworlds.hk2027
+name: Auth Welcome Screen
+
+---
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 30000
+
+# =====================
+# WELCOME SCREEN ELEMENTS
+# =====================
+
+# Verify logo and branding
+- assertVisible: "Welcome to"
+- assertVisible: "Dragon Worlds"
+- assertVisible: "Hong Kong 2026 & 2027"
+
+# =====================
+# AUTH BUTTONS VISIBLE
+# =====================
+
+- assertVisible: "Continue with Google"
+- assertVisible: "Continue with Apple"
+- assertVisible: "Continue with Email"
+
+# =====================
+# EMAIL AUTH FLOW
+# =====================
+
+# Tap Continue with Email
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible:
+      id: "auth-email"
+    timeout: 5000
+
+# Verify we're on the email auth screen
+- assertVisible:
+    id: "auth-email"
+- assertVisible:
+    id: "auth-continue"
+
+# Test back navigation
+- tapOn:
+    id: "auth-back"
+
+# If back worked, we should see welcome screen again
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 5000
+
+- assertVisible: "Continue with Email"

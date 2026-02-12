@@ -1,0 +1,63 @@
+# Category 4A: Schedule Screen
+# Tests schedule display, event switching, date navigation
+#
+# Usage: maestro test e2e/maestro/flows/05-schedule-screen.yaml
+
+appId: com.dragonworlds.hk2027
+name: Schedule Screen
+
+---
+
+# Authenticate with test account
+- launchApp:
+    clearState: true
+
+- runFlow: "00-login-subflow.yaml"
+
+# =====================
+# SCHEDULE CONTENT
+# =====================
+
+# Verify header
+- assertVisible: "Schedule"
+
+# Verify event switcher - should show APAC 2026 by default
+- assertVisible: "APAC 2026"
+
+# Verify month/year display
+- assertVisible:
+    text: "NOVEMBER"
+    optional: true
+
+# =====================
+# EVENT SWITCHING
+# =====================
+
+# Switch to Worlds 2027
+- tapOn: "Worlds 2027"
+- waitForAnimationToEnd
+
+# Verify the event switched
+- assertVisible: "Worlds 2027"
+
+# Switch back to APAC 2026
+- tapOn: "APAC 2026"
+- waitForAnimationToEnd
+- assertVisible: "APAC 2026"
+
+# =====================
+# SCROLL BEHAVIOR
+# =====================
+
+# Scroll down through schedule content
+- scroll
+- scroll
+- waitForAnimationToEnd
+
+# Scroll back up
+- scroll
+- scroll
+- waitForAnimationToEnd
+
+# Verify we're still on schedule
+- assertVisible: "Schedule"

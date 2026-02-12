@@ -1,0 +1,156 @@
+# Category 5: Cross-Screen User Journey - Full App Tour
+# Tests a realistic end-to-end user flow visiting every major feature
+#
+# Usage: maestro test e2e/maestro/flows/10-full-app-tour.yaml
+
+appId: com.dragonworlds.hk2027
+name: Full App Tour
+
+---
+
+# Authenticate with test account
+- launchApp:
+    clearState: true
+
+- runFlow: "00-login-subflow.yaml"
+
+# =====================
+# JOURNEY 1: Check Today's Schedule
+# =====================
+
+- assertVisible: "Schedule"
+- assertVisible: "APAC 2026"
+- scroll
+- scroll
+
+# Switch to Worlds
+- tapOn: "Worlds 2027"
+- waitForAnimationToEnd
+- assertVisible: "Worlds 2027"
+
+# Switch back
+- tapOn: "APAC 2026"
+- waitForAnimationToEnd
+
+# =====================
+# JOURNEY 2: Check Notices
+# =====================
+
+- tapOn:
+    id: "tab-noticeboard"
+- waitForAnimationToEnd
+- assertVisible: "Notices"
+
+# Browse category filters
+- tapOn:
+    text: "All"
+    optional: true
+- waitForAnimationToEnd
+
+# Scroll through notices
+- scroll
+- scroll
+
+# =====================
+# JOURNEY 3: Review Results
+# =====================
+
+- tapOn:
+    id: "tab-results"
+- waitForAnimationToEnd
+- assertVisible: "Results"
+
+# Scroll through standings
+- scroll
+- scroll
+- scroll
+- scroll
+
+# =====================
+# JOURNEY 4: Check Forms
+# =====================
+
+- tapOn:
+    id: "tab-forms"
+- waitForAnimationToEnd
+- assertVisible: "Forms"
+
+# Scroll through forms
+- scroll
+- scroll
+
+# =====================
+# JOURNEY 5: Explore More Menu
+# =====================
+
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- assertVisible: "More"
+- assertVisible: "RACE"
+
+# Visit Entrants
+- tapOn:
+    id: "more-menu-entrants"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Entries"
+    timeout: 10000
+
+# Back to More
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+# Visit News
+- tapOn:
+    id: "more-menu-news"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "News"
+    timeout: 10000
+
+# Back to More
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+# Visit Contacts
+- tapOn:
+    id: "more-menu-contacts"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Contacts"
+    timeout: 10000
+
+# Back to More
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+# =====================
+# JOURNEY 6: Return to Home
+# =====================
+
+- tapOn:
+    id: "tab-schedule"
+- waitForAnimationToEnd
+- assertVisible: "Schedule"
+
+# =====================
+# FINAL VERIFICATION
+# =====================
+
+# Verify all tabs still work
+- assertVisible:
+    id: "tab-schedule"
+- assertVisible:
+    id: "tab-noticeboard"
+- assertVisible:
+    id: "tab-results"
+- assertVisible:
+    id: "tab-forms"
+- assertVisible:
+    id: "tab-more"
+
+# Tour complete!

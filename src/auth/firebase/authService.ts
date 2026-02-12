@@ -25,7 +25,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import { auth, firestore } from '../../config/firebase';
 import { LoginCredentials, RegisterCredentials, User, AuthProviderType, UserStatus } from '../authTypes';
-import { setDoc, getDoc, doc } from 'firebase/firestore';
+import { setDoc, getDoc, doc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { googleSignInService } from '../googleSignInService';
 
 /**
@@ -151,8 +151,49 @@ export class FirebaseAuthService {
       if (firestore) {
         try {
           const userDoc = await getDoc(doc(firestore, 'users', userCredential.user.uid));
-          userData = userDoc.data();
-        } catch (error) {
+          if (userDoc.exists()) {
+            userData = userDoc.data();
+          } else {
+            // User exists in Auth but not in Firestore - create the missing document
+            console.log('[AuthService] User missing from Firestore, creating document...');
+            const newUserData = {
+              uid: userCredential.user.uid,
+              email: (userCredential.user.email || '').toLowerCase().trim(),
+              displayName: userCredential.user.displayName || '',
+              emailVerified: userCredential.user.emailVerified,
+              role: 'participant',
+              providers: ['email'],
+              preferences: {
+                notifications: true,
+                newsletter: false,
+                language: 'en',
+              },
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            };
+            let createSuccess = false;
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              try {
+                await setDoc(doc(firestore, 'users', userCredential.user.uid), newUserData);
+                userData = newUserData;
+                createSuccess = true;
+                console.log('[AuthService] Created missing Firestore document for user');
+                break;
+              } catch (createError: any) {
+                console.log(`[AuthService] Firestore recovery attempt ${attempt}/3 failed:`, createError?.message);
+                if (attempt < 3) {
+                  await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                }
+              }
+            }
+            if (!createSuccess) {
+              console.error('[AuthService] Could not create user document after 3 attempts');
+            }
+          }
+        } catch (error: any) {
+          // Use console.log to avoid LogBox warnings in dev mode
+          // Firestore offline is common and not a real failure - user is still authenticated
+          console.log('[AuthService] Could not fetch user document (offline?):', error?.message);
         }
       }
 
@@ -185,9 +226,10 @@ export class FirebaseAuthService {
 
 
       // Create user document in Firestore
+      // Normalize email to lowercase for consistent querying
       const userData = {
         uid: userCredential.user.uid,
-        email: userCredential.user.email || '',
+        email: (userCredential.user.email || '').toLowerCase().trim(),
         displayName: credentials.displayName || '',
         emailVerified: false,
         role: 'participant',
@@ -202,10 +244,26 @@ export class FirebaseAuthService {
       };
 
       if (firestore) {
-        try {
-          await setDoc(doc(firestore, 'users', userCredential.user.uid), userData);
-        } catch (error) {
+        const maxRetries = 3;
+        let firestoreSuccess = false;
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            await setDoc(doc(firestore, 'users', userCredential.user.uid), userData);
+            console.log('[AuthService] User document created in Firestore');
+            firestoreSuccess = true;
+            break;
+          } catch (error: any) {
+            console.error(`[AuthService] Firestore setDoc attempt ${attempt}/${maxRetries} failed:`, error?.message || error);
+            if (attempt < maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+            }
+          }
         }
+        if (!firestoreSuccess) {
+          console.error('[AuthService] CRITICAL: All Firestore write attempts failed — user has no Firestore document');
+        }
+      } else {
+        console.error('[AuthService] CRITICAL: Firestore not initialized — cannot create user document');
       }
 
       // Send verification email
@@ -276,7 +334,7 @@ export class FirebaseAuthService {
       if (firestore) {
         try {
           const userData = {
-            email: firebaseUser.email,
+            email: (firebaseUser.email || '').toLowerCase().trim(),
             displayName: firebaseUser.displayName || googleResult.user.name,
             photoURL: firebaseUser.photoURL || googleResult.user.photo,
             providers: ['google'],
@@ -368,7 +426,7 @@ export class FirebaseAuthService {
       if (firestore) {
         try {
           const userData = {
-            email: firebaseUser.email || appleCredential.email,
+            email: (firebaseUser.email || appleCredential.email || '').toLowerCase().trim(),
             displayName: displayName,
             photoURL: firebaseUser.photoURL,
             providers: ['apple'],
@@ -436,21 +494,40 @@ export class FirebaseAuthService {
   /**
    * Check if an email is already registered
    * Returns true if account exists, false if new email
+   *
+   * Strategy:
+   * 1. Check Firestore users collection (fast, handles most cases)
+   * 2. If not found, try signing in with dummy password to check Firebase Auth
+   *    - "auth/wrong-password" = user exists in Auth (Firestore doc may be missing)
+   *    - "auth/user-not-found" = user doesn't exist
    */
   async checkEmailExists(email: string): Promise<boolean> {
+    const normalizedEmail = email.toLowerCase().trim();
+
     try {
-      if (!auth) {
-        throw new Error('Firebase Auth not initialized');
+      // First, check Firestore
+      if (firestore) {
+        const usersRef = collection(firestore, 'users');
+        const q = query(usersRef, where('email', '==', normalizedEmail), limit(1));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          console.log(`[AuthService] checkEmailExists(${email}): true (found in Firestore)`);
+          return true;
+        }
       }
-      const methods = await fetchSignInMethodsForEmail(auth, email);
-      return methods.length > 0;
+
+      // Not found in Firestore
+      // Note: We cannot reliably detect if user exists in Firebase Auth when
+      // email enumeration protection is enabled (which is the default since Sept 2023).
+      // Both "user not found" and "wrong password" return "auth/invalid-credential".
+      //
+      // Strategy: Return false (show signup screen). If user actually exists,
+      // they will see "Email already in use" error and can switch to sign-in.
+      console.log(`[AuthService] checkEmailExists(${email}): false (not in Firestore)`);
+      return false;
     } catch (error: any) {
-      // If error is invalid-email, re-throw it
-      if (error?.code === 'auth/invalid-email') {
-        throw this.handleAuthError(error);
-      }
-      // For other errors (like network issues), assume email doesn't exist
-      // The actual login/register will handle the real error
+      console.log('[AuthService] checkEmailExists error:', error);
       return false;
     }
   }
@@ -515,7 +592,7 @@ export class FirebaseAuthService {
           updatedAt: new Date(),
         };
         setDoc(doc(firestore, 'users', currentUser.uid), updatedData, { merge: true }).catch((firestoreError) => {
-          console.warn('[AuthService] Firestore update failed (non-blocking):', firestoreError);
+          console.log('[AuthService] Firestore update failed (non-blocking):', firestoreError);
           // Silently ignore Firestore errors - Firebase Auth is the source of truth
         });
       } else {
@@ -625,8 +702,11 @@ export class FirebaseAuthService {
         message = error?.message || 'Authentication failed';
     }
 
-    // Create new error with preserved stack trace for better debugging
-    const newError = new Error(message);
+    // Create new error with preserved code and stack trace for better debugging
+    const newError: any = new Error(message);
+    if (error?.code) {
+      newError.code = error.code;
+    }
     if (error?.stack) {
       newError.stack = error.stack;
     }

@@ -1,0 +1,219 @@
+# Category 4E: More Screen & All Sub-Screens
+# Tests More menu and navigation to all child screens
+#
+# Usage: maestro test e2e/maestro/flows/09-more-subscreens.yaml
+
+appId: com.dragonworlds.hk2027
+name: More Sub-Screens
+
+---
+
+# Authenticate with test account
+- launchApp:
+    clearState: true
+
+- runFlow: "00-login-subflow.yaml"
+
+# =====================
+# NAVIGATE TO MORE
+# =====================
+
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+# =====================
+# MORE MENU CONTENT
+# =====================
+
+- assertVisible: "More"
+
+# Section headers (uppercase)
+- assertVisible: "RACE"
+- assertVisible: "EVENT"
+- assertVisible: "APP"
+
+# Menu items
+- assertVisible: "Entrants"
+- assertVisible: "Venue Map"
+- assertVisible: "Weather"
+- assertVisible: "Discuss"
+- assertVisible: "News"
+- assertVisible: "Contacts"
+- assertVisible: "Sponsors"
+
+# Scroll down to see more items
+- scroll
+
+- assertVisible:
+    text: "Container Shipping"
+    optional: true
+- assertVisible:
+    text: "About RegattaFlow"
+    optional: true
+- assertVisible:
+    text: "Data Sources"
+    optional: true
+
+# Scroll back up
+- scroll
+
+# =====================
+# TEST ENTRANTS SUB-SCREEN
+# =====================
+
+- tapOn:
+    id: "more-menu-entrants"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Entrants"
+    timeout: 10000
+
+# Verify content
+- assertVisible: "Entrants"
+
+# Go back
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- assertVisible: "More"
+
+# =====================
+# TEST WEATHER SUB-SCREEN
+# =====================
+
+- tapOn:
+    id: "more-menu-weather"
+- waitForAnimationToEnd
+
+# Weather screen uses a map view — wait for it to load
+- extendedWaitUntil:
+    visible: "Weather"
+    timeout: 10000
+    optional: true
+
+# Go back
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- assertVisible: "More"
+
+# =====================
+# TEST NEWS SUB-SCREEN
+# =====================
+
+- tapOn:
+    id: "more-menu-news"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "News"
+    timeout: 10000
+
+# Go back
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- assertVisible: "More"
+
+# =====================
+# TEST CONTACTS SUB-SCREEN
+# =====================
+
+- tapOn:
+    id: "more-menu-contacts"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Contacts"
+    timeout: 10000
+
+# Go back
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- assertVisible: "More"
+
+# =====================
+# TEST SPONSORS SUB-SCREEN
+# =====================
+
+- tapOn:
+    id: "more-menu-sponsors"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Sponsors"
+    timeout: 10000
+
+# Go back
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- assertVisible: "More"
+
+# =====================
+# TEST SHIPPING SUB-SCREEN
+# =====================
+
+- scroll
+
+- tapOn:
+    id: "more-menu-shipping"
+- waitForAnimationToEnd
+
+# Wait for shipping screen
+- extendedWaitUntil:
+    visible: "Shipping"
+    timeout: 10000
+    optional: true
+
+# Go back
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+
+# Scroll back up
+- scroll
+- assertVisible: "More"
+
+# =====================
+# TEST DATA SOURCES SUB-SCREEN
+# =====================
+
+- scroll
+
+- tapOn:
+    id: "more-menu-data-sources"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Data Sources"
+    timeout: 10000
+    optional: true
+
+# Go back
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- scroll
+- assertVisible: "More"
+
+# =====================
+# TEST ABOUT REGATTAFLOW SUB-SCREEN
+# =====================
+
+- scroll
+
+- tapOn:
+    id: "more-menu-about-regattaflow"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "RegattaFlow"
+    timeout: 10000
+    optional: true
+
+# Go back
+- tapOn:
+    id: "tab-more"
+- waitForAnimationToEnd
+- scroll
+- assertVisible: "More"
+
+# All sub-screens tested!

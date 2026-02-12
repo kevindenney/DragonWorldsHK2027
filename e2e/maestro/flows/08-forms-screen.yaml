@@ -1,0 +1,86 @@
+# Category 4D: Forms Screen
+# Tests forms display, sections, QR codes
+#
+# Usage: maestro test e2e/maestro/flows/08-forms-screen.yaml
+
+appId: com.dragonworlds.hk2027
+name: Forms Screen
+
+---
+
+# Authenticate with test account
+- launchApp:
+    clearState: true
+
+- runFlow: "00-login-subflow.yaml"
+
+# =====================
+# NAVIGATE TO FORMS
+# =====================
+
+- tapOn:
+    id: "tab-forms"
+- waitForAnimationToEnd
+
+# =====================
+# FORMS CONTENT
+# =====================
+
+- assertVisible: "Forms"
+- assertVisible: "APAC 2026"
+
+# Verify form sections
+- assertVisible:
+    text: "Protests"
+    optional: true
+- assertVisible:
+    text: "Scoring"
+    optional: true
+- assertVisible:
+    text: "Administrative"
+    optional: true
+
+# Verify individual forms
+- assertVisible:
+    text: "Submit Request for Hearing"
+    optional: true
+- assertVisible:
+    text: "Submit Scoring Inquiry"
+    optional: true
+
+# =====================
+# QR CODE TOGGLE
+# =====================
+
+# Tap QR Code button on first form (if visible)
+- tapOn:
+    text: "QR Code"
+    optional: true
+- waitForAnimationToEnd
+
+# Tap again to collapse
+- tapOn:
+    text: "QR Code"
+    optional: true
+- waitForAnimationToEnd
+
+# =====================
+# EVENT SWITCHING
+# =====================
+
+- tapOn: "Worlds 2027"
+- waitForAnimationToEnd
+- tapOn: "APAC 2026"
+- waitForAnimationToEnd
+
+# =====================
+# SCROLL
+# =====================
+
+- scroll
+- scroll
+- scroll
+- scroll
+- waitForAnimationToEnd
+
+- assertVisible: "Forms"

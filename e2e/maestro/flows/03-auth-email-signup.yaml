@@ -1,0 +1,76 @@
+# Category 2B: Email Auth Flow
+# Tests the email entry and transition to signup/signin form
+#
+# Usage: maestro test e2e/maestro/flows/03-auth-email-signup.yaml
+
+appId: com.dragonworlds.hk2027
+name: Email Auth Flow
+
+---
+
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 30000
+
+# Navigate to email auth
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible:
+      id: "auth-email"
+    timeout: 5000
+
+# =====================
+# STEP 1: EMAIL ENTRY
+# =====================
+
+# Verify email input elements
+- assertVisible:
+    id: "auth-email"
+- assertVisible:
+    id: "auth-continue"
+
+# Enter existing test email
+- tapOn:
+    id: "auth-email"
+- inputText: "maestro.e2etest2026@gmail.com"
+- hideKeyboard
+- waitForAnimationToEnd
+
+# Tap continue
+- tapOn:
+    id: "auth-continue"
+
+# =====================
+# STEP 2: Wait for form (signup or signin)
+# =====================
+
+# Firestore cold-start can take 60-90s on emulator
+- extendedWaitUntil:
+    visible: "Create Account"
+    timeout: 120000
+
+# Verify signup form elements are present
+- assertVisible: "Display Name"
+- assertVisible: "Password"
+- assertVisible: "Confirm Password"
+- assertVisible: "Create Account"
+
+# =====================
+# BACK NAVIGATION
+# =====================
+
+# Test going back to email step
+- tapOn:
+    id: "auth-back"
+
+- extendedWaitUntil:
+    visible:
+      id: "auth-email"
+    timeout: 5000
+
+# Email should still be pre-filled
+- assertVisible: "maestro.e2etest2026@gmail.com"

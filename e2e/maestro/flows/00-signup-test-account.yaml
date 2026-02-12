@@ -1,0 +1,88 @@
+# Create a test account for use in subsequent E2E tests
+# Run this ONCE to create the account, then use 00-login-subflow.yaml in other tests
+#
+# Usage: maestro test e2e/maestro/flows/00-signup-test-account.yaml
+
+appId: com.dragonworlds.hk2027
+name: Create Test Account
+tags:
+  - setup
+
+---
+
+# Launch fresh
+- launchApp:
+    clearState: true
+
+- extendedWaitUntil:
+    visible: "Welcome to"
+    timeout: 30000
+
+# Navigate to email auth
+- tapOn: "Continue with Email"
+
+- extendedWaitUntil:
+    visible:
+      id: "auth-email"
+    timeout: 10000
+
+# Enter test email
+- tapOn:
+    id: "auth-email"
+- inputText: "maestro.e2etest2026@gmail.com"
+- hideKeyboard
+- waitForAnimationToEnd
+
+# Tap continue — Firebase will check if email exists
+- tapOn:
+    id: "auth-continue"
+
+# Wait for signup form (Firestore cold-start can take 60-90s on emulator)
+- extendedWaitUntil:
+    visible: "Create Account"
+    timeout: 120000
+
+# Wait for animation to settle
+- waitForAnimationToEnd
+
+# Display Name input is auto-focused, so just type directly
+- inputText: "Maestro Tester"
+
+# Tap on the Password field input (child of auth-password container, below the "Password" label)
+- tapOn:
+    below: "Password"
+    index: 0
+- inputText: "Test2026Aa!"
+
+# Tap on Confirm Password input (below the "Confirm Password" label)
+- tapOn:
+    below: "Confirm Password"
+    index: 0
+- inputText: "Test2026Aa!"
+
+# Hide keyboard and tap create
+- hideKeyboard
+- waitForAnimationToEnd
+
+# Tap Create Account button (auth-signup testID)
+- tapOn:
+    id: "auth-signup"
+
+# Wait for account creation and navigation to main app
+- extendedWaitUntil:
+    visible: "Schedule"
+    timeout: 60000
+
+# Verify we're on the main screen with tabs
+- assertVisible:
+    id: "tab-schedule"
+- assertVisible:
+    id: "tab-noticeboard"
+- assertVisible:
+    id: "tab-results"
+- assertVisible:
+    id: "tab-forms"
+- assertVisible:
+    id: "tab-more"
+
+# Account created successfully!

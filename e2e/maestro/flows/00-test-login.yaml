@@ -1,0 +1,22 @@
+# Quick test: verify login with the test account works
+appId: com.dragonworlds.hk2027
+name: Test Login
+
+---
+
+- launchApp:
+    clearState: true
+
+- runFlow: "00-login-subflow.yaml"
+
+# Verify we made it to the main screen
+- assertVisible:
+    id: "tab-schedule"
+- assertVisible:
+    id: "tab-noticeboard"
+- assertVisible:
+    id: "tab-results"
+- assertVisible:
+    id: "tab-forms"
+- assertVisible:
+    id: "tab-more"

@@ -234,6 +234,26 @@ export function UnifiedEmailAuthScreen({ navigation }: UnifiedEmailAuthScreenPro
       await register({ email, password, displayName });
     } catch (error: any) {
       setAuthAttempted(false);
+      const errorCode = error?.code || '';
+
+      // If email already exists, switch to sign-in mode
+      if (errorCode === 'auth/email-already-in-use') {
+        animateTransition(() => {
+          setStep('signin');
+          setPassword('');
+          setConfirmPassword('');
+          setDisplayName('');
+          setPasswordError('');
+          setConfirmPasswordError('');
+          setDisplayNameError('');
+          setAuthError({
+            title: 'Account Exists',
+            message: 'An account with this email already exists. Please sign in with your password.',
+          });
+        });
+        return;
+      }
+
       const errorInfo = getErrorMessage(error);
       setAuthError(errorInfo);
     }
